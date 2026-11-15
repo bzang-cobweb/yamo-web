@@ -29,12 +29,17 @@ class UserResourceTest extends AuthFilamentTestCase
         Livewire::test(ListUsers::class)
             ->assertOk()
             ->assertCanSeeTableRecords($users->push($admin))
-            ->sortTable('name')
-            ->assertCanSeeTableRecords($users->sortBy('name'), inOrder: true)
+            ->sortTable('first_name')
+            ->assertCanSeeTableRecords($users->sortBy('first_name'), inOrder: true)
+            ->sortTable('last_name')
+            ->assertCanSeeTableRecords($users->sortBy('last_name'), inOrder: true)
+            ->sortTable('locale')
             ->sortTable('email')
             ->assertCanSeeTableRecords($users->sortBy('email'), inOrder: true)
             ->searchTable($users->first()->email)
-            ->assertCountTableRecords(1);
+            ->assertCountTableRecords(1)
+            ->searchTable($users->first()->last_name)
+            ->assertCanSeeTableRecords([$users->first()]);
     }
 
     public function test_super_admin_sees_the_list_without_explicit_permission(): void
@@ -58,8 +63,10 @@ class UserResourceTest extends AuthFilamentTestCase
 
         Livewire::test(CreateUser::class)
             ->fillForm([
-                'name' => 'Jeanne',
+                'first_name' => 'Jeanne',
+                'last_name' => 'Dupont',
                 'email' => 'jeanne@example.com',
+                'locale' => 'en',
                 'password' => 'secret-password',
                 'roles' => [$role->getKey()],
             ])
@@ -69,6 +76,34 @@ class UserResourceTest extends AuthFilamentTestCase
         $user = User::firstWhere('email', 'jeanne@example.com');
         $this->assertTrue(Hash::check('secret-password', $user->password));
         $this->assertTrue($user->hasRole('editor'));
+        $this->assertSame('Jeanne Dupont', $user->full_name);
+        $this->assertSame('en', $user->preferredLocale());
+    }
+
+    public function test_locale_defaults_to_the_application_locale(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+
+        Livewire::test(CreateUser::class)
+            ->assertSchemaStateSet(['locale' => config('app.locale')]);
+    }
+
+    public function test_create_rejects_an_unsupported_locale(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'first_name' => 'Jeanne',
+                'last_name' => 'Dupont',
+                'email' => 'jeanne@example.com',
+                'password' => 'secret-password',
+                'locale' => 'de',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['locale' => 'in']);
+
+        $this->assertDatabaseMissing(User::class, ['email' => 'jeanne@example.com']);
     }
 
     public function test_create_validates_required_fields(): void
@@ -76,9 +111,14 @@ class UserResourceTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
 
         Livewire::test(CreateUser::class)
-            ->fillForm(['name' => '', 'email' => '', 'password' => ''])
+            ->fillForm(['first_name' => '', 'last_name' => '', 'email' => '', 'password' => ''])
             ->call('create')
-            ->assertHasFormErrors(['name' => 'required', 'email' => 'required', 'password' => 'required']);
+            ->assertHasFormErrors([
+                'first_name' => 'required',
+                'last_name' => 'required',
+                'email' => 'required',
+                'password' => 'required',
+            ]);
     }
 
     public function test_edit_keeps_password_when_left_empty(): void
@@ -88,12 +128,13 @@ class UserResourceTest extends AuthFilamentTestCase
         $hash = $user->password;
 
         Livewire::test(EditUser::class, ['record' => $user->getKey()])
-            ->fillForm(['name' => 'Nouveau nom', 'password' => ''])
+            ->fillForm(['first_name' => 'Nouveau', 'last_name' => 'Nom', 'locale' => 'en', 'password' => ''])
             ->call('save')
             ->assertHasNoFormErrors();
 
         $user->refresh();
-        $this->assertSame('Nouveau nom', $user->name);
+        $this->assertSame('Nouveau Nom', $user->full_name);
+        $this->assertSame('en', $user->locale);
         $this->assertSame($hash, $user->password);
     }
 
@@ -135,5 +176,18 @@ class UserResourceTest extends AuthFilamentTestCase
 
         Livewire::test(ListUsers::class)
             ->assertActionHidden(TestAction::make('delete')->table($other));
+    }
+
+    public function test_bulk_delete_never_deletes_its_own_account(): void
+    {
+        $admin = $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::DELETE_USERS);
+        $other = User::factory()->create();
+
+        Livewire::test(ListUsers::class)
+            ->selectTableRecords([$admin, $other])
+            ->callAction(TestAction::make('delete')->table()->bulk());
+
+        $this->assertModelExists($admin);
+        $this->assertModelMissing($other);
     }
 }

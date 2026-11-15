@@ -5,6 +5,7 @@ namespace Modules\Auth\Filament\Resources;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Auth\Filament\Resources\UserResource\Pages\CreateUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\ListUsers;
@@ -20,7 +21,7 @@ class UserResource extends AbstractAuthResource
 
     protected static ?int $navigationSort = 10;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $recordTitleAttribute = 'last_name';
 
     public static function form(Schema $schema): Schema
     {
@@ -39,6 +40,16 @@ class UserResource extends AbstractAuthResource
             'create' => CreateUser::route('/create'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getRecordTitle(?Model $record): ?string
+    {
+        return $record instanceof User ? $record->full_name : null;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['first_name', 'last_name', 'email'];
     }
 
     public static function getModelLabel(): string

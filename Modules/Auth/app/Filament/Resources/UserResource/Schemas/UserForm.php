@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Filament\Resources\UserResource\Schemas;
 
+use App\Support\Locales;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
@@ -28,8 +29,12 @@ abstract class UserForm
         return Section::make(__('auth::user.sections.general'))
             ->columns(2)
             ->schema([
-                TextInput::make('name')
-                    ->label(__('auth::user.name'))
+                TextInput::make('first_name')
+                    ->label(__('auth::user.first_name'))
+                    ->maxLength(255)
+                    ->required(),
+                TextInput::make('last_name')
+                    ->label(__('auth::user.last_name'))
                     ->maxLength(255)
                     ->required(),
                 TextInput::make('email')
@@ -37,6 +42,12 @@ abstract class UserForm
                     ->email()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
+                    ->required(),
+                Select::make('locale')
+                    ->label(__('auth::user.locale'))
+                    ->options(Locales::options())
+                    ->default(config('app.locale'))
+                    ->selectablePlaceholder(false)
                     ->required(),
                 TextInput::make('password')
                     ->label(__('auth::user.password'))

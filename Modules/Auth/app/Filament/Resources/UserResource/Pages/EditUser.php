@@ -19,6 +19,6 @@ class EditUser extends EditRecord
 
     public function getBreadcrumb(): string
     {
-        return $this->record->name ?? parent::getBreadcrumb();
+        return $this->record->full_name ?: parent::getBreadcrumb();
     }
 }

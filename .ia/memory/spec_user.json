@@ -1,0 +1,331 @@
+{
+  "concept": "user",
+  "libelle": "Compte utilisateur",
+  "chantier": "2026-11-15-profil-api-mobile",
+  "tache": "01",
+  "date_audit": "2026-11-15",
+  "stack": "Laravel (nwidart/laravel-modules, module Auth) + Filament (panel admin) + spatie/laravel-permission + Laravel Sanctum",
+  "perimetre": "Etat du code avant modification (ajout first_name, last_name, locale ; suppression de name ; API de connexion Sanctum).",
+  "fichiers_lus": [
+    "Modules/Auth/app/Models/User.php",
+    "Modules/Auth/app/Models/Role.php",
+    "Modules/Auth/app/Models/Permission.php",
+    "Modules/Auth/app/Policies/UserPolicy.php",
+    "Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php",
+    "Modules/Auth/app/Enums/PermissionEnum.php",
+    "Modules/Auth/app/Enums/RoleEnum.php",
+    "Modules/Auth/app/Filament/Resources/AbstractAuthResource.php",
+    "Modules/Auth/app/Filament/Resources/UserResource.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/CreateUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/EditUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/ListUsers.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php",
+    "Modules/Auth/app/Providers/AuthServiceProvider.php",
+    "Modules/Auth/app/Providers/EventServiceProvider.php",
+    "Modules/Auth/app/Providers/RouteServiceProvider.php",
+    "Modules/Auth/config/config.php",
+    "Modules/Auth/database/factories/UserFactory.php",
+    "Modules/Auth/database/seeders/AuthDatabaseSeeder.php",
+    "Modules/Auth/database/migrations/2026_11_15_141956_create_permission_tables.php",
+    "Modules/Auth/lang/en/user.php",
+    "Modules/Auth/lang/fr/user.php",
+    "Modules/Auth/lang/en/navigation.php",
+    "Modules/Auth/lang/fr/navigation.php",
+    "Modules/Auth/routes/api.php",
+    "Modules/Auth/routes/web.php",
+    "Modules/Auth/tests/Feature/Filament/AuthFilamentTestCase.php",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php",
+    "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php",
+    "database/migrations/0001_01_01_000000_create_users_table.php",
+    "database/migrations/2026_11_15_140128_create_personal_access_tokens_table.php",
+    "database/seeders/DatabaseSeeder.php",
+    "config/auth.php",
+    "config/permission.php",
+    "config/sanctum.php",
+    "routes/api.php",
+    "routes/web.php",
+    "routes/console.php",
+    "bootstrap/app.php",
+    "app/Filament/AbstractResource.php",
+    "app/Providers/Filament/AdminPanelProvider.php"
+  ],
+  "modele": {
+    "classe": "Modules\\Auth\\Models\\User",
+    "source": "Modules/Auth/app/Models/User.php:22",
+    "herite_de": "Illuminate\\Foundation\\Auth\\User (Authenticatable)",
+    "implemente": ["Filament\\Models\\Contracts\\FilamentUser"],
+    "traits": [
+      {"nom": "HasApiTokens", "paquet": "Laravel\\Sanctum", "source": "Modules/Auth/app/Models/User.php:13,25"},
+      {"nom": "HasFactory", "source": "Modules/Auth/app/Models/User.php:10,25"},
+      {"nom": "HasRoles", "paquet": "Spatie\\Permission\\Traits", "source": "Modules/Auth/app/Models/User.php:17,25"},
+      {"nom": "Notifiable", "source": "Modules/Auth/app/Models/User.php:12,25"}
+    ],
+    "fillable": {"valeur": ["name", "email", "password"], "source": "Modules/Auth/app/Models/User.php:19"},
+    "hidden": {"valeur": ["password", "remember_token"], "source": "Modules/Auth/app/Models/User.php:20"},
+    "factory": {"classe": "Modules\\Auth\\Database\\Factories\\UserFactory", "source": "Modules/Auth/app/Models/User.php:21"},
+    "casts": [
+      {"attribut": "email_verified_at", "cast": "datetime", "source": "Modules/Auth/app/Models/User.php:35"},
+      {"attribut": "password", "cast": "hashed", "source": "Modules/Auth/app/Models/User.php:36"}
+    ],
+    "methodes": [
+      {
+        "nom": "canAccessPanel(Panel $panel): bool",
+        "regle": "true si isSuperAdmin() ou hasPermissionTo(PermissionEnum::ACCESS_ADMIN) ('admin.access'). Ne distingue pas le panel recu.",
+        "source": "Modules/Auth/app/Models/User.php:40-43"
+      },
+      {
+        "nom": "isSuperAdmin(): bool",
+        "regle": "hasRole(RoleEnum::SUPER_ADMIN) ('super_admin').",
+        "source": "Modules/Auth/app/Models/User.php:45-48"
+      }
+    ],
+    "soft_deletes": {"valeur": false, "note": "Aucun trait SoftDeletes sur le modele ni colonne deleted_at dans la migration.", "source": "Modules/Auth/app/Models/User.php:25 ; database/migrations/0001_01_01_000000_create_users_table.php:14-22"}
+  },
+  "table": {
+    "nom": "users",
+    "migration": "database/migrations/0001_01_01_000000_create_users_table.php",
+    "source": "database/migrations/0001_01_01_000000_create_users_table.php:14-22",
+    "colonnes": [
+      {"nom": "id", "declaration": "$table->id()", "type": "bigint unsigned auto-increment", "nullable": false, "defaut": null, "index": "cle primaire", "source": "database/migrations/0001_01_01_000000_create_users_table.php:15"},
+      {"nom": "name", "declaration": "$table->string('name')", "type": "varchar(255)", "nullable": false, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:16"},
+      {"nom": "email", "declaration": "$table->string('email')->unique()", "type": "varchar(255)", "nullable": false, "defaut": null, "index": "unique", "source": "database/migrations/0001_01_01_000000_create_users_table.php:17"},
+      {"nom": "email_verified_at", "declaration": "$table->timestamp('email_verified_at')->nullable()", "type": "timestamp", "nullable": true, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:18"},
+      {"nom": "password", "declaration": "$table->string('password')", "type": "varchar(255)", "nullable": false, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:19"},
+      {"nom": "remember_token", "declaration": "$table->rememberToken()", "type": "varchar(100)", "nullable": true, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:20"},
+      {"nom": "created_at", "declaration": "$table->timestamps()", "type": "timestamp", "nullable": true, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:21"},
+      {"nom": "updated_at", "declaration": "$table->timestamps()", "type": "timestamp", "nullable": true, "defaut": null, "index": null, "source": "database/migrations/0001_01_01_000000_create_users_table.php:21"}
+    ],
+    "colonnes_absentes_notables": {
+      "valeur": ["first_name", "last_name", "locale"],
+      "note": "Aucune de ces colonnes n'existe dans la migration users ni dans une autre migration lue.",
+      "source": "database/migrations/0001_01_01_000000_create_users_table.php:14-22"
+    },
+    "tables_annexes_meme_migration": [
+      {
+        "nom": "password_reset_tokens",
+        "colonnes": [
+          {"nom": "email", "type": "varchar(255)", "nullable": false, "index": "cle primaire", "source": "database/migrations/0001_01_01_000000_create_users_table.php:25"},
+          {"nom": "token", "type": "varchar(255)", "nullable": false, "source": "database/migrations/0001_01_01_000000_create_users_table.php:26"},
+          {"nom": "created_at", "type": "timestamp", "nullable": true, "source": "database/migrations/0001_01_01_000000_create_users_table.php:27"}
+        ],
+        "note": "Liee a users par email, sans cle etrangere declaree. Utilisee par le broker 'users' (config/auth.php:95-101).",
+        "source": "database/migrations/0001_01_01_000000_create_users_table.php:24-28"
+      },
+      {
+        "nom": "sessions",
+        "colonnes": [
+          {"nom": "id", "type": "varchar(255)", "nullable": false, "index": "cle primaire", "source": "database/migrations/0001_01_01_000000_create_users_table.php:31"},
+          {"nom": "user_id", "declaration": "foreignId('user_id')->nullable()->index()", "type": "bigint unsigned", "nullable": true, "index": "index (pas de contrainte FK declaree)", "source": "database/migrations/0001_01_01_000000_create_users_table.php:32"},
+          {"nom": "ip_address", "type": "varchar(45)", "nullable": true, "source": "database/migrations/0001_01_01_000000_create_users_table.php:33"},
+          {"nom": "user_agent", "type": "text", "nullable": true, "source": "database/migrations/0001_01_01_000000_create_users_table.php:34"},
+          {"nom": "payload", "type": "longText", "nullable": false, "source": "database/migrations/0001_01_01_000000_create_users_table.php:35"},
+          {"nom": "last_activity", "type": "integer", "nullable": false, "index": "index", "source": "database/migrations/0001_01_01_000000_create_users_table.php:36"}
+        ],
+        "source": "database/migrations/0001_01_01_000000_create_users_table.php:30-37"
+      }
+    ]
+  },
+  "relations": [
+    {
+      "nom": "roles",
+      "type": "morphToMany (via trait HasRoles de spatie/laravel-permission)",
+      "modele_cible": "Modules\\Auth\\Models\\Role (config permission.models.role)",
+      "table_pivot": "model_has_roles (colonnes role_id, model_type, model_id ; PK [role_id, model_id, model_type] ; index [model_id, model_type] ; FK role_id -> roles.id cascadeOnDelete)",
+      "source": "Modules/Auth/app/Models/User.php:17,25 ; config/permission.php:31,80,95,106 ; Modules/Auth/database/migrations/2026_11_15_141956_create_permission_tables.php:77-98"
+    },
+    {
+      "nom": "permissions (directes)",
+      "type": "morphToMany (via trait HasRoles / HasPermissions de spatie/laravel-permission)",
+      "modele_cible": "Modules\\Auth\\Models\\Permission (config permission.models.permission)",
+      "table_pivot": "model_has_permissions (colonnes permission_id, model_type, model_id ; PK [permission_id, model_id, model_type] ; index [model_id, model_type] ; FK permission_id -> permissions.id cascadeOnDelete)",
+      "note": "Les permissions sont aussi obtenues via les roles (table role_has_permissions, migration lignes 100-115). Teams desactive (config/permission.php:151).",
+      "source": "Modules/Auth/app/Models/User.php:17,25 ; config/permission.php:20,72,96,106,151 ; Modules/Auth/database/migrations/2026_11_15_141956_create_permission_tables.php:54-75"
+    },
+    {
+      "nom": "tokens (jetons Sanctum)",
+      "type": "morphMany (via trait HasApiTokens de Laravel Sanctum)",
+      "modele_cible": "Laravel\\Sanctum\\PersonalAccessToken (aucune surcharge vue dans le code lu)",
+      "table": "personal_access_tokens : id ; morphs('tokenable') (tokenable_type, tokenable_id + index) ; name text ; token varchar(64) unique ; abilities text nullable ; last_used_at timestamp nullable ; expires_at timestamp nullable index ; timestamps",
+      "source": "Modules/Auth/app/Models/User.php:13,25 ; database/migrations/2026_11_15_140128_create_personal_access_tokens_table.php:14-23"
+    }
+  ],
+  "roles_et_permissions": {
+    "roles_declares": [
+      {"enum": "RoleEnum::SUPER_ADMIN", "valeur": "super_admin", "effet": "court-circuite les policies (HasBeforeAbility)", "source": "Modules/Auth/app/Enums/RoleEnum.php:7-8"}
+    ],
+    "permissions_concernant_user": [
+      {"enum": "ACCESS_ADMIN", "valeur": "admin.access", "source": "Modules/Auth/app/Enums/PermissionEnum.php:11"},
+      {"enum": "VIEW_USERS", "valeur": "users.view", "source": "Modules/Auth/app/Enums/PermissionEnum.php:13"},
+      {"enum": "CREATE_USERS", "valeur": "users.create", "source": "Modules/Auth/app/Enums/PermissionEnum.php:14"},
+      {"enum": "UPDATE_USERS", "valeur": "users.update", "source": "Modules/Auth/app/Enums/PermissionEnum.php:15"},
+      {"enum": "DELETE_USERS", "valeur": "users.delete", "source": "Modules/Auth/app/Enums/PermissionEnum.php:16"}
+    ],
+    "synchronisation": {
+      "regle": "AuthDatabaseSeeder cree chaque permission de PermissionEnum (findOrCreate), supprime les permissions en base absentes de l'enum, cree chaque role de RoleEnum (findOrCreate), et vide le cache de permissions avant et apres. Appele par DatabaseSeeder.",
+      "source": "Modules/Auth/database/seeders/AuthDatabaseSeeder.php:18-35 ; database/seeders/DatabaseSeeder.php:15"
+    }
+  },
+  "policy": {
+    "classe": "Modules\\Auth\\Policies\\UserPolicy",
+    "enregistrement": {"regle": "Gate::policy(User::class, UserPolicy::class)", "source": "Modules/Auth/app/Providers/AuthServiceProvider.php:21"},
+    "before": {
+      "regles": [
+        {"ordre": 1, "regle": "Si ability === 'delete' et que le premier argument est un User identique (is) a l'utilisateur courant : false (personne, pas meme le super admin, ne supprime son propre compte).", "source": "Modules/Auth/app/Policies/UserPolicy.php:16-21"},
+        {"ordre": 2, "regle": "Sinon delegue a HasBeforeAbility::before : true si isSuperAdmin(), sinon null (passe a la methode de la policy).", "source": "Modules/Auth/app/Policies/UserPolicy.php:23 ; Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php:13-16"}
+      ]
+    },
+    "abilities": [
+      {"ability": "viewAny", "filament": "hasPermissionTo('users.view')", "hors_filament": "false (site et API : pas de liste des comptes)", "source": "Modules/Auth/app/Policies/UserPolicy.php:26-34"},
+      {"ability": "view", "filament": "hasPermissionTo('users.view')", "hors_filament": "$model->is($user) (chacun voit son propre compte)", "source": "Modules/Auth/app/Policies/UserPolicy.php:36-44"},
+      {"ability": "create", "filament": "hasPermissionTo('users.create')", "hors_filament": "false (un compte connecte ne cree pas d'autre compte)", "source": "Modules/Auth/app/Policies/UserPolicy.php:46-54"},
+      {"ability": "update", "filament": "hasPermissionTo('users.update')", "hors_filament": "$model->is($user) (chacun modifie son propre compte)", "source": "Modules/Auth/app/Policies/UserPolicy.php:56-64"},
+      {"ability": "delete", "filament": "hasPermissionTo('users.delete') && ! $model->is($user)", "hors_filament": "false (pas de suppression de compte pour l'instant)", "source": "Modules/Auth/app/Policies/UserPolicy.php:66-75"},
+      {"ability": "deleteAny", "filament": "hasPermissionTo('users.delete')", "hors_filament": "false (pas de suppression groupee)", "source": "Modules/Auth/app/Policies/UserPolicy.php:77-85"}
+    ],
+    "critere_de_branche": {"regle": "La branche Filament est choisie par Filament::isServing().", "source": "Modules/Auth/app/Policies/UserPolicy.php:28,38,48,58,68,79"},
+    "abilities_non_definies": {"valeur": ["restore", "forceDelete", "restoreAny", "forceDeleteAny", "replicate", "reorder"], "note": "Absentes de UserPolicy ; seul before() s'applique (super admin = true).", "source": "Modules/Auth/app/Policies/UserPolicy.php:10-86"},
+    "acces_panel": {"regle": "Acces au panel admin via User::canAccessPanel : super admin ou permission 'admin.access'.", "source": "Modules/Auth/app/Models/User.php:40-43"},
+    "verifie_par_tests": [
+      {"comportement": "Hors Filament : view/update de soi true, d'autrui false ; delete de soi false.", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:28-38"},
+      {"comportement": "Hors Filament : toutes les permissions back-office ne donnent ni viewAny, ni create, ni update/delete d'autrui.", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:40-56"},
+      {"comportement": "Super admin : viewAny true hors Filament.", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:58-65"},
+      {"comportement": "/admin : 403 sans 'admin.access', 200 avec.", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:67-74"},
+      {"comportement": "Invite sur /admin/users redirige vers /admin/login.", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:76-79"},
+      {"comportement": "Filament : action delete cachee sur sa propre ligne, y compris pour le super admin.", "source": "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:108-129"}
+    ]
+  },
+  "filament": {
+    "panel": {"id": "admin", "path": "admin", "login": true, "decouverte_ressources_modules": "Modules\\<Module>\\Filament\\Resources pour chaque module actif", "source": "app/Providers/Filament/AdminPanelProvider.php:29-44"},
+    "ressource": {
+      "classe": "Modules\\Auth\\Filament\\Resources\\UserResource",
+      "herite_de": "AbstractAuthResource -> App\\Filament\\AbstractResource",
+      "modele": "Modules\\Auth\\Models\\User",
+      "navigation_icon": "Heroicon::OutlinedUsers",
+      "navigation_sort": 10,
+      "navigation_group": "__('auth::navigation.group') (fr 'Acces', en 'Access')",
+      "record_title_attribute": "name",
+      "model_label": "__('auth::user.singular')",
+      "plural_model_label": "__('auth::user.plural')",
+      "source": "Modules/Auth/app/Filament/Resources/UserResource.php:15-52 ; Modules/Auth/app/Filament/Resources/AbstractAuthResource.php:12-15 ; Modules/Auth/lang/fr/navigation.php:4"
+    },
+    "pages": [
+      {"cle": "index", "classe": "ListUsers", "route": "/", "url": "/admin/users", "header_actions": ["CreateAction"], "source": "Modules/Auth/app/Filament/Resources/UserResource.php:38 ; Modules/Auth/app/Filament/Resources/UserResource/Pages/ListUsers.php:13-18"},
+      {"cle": "create", "classe": "CreateUser", "route": "/create", "url": "/admin/users/create", "header_actions": [], "source": "Modules/Auth/app/Filament/Resources/UserResource.php:39 ; Modules/Auth/app/Filament/Resources/UserResource/Pages/CreateUser.php:8-11"},
+      {"cle": "edit", "classe": "EditUser", "route": "/{record}/edit", "url": "/admin/users/{record}/edit", "header_actions": ["DeleteAction"], "fil_d_ariane": "$this->record->name ?? parent::getBreadcrumb()", "source": "Modules/Auth/app/Filament/Resources/UserResource.php:40 ; Modules/Auth/app/Filament/Resources/UserResource/Pages/EditUser.php:13-23"}
+    ],
+    "formulaire": {
+      "classe": "UserForm",
+      "disposition": "schema 1 colonne, 2 sections",
+      "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:16-24",
+      "sections": [
+        {
+          "titre": "__('auth::user.sections.general') (fr 'Informations', en 'Details')",
+          "colonnes": 2,
+          "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:26-50",
+          "champs": [
+            {"nom": "name", "composant": "TextInput", "label": "__('auth::user.name') (fr 'Nom')", "validations": ["required", "maxLength:255"], "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:31-34"},
+            {"nom": "email", "composant": "TextInput", "label": "__('auth::user.email') (fr 'Adresse e-mail')", "validations": ["required", "email", "maxLength:255", "unique(ignoreRecord: true)"], "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:35-40"},
+            {"nom": "password", "composant": "TextInput->password()->revealable()", "label": "__('auth::user.password') (fr 'Mot de passe')", "validations": ["maxLength:255", "required uniquement sur CreateRecord"], "dehydrated": "seulement si la valeur est remplie (filled) : vide en edition = mot de passe conserve", "helper_text": "aucun en creation ; __('auth::user.password_help') en edition (fr 'Laisser vide pour conserver le mot de passe actuel.')", "hachage": "par le cast 'hashed' du modele", "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:41-48 ; Modules/Auth/app/Models/User.php:36 ; Modules/Auth/lang/fr/user.php:10"}
+          ]
+        },
+        {
+          "titre": "__('auth::user.sections.access') (fr 'Acces', en 'Access')",
+          "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:52-70",
+          "champs": [
+            {"nom": "roles", "composant": "Select", "label": "__('auth::role.title')", "relation": "roles, titre 'name'", "options": "multiple, preload, searchable", "regle": "Si l'utilisateur connecte n'est pas super admin, le role 'super_admin' est exclu des options (where name != 'super_admin').", "validations": [], "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:56-68"}
+          ]
+        }
+      ],
+      "champs_absents": {"valeur": ["email_verified_at", "first_name", "last_name", "locale", "permissions directes"], "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:26-70"}
+    },
+    "table": {
+      "classe": "UserTable",
+      "tri_par_defaut": "name",
+      "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:12-43",
+      "colonnes": [
+        {"nom": "name", "type": "TextColumn", "label": "__('auth::user.name')", "sortable": true, "searchable": true, "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:17-20"},
+        {"nom": "email", "type": "TextColumn", "label": "__('auth::user.email')", "sortable": true, "searchable": true, "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:21-24"},
+        {"nom": "roles.name", "type": "TextColumn badge", "label": "__('auth::role.title')", "sortable": false, "searchable": false, "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:25-27"},
+        {"nom": "created_at", "type": "TextColumn dateTime", "label": "__('auth::user.created_at') (fr 'Cree le')", "sortable": true, "toggleable": "masquee par defaut", "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:28-32"}
+      ],
+      "filtres": [
+        {"nom": "roles", "type": "SelectFilter", "relation": "roles, 'name'", "options": "multiple, preload", "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:35-39"}
+      ],
+      "actions_ligne": {"valeur": ["EditAction", "DeleteAction"], "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:41 ; app/Filament/AbstractResource.php:22-28"},
+      "actions_groupees": {"valeur": ["BulkActionGroup[DeleteBulkAction]"], "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:42 ; app/Filament/AbstractResource.php:33-40"}
+    },
+    "traductions": {
+      "fichiers": ["Modules/Auth/lang/fr/user.php", "Modules/Auth/lang/en/user.php"],
+      "cles": ["singular", "plural", "title", "name", "email", "password", "password_help", "created_at", "sections.general", "sections.access"],
+      "source": "Modules/Auth/lang/fr/user.php:3-16 ; Modules/Auth/lang/en/user.php:3-16"
+    }
+  },
+  "authentification": {
+    "garde_par_defaut": {"valeur": "env AUTH_GUARD, defaut 'web'", "source": "config/auth.php:19"},
+    "gardes_declarees": [{"nom": "web", "driver": "session", "provider": "users", "source": "config/auth.php:40-45"}],
+    "provider_users": {"driver": "eloquent", "model": "env AUTH_MODEL, defaut Modules\\Auth\\Models\\User", "source": "config/auth.php:64-69"},
+    "reset_mot_de_passe": {"broker": "users", "table": "password_reset_tokens", "expire_minutes": 60, "throttle_secondes": 60, "source": "config/auth.php:95-101"},
+    "password_timeout": {"valeur": "env AUTH_PASSWORD_TIMEOUT, defaut 10800", "source": "config/auth.php:115"},
+    "sanctum": {
+      "stateful": "env SANCTUM_STATEFUL_DOMAINS, defaut localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1 + URL de l'application",
+      "guard": ["web"],
+      "expiration": null,
+      "token_prefix": "env SANCTUM_TOKEN_PREFIX, defaut ''",
+      "middleware": {"authenticate_session": "Laravel\\Sanctum\\Http\\Middleware\\AuthenticateSession", "encrypt_cookies": "Illuminate\\Cookie\\Middleware\\EncryptCookies", "validate_csrf_token": "Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken"},
+      "source": "config/sanctum.php:21-85"
+    },
+    "rendu_json_erreurs": {"regle": "Les exceptions sont rendues en JSON pour api/* ou si la requete attend du JSON.", "source": "bootstrap/app.php:19-21"}
+  },
+  "routes": [
+    {"methode": "GET", "uri": "/api/user", "middleware": ["api (groupe applique par withRouting api:)", "auth:sanctum"], "action": "closure qui retourne $request->user() (modele User serialise, password et remember_token caches)", "garde_can": null, "nom": null, "source": "routes/api.php:6-8 ; bootstrap/app.php:11 ; Modules/Auth/app/Models/User.php:20"},
+    {"methode": "GET", "uri": "/admin/users", "action": "Filament ListUsers", "source": "Modules/Auth/app/Filament/Resources/UserResource.php:38"},
+    {"methode": "GET", "uri": "/admin/users/create", "action": "Filament CreateUser", "source": "Modules/Auth/app/Filament/Resources/UserResource.php:39"},
+    {"methode": "GET", "uri": "/admin/users/{record}/edit", "action": "Filament EditUser", "source": "Modules/Auth/app/Filament/Resources/UserResource.php:40"},
+    {"methode": "GET/POST", "uri": "/admin/login", "action": "page de connexion Filament (->login())", "source": "app/Providers/Filament/AdminPanelProvider.php:44 ; Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:78"}
+  ],
+  "routes_module_auth": {
+    "api": {"contenu": "Aucune route : commentaire seul annoncant la connexion par jeton Sanctum a venir et l'obligation d'une garde can: par route agissant sur un modele.", "prefixe_applique": "middleware 'api', prefix 'api', name 'api.'", "source": "Modules/Auth/routes/api.php:1-4 ; Modules/Auth/app/Providers/RouteServiceProvider.php:46-49"},
+    "web": {"contenu": "Aucune route : commentaire seul.", "middleware_applique": "web", "source": "Modules/Auth/routes/web.php:1-4 ; Modules/Auth/app/Providers/RouteServiceProvider.php:36-39"},
+    "controleurs": {"contenu": "Aucun controleur (dossier Modules/Auth/app/Http/Controllers ne contient que .gitkeep)."}
+  },
+  "factory": {
+    "classe": "Modules\\Auth\\Database\\Factories\\UserFactory",
+    "definition": {"name": "fake()->name()", "email": "fake()->unique()->safeEmail()", "email_verified_at": "now()", "password": "Hash::make('password') memorise en statique", "remember_token": "Str::random(10)"},
+    "etats": [{"nom": "unverified", "effet": "email_verified_at = null", "source": "Modules/Auth/database/factories/UserFactory.php:39-44"}],
+    "source": "Modules/Auth/database/factories/UserFactory.php:25-34"
+  },
+  "tests_existants": [
+    {"fichier": "Modules/Auth/tests/Feature/Filament/UserResourceTest.php", "couvre": "liste (403 sans users.view, tri name/email, recherche email, super admin), creation (403, creation avec role + hash, required name/email/password), edition (mot de passe vide conserve, renommage via 'name', 403), suppression (autrui oui, soi non, cachee sans permission)", "dependance_a_name": "lignes 32-33, 61, 79-81, 91, 96", "source": "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:17-138"},
+    {"fichier": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php", "couvre": "branche hors Filament des policies, super admin, acces /admin, redirection invite", "source": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php:28-79"},
+    {"fichier": "Modules/Auth/tests/Feature/Filament/AuthFilamentTestCase.php", "couvre": "base : RefreshDatabase, seed AuthDatabaseSeeder, panel 'admin' en service, helpers actingAsUserWith (ajoute toujours admin.access) et actingAsSuperAdmin", "source": "Modules/Auth/tests/Feature/Filament/AuthFilamentTestCase.php:13-46"}
+  ],
+  "references_a_name": [
+    {"usage": "fillable", "source": "Modules/Auth/app/Models/User.php:19"},
+    {"usage": "colonne users.name NOT NULL", "source": "database/migrations/0001_01_01_000000_create_users_table.php:16"},
+    {"usage": "recordTitleAttribute", "source": "Modules/Auth/app/Filament/Resources/UserResource.php:23"},
+    {"usage": "fil d'ariane EditUser", "source": "Modules/Auth/app/Filament/Resources/UserResource/Pages/EditUser.php:22"},
+    {"usage": "champ formulaire", "source": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php:31-34"},
+    {"usage": "colonne table + tri par defaut", "source": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:15,17-20"},
+    {"usage": "factory", "source": "Modules/Auth/database/factories/UserFactory.php:28"},
+    {"usage": "traduction auth::user.name", "source": "Modules/Auth/lang/fr/user.php:7 ; Modules/Auth/lang/en/user.php:7"},
+    {"usage": "tests", "source": "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:32-33,61,79-81,91,96"}
+  ],
+  "contexte_locale": {
+    "valeur": "config app.locale = env APP_LOCALE, defaut 'fr' ; app.supported_locales = ['fr', 'en']. Aucun attribut de locale sur l'utilisateur.",
+    "source": "config/app.php:81,88"
+  },
+  "incertitudes": [
+    "Skills bza-dev:audit-source et bza-laravel:audit-laravel introuvables dans l'environnement : l'enveloppe JSON a ete construite d'apres la consigne de la tache ; sa forme peut differer du contrat attendu.",
+    "Types SQL deduits des methodes Blueprint de Laravel (id = bigint unsigned, string = varchar(255), rememberToken = varchar(100) nullable, timestamps nullables) et non d'un schema lu en base ; le SGBD cible (MariaDB d'apres l'historique git) n'a pas ete verifie.",
+    "Les relations roles/permissions/tokens viennent des traits HasRoles et HasApiTokens (code des paquets vendor non lu) ; leur signature exacte (morphToMany/morphMany, modele PersonalAccessToken) est celle connue des paquets, pas verifiee dans vendor/.",
+    "Aucune garde 'sanctum' declaree dans config/auth.php (seule 'web', config/auth.php:40-45) ; routes/api.php:8 utilise auth:sanctum, qui repose sur la garde enregistree par le paquet Sanctum (non verifie dans vendor/).",
+    "La route GET /api/user (routes/api.php:6-8) n'a ni garde can: ni ressource API : elle renvoie le modele brut. Aucun test ne la couvre dans les fichiers lus.",
+    "Le premier argument de UserPolicy::before (UserPolicy.php:16-19) suppose que Laravel transmet les arguments de l'ability a before() ; le test UserResourceTest.php:121-129 confirme le comportement cote Filament pour l'action delete de ligne.",
+    "deleteAny (UserPolicy.php:77-85) n'exclut pas le compte courant : il n'est pas verifie dans le code lu si DeleteBulkAction de Filament controle 'delete' par enregistrement, donc si un admin peut supprimer son propre compte via l'action groupee. Aucun test ne couvre l'action groupee.",
+    "Filament affiche le nom de l'utilisateur connecte (AccountWidget, menu utilisateur, AdminPanelProvider.php:59) via un mecanisme interne au paquet, probablement fonde sur l'attribut name (User n'implemente pas HasName) : non verifie dans vendor/, a considerer lors de la suppression de name.",
+    "Le guard_name des roles/permissions crees par le seeder (AuthDatabaseSeeder.php:23,31) n'est pas precise : il depend de la garde par defaut ('web') ; l'effet sur des verifications faites sous la garde sanctum n'est pas audite.",
+    "Hors perimetre lu : App\\Filament\\Resources (dossier existe, contenu non audite au-dela d'AbstractResource), tests/TestCase.php, config/app.php hors lignes 81 et 88, vendor/, RoleResource et PermissionResource (sauf en tant que contexte).",
+    "Aucune verification d'email, d'evenement ou de notification liee aux utilisateurs n'est configuree dans le code lu (EventServiceProvider.php:14,26 vide) ; User n'implemente pas MustVerifyEmail (User.php:22)."
+  ]
+}

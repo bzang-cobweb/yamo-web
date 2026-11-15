@@ -34,7 +34,9 @@ abstract class AbstractResource extends Resource
     {
         return [
             BulkActionGroup::make([
-                DeleteBulkAction::make(),
+                // Chaque ligne cochée est soumise à `delete` de la policy : la
+                // suppression groupée n'élargit pas ce que la suppression unitaire refuse.
+                DeleteBulkAction::make()->authorizeIndividualRecords('delete'),
             ]),
         ];
     }

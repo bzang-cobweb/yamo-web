@@ -4,6 +4,7 @@ namespace Modules\Auth\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
+use Modules\Auth\Console\CreateUserCommand;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
@@ -38,7 +39,9 @@ class AuthServiceProvider extends ModuleServiceProvider
      *
      * @var string[]
      */
-    // protected array $commands = [];
+    protected array $commands = [
+        CreateUserCommand::class,
+    ];
 
     /**
      * Provider classes to register.
