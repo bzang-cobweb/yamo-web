@@ -45,11 +45,29 @@ elle est réputée vraie par construction.
     `locale` (valeurs de `config('app.supported_locales')`, domicile
     `App\Support\Locales`).
   - API mobile (`Modules/Auth/routes/api.php`) : `POST /api/v1/auth/login`
-    (jeton Sanctum par appareil, 5 essais/min), `POST /api/v1/auth/logout`,
-    `GET /api/v1/auth/me`. Réponses dans la langue du compte, sinon
-    `Accept-Language` (`App\Http\Middleware\SetLocale`).
-  - Toute route de contrôleur porte une garde `can:` ou figure, motivée, dans
-    `tests/Feature/RouteGuardTest.php`.
+    (`LoginController`/`LoginService`, jeton Sanctum par appareil, 5 essais/min),
+    `POST /api/v1/auth/logout` (`LogoutController`/`LogoutService`),
+    `GET` et `PATCH /api/v1/auth/me` (`ProfileController`/`ProfileService` ; le
+    PATCH n'accepte que les champs des formulaires de profil). Réponses dans la
+    langue du compte, sinon `Accept-Language` (`App\Http\Middleware\SetLocale`).
+  - Formulaires servis à l'app : `auth.login`, `auth.profile.locale`
+    (`Modules/Auth/app/Forms/`, inscrits dans `AuthServiceProvider`).
+- **Form** (`Modules/Form`) : formulaires décrits par le serveur pour l'app mobile.
+  Un formulaire étend `Modules\Form\Support\Form` (champs `Field::text()`,
+  `::select()`… avec libellés traduits et règles), s'inscrit au `FormRegistry`, et
+  sa FormRequest lit `rules()` — une seule source pour l'affichage et la
+  validation. Types : `text`, `hidden`, `email`, `password`, `number`, `textarea`,
+  `select`, `radio`, `checkbox`, `checkbox_group`, `switch` (enum `FieldType` ; un
+  type ajouté ici demande son composant côté mobile). Route
+  `GET /api/v1/forms/{form}` (404 inconnu ; capacité `viewForm` : 401 invité,
+  403 refusé).
+- **Langues** : `config('app.supported_locales')` (liste) et
+  `config('app.default_locale')` (défaut stable — `app.locale` est réécrite à
+  chaque requête) ; domicile `App\Support\Locales` ; `GET /api/v1/locales` public.
+- Sur l'API, l'utilisateur se reconnaît à son jeton même sur une route ouverte
+  (`App\Http\Middleware\UseSanctumGuard`, groupe `api`).
+- Toute route de contrôleur porte une garde `can:` ou figure, motivée, dans
+  `tests/Feature/RouteGuardTest.php`.
 
 ## Environnement — comment on exécute ici
 

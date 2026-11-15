@@ -235,3 +235,69 @@ traductions de l'interface) vit hors de `features/` — **voir arbitrage A**.
 
 Défaut sans réponse : aucune dépendance ; le critère de tests de l'étape 3 est
 reporté et noté en suspens.
+
+## Avenant — 2026-11-15 : contrôleurs et services Login, Logout, Profile
+
+Demande de l'humain en cours de chantier, consignée dans
+`.ia/context/decisions/2026-11-15-services-login-logout-profile.md` (remplace
+l'arbitrage G) : côté Laravel, `LoginController`/`LoginService`,
+`LogoutController`/`LogoutService`, `ProfileController`/`ProfileService` à la place
+d'`AuthController`/`AuthService`, URL inchangées ; côté mobile, `LoginService`,
+`LogoutService`, `ProfileService` (`get`, `update`) dans `features/auth/services`,
+écran Profil dans `features/auth/screens` (pas de feature `profile`).
+
+---
+
+# Clôture — 2026-11-15
+
+## Ce que j'ai décidé seul
+
+- **Langue par défaut stable** (`config('app.default_locale')`, `Locales::default()`) :
+  `config('app.locale')` est réécrite par `App::setLocale()` à chaque requête ; la langue
+  par défaut renvoyée par `GET /api/v1/locales` était fausse (bug trouvé par un test).
+- **Garde Sanctum sur tout le groupe `api`** (`UseSanctumGuard`) : une route ouverte aux
+  invités reconnaît quand même le compte du jeton ; c'est le formulaire qui décide de son
+  accès (capacité `viewForm` : 401 invité, 403 refusé).
+- **Schéma Bearer** déclaré dans `openapi.json` (relevé par l'audit).
+- **Placement mobile des services Login/Logout/Profile** dans `features/auth/services`
+  (la demande ne disait pas où).
+- **`useI18n()` partagé** (`src/shared/i18n/I18nContext`) : la feature `form` lit la langue
+  sans dépendre de la feature `auth`, qui la décide.
+- **Sélecteur sans dépendance** : liste d'options dans une fenêtre modale.
+- **`FormLoader`** : charge la définition et remonte le formulaire quand la langue change.
+- **Correctifs d'outillage** : types Jest déclarés dans `tsconfig.json` (TypeScript 6),
+  CSS remplacé par un module vide dans Jest, `package.json`/`app.json` remis à 2 espaces.
+- **Entrée envoie le formulaire** : régression de l'ancien écran de connexion, rétablie.
+
+## Ce qui a été fait
+
+- **Web** (`e63f966`, `6471f96`) : module `Form` (11 types de champs, règles dérivées,
+  registre), formulaires `auth.login` et `auth.profile.locale` dont les FormRequest lisent les
+  règles, `GET /api/v1/forms/{form}`, `GET /api/v1/locales`, `PATCH /api/v1/auth/me` ;
+  contrôleurs et services Login, Logout, Profile. 65 tests.
+- **Mobile** (`69442d8`, `c9e4c30`) : `features/auth` (services Login/Logout/Profile, types,
+  contexte, provider, hooks, écrans Connexion/Accueil/Profil, composants, utilitaires),
+  `src/shared` (ApiClient, config, i18n, thème, LocaleService), meilleure langue de l'appareil
+  (`expo-localization`), `features/form` (DynamicForm, FormLoader, `switch` des types, un
+  composant par type), écran Profil avec changement de langue. 12 tests.
+- 5 verdicts qa-check, tous GO, dans `.ia/runs/2026-11-15-mobile-features-formulaires/`.
+
+## Ce que je n'ai pas vérifié
+
+- **Rendu natif iOS / Android** : toujours aucun runtime iOS sur la machine ; parcours
+  vérifiés en Expo web (le jeton y est en `localStorage`, pas dans SecureStore).
+- `useLocales()` sur un appareil réel (changement de langue du système à chaud).
+- Pas de test automatisé de `FormLoader`, `ProfileScreen`, des services mobiles ni du repli
+  « API injoignable ».
+- Le comportement de l'API derrière un proxy, et la page de debug en production (APP_DEBUG).
+
+## Ce qui reste en suspens
+
+- **Jetons orphelins** : supprimer un compte (back-office, commande) laisse ses jetons Sanctum
+  en base (Sanctum ne les supprime pas). Sans effet sur la sécurité (le jeton ne
+  s'authentifie plus), mais à révoquer à la suppression.
+- Le chargement de l'app attend la liste des langues (écran de démarrage plus long si l'API
+  est lente).
+- Type `date` / `datetime` : au premier formulaire qui en a besoin (dépendance à valider).
+- Le 401 « Unauthenticated. » reste en anglais en `fr` (chantier précédent).
+- Simulateur iOS à installer pour constater l'app en natif.
