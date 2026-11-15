@@ -11,6 +11,7 @@ return [
     'locale' => 'Langue',
     'email' => 'Adresse e-mail',
     'password' => 'Mot de passe',
+    'device_name' => 'nom de l\'appareil',
     'password_help' => 'Laisser vide pour conserver le mot de passe actuel.',
     'created_at' => 'Créé le',
     'created' => 'Utilisateur :name (:email) créé.',

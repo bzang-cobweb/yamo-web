@@ -43,6 +43,15 @@ class UserPolicy
         return $model->is($user);
     }
 
+    /**
+     * Consulter son propre compte (`GET /api/v1/auth/me`) : même règle que
+     * voir ce compte-là.
+     */
+    public function me(User $user): bool
+    {
+        return $this->view($user, $user);
+    }
+
     public function create(User $user): bool
     {
         if (Filament::isServing()) {

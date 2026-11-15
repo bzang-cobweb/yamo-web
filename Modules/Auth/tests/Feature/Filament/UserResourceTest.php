@@ -24,7 +24,13 @@ class UserResourceTest extends AuthFilamentTestCase
     public function test_list_shows_searches_and_sorts_users(): void
     {
         $admin = $this->actingAsUserWith(PermissionEnum::VIEW_USERS);
-        $users = User::factory()->count(3)->create();
+        $admin->update(['name' => 'mmm', 'first_name' => 'Mmm', 'last_name' => 'Mmm', 'email' => 'mmm@example.com']);
+        // Valeurs distinctes et sans accent : un ex æquo rendrait l'ordre attendu indéterminé.
+        $users = User::factory()->forEachSequence(
+            ['name' => 'zoe', 'first_name' => 'Anne', 'last_name' => 'Zola', 'email' => 'b@example.com'],
+            ['name' => 'alix', 'first_name' => 'Zelie', 'last_name' => 'Brun', 'email' => 'z@example.com'],
+            ['name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Adam', 'email' => 'a@example.com'],
+        )->create();
 
         Livewire::test(ListUsers::class)
             ->assertOk()

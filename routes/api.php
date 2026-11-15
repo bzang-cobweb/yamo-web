@@ -1,8 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Routes d'API de l'application (préfixe `api`). Les routes des modules sont dans
+// Modules/<Module>/routes/api.php — l'authentification est dans le module Auth
+// (`/api/v1/auth/*`). Chaque route qui agit sur un modèle porte la garde `can:`
+// de sa policy (bza-laravel:create-policy).

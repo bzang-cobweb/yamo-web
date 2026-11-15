@@ -11,6 +11,7 @@ return [
     'locale' => 'Language',
     'email' => 'Email address',
     'password' => 'Password',
+    'device_name' => 'device name',
     'password_help' => 'Leave empty to keep the current password.',
     'created_at' => 'Created at',
     'created' => 'User :name (:email) created.',

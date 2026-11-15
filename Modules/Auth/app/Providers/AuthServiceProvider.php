@@ -2,8 +2,12 @@
 
 namespace Modules\Auth\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Modules\Auth\Console\CreateUserCommand;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
@@ -22,6 +26,10 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
+
+        // Connexion API : 5 essais par minute pour un même e-mail depuis une même adresse.
+        RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)
+            ->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
     }
 
     /**
