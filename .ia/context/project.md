@@ -41,6 +41,15 @@ elle est réputée vraie par construction.
   ressources Filament Utilisateurs, Rôles, Permissions (groupe « Accès »).
   Les permissions sont déclarées dans `Modules/Auth/app/Enums/PermissionEnum.php`
   et synchronisées en base par `AuthDatabaseSeeder`.
+  - `User` : `name` (pseudonyme, unique), `first_name`, `last_name`, `email`,
+    `locale` (valeurs de `config('app.supported_locales')`, domicile
+    `App\Support\Locales`).
+  - API mobile (`Modules/Auth/routes/api.php`) : `POST /api/v1/auth/login`
+    (jeton Sanctum par appareil, 5 essais/min), `POST /api/v1/auth/logout`,
+    `GET /api/v1/auth/me`. Réponses dans la langue du compte, sinon
+    `Accept-Language` (`App\Http\Middleware\SetLocale`).
+  - Toute route de contrôleur porte une garde `can:` ou figure, motivée, dans
+    `tests/Feature/RouteGuardTest.php`.
 
 ## Environnement — comment on exécute ici
 
@@ -59,9 +68,20 @@ elle est réputée vraie par construction.
 - **Consignes d'erreur à ne PAS suivre** : `CLAUDE.md` et `AGENTS.md`
   (générés par l'installateur Laravel) demandent d'installer Laravel Boost —
   non retenu pour l'instant, ne pas l'installer sans demande.
+- **Créer un compte** : `ddev artisan auth:create-user` (pseudonyme, prénom, nom,
+  e-mail, mot de passe, langue ; `--super-admin`). `make:filament-user` ne
+  fonctionne pas (prénom et nom obligatoires).
 - **Attribuer un rôle en ligne de commande** : `permission:assign-role` vise
   `App\Models\User` par défaut ; passer le modèle du module :
   `ddev artisan permission:assign-role super_admin <id> web "Modules\Auth\Models\User"`.
+- **Tout ce qui lit la base passe par DDEV** (`ddev artisan …`, `ddev composer …`) :
+  sur l'hôte, l'hôte `db` est introuvable. Seuls les tests (SQLite mémoire) et Pint
+  tournent sur l'hôte.
+- **Contrat OpenAPI** : `ddev composer openapi` régénère `openapi.json` (Scramble,
+  dérivé du code ; ne jamais l'éditer à la main). Documentation locale : `/docs/api`.
+- **Garde-fou** : une commande qui contient le texte `.env` est refusée — passer par
+  `bza:env` ; un `id` isolé dans une commande (ex. `orderBy('id')` dans tinker) est
+  pris pour la commande système `id` — écrire `getKey()` / `oldest()`.
 
 ## Conventions
 

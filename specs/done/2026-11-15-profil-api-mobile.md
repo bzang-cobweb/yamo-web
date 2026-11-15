@@ -154,3 +154,61 @@ Critères ajoutés à l'étape 1 :
   pseudonyme déjà pris est refusé (formulaire, commande, contrainte en base).
 - La liste du back-office affiche le pseudonyme, triable et cherchable.
 - Les comptes existants ont un pseudonyme unique après migration.
+
+---
+
+# Clôture — 2026-11-15
+
+## Ce que j'ai décidé seul
+
+- **`App\Support\Locales`** : domicile unique des langues (lit `config('app.supported_locales')`),
+  utilisé par le formulaire, la table, la commande et le middleware de langue. Les noms de langue
+  sont écrits dans leur propre langue (« Français », « English »), via intl, sans fichier de traduction.
+- **Suppression groupée** : `authorizeIndividualRecords('delete')` dans la base commune
+  `AbstractResource` — l'audit a montré qu'elle permettait de supprimer son propre compte, contre une
+  décision du registre. Prouvé par un test qui échoue sans le correctif.
+- **`HasLocalePreference`** sur `User` : les notifications Laravel futures partiront dans la langue du compte.
+- **Langue des réponses de l'API** (`App\Http\Middleware\SetLocale`, groupe `api`) : langue du compte
+  connecté, sinon `Accept-Language`, sinon `fr`.
+- **Forme de la réponse de connexion** : `{ "data": <UserResource>, "token": "…" }`.
+- **Déconnexion** : ne révoque que le jeton de la requête ; les autres appareils restent connectés.
+- **Contrat OpenAPI en JSON** (`openapi.json`) et non `openapi.yaml` comme écrit au contrat : Scramble
+  n'exporte que du JSON (sous-ensemble valide de YAML). Régénération : `ddev composer openapi`
+  (Scramble lit le schéma de la base, donc sous DDEV).
+- **Route par défaut `GET /api/user` retirée** : elle renvoyait le modèle brut, sans garde ni test.
+- **Mobile** : textes fr/en dans l'app (langue du compte, sinon de l'appareil) ; jeton dans
+  `localStorage` sur le web, réservé au développement ; API locale en HTTP (certificat DDEV non reconnu
+  par le simulateur) ; nom de l'app `yamo`, schéma `yamo` ; exemples du modèle retirés ; correctif
+  du hook `use-color-scheme.web.ts` du modèle (erreur de lint) ; `src/expo-types.d.ts` pour que
+  `tsc` passe sans `expo start` préalable.
+
+## Ce qui a été fait
+
+- **Étape 1** (web, `ee42adf`) : `first_name`, `last_name`, `locale` ; reprise du nom ; commande
+  `auth:create-user` ; ressource Filament ; suppression groupée sûre. qa-check : GO.
+- **Avenant** (web, `b56e680`) : `name` conservé, obligatoire et unique (pseudonyme), remis par une
+  nouvelle migration ; reprise « prénom nom » suffixée ; test de la reprise. qa-check : GO.
+- **Étape 2** (web, `802ec62`) : `POST /api/v1/auth/login`, `POST /logout`, `GET /me` ; FormRequest,
+  service, JsonResource, policy `me`, limite 5/min ; balayage des gardes de routes ; `openapi.json`.
+  qa-check : GO. Parcours réel vérifié en HTTP.
+- **Étape 3** (mobile, `9750609`) : Expo SDK 58, connexion, accueil, déconnexion. qa-check : GO.
+  Parcours réel vérifié dans le navigateur (Expo web).
+- Tests web : 49 au vert.
+
+## Ce que je n'ai pas vérifié
+
+- **L'app dans le simulateur iOS** : aucun runtime iOS n'est installé sur la machine. Le parcours a
+  été vérifié en Expo web (même code, sauf le stockage du jeton : `localStorage` au lieu de SecureStore).
+- Android (émulateur ou appareil) et SecureStore sur appareil réel.
+- Le comportement de la limite de connexion derrière un proxy (clé e-mail + IP).
+- L'exécution interactive (invites) de `auth:create-user` ; `down()` des migrations sur des données réelles.
+
+## Ce qui reste en suspens
+
+- Installer un runtime iOS (Xcode → Settings → Components, ou `xcodebuild -downloadPlatform iOS`)
+  puis constater l'app dans le simulateur.
+- Le 401 « Unauthenticated. » de l'API reste en anglais en `fr` (traduction Laravel manquante).
+- Identifiants d'application iOS/Android (`bundleIdentifier`, `package`) et projet EAS : à choisir
+  avant le premier build.
+- Chantiers suivants annoncés : inscription, mot de passe oublié, modification du profil depuis l'app,
+  notifications push.
