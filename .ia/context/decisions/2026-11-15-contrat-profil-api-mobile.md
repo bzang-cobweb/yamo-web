@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-15-name-pseudonyme-unique.md (point A uniquement)
+
 # `2026-11-15` — Contrat du chantier profil, API de connexion et mobile validé
 
 - **Type** : décision

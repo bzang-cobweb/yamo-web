@@ -4,6 +4,8 @@ return [
     'singular' => 'utilisateur',
     'plural' => 'utilisateurs',
     'title' => 'Utilisateurs',
+    'name' => 'Pseudonyme',
+    'name_help' => 'Nom public, unique, affiché dans l\'application.',
     'first_name' => 'Prénom',
     'last_name' => 'Nom',
     'locale' => 'Langue',

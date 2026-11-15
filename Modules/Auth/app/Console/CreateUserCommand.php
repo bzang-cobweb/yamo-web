@@ -20,6 +20,7 @@ use function Laravel\Prompts\text;
 class CreateUserCommand extends Command
 {
     protected $signature = 'auth:create-user
+        {--name= : Pseudonyme (unique)}
         {--first-name= : Prénom}
         {--last-name= : Nom}
         {--email= : Adresse e-mail}
@@ -32,6 +33,7 @@ class CreateUserCommand extends Command
     public function handle(): int
     {
         $data = [
+            'name' => $this->option('name') ?? text(__('auth::user.name'), required: true),
             'first_name' => $this->option('first-name') ?? text(__('auth::user.first_name'), required: true),
             'last_name' => $this->option('last-name') ?? text(__('auth::user.last_name'), required: true),
             'email' => $this->option('email') ?? text(__('auth::user.email'), required: true),
@@ -40,6 +42,7 @@ class CreateUserCommand extends Command
         ];
 
         $validator = Validator::make($data, [
+            'name' => ['required', 'string', 'max:255', Rule::unique(User::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique(User::class)],

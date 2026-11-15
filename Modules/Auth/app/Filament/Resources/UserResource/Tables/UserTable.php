@@ -15,6 +15,10 @@ abstract class UserTable
         return $table
             ->defaultSort('last_name')
             ->columns([
+                TextColumn::make('name')
+                    ->label(__('auth::user.name'))
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('first_name')
                     ->label(__('auth::user.first_name'))
                     ->sortable()

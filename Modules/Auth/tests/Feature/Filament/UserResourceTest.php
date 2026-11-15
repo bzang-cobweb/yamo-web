@@ -29,6 +29,8 @@ class UserResourceTest extends AuthFilamentTestCase
         Livewire::test(ListUsers::class)
             ->assertOk()
             ->assertCanSeeTableRecords($users->push($admin))
+            ->sortTable('name')
+            ->assertCanSeeTableRecords($users->sortBy('name'), inOrder: true)
             ->sortTable('first_name')
             ->assertCanSeeTableRecords($users->sortBy('first_name'), inOrder: true)
             ->sortTable('last_name')
@@ -39,6 +41,8 @@ class UserResourceTest extends AuthFilamentTestCase
             ->searchTable($users->first()->email)
             ->assertCountTableRecords(1)
             ->searchTable($users->first()->last_name)
+            ->assertCanSeeTableRecords([$users->first()])
+            ->searchTable($users->first()->name)
             ->assertCanSeeTableRecords([$users->first()]);
     }
 
@@ -63,6 +67,7 @@ class UserResourceTest extends AuthFilamentTestCase
 
         Livewire::test(CreateUser::class)
             ->fillForm([
+                'name' => 'jeanne',
                 'first_name' => 'Jeanne',
                 'last_name' => 'Dupont',
                 'email' => 'jeanne@example.com',
@@ -76,6 +81,7 @@ class UserResourceTest extends AuthFilamentTestCase
         $user = User::firstWhere('email', 'jeanne@example.com');
         $this->assertTrue(Hash::check('secret-password', $user->password));
         $this->assertTrue($user->hasRole('editor'));
+        $this->assertSame('jeanne', $user->name);
         $this->assertSame('Jeanne Dupont', $user->full_name);
         $this->assertSame('en', $user->preferredLocale());
     }
@@ -94,6 +100,7 @@ class UserResourceTest extends AuthFilamentTestCase
 
         Livewire::test(CreateUser::class)
             ->fillForm([
+                'name' => 'jeanne',
                 'first_name' => 'Jeanne',
                 'last_name' => 'Dupont',
                 'email' => 'jeanne@example.com',
@@ -111,14 +118,32 @@ class UserResourceTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
 
         Livewire::test(CreateUser::class)
-            ->fillForm(['first_name' => '', 'last_name' => '', 'email' => '', 'password' => ''])
+            ->fillForm(['name' => '', 'first_name' => '', 'last_name' => '', 'email' => '', 'password' => ''])
             ->call('create')
             ->assertHasFormErrors([
+                'name' => 'required',
                 'first_name' => 'required',
                 'last_name' => 'required',
                 'email' => 'required',
                 'password' => 'required',
             ]);
+    }
+
+    public function test_pseudonym_must_be_unique(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+        User::factory()->create(['name' => 'jeanne']);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'jeanne',
+                'first_name' => 'Jeanne',
+                'last_name' => 'Dupont',
+                'email' => 'jeanne@example.com',
+                'password' => 'secret-password',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['name' => 'unique']);
     }
 
     public function test_edit_keeps_password_when_left_empty(): void

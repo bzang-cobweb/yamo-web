@@ -134,3 +134,23 @@ Routes du module Auth, préfixe `/api/v1/auth` :
 
 Défaut sans réponse : aucune dépendance hors `create-expo-app` ; le critère
 OpenAPI est alors reporté et noté en suspens.
+
+## Avenant — 2026-11-15 : `name` conservé comme pseudonyme
+
+Demande de l'humain en cours de chantier, consignée dans
+`.ia/context/decisions/2026-11-15-name-pseudonyme-unique.md` ; remplace
+l'arbitrage A.
+
+- `name` est conservé, **obligatoire et unique** : c'est le pseudonyme.
+  `first_name` et `last_name` restent l'identité civile.
+- La colonne, déjà supprimée par la migration de l'étape 1 (commitée), est remise
+  par une nouvelle migration ; les comptes existants reçoivent « prénom nom »,
+  suffixé en cas de doublon.
+- `auth:create-user` reçoit `--name`.
+- `UserResource` (étape 2) expose `name`.
+
+Critères ajoutés à l'étape 1 :
+- Le pseudonyme est saisi à la création et modifiable ; il est obligatoire ; un
+  pseudonyme déjà pris est refusé (formulaire, commande, contrainte en base).
+- La liste du back-office affiche le pseudonyme, triable et cherchable.
+- Les comptes existants ont un pseudonyme unique après migration.

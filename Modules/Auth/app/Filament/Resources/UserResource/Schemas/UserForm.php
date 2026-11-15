@@ -29,6 +29,13 @@ abstract class UserForm
         return Section::make(__('auth::user.sections.general'))
             ->columns(2)
             ->schema([
+                TextInput::make('name')
+                    ->label(__('auth::user.name'))
+                    ->helperText(__('auth::user.name_help'))
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true)
+                    ->required()
+                    ->columnSpanFull(),
                 TextInput::make('first_name')
                     ->label(__('auth::user.first_name'))
                     ->maxLength(255)

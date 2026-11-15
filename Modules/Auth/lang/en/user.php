@@ -4,6 +4,8 @@ return [
     'singular' => 'user',
     'plural' => 'users',
     'title' => 'Users',
+    'name' => 'Username',
+    'name_help' => 'Public, unique name shown in the app.',
     'first_name' => 'First name',
     'last_name' => 'Last name',
     'locale' => 'Language',
