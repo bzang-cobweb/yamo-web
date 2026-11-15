@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-15-services-login-logout-profile.md (arbitrage G uniquement)
+
 # `2026-11-15` — Contrat du chantier « features mobile et formulaires pilotés par l'API » validé
 
 - **Type** : décision
