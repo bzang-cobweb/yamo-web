@@ -44,6 +44,18 @@ final class AuthService
     }
 
     /**
+     * Modifie son propre compte avec des données déjà validées.
+     *
+     * @param  array{locale?: string}  $data
+     */
+    public function updateMe(User $user, array $data): User
+    {
+        $user->update($data);
+
+        return $user;
+    }
+
+    /**
      * Révoque le jeton qui a authentifié la requête, et lui seul : les autres
      * appareils restent connectés.
      */

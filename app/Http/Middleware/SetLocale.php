@@ -23,7 +23,7 @@ class SetLocale
             ? $user->preferredLocale()
             : $request->getPreferredLanguage(Locales::values());
 
-        App::setLocale(in_array($locale, Locales::values(), true) ? $locale : config('app.locale'));
+        App::setLocale(in_array($locale, Locales::values(), true) ? $locale : Locales::default());
 
         return $next($request);
     }

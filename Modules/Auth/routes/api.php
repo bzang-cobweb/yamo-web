@@ -15,5 +15,6 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('me', [AuthController::class, 'me'])->can('me', User::class)->name('me');
+        Route::patch('me', [AuthController::class, 'updateMe'])->can('updateMe', User::class)->name('me.update');
     });
 });

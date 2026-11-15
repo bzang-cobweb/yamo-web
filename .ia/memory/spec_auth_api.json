@@ -1,0 +1,245 @@
+{
+  "concept": "auth_api",
+  "libelle": "API d'authentification par jeton Sanctum consommée par l'application mobile (/api/v1/auth/*)",
+  "chantier": "2026-11-15-mobile-features-formulaires",
+  "tache": "01",
+  "date_audit": "2026-11-15",
+  "stack": "Laravel (nwidart/laravel-modules, Sanctum, Scramble, Filament, spatie/laravel-permission)",
+  "perimetre": "Etat du code avant modification (validation de la connexion dérivée d'une déclaration de formulaire ; ajout PATCH /api/v1/auth/me ; ajout GET /api/v1/forms/{form} et GET /api/v1/locales). Lecture statique uniquement : aucune commande artisan exécutée (route:list non lancé).",
+  "fichiers_lus": [
+    "Modules/Auth/routes/api.php",
+    "Modules/Auth/app/Http/Controllers/Api/AuthController.php",
+    "Modules/Auth/app/Http/Requests/LoginRequest.php",
+    "Modules/Auth/app/Http/Resources/UserResource.php",
+    "Modules/Auth/app/Services/AuthService.php",
+    "Modules/Auth/app/Policies/UserPolicy.php",
+    "Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php",
+    "Modules/Auth/app/Providers/AuthServiceProvider.php",
+    "Modules/Auth/app/Providers/RouteServiceProvider.php",
+    "Modules/Auth/app/Models/User.php",
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php",
+    "Modules/Auth/lang/fr/user.php (ligne device_name, par grep)",
+    "Modules/Auth/lang/en/user.php (ligne device_name, par grep)",
+    "lang/fr/auth.php et lang/en/auth.php (clé failed, par grep)",
+    "app/Http/Middleware/SetLocale.php",
+    "app/Support/Locales.php",
+    "bootstrap/app.php",
+    "routes/api.php",
+    "config/app.php (lignes 70-90)",
+    "config/sanctum.php",
+    "config/scramble.php (partiel, hors commentaires)",
+    "tests/Feature/RouteGuardTest.php",
+    "openapi.json",
+    "modules_statuses.json",
+    "Modules/Form/routes/api.php, Modules/Form/routes/web.php, Modules/Form/app/Providers/RouteServiceProvider.php (grep) — module non suivi par git, voir incertitudes",
+    ".ia/memory/spec_user.json (chantier précédent, survol par grep)"
+  ],
+  "enregistrement_des_routes": {
+    "groupe_module": {
+      "regle": "Les routes de Modules/Auth/routes/api.php sont chargées avec middleware('api'), prefix('api'), name('api.').",
+      "source": "Modules/Auth/app/Providers/RouteServiceProvider.php:46-49"
+    },
+    "groupe_v1_auth": {
+      "regle": "Route::prefix('v1/auth')->name('v1.auth.') : URI finales /api/v1/auth/*, noms finaux api.v1.auth.*.",
+      "source": "Modules/Auth/routes/api.php:10"
+    },
+    "middleware_api_ajoute": {
+      "regle": "SetLocale est ajouté en fin (append) du groupe de middlewares 'api'.",
+      "source": "bootstrap/app.php:17"
+    },
+    "rendu_json_des_exceptions": {
+      "regle": "Les exceptions sont rendues en JSON si la requête correspond à 'api/*' ou attend du JSON.",
+      "source": "bootstrap/app.php:20-22"
+    },
+    "routes_api_application": {
+      "regle": "routes/api.php ne contient aucune route (commentaire seul) ; il est chargé via withRouting(api: ...).",
+      "source": "routes/api.php:1-6 ; bootstrap/app.php:12"
+    },
+    "ancienne_route_api_user": {
+      "regle": "GET /api/user n'existe plus : 404 attendu par le test.",
+      "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:164-171"
+    }
+  },
+  "routes": [
+    {
+      "methode": "POST",
+      "uri": "/api/v1/auth/login",
+      "nom": "api.v1.auth.login",
+      "middlewares": ["api (groupe, dont SetLocale en fin)", "throttle:auth-login"],
+      "garde_can": null,
+      "controleur": "Modules\\Auth\\Http\\Controllers\\Api\\AuthController@login",
+      "source": "Modules/Auth/routes/api.php:11-13 ; Modules/Auth/app/Providers/RouteServiceProvider.php:48",
+      "requete": {
+        "classe": "Modules\\Auth\\Http\\Requests\\LoginRequest",
+        "authorize": {"valeur": "return true (route publique)", "source": "Modules/Auth/app/Http/Requests/LoginRequest.php:16-19"},
+        "regles": {
+          "email": ["required", "string", "email", "max:255"],
+          "password": ["required", "string", "max:255"],
+          "device_name": ["required", "string", "max:255"],
+          "source": "Modules/Auth/app/Http/Requests/LoginRequest.php:24-31"
+        },
+        "attributs": {
+          "email": "__('auth::user.email')",
+          "password": "__('auth::user.password')",
+          "device_name": "__('auth::user.device_name') (fr : « nom de l'appareil », en : « device name »)",
+          "source": "Modules/Auth/app/Http/Requests/LoginRequest.php:36-43 ; Modules/Auth/lang/fr/user.php:14 ; Modules/Auth/lang/en/user.php:14"
+        },
+        "messages_personnalises": "aucune méthode messages() dans LoginRequest"
+      },
+      "traitement": {
+        "etapes": [
+          {"regle": "Le contrôleur passe $request->validated() à AuthService::login.", "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:25"},
+          {"regle": "Vérification par Auth::guard('web')->validate(['email', 'password']) (aucune ouverture de session).", "source": "Modules/Auth/app/Services/AuthService.php:22-24"},
+          {"regle": "Echec : ValidationException::withMessages(['email' => __('auth.failed')]) — même réponse pour mot de passe faux et e-mail inconnu.", "source": "Modules/Auth/app/Services/AuthService.php:24-26 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:72-80"},
+          {"regle": "Succès : utilisateur = $guard->getLastAttempted() ; jeton = $user->createToken($data['device_name'])->plainTextToken (le nom du jeton est device_name).", "source": "Modules/Auth/app/Services/AuthService.php:29-34,41-44 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:55-56"},
+          {"regle": "Aucun jeton créé en cas d'échec.", "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:60-70"}
+        ]
+      },
+      "reponse": {
+        "code": 200,
+        "ressource": "UserResource avec additional(['token' => $token])",
+        "forme_exacte": {"data": {"id": "int", "name": "string", "first_name": "string", "last_name": "string", "email": "string", "locale": "string"}, "token": "string"},
+        "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:27-30 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:40-53"
+      },
+      "erreurs": [
+        {"code": 422, "cas": "validation des champs (email, password, device_name) ou identifiants refusés (erreur sur 'email', message auth.failed traduit)", "forme": "{message, errors: {champ: [string]}}", "source": "Modules/Auth/app/Services/AuthService.php:25 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:60-87"},
+        {"code": 429, "cas": "6e essai dans la minute pour le même couple e-mail|IP, y compris avec un mot de passe correct", "source": "Modules/Auth/app/Providers/AuthServiceProvider.php:31-32 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:102-112"}
+      ],
+      "scramble": {"annotation": "@unauthenticated", "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:21"}
+    },
+    {
+      "methode": "POST",
+      "uri": "/api/v1/auth/logout",
+      "nom": "api.v1.auth.logout",
+      "middlewares": ["api (groupe, dont SetLocale en fin)", "auth:sanctum"],
+      "garde_can": null,
+      "controleur": "Modules\\Auth\\Http\\Controllers\\Api\\AuthController@logout",
+      "source": "Modules/Auth/routes/api.php:15-16",
+      "requete": {"classe": "Illuminate\\Http\\Request (pas de FormRequest, pas de règles)", "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:36"},
+      "traitement": {
+        "regle": "AuthService::logout supprime $user->currentAccessToken() seulement s'il est une instance de PersonalAccessToken ; les autres jetons de l'utilisateur restent valides.",
+        "source": "Modules/Auth/app/Services/AuthService.php:50-57 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:141-157"
+      },
+      "reponse": {"code": 204, "forme_exacte": "corps vide (response()->noContent())", "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:42"},
+      "erreurs": [
+        {"code": 401, "cas": "sans jeton ou jeton révoqué", "forme": "{message}", "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:159-162,153"}
+      ]
+    },
+    {
+      "methode": "GET",
+      "uri": "/api/v1/auth/me",
+      "nom": "api.v1.auth.me",
+      "middlewares": ["api (groupe, dont SetLocale en fin)", "auth:sanctum", "can:me,Modules\\Auth\\Models\\User (via ->can('me', User::class))"],
+      "garde_can": "me sur User::class (UserPolicy::me)",
+      "controleur": "Modules\\Auth\\Http\\Controllers\\Api\\AuthController@me",
+      "source": "Modules/Auth/routes/api.php:15,17",
+      "requete": {"classe": "Illuminate\\Http\\Request (pas de FormRequest, pas de règles)", "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:48"},
+      "reponse": {
+        "code": 200,
+        "ressource": "UserResource($request->user())",
+        "forme_exacte": {"data": {"id": "int", "name": "string", "first_name": "string", "last_name": "string", "email": "string", "locale": "string"}},
+        "source": "Modules/Auth/app/Http/Controllers/Api/AuthController.php:48-51 ; Modules/Auth/app/Http/Resources/UserResource.php:17-27"
+      },
+      "erreurs": [
+        {"code": 401, "cas": "sans jeton ou jeton révoqué", "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:126-129,153"},
+        {"code": 403, "cas": "refus de la policy — en pratique UserPolicy::me renvoie toujours true hors Filament ($user->is($user)) ; aucun test ne couvre le 403", "source": "Modules/Auth/app/Policies/UserPolicy.php:50-53,36-44"}
+      ]
+    }
+  ],
+  "ressource_user": {
+    "classe": "Modules\\Auth\\Http\\Resources\\UserResource",
+    "champs": ["id", "name", "first_name", "last_name", "email", "locale"],
+    "enveloppe": "wrapping par défaut de JsonResource sous 'data' (aucun $wrap redéfini dans la classe)",
+    "absents_verifies_par_test": ["password", "roles", "remember_token"],
+    "source": "Modules/Auth/app/Http/Resources/UserResource.php:15-27 ; Modules/Auth/tests/Feature/Api/AuthApiTest.php:51-53"
+  },
+  "limite_de_frequence": {
+    "nom": "auth-login",
+    "regle": "Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip())",
+    "appliquee_a": "POST /api/v1/auth/login uniquement (throttle:auth-login)",
+    "autres_routes": "aucun throttle explicite sur logout et me dans Modules/Auth/routes/api.php ; le contenu du groupe 'api' par défaut de Laravel n'a pas été vérifié",
+    "source": "Modules/Auth/app/Providers/AuthServiceProvider.php:30-32 ; Modules/Auth/routes/api.php:12"
+  },
+  "langue_des_reponses": {
+    "middleware": "App\\Http\\Middleware\\SetLocale, ajouté au groupe api",
+    "regle": [
+      "1. Si $request->user('sanctum') implémente HasLocalePreference (User l'implémente) : $user->preferredLocale() = $user->locale.",
+      "2. Sinon : $request->getPreferredLanguage(Locales::values()) (en-tête Accept-Language).",
+      "3. App::setLocale(locale si présente dans Locales::values() en comparaison stricte, sinon config('app.locale'))."
+    ],
+    "langues_supportees": {"valeur": ["fr", "en"], "source": "config/app.php:88"},
+    "langue_par_defaut": {"valeur": "env('APP_LOCALE', 'fr')", "source": "config/app.php:81"},
+    "langue_de_repli": {"valeur": "env('APP_FALLBACK_LOCALE', 'en')", "source": "config/app.php:83"},
+    "locales_support": {"regle": "Locales::values() = array_values(config('app.supported_locales')) ; Locales::options() = [code => label] avec label = Str::ucfirst(Locale::getDisplayLanguage($code, $code))", "source": "app/Support/Locales.php:17-38"},
+    "tests": [
+      {"regle": "Erreur de connexion traduite selon Accept-Language (fr-CH,fr;q=0.9 → fr ; en → en).", "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:89-100"},
+      {"regle": "Utilisateur connecté avec locale 'en' et Accept-Language 'fr' : la locale de l'application est 'en'.", "source": "Modules/Auth/tests/Feature/Api/AuthApiTest.php:131-139"}
+    ],
+    "source": "app/Http/Middleware/SetLocale.php:18-29 ; bootstrap/app.php:17 ; Modules/Auth/app/Models/User.php:25,56-59"
+  },
+  "policy": {
+    "classe": "Modules\\Auth\\Policies\\UserPolicy",
+    "enregistrement": {"regle": "Gate::policy(User::class, UserPolicy::class)", "source": "Modules/Auth/app/Providers/AuthServiceProvider.php:26"},
+    "before": [
+      {"ordre": 1, "regle": "ability 'delete' sur soi-même : false (même super admin).", "source": "Modules/Auth/app/Policies/UserPolicy.php:19-21"},
+      {"ordre": 2, "regle": "Super admin (hasRole(RoleEnum::SUPER_ADMIN)) : true ; sinon null (passe à la méthode).", "source": "Modules/Auth/app/Policies/UserPolicy.php:23 ; Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php:13-16 ; Modules/Auth/app/Models/User.php:66-69"}
+    ],
+    "branche_hors_filament": [
+      {"ability": "viewAny", "regle": "false", "source": "Modules/Auth/app/Policies/UserPolicy.php:32-33"},
+      {"ability": "view", "regle": "$model->is($user)", "source": "Modules/Auth/app/Policies/UserPolicy.php:42-43"},
+      {"ability": "me", "regle": "$this->view($user, $user) (donc true hors Filament ; dans Filament : permission VIEW_USERS)", "source": "Modules/Auth/app/Policies/UserPolicy.php:50-53"},
+      {"ability": "create", "regle": "false", "source": "Modules/Auth/app/Policies/UserPolicy.php:61-62"},
+      {"ability": "update", "regle": "$model->is($user) (chacun modifie son propre compte)", "source": "Modules/Auth/app/Policies/UserPolicy.php:71-72"},
+      {"ability": "delete", "regle": "false", "source": "Modules/Auth/app/Policies/UserPolicy.php:82-83"},
+      {"ability": "deleteAny", "regle": "false", "source": "Modules/Auth/app/Policies/UserPolicy.php:92-93"}
+    ],
+    "detection_filament": "Filament::isServing()",
+    "remarque": "Aucune ability dédiée à une mise à jour de son propre compte sans modèle (équivalent de 'me' pour update) n'existe ; seule update(User, User) existe."
+  },
+  "sanctum": {
+    "guard": {"valeur": ["web"], "source": "config/sanctum.php:40"},
+    "expiration": {"valeur": null, "source": "config/sanctum.php:53"},
+    "token_prefix": {"valeur": "env('SANCTUM_TOKEN_PREFIX', '')", "source": "config/sanctum.php:68"},
+    "stateful": {"valeur": "env SANCTUM_STATEFUL_DOMAINS, défaut localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1 + Sanctum::currentApplicationUrlWithPort()", "source": "config/sanctum.php:21-26"},
+    "modele": {"regle": "User utilise HasApiTokens.", "source": "Modules/Auth/app/Models/User.php:16,28"}
+  },
+  "test_de_balayage_des_routes": {
+    "fichier": "tests/Feature/RouteGuardTest.php",
+    "perimetre": "routes dont l'action commence par App\\Http\\Controllers\\ ou correspond à ^Modules\\\\\\w+\\\\Http\\\\Controllers\\\\ ; garde = un middleware chaîne commençant par 'can:'",
+    "exceptions_WITHOUT_CAN": {
+      "api/v1/auth/login": "publique : connexion, limitée par throttle:auth-login",
+      "api/v1/auth/logout": "agit sur le jeton de la requête, pas sur un modèle : gardée par auth:sanctum"
+    },
+    "second_test": "chaque URI de WITHOUT_CAN doit exister dans la table des routes (exception obsolète sinon)",
+    "source": "tests/Feature/RouteGuardTest.php:16-19,21-41,43-50"
+  },
+  "openapi": {
+    "fichier": "openapi.json (export Scramble, config/scramble.php:33 export_path)",
+    "chemins_documentes": ["/v1/auth/login (post)", "/v1/auth/logout (post)", "/v1/auth/me (get)"],
+    "serveur": {"valeur": "https://yamo.ddev.site/api", "source": "openapi.json:10"},
+    "conformites": [
+      "LoginRequest : 3 champs requis, email format email, maxLength 255 partout — conforme aux règles (openapi.json:136-160).",
+      "UserResource : 6 champs requis id (integer), name, first_name, last_name, email, locale (string) — conforme (openapi.json:161-192).",
+      "login 200 {data, token} requis ; 422 ; 429 ; security [] — conforme (openapi.json:31-78).",
+      "logout 204 ; 401 — conforme (openapi.json:88-95).",
+      "me 200 {data} ; 401 ; 403 — conforme (openapi.json:105-130)."
+    ],
+    "ecarts": [
+      "Aucun chemin /v1/forms* ni /v1/locales dans openapi.json alors que Modules/Form/routes/api.php (non suivi par git) déclare apiResource('forms') sous auth:sanctum et préfixe v1 — écart entre l'arbre de travail et l'export (openapi.json:13-133 ; Modules/Form/routes/api.php).",
+      "L'ordre des réponses de login dans openapi.json est 200, 429, 422 : cosmétique, sans écart fonctionnel (openapi.json:31-77).",
+      "Aucun schéma de sécurité (components.securitySchemes) déclaré : la mention Bearer n'apparaît que dans info.description (openapi.json:6,134-263). Non vérifié s'il s'agit d'un écart voulu."
+    ]
+  },
+  "incertitudes": [
+    "Module Form présent dans l'arbre de travail mais NON suivi par git (git status : '?? Modules/Form/', ' M modules_statuses.json' avec Form: true). Modules/Form/routes/api.php déclare Route::middleware(['auth:sanctum'])->prefix('v1')->apiResource('forms', FormController::class)->names('form') — donc GET /api/v1/forms/{form} existerait déjà sous le nom api.form.show — alors que la classe Modules\\Form\\Http\\Controllers\\FormController est introuvable. Ces routes n'ont pas de garde can: et ne sont pas dans WITHOUT_CAN : RouteGuardTest échouerait si elles sont chargées. Probablement un échafaudage d'une autre tâche du chantier : état non stable, non audité ici.",
+    "Le git status initial de la session était 'clean' ; le module Form et la modification de modules_statuses.json sont apparus depuis (travail parallèle présumé).",
+    "Table des routes non vérifiée par php artisan route:list (lecture statique ; .env interdit) : les noms finaux api.v1.auth.* sont déduits de la composition name('api.') + name('v1.auth.') + name(...).",
+    "Middlewares exacts du groupe 'api' par défaut de Laravel (ex. throttle:api, SubstituteBindings) non audités : seul l'ajout de SetLocale est explicite dans bootstrap/app.php.",
+    "Le 403 de GET /api/v1/auth/me est documenté par openapi.json mais inatteignable hors Filament d'après la policy ; aucun test ne le couvre.",
+    "SetLocale utilise $request->user('sanctum') : pour une requête sans jeton mais avec cookie de session d'un domaine stateful, Sanctum pourrait authentifier par la garde web ; non testé, non vérifié.",
+    "Locales::values() est la source unique des langues ; le commentaire de config/app.php:87 la présente comme 'Langues du contenu traduisible' — aucun endpoint n'expose encore cette liste (GET /api/v1/locales absent).",
+    "spec_user.json (chantier 2026-11-15-profil-api-mobile) est périmée sur au moins un point : elle indique fillable = [name, email, password] alors que le code actuel a #[Fillable(['name', 'first_name', 'last_name', 'email', 'locale', 'password'])] (Modules/Auth/app/Models/User.php:22). Elle n'a été que survolée.",
+    "Aucune règle de validation de la colonne locale ni de first_name/last_name côté API n'existe aujourd'hui (pas de FormRequest de mise à jour) ; les règles de la future PATCH /api/v1/auth/me ne peuvent pas être dérivées de la source actuelle.",
+    "Skill d'enveloppe bza-dev:audit-source et bza-laravel:audit-laravel non trouvés localement : la structure suit celle de spec_user.json ; profondeur conforme à la demande de la tâche, sans garantie de conformité stricte à l'enveloppe."
+  ]
+}

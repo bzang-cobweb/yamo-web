@@ -38,7 +38,7 @@ class CreateUserCommand extends Command
             'last_name' => $this->option('last-name') ?? text(__('auth::user.last_name'), required: true),
             'email' => $this->option('email') ?? text(__('auth::user.email'), required: true),
             'password' => $this->option('password') ?? password(__('auth::user.password'), required: true),
-            'locale' => $this->option('locale') ?? select(__('auth::user.locale'), Locales::options(), default: config('app.locale')),
+            'locale' => $this->option('locale') ?? select(__('auth::user.locale'), Locales::options(), default: Locales::default()),
         ];
 
         $validator = Validator::make($data, [

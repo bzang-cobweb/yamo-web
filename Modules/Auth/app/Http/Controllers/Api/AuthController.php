@@ -5,6 +5,7 @@ namespace Modules\Auth\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Auth\Http\Requests\LoginRequest;
+use Modules\Auth\Http\Requests\UpdateMeRequest;
 use Modules\Auth\Http\Resources\UserResource;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AuthService;
@@ -48,5 +49,17 @@ class AuthController
     public function me(Request $request): UserResource
     {
         return new UserResource($request->user());
+    }
+
+    /**
+     * Modifier son propre compte (aujourd'hui : la langue). Les champs non prévus
+     * sont ignorés.
+     */
+    public function updateMe(UpdateMeRequest $request, AuthService $service): UserResource
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        return new UserResource($service->updateMe($user, $request->validated()));
     }
 }

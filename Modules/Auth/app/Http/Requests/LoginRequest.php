@@ -3,10 +3,12 @@
 namespace Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Auth\Forms\LoginForm;
 
 /**
- * Connexion de l'application mobile : identifiants et nom de l'appareil,
- * qui nomme le jeton créé.
+ * Connexion de l'application mobile. Les règles des champs saisis viennent du
+ * formulaire `auth.login` que l'app affiche ; `device_name`, renseigné par l'app,
+ * nomme le jeton créé.
  */
 class LoginRequest extends FormRequest
 {
@@ -19,13 +21,12 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, list<mixed>>
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string', 'max:255'],
+            ...(new LoginForm)->rules(),
             'device_name' => ['required', 'string', 'max:255'],
         ];
     }
@@ -36,8 +37,7 @@ class LoginRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'email' => __('auth::user.email'),
-            'password' => __('auth::user.password'),
+            ...(new LoginForm)->attributes(),
             'device_name' => __('auth::user.device_name'),
         ];
     }

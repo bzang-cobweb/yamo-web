@@ -10,6 +10,11 @@
             "url": "https://yamo.ddev.site/api"
         }
     ],
+    "security": [
+        {
+            "http": []
+        }
+    ],
     "paths": {
         "/v1/auth/login": {
             "post": {
@@ -128,14 +133,192 @@
                         "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
+            },
+            "patch": {
+                "operationId": "v1.auth.me.update",
+                "summary": "Modifier son propre compte (aujourd'hui : la langue). Les champs non pr\u00e9vus\nsont ignor\u00e9s",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateMeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/forms/{form}": {
+            "get": {
+                "operationId": "v1.forms.show",
+                "summary": "D\u00e9finition d'un formulaire : champs (libell\u00e9s traduits), options, valeurs\npar d\u00e9faut, bouton d'envoi. Formulaire inconnu : 404 ; formulaire r\u00e9serv\u00e9\ndemand\u00e9 sans jeton : 401",
+                "tags": [
+                    "Form"
+                ],
+                "parameters": [
+                    {
+                        "name": "form",
+                        "in": "path",
+                        "required": true,
+                        "description": "The form ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`FormResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/locales": {
+            "get": {
+                "operationId": "v1.locales.index",
+                "summary": "Langues disponibles, chacune nomm\u00e9e dans sa propre langue. L'app mobile\nchoisit parmi elles la meilleure langue de l'appareil",
+                "tags": [
+                    "Locale"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "code",
+                                                    "label"
+                                                ]
+                                            }
+                                        },
+                                        "default": {
+                                            "type": "string",
+                                            "description": "Langue par d\u00e9faut, quand aucune langue de l'appareil n'est disponible."
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "default"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
             }
         }
     },
     "components": {
+        "securitySchemes": {
+            "http": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
         "schemas": {
+            "FormResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "submit": {
+                        "type": "object",
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "label"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "fields",
+                    "submit"
+                ],
+                "title": "FormResource"
+            },
             "LoginRequest": {
                 "type": "object",
-                "description": "Connexion de l'application mobile : identifiants et nom de l'appareil,\nqui nomme le jeton cr\u00e9\u00e9.",
+                "description": "Connexion de l'application mobile. Les r\u00e8gles des champs saisis viennent du\nformulaire `auth.login` que l'app affiche ; `device_name`, renseign\u00e9 par l'app,\nnomme le jeton cr\u00e9\u00e9.",
                 "properties": {
                     "email": {
                         "type": "string",
@@ -157,6 +340,23 @@
                     "device_name"
                 ],
                 "title": "LoginRequest"
+            },
+            "UpdateMeRequest": {
+                "type": "object",
+                "description": "Modification de son propre compte depuis l'app mobile. Seuls les champs des\nformulaires de profil sont accept\u00e9s (aujourd'hui : la langue) ; tout autre\nchamp envoy\u00e9 est ignor\u00e9.",
+                "properties": {
+                    "locale": {
+                        "type": "string",
+                        "enum": [
+                            "fr",
+                            "en"
+                        ]
+                    }
+                },
+                "required": [
+                    "locale"
+                ],
+                "title": "UpdateMeRequest"
             },
             "UserResource": {
                 "type": "object",
@@ -243,6 +443,25 @@
             },
             "AuthorizationException": {
                 "description": "Authorization error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ModelNotFoundException": {
+                "description": "Not found",
                 "content": {
                     "application/json": {
                         "schema": {

@@ -20,6 +20,15 @@ final class Locales
     }
 
     /**
+     * Langue par défaut de l'application — pas `config('app.locale')`, que
+     * App::setLocale() remplace par la langue de la requête.
+     */
+    public static function default(): string
+    {
+        return config('app.default_locale');
+    }
+
+    /**
      * Codes et noms de langue, chaque nom écrit dans sa propre langue
      * (« Français », « English ») : c'est ainsi qu'on reconnaît la sienne.
      *

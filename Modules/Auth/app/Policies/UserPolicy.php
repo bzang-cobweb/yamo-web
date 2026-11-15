@@ -52,6 +52,15 @@ class UserPolicy
         return $this->view($user, $user);
     }
 
+    /**
+     * Modifier son propre compte (`PATCH /api/v1/auth/me`) : même règle que
+     * modifier ce compte-là.
+     */
+    public function updateMe(User $user): bool
+    {
+        return $this->update($user, $user);
+    }
+
     public function create(User $user): bool
     {
         if (Filament::isServing()) {

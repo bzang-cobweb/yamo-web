@@ -9,12 +9,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Modules\Auth\Console\CreateUserCommand;
+use Modules\Auth\Forms\LoginForm;
+use Modules\Auth\Forms\ProfileLocaleForm;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Policies\PermissionPolicy;
 use Modules\Auth\Policies\RolePolicy;
 use Modules\Auth\Policies\UserPolicy;
+use Modules\Form\Support\FormRegistry;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class AuthServiceProvider extends ModuleServiceProvider
@@ -26,6 +29,11 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
+
+        // Formulaires servis à l'app mobile (module Form).
+        $registry = $this->app->make(FormRegistry::class);
+        $registry->register(LoginForm::class);
+        $registry->register(ProfileLocaleForm::class);
 
         // Connexion API : 5 essais par minute pour un même e-mail depuis une même adresse.
         RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)

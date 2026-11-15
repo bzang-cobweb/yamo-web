@@ -53,7 +53,7 @@ abstract class UserForm
                 Select::make('locale')
                     ->label(__('auth::user.locale'))
                     ->options(Locales::options())
-                    ->default(config('app.locale'))
+                    ->default(Locales::default())
                     ->selectablePlaceholder(false)
                     ->required(),
                 TextInput::make('password')

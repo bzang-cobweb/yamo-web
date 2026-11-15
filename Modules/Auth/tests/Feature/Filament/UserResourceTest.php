@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Tests\Feature\Filament;
 
+use App\Support\Locales;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
@@ -97,7 +98,7 @@ class UserResourceTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
 
         Livewire::test(CreateUser::class)
-            ->assertSchemaStateSet(['locale' => config('app.locale')]);
+            ->assertSchemaStateSet(['locale' => Locales::default()]);
     }
 
     public function test_create_rejects_an_unsupported_locale(): void

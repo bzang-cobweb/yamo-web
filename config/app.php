@@ -84,8 +84,13 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'fr_FR'),
 
-    // Langues du contenu traduisible (spatie/laravel-translatable, Filament).
+    // Langues proposées : contenu traduisible (spatie/laravel-translatable, Filament),
+    // langue des comptes, de l'API et de l'app mobile. Domicile : App\Support\Locales.
     'supported_locales' => ['fr', 'en'],
+
+    // Langue par défaut, stable : `app.locale` est réécrite à chaque requête par
+    // App::setLocale() (langue du compte ou de l'appareil). Lire Locales::default().
+    'default_locale' => env('APP_LOCALE', 'fr'),
 
     /*
     |--------------------------------------------------------------------------
