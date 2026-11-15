@@ -1,0 +1,16 @@
+{
+  "extraKnownMarketplaces": {
+    "bza": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/bertrandzang/home/private/ai"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "bza@bza": true,
+    "bza-dev@bza": true,
+    "bza-laravel@bza": true,
+    "bza-sysadmin@bza": true
+  }
+}
