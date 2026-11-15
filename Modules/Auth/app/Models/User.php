@@ -28,6 +28,15 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
+     * Un compte supprimé emporte ses jetons d'API : Sanctum ne les supprime pas
+     * lui-même (relation polymorphe, sans clé étrangère).
+     */
+    protected static function booted(): void
+    {
+        static::deleting(fn (User $user) => $user->tokens()->delete());
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

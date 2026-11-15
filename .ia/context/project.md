@@ -50,6 +50,10 @@ elle est réputée vraie par construction.
     `GET` et `PATCH /api/v1/auth/me` (`ProfileController`/`ProfileService` ; le
     PATCH n'accepte que les champs des formulaires de profil). Réponses dans la
     langue du compte, sinon `Accept-Language` (`App\Http\Middleware\SetLocale`).
+  - Supprimer un compte révoque ses jetons Sanctum (événement `deleting` du
+    modèle `User`) — pas une suppression de masse par requête
+    (`User::where(…)->delete()`), qui ne déclenche pas les événements : passer
+    par `$user->delete()`.
   - Formulaires servis à l'app : `auth.login`, `auth.profile.locale`
     (`Modules/Auth/app/Forms/`, inscrits dans `AuthServiceProvider`).
 - **Form** (`Modules/Form`) : formulaires décrits par le serveur pour l'app mobile.
