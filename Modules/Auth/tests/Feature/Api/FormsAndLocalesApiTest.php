@@ -9,9 +9,9 @@ use Modules\Auth\Models\User;
 use Tests\TestCase;
 
 /**
- * Formulaires servis à l'app mobile (`GET /api/v1/forms/{form}`), langues
- * disponibles (`GET /api/v1/locales`) et modification de la langue du compte
- * (`PATCH /api/v1/auth/me`).
+ * Formulaires servis à l'app mobile (`GET /api/v1/forms/{form}`) et langues
+ * disponibles (`GET /api/v1/locales`). Les formulaires du profil sont testés dans
+ * `ProfileFormsApiTest`.
  */
 class FormsAndLocalesApiTest extends TestCase
 {
@@ -51,20 +51,20 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertJsonPath('data.submit.label', 'Sign in');
     }
 
-    public function test_a_form_without_title_sends_null_and_a_field_can_carry_help(): void
+    public function test_a_form_without_subtitle_sends_null_and_a_field_can_carry_help(): void
     {
         $user = User::factory()->create(['locale' => 'fr']);
 
-        $this->withToken($this->tokenFor($user))->getJson('/api/v1/forms/auth.profile.locale')
+        $this->withToken($this->tokenFor($user))->getJson('/api/v1/forms/auth.profile.preferences')
             ->assertOk()
-            ->assertJsonPath('data.title', null)
+            ->assertJsonPath('data.title', 'Préférences')
             ->assertJsonPath('data.subtitle', null)
             ->assertJsonPath('data.fields.0.help', "Langue de l'application et des e-mails.");
     }
 
     public function test_a_guest_asking_for_a_private_form_gets_a_translated_401(): void
     {
-        $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.profile.locale')
+        $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.profile.preferences')
             ->assertUnauthorized()
             ->assertExactJson(['message' => 'Vous devez vous connecter.']);
     }
@@ -83,18 +83,18 @@ class FormsAndLocalesApiTest extends TestCase
         $this->getJson('/api/v1/forms/nope')->assertNotFound();
     }
 
-    public function test_profile_locale_form_requires_a_token(): void
+    public function test_preferences_form_requires_a_token(): void
     {
-        $this->getJson('/api/v1/forms/auth.profile.locale')->assertUnauthorized();
+        $this->getJson('/api/v1/forms/auth.profile.preferences')->assertUnauthorized();
     }
 
-    public function test_profile_locale_form_offers_available_locales_and_current_value(): void
+    public function test_preferences_form_offers_available_locales_and_current_value(): void
     {
         $user = User::factory()->create(['locale' => 'en']);
 
         $this->withToken($this->tokenFor($user))
             ->withHeader('Accept-Language', 'fr')
-            ->getJson('/api/v1/forms/auth.profile.locale')
+            ->getJson('/api/v1/forms/auth.profile.preferences')
             ->assertOk()
             ->assertJsonPath('data.fields.0.name', 'locale')
             ->assertJsonPath('data.fields.0.type', 'select')
@@ -116,53 +116,5 @@ class FormsAndLocalesApiTest extends TestCase
                 'data' => [['code' => 'fr', 'label' => 'Français'], ['code' => 'en', 'label' => 'English']],
                 'default' => 'fr',
             ]);
-    }
-
-    public function test_update_me_changes_the_locale(): void
-    {
-        $user = User::factory()->create(['locale' => 'fr']);
-
-        $this->withToken($this->tokenFor($user))
-            ->patchJson('/api/v1/auth/me', ['locale' => 'en'])
-            ->assertOk()
-            ->assertJsonPath('data.id', $user->id)
-            ->assertJsonPath('data.locale', 'en');
-
-        $this->assertSame('en', $user->fresh()->locale);
-    }
-
-    public function test_update_me_rejects_an_unavailable_locale(): void
-    {
-        $user = User::factory()->create(['locale' => 'fr']);
-
-        $this->withToken($this->tokenFor($user))
-            ->patchJson('/api/v1/auth/me', ['locale' => 'de'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['locale']);
-
-        $this->assertSame('fr', $user->fresh()->locale);
-    }
-
-    public function test_update_me_ignores_fields_that_are_not_in_the_form(): void
-    {
-        $user = User::factory()->create(['locale' => 'fr', 'name' => 'jeanne', 'email' => 'jeanne@example.com']);
-
-        $this->withToken($this->tokenFor($user))
-            ->patchJson('/api/v1/auth/me', [
-                'locale' => 'en',
-                'name' => 'pirate',
-                'email' => 'pirate@example.com',
-                'roles' => ['super_admin'],
-            ])
-            ->assertOk();
-
-        $user->refresh();
-        $this->assertSame(['en', 'jeanne', 'jeanne@example.com'], [$user->locale, $user->name, $user->email]);
-        $this->assertCount(0, $user->roles);
-    }
-
-    public function test_update_me_requires_a_token(): void
-    {
-        $this->patchJson('/api/v1/auth/me', ['locale' => 'en'])->assertUnauthorized();
     }
 }

@@ -13,19 +13,6 @@ final class ProfileService
     public function __construct(private readonly AvatarService $avatars) {}
 
     /**
-     * Modifie son propre compte avec des données déjà validées (aujourd'hui : la
-     * langue, par le formulaire `auth.profile.locale`).
-     *
-     * @param  array{locale?: string}  $data
-     */
-    public function update(User $user, array $data): User
-    {
-        $user->update($data);
-
-        return $user;
-    }
-
-    /**
      * Remplace sa photo de profil par le fichier envoyé, optimisé avant
      * enregistrement.
      */

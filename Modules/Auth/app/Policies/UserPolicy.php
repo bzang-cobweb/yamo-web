@@ -53,7 +53,8 @@ class UserPolicy
     }
 
     /**
-     * Modifier son propre compte (`PATCH /api/v1/auth/me`) : même règle que
+     * Modifier son propre compte (informations personnelles, mot de passe,
+     * préférences, photo) : même règle que
      * modifier ce compte-là.
      */
     public function updateMe(User $user): bool

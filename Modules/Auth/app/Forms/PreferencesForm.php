@@ -8,14 +8,14 @@ use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 
 /**
- * Langue du compte, modifiable depuis le profil de l'app mobile
- * (`PATCH /api/v1/auth/me`). Réservé à un compte connecté.
+ * Préférences du compte, depuis le profil de l'app mobile
+ * (`PATCH /api/v1/auth/me/preferences`) : aujourd'hui la langue.
  */
-class ProfileLocaleForm extends Form
+class PreferencesForm extends Form
 {
     public static function name(): string
     {
-        return 'auth.profile.locale';
+        return 'auth.profile.preferences';
     }
 
     public function fields(): array
@@ -23,11 +23,16 @@ class ProfileLocaleForm extends Form
         return [
             Field::select('locale')
                 ->label(__('auth::user.locale'))
-                ->help(__('auth::form.profile.locale_help'))
+                ->help(__('auth::form.preferences.locale_help'))
                 ->options(Locales::options())
                 ->default($this->user instanceof User ? $this->user->locale : Locales::default())
                 ->required(),
         ];
+    }
+
+    public function title(): string
+    {
+        return __('auth::form.preferences.title');
     }
 
     public function submitLabel(): string

@@ -47,9 +47,14 @@ elle est réputée vraie par construction.
   - API mobile (`Modules/Auth/routes/api.php`) : `POST /api/v1/auth/login`
     (`LoginController`/`LoginService`, jeton Sanctum par appareil, 5 essais/min),
     `POST /api/v1/auth/logout` (`LogoutController`/`LogoutService`),
-    `GET` et `PATCH /api/v1/auth/me` (`ProfileController`/`ProfileService` ; le
-    PATCH n'accepte que les champs des formulaires de profil). Réponses dans la
-    langue du compte, sinon `Accept-Language` (`App\Http\Middleware\SetLocale`).
+    `GET /api/v1/auth/me` (`ProfileController`/`ProfileService`, avec la photo).
+    Profil : **un formulaire = un contrôleur + un service** —
+    `PATCH /me/personal-info` (`PersonalInfoController`/`PersonalInfoService`),
+    `PUT /me/password` (`PasswordController`/`PasswordService` : révoque les jetons
+    des autres appareils), `PATCH /me/preferences`
+    (`PreferencesController`/`PreferencesService`). Chaque route n'accepte que les
+    champs de son formulaire. Réponses dans la langue du compte, sinon
+    `Accept-Language` (`App\Http\Middleware\SetLocale`).
   - Supprimer un compte révoque ses jetons Sanctum (événement `deleting` du
     modèle `User`) — pas une suppression de masse par requête
     (`User::where(…)->delete()`), qui ne déclenche pas les événements : passer
@@ -60,8 +65,11 @@ elle est réputée vraie par construction.
     domicile, `Modules\Auth\Services\AvatarService`, appelé par l'API et par le
     back-office. Vignette `thumb` 256 px produite sans file d'attente (aucun worker
     ne tourne). `avatar_url` suit l'hôte de la requête (simulateur en HTTP).
-  - Formulaires servis à l'app : `auth.login`, `auth.profile.locale`
-    (`Modules/Auth/app/Forms/`, inscrits dans `AuthServiceProvider`).
+  - Formulaires servis à l'app : `auth.login`, `auth.profile.personal`,
+    `auth.profile.password`, `auth.profile.preferences` (`Modules/Auth/app/Forms/`,
+    inscrits dans `AuthServiceProvider`). Leur FormRequest étend
+    `Modules\Form\Http\Requests\FormBackedRequest` (règles et libellés lus sur le
+    formulaire).
 - **Form** (`Modules/Form`) : formulaires décrits par le serveur pour l'app mobile.
   Un formulaire étend `Modules\Form\Support\Form` (champs `Field::text()`,
   `::select()`… avec libellés traduits et règles), s'inscrit au `FormRegistry`, et

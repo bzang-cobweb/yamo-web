@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Modules\Auth\Console\CreateUserCommand;
 use Modules\Auth\Forms\LoginForm;
-use Modules\Auth\Forms\ProfileLocaleForm;
+use Modules\Auth\Forms\PasswordForm;
+use Modules\Auth\Forms\PersonalInfoForm;
+use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
@@ -33,7 +35,9 @@ class AuthServiceProvider extends ModuleServiceProvider
         // Formulaires servis à l'app mobile (module Form).
         $registry = $this->app->make(FormRegistry::class);
         $registry->register(LoginForm::class);
-        $registry->register(ProfileLocaleForm::class);
+        $registry->register(PersonalInfoForm::class);
+        $registry->register(PasswordForm::class);
+        $registry->register(PreferencesForm::class);
 
         // Connexion API : 5 essais par minute pour un même e-mail depuis une même adresse.
         RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)

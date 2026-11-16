@@ -1,0 +1,303 @@
+{
+  "chantier": "2026-11-16-menu-et-profil",
+  "tache": "01 — audit web avant les trois formulaires de profil (personal, password, preferences) et la suppression de PATCH /api/v1/auth/me",
+  "concept": "profil_formulaires_web",
+  "titre": "Profil du compte connecté côté Laravel : formulaires servis, routes /api/v1/auth/me*, requêtes, services, jetons Sanctum",
+  "date_audit": "2026-11-16",
+  "stack": "Laravel 13.42.0 (composer.lock), Sanctum v4.4.0, nwidart/modules, Scramble (dedoc/scramble ^0.13.54)",
+  "profondeur": "Skill bza-dev:audit-source et bza-laravel:audit-laravel introuvables localement : enveloppe reprise des clés des specs existantes, profondeur réduite (voir incertitudes).",
+
+  "routes_auth_api": {
+    "fichier": "Modules/Auth/routes/api.php",
+    "groupe": "prefix('v1/auth')->name('v1.auth.') (:12) ; sous-groupe middleware('auth:sanctum') (:17-23)",
+    "routes": [
+      { "methode": "POST", "uri": "api/v1/auth/login", "action": "LoginController@login", "garde": "throttle:auth-login, pas de can:", "preuve": "api.php:13-15" },
+      { "methode": "POST", "uri": "api/v1/auth/logout", "action": "LogoutController@logout", "garde": "auth:sanctum, pas de can:", "preuve": "api.php:18" },
+      { "methode": "GET", "uri": "api/v1/auth/me", "action": "ProfileController@show", "garde": "->can('me', User::class)", "nom": "v1.auth.me", "preuve": "api.php:19" },
+      { "methode": "PATCH", "uri": "api/v1/auth/me", "action": "ProfileController@update", "garde": "->can('updateMe', User::class)", "nom": "v1.auth.me.update", "preuve": "api.php:20", "a_supprimer": true },
+      { "methode": "POST", "uri": "api/v1/auth/me/avatar", "action": "ProfileController@updateAvatar", "garde": "->can('updateMe', User::class)", "nom": "v1.auth.me.avatar.update", "preuve": "api.php:21" },
+      { "methode": "DELETE", "uri": "api/v1/auth/me/avatar", "action": "ProfileController@destroyAvatar", "garde": "->can('updateMe', User::class)", "nom": "v1.auth.me.avatar.destroy", "preuve": "api.php:22" }
+    ],
+    "convention": "commentaire api.php:9-10 : chaque route qui agit sur un modèle porte la garde can: de sa policy",
+    "middlewares_api_globaux": "bootstrap/app.php:20 ajoute UseSanctumGuard puis SetLocale au groupe api ; :23 SetLocale passe avant AuthenticatesRequests"
+  },
+
+  "controleurs_api": {
+    "LoginController": "login(LoginRequest, LoginService): UserResource + additional token (LoginController.php:20-28)",
+    "LogoutController": "logout(Request, LogoutService): noContent (LogoutController.php:18-25)",
+    "ProfileController": {
+      "fichier": "Modules/Auth/app/Http/Controllers/Api/ProfileController.php",
+      "show": "new UserResource($request->user()) (:20-23)",
+      "update": "UpdateMeRequest + ProfileService, new UserResource($service->update($user, $request->validated())) (:29-35) — à supprimer ; import UpdateMeRequest :7",
+      "updateAvatar": "UpdateAvatarRequest + ProfileService->updateAvatar (:41-47) — reste",
+      "destroyAvatar": "Request + ProfileService->removeAvatar (:52-58) — reste",
+      "style": "classes sans parent (pas de extends Controller), docblock = summary OpenAPI (cf. openapi.json:283), `/** @var User $user */ $user = $request->user();` (:31-32)"
+    }
+  },
+
+  "services": {
+    "ProfileService": {
+      "fichier": "Modules/Auth/app/Services/ProfileService.php",
+      "final": "final class (:11), constructeur AvatarService (:13)",
+      "update": "update(User, array{locale?: string}): $user->update($data); return $user (:21-26) — à supprimer ; docblock cite auth.profile.locale (:16-17)",
+      "updateAvatar": ":32-37 — reste",
+      "removeAvatar": ":42-47 — reste"
+    },
+    "LoginService": "final ; Auth::guard('web')->validate puis getLastAttempted, ValidationException::withMessages(['email' => __('auth.failed')]) (LoginService.php:23-30) ; createToken($deviceName)->plainTextToken (:42-45)",
+    "LogoutService": "final ; $token = $user->currentAccessToken(); if ($token instanceof PersonalAccessToken) $token->delete() (LogoutService.php:17-24) — modèle à suivre pour identifier le jeton courant",
+    "AvatarService": "final ; règles et optimisation de la photo (AvatarService.php:16-101), hors périmètre"
+  },
+
+  "form_requests": {
+    "LoginRequest": "authorize true (:18-21) ; rules = [...(new LoginForm)->rules(), 'device_name' => [...]] (:26-32) ; attributes = [...(new LoginForm)->attributes(), ...] (:37-43)",
+    "UpdateAvatarRequest": "authorize: $this->user()?->can('updateMe', User::class) ?? false (UpdateAvatarRequest.php:18-21) ; rules AvatarService::rules() (:26-31)",
+    "UpdateMeRequest": {
+      "fichier": "Modules/Auth/app/Http/Requests/UpdateMeRequest.php",
+      "authorize": "$this->user()?->can('updateMe', User::class) ?? false (:19-22) — modèle d'authorize pour les trois nouvelles requêtes",
+      "rules": "$this->form()->rules() (:27-30)",
+      "attributes": "$this->form()->attributes() (:35-38)",
+      "form": "private function form(): ProfileLocaleForm { return new ProfileLocaleForm($this->user()); } (:40-43) — modèle de « règles lues sur le formulaire » avec l'utilisateur passé au formulaire",
+      "a_supprimer": true
+    }
+  },
+
+  "formulaires_auth": {
+    "LoginForm": "name 'auth.login' (LoginForm.php:15-18) ; Field::email/password ->label->required->rules(['max:255']) (:22-31) ; submitLabel auth::form.login.submit (:34-37) ; title/subtitle (:39-47) ; canBeViewedBy true (:52-55)",
+    "ProfileLocaleForm": {
+      "fichier": "Modules/Auth/app/Forms/ProfileLocaleForm.php",
+      "name": "'auth.profile.locale' (:16-19)",
+      "champ": "Field::select('locale')->label(__('auth::user.locale'))->help(__('auth::form.profile.locale_help'))->options(Locales::options())->default($this->user instanceof User ? $this->user->locale : Locales::default())->required() (:24-29)",
+      "submitLabel": "__('auth::form.save') (:33-36)",
+      "title": "non surchargé → null (Form.php:48-51)",
+      "canBeViewedBy": "non surchargé → compte connecté requis (Form.php:65-68)",
+      "a_supprimer": true
+    },
+    "inscription": "AuthServiceProvider::boot : $registry = $this->app->make(FormRegistry::class); register(LoginForm::class); register(ProfileLocaleForm::class) (AuthServiceProvider.php:33-36) ; import ProfileLocaleForm :13"
+  },
+
+  "module_form": {
+    "Field": {
+      "fichier": "Modules/Form/app/Support/Field.php",
+      "fabriques": "make, text, hidden, email, password, number, textarea, select, radio, checkbox, checkboxGroup, switch (:35-93)",
+      "types_enum": "FieldType : text, hidden, email, password, number, textarea, select, radio, checkbox, checkbox_group, switch (Modules/Form/app/Enums/FieldType.php:14-24)",
+      "regles_par_type": "TEXT/HIDDEN/PASSWORD/TEXTAREA → ['string'] ; EMAIL → ['string','email'] ; NUMBER → ['numeric'] ; SELECT/RADIO → ['string', Rule::in(options)] ; CHECKBOX/SWITCH → ['boolean'] ; CHECKBOX_GROUP → ['array'] (FieldType.php:40-50)",
+      "validationRules": "[name => [required|nullable, ...type->rules(values), ...$this->rules]] (Field.php:159-172) ; présence 'required' si required() sinon 'nullable' (:162)",
+      "rules": "rules(list<mixed>) REMPLACE la liste précédente ($this->rules = $rules) (:146-151) ; type list<mixed> : accepte des objets règle",
+      "default": "default(mixed) (:123-128), sérialisé tel quel (:193) ; null par défaut (:22)",
+      "help": "help(string) (:109-114), sérialisé (:191)",
+      "placeholder": ":102-107",
+      "toArray": "name, type, label, placeholder, help, required, default, options[{value,label}] (:184-199) — les règles ne sont pas sérialisées"
+    },
+    "Form": "abstract ; __construct(protected ?Authenticatable $user = null) (Form.php:17) ; name() statique (:22) ; fields() (:38) ; submitLabel() (:43) ; title()/subtitle() null par défaut (:48-59) ; canBeViewedBy → $user !== null (:65-68) ; rules() = Arr::collapse des validationRules (:75-78) ; attributes() = labels non null par nom (:85-91)",
+    "FormRegistry": "register refuse une classe hors Form (FormRegistry.php:20-27), indexé par $form::name() ; make($name, $user) instancie avec l'utilisateur (:34-39)",
+    "route": "GET api/v1/forms/{form} ->can('viewForm','form') (Modules/Form/routes/api.php:10-12)",
+    "FormResource": "name, title, subtitle, fields, submit.label (Modules/Form/app/Http/Resources/FormResource.php:20-29)"
+  },
+
+  "policy": {
+    "fichier": "Modules/Auth/app/Policies/UserPolicy.php",
+    "before": "delete de soi-même refusé à tous (:16-24), sinon HasBeforeAbility : super admin → true (Concerns/HasBeforeAbility.php:13-16)",
+    "me": "$this->view($user, $user) (:50-53)",
+    "updateMe": "$this->update($user, $user) (:59-62) ; docblock cite `PATCH /api/v1/auth/me` (:56)",
+    "update": "Filament : permission UPDATE_USERS ; sinon $model->is($user) (:74-82)",
+    "references_tests_updateMe": "aucune dans Modules/*/tests ni tests (grep 'updateMe')"
+  },
+
+  "modele_user": {
+    "fichier": "Modules/Auth/app/Models/User.php",
+    "fillable": "#[Fillable(['name','first_name','last_name','email','locale','password'])] (:28)",
+    "hidden": "#[Hidden(['password','remember_token'])] (:29)",
+    "casts": "'password' => 'hashed' (:54) — le cast hache une valeur en clair et garde une valeur déjà hachée (vendor HasAttributes.php:1506-1521)",
+    "jetons": "use HasApiTokens (:17,34) ; deleting supprime $user->tokens() (:40-43)",
+    "fullName": "Attribute::get trim(first_name.' '.last_name) (:61-64)",
+    "preferredLocale": "return $this->locale (:112-115)",
+    "colonnes": "first_name, last_name string non nullables (migration 2026_11_15_160000:17-18,33-34) ; locale string(5) (:19)",
+    "factory": "password par défaut Hash::make('password') (UserFactory.php:34)"
+  },
+
+  "sanctum_jeton_courant": {
+    "currentAccessToken": "renvoie $this->accessToken posé par withAccessToken (vendor/laravel/sanctum/src/HasApiTokens.php:94-108)",
+    "garde": "Guard::__invoke essaie d'abord les gardes de config('sanctum.guard') = ['web'] (config/sanctum.php:40) ; un utilisateur trouvé ainsi reçoit un TransientToken (vendor/laravel/sanctum/src/Guard.php:32-37) ; sinon jeton Bearer → PersonalAccessToken via withAccessToken (:40-60)",
+    "actingAs_tests": "Sanctum::actingAs pose un mock Mockery de PersonalAccessToken (vendor/laravel/sanctum/src/Sanctum.php:72-82)",
+    "modele_existant": "LogoutService.php:19-23 teste instanceof PersonalAccessToken avant delete",
+    "expiration": "null (config/sanctum.php:53)"
+  },
+
+  "garde_par_defaut_et_current_password": {
+    "config_auth_guards": "un seul garde déclaré : 'web' session/provider users (config/auth.php:40-45) ; défaut env('AUTH_GUARD','web') (:18-21) ; provider eloquent User (:64-68)",
+    "regle_current_password": "validateCurrentPassword : $auth->guard(Arr::first($parameters)) — sans paramètre, garde par défaut ; guest → false ; sinon Hash::check (vendor/.../ValidatesAttributes.php:606-618)",
+    "garde_par_defaut_sur_api": "UseSanctumGuard fait Auth::shouldUse('sanctum') sur tout le groupe api (app/Http/Middleware/UseSanctumGuard.php:18-23, bootstrap/app.php:20) ; Authenticate fait aussi shouldUse($guard) (vendor/.../Auth/Middleware/Authenticate.php:83)",
+    "constat": "sur les routes api, `current_password` sans paramètre vise donc le garde sanctum ; `current_password:sanctum` l'écrit explicitement. Le garde 'sanctum' n'est pas dans config/auth.php : il est enregistré par Sanctum."
+  },
+
+  "regle_password_laravel": {
+    "Password::defaults": "aucun appel Password::defaults() dans app/ ni Modules/ (grep) → Password::default() = Password::min(8) (vendor/.../Validation/Rules/Password.php:166-173, $min = 8 :42)",
+    "messages": "longueur via la règle min (validation.min.string) ; password.letters/mixed/numbers/symbols/uncompromised (Password.php:359-363)"
+  },
+
+  "traductions": {
+    "validation_fr": {
+      "confirmed": "'Le champ de confirmation :attribute ne correspond pas.' (lang/fr/validation.php:29)",
+      "current_password": "'Le mot de passe est incorrect.' (:31) — sans :attribute",
+      "different": "'Les champs :attribute et :other doivent être différents.' (:38)",
+      "min.string": "'Le texte de :attribute doit contenir au moins :min caractères.' (:104)",
+      "max.string": ":95",
+      "required": ":135",
+      "string": ":153",
+      "password.*": "letters, mixed, numbers, symbols, uncompromised (:116-121)",
+      "attributes": "current_password 'mot de passe actuel' (:186), first_name 'prénom' (:201), last_name 'nom de famille' (:218), password 'mot de passe' (:231), password_confirmation 'confirmation du mot de passe' (:232)",
+      "custom": "pas de clé 'custom' dans lang/fr/validation.php (grep)"
+    },
+    "validation_en": "confirmed :39, current_password :41, different :48, min :110-115, password.* :126-131, custom :183-187, attributes [] :200 (lang/en/validation.php)",
+    "auth_form": {
+      "fr": "save 'Enregistrer' (:4), login.{title,subtitle,submit} (:5-9), profile.locale_help (:10-12) (Modules/Auth/lang/fr/form.php)",
+      "en": "même structure (Modules/Auth/lang/en/form.php:3-13)"
+    },
+    "auth_user": {
+      "fr": "first_name 'Prénom' (:9), last_name 'Nom' (:10), locale 'Langue' (:13), password 'Mot de passe' (:15), password_help (:17) (Modules/Auth/lang/fr/user.php)",
+      "en": "first_name 'First name' (:9), last_name 'Last name' (:10), locale 'Language' (:13), password 'Password' (:15) (Modules/Auth/lang/en/user.php)",
+      "absent": "aucune clé pour ancien mot de passe, nouveau mot de passe, confirmation"
+    },
+    "auth_mobile": {
+      "fr": "home.{greeting,signedInAs,email,signOut,profile} (:7-13), profile.{title,saved,back} (:14-18), avatar.* (:19-26) (Modules/Auth/lang/fr/mobile.php)",
+      "en": "même structure (Modules/Auth/lang/en/mobile.php:6-27)",
+      "autres_sources": "lang/fr/mobile.php : error.unknown (:7-9) ; Modules/Form/lang/fr/mobile.php : form.* ; MobileMessages lève LogicException sur une clé déclarée deux fois (app/Support/MobileMessages.php:39-41)",
+      "test_parite": "tests/Feature/Api/MessagesApiTest.php:49-59 exige les mêmes clés dans toutes les langues"
+    }
+  },
+
+  "UserResource": {
+    "fichier": "Modules/Auth/app/Http/Resources/UserResource.php",
+    "champs": "id, name, first_name, last_name, email, locale, avatar_url (:19-27)",
+    "avatar_url": "hôte de la requête + chemin (:34-39)"
+  },
+
+  "RouteGuardTest": {
+    "fichier": "tests/Feature/RouteGuardTest.php",
+    "regle": "toute route d'action App\\Http\\Controllers\\ ou Modules\\*\\Http\\Controllers\\ doit avoir un middleware commençant par 'can:' (:27-40)",
+    "exceptions": "login, logout, locales, messages (:16-21)",
+    "obsolescence": "chaque exception doit nommer une URI existante (:45-52)",
+    "consequence": "les trois nouvelles routes passent sans nouvelle exception si elles portent ->can('updateMe', User::class)"
+  },
+
+  "references_a_supprimer_ou_mettre_a_jour": {
+    "methode": "grep -rn sur 'auth\\.profile\\.locale', 'UpdateMeRequest', 'ProfileLocaleForm', 'ProfileService::update', 'me\\.update', 'locale_help' (hors vendor, node_modules, storage, .ia/memory, .ia/runs, specs/done) puis grep patchJson/'PATCH'/auth/me dans tests et Modules",
+    "code": [
+      "Modules/Auth/routes/api.php:20 — Route::patch('me', ...)->name('me.update')",
+      "Modules/Auth/app/Http/Controllers/Api/ProfileController.php:7 — use UpdateMeRequest",
+      "Modules/Auth/app/Http/Controllers/Api/ProfileController.php:25-35 — méthode update",
+      "Modules/Auth/app/Services/ProfileService.php:15-26 — méthode update (docblock :17 cite auth.profile.locale)",
+      "Modules/Auth/app/Http/Requests/UpdateMeRequest.php:1-44 — fichier entier",
+      "Modules/Auth/app/Forms/ProfileLocaleForm.php:1-37 — fichier entier",
+      "Modules/Auth/app/Providers/AuthServiceProvider.php:13 — use ProfileLocaleForm",
+      "Modules/Auth/app/Providers/AuthServiceProvider.php:36 — register(ProfileLocaleForm::class)",
+      "Modules/Auth/app/Policies/UserPolicy.php:56 — docblock updateMe cite `PATCH /api/v1/auth/me`",
+      "Modules/Auth/lang/fr/form.php:11 et Modules/Auth/lang/en/form.php:11 — profile.locale_help (seul usage : ProfileLocaleForm.php:26)"
+    ],
+    "tests": [
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:11-15 — docblock cite PATCH /api/v1/auth/me",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:54-63 — test_a_form_without_title_sends_null_and_a_field_can_carry_help (GET forms/auth.profile.locale :58, help :62)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:65-70 — test_a_guest_asking_for_a_private_form_gets_a_translated_401 (:67)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:86-89 — test_profile_locale_form_requires_a_token (:88)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:91-109 — test_profile_locale_form_offers_available_locales_and_current_value (:97)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:121-132 — test_update_me_changes_the_locale (patchJson :126)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:134-144 — test_update_me_rejects_an_unavailable_locale (:139)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:146-162 — test_update_me_ignores_fields_that_are_not_in_the_form (:151)",
+      "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:164-167 — test_update_me_requires_a_token (:166)"
+    ],
+    "contrat_et_doc": [
+      "openapi.json:281-326 — opération patch v1.auth.me.update",
+      "openapi.json:292 — $ref UpdateMeRequest",
+      "openapi.json:496-512 — schéma UpdateMeRequest",
+      ".ia/context/project.md:50-52 — « GET et PATCH /api/v1/auth/me … le PATCH n'accepte que les champs des formulaires de profil »",
+      ".ia/context/project.md:63-64 — « Formulaires servis à l'app : auth.login, auth.profile.locale »"
+    ],
+    "non_concernes": "GET /api/v1/auth/me reste utilisé par AuthApiTest.php:120,129,137,154,157, AvatarApiTest.php:77, tests/Feature/Api/MessagesApiTest.php:81,85 ; aucun test ne référence UpdateMeRequest, ProfileLocaleForm ni ProfileService::update par leur nom de classe",
+    "openapi_regeneration": "composer script openapi = php artisan scramble:export --fail-on-unknown (composer.json:83-84) ; « ddev composer openapi », ne jamais éditer à la main (.ia/context/project.md:128-129)"
+  },
+
+  "tests_a_impacter": {
+    "FormsAndLocalesApiTest": "les 8 tests listés ci-dessus ; les tests :54-70 utilisent auth.profile.locale comme exemple de formulaire privé sans titre avec help",
+    "AuthApiTest_modeles": "logout ne révoque que le jeton courant (AuthApiTest.php:142-158) : deux jetons réels via login, forgetGuards() entre deux appels (:152-156)",
+    "RouteGuardTest": "doit passer sans ajout d'exception",
+    "MessagesApiTest": "parité fr/en des textes mobiles (:49-59)"
+  },
+
+  "pieges": [
+    "Supprimer Route::patch('me') en gardant Route::get('me') (api.php:19-20) : un PATCH /api/v1/auth/me répondra 405 (méthode non permise), pas 404 — à vérifier par l'implémenteur pour le critère 7.",
+    "Field::rules() remplace la liste au lieu de l'ajouter (Field.php:146-151) : toutes les règles propres d'un champ doivent être passées en un seul appel.",
+    "La règle 'confirmed' attend un champ nommé <champ>_confirmation ; si ce champ est déclaré dans le formulaire, il reçoit lui-même ses règles de type (required + string) via Field::validationRules (Field.php:159-172).",
+    "'current_password' : sans paramètre, garde par défaut (ValidatesAttributes.php:611) ; sur l'API c'est sanctum grâce à UseSanctumGuard (UseSanctumGuard.php:20). Hors du groupe api (ex. instancier la FormRequest dans un test unitaire) le garde par défaut redevient 'web' (config/auth.php:19) et la règle échoue.",
+    "Le message current_password n'a pas de :attribute (lang/fr/validation.php:31, lang/en/validation.php:41).",
+    "FormRequest::attributes() alimentée par les labels du formulaire (Form.php:85-91) prime sur lang/*/validation.php attributes ; lang/en/validation.php:200 a attributes [] : les libellés en anglais ne viennent que des labels du formulaire.",
+    "Aucune clé de traduction n'existe pour ancien / nouveau / confirmation du mot de passe dans Modules/Auth/lang/*/user.php ni form.php.",
+    "Révoquer les autres jetons demande l'identifiant du jeton courant : currentAccessToken() peut être un TransientToken sans clé (Guard.php:32-37, sanctum.guard ['web'] config/sanctum.php:40) ; LogoutService.php:21 teste instanceof PersonalAccessToken.",
+    "Sanctum::actingAs pose un mock de PersonalAccessToken (Sanctum.php:72-82) : un test de révocation doit utiliser de vrais jetons (createToken / login), comme AuthApiTest.php:142-158.",
+    "Le garde mémorise l'utilisateur entre deux appels d'un même test : app['auth']->forgetGuards() (AuthApiTest.php:152-156).",
+    "Cast 'password' => 'hashed' (User.php:54) : passer le mot de passe en clair à update ; un Hash::make préalable est aussi accepté (HasAttributes.php:1512-1521). password est fillable (User.php:28).",
+    "Password::defaults() n'est configuré nulle part : Password::default() = min(8) (Password.php:166-173). Le mot de passe de la factory est 'password' (UserFactory.php:34), soit 8 caractères.",
+    "SetLocale fixe la langue avant l'action (bootstrap/app.php:23, SetLocale.php:20-26) : la réponse d'un changement de langue est rendue dans l'ancienne langue du compte.",
+    "Préférences : ProfileLocaleForm passe l'utilisateur au formulaire pour la valeur par défaut (ProfileLocaleForm.php:28, UpdateMeRequest.php:42) ; Form::__construct reçoit ?Authenticatable (Form.php:17), d'où le test instanceof User.",
+    "MobileMessages refuse une clé en double entre lang/*/mobile.php, Modules/Auth/lang/*/mobile.php et Modules/Form/lang/*/mobile.php (MobileMessages.php:39-41) ; parité fr/en testée (MessagesApiTest.php:49-59).",
+    "openapi.json est dérivé du code (scramble:export --fail-on-unknown, composer.json:83-84) : une règle objet (Password) ou une FormRequest dont les règles viennent d'un formulaire doivent rester exportables sans erreur — non vérifié.",
+    "ProfileController et ProfileService gardent les méthodes avatar (ProfileController.php:41-58, ProfileService.php:32-47) : seule la méthode update part.",
+    "Les docblocks des méthodes de contrôleur deviennent le summary OpenAPI (ProfileController.php:25-28 → openapi.json:283)."
+  ],
+
+  "incertitudes": [
+    "Skills bza-dev:audit-source et bza-laravel:audit-laravel introuvables sous ~/.claude/plugins : enveloppe calquée sur les clés des specs existantes, sans garantie de conformité au contrat d'enveloppe.",
+    "Le code HTTP 405 pour PATCH /api/v1/auth/me après suppression est déduit du routage Laravel, non exécuté.",
+    "Comportement de Scramble (--fail-on-unknown) face à une règle Password::defaults() ou à des règles objet : non vérifié.",
+    "Le message de longueur de la règle Password passe par la règle min (lecture partielle de Password.php, :330-380) ; le détail des clés produites n'a pas été exécuté.",
+    "Filament (UserForm.php:64-71) gère le mot de passe en back-office séparément ; non audité au-delà de ces lignes.",
+    "Modules/Form/app/Http/Controllers/Api/FormController.php et la capacité viewForm lus partiellement (FormController.php:1-24) ; la définition de la capacité viewForm n'a pas été lue."
+  ],
+
+  "fichiers_lus": [
+    "specs/2026-11-16-menu-et-profil.md",
+    "Modules/Auth/routes/api.php",
+    "Modules/Auth/app/Http/Controllers/Api/LoginController.php",
+    "Modules/Auth/app/Http/Controllers/Api/LogoutController.php",
+    "Modules/Auth/app/Http/Controllers/Api/ProfileController.php",
+    "Modules/Auth/app/Services/AvatarService.php",
+    "Modules/Auth/app/Services/LoginService.php",
+    "Modules/Auth/app/Services/LogoutService.php",
+    "Modules/Auth/app/Services/ProfileService.php",
+    "Modules/Auth/app/Http/Requests/LoginRequest.php",
+    "Modules/Auth/app/Http/Requests/UpdateAvatarRequest.php",
+    "Modules/Auth/app/Http/Requests/UpdateMeRequest.php",
+    "Modules/Auth/app/Http/Resources/UserResource.php",
+    "Modules/Auth/app/Forms/LoginForm.php",
+    "Modules/Auth/app/Forms/ProfileLocaleForm.php",
+    "Modules/Auth/app/Providers/AuthServiceProvider.php",
+    "Modules/Auth/app/Policies/UserPolicy.php",
+    "Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php",
+    "Modules/Auth/app/Models/User.php",
+    "Modules/Auth/lang/{fr,en}/{form,mobile,navigation,permission,role,user}.php",
+    "Modules/Form/app/Support/{Field,Form,FormRegistry}.php",
+    "Modules/Form/app/Enums/FieldType.php",
+    "Modules/Form/app/Http/Resources/FormResource.php",
+    "Modules/Form/app/Http/Controllers/Api/FormController.php",
+    "Modules/Form/routes/api.php",
+    "Modules/Form/lang/fr/mobile.php",
+    "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php",
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php",
+    "tests/Feature/RouteGuardTest.php",
+    "config/auth.php (:1-80)",
+    "config/sanctum.php (grep guard, expiration)",
+    "lang/fr/validation.php (grep + :155-290)",
+    "lang/en/validation.php (grep + :180-202)",
+    "lang/fr/mobile.php",
+    "app/Http/Middleware/{UseSanctumGuard,SetLocale}.php",
+    "app/Support/Locales.php",
+    "app/Support/MobileMessages.php (:1-60)",
+    "bootstrap/app.php",
+    "openapi.json (:240-330, :490-515)",
+    ".ia/context/project.md (:40-70, :125-135)",
+    "Modules/Auth/database/migrations/2026_11_15_160000_split_user_name_and_add_locale.php (grep)",
+    "Modules/Auth/database/factories/UserFactory.php (grep)",
+    "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php (:60-75)",
+    "tests/Feature/Api/MessagesApiTest.php (grep)",
+    "vendor : sanctum Guard.php, HasApiTokens.php, Sanctum.php ; framework ValidatesAttributes.php:606-618, Authenticate.php:75-85, HasAttributes.php:1506-1522, Rules/Password.php (extraits)"
+  ]
+}

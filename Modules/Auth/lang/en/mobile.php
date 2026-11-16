@@ -4,14 +4,19 @@
 // (App\Support\MobileMessages). Variables au format :name.
 
 return [
+    'tabs' => [
+        'home' => 'Home',
+        'profile' => 'Profile',
+    ],
     'home' => [
         'greeting' => 'Hello :name',
-        'signedInAs' => 'Signed in as :fullName',
-        'email' => 'Email: :email',
-        'signOut' => 'Sign out',
-        'profile' => 'My profile',
     ],
     'profile' => [
+        'personalInfo' => 'Personal information',
+        'password' => 'Change password',
+        'preferences' => 'Preferences',
+        'passwordSaved' => 'Password changed.',
+        'signOut' => 'Sign out',
         'title' => 'Profile',
         'saved' => 'Changes saved.',
         'back' => 'Back',
