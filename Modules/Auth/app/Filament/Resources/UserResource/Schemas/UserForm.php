@@ -3,6 +3,8 @@
 namespace Modules\Auth\Filament\Resources\UserResource\Schemas;
 
 use App\Support\Locales;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
@@ -12,7 +14,9 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
 
@@ -49,6 +53,18 @@ abstract class UserForm
                     ->label(__('auth::user.last_name'))
                     ->maxLength(255)
                     ->required(),
+                // Mêmes règles que le formulaire Informations personnelles de l'app.
+                Radio::make('gender')
+                    ->label(__('auth::user.gender'))
+                    ->options(GenderEnum::options())
+                    ->inline()
+                    ->required(),
+                DatePicker::make('birth_date')
+                    ->label(__('auth::user.birth_date'))
+                    ->native(false)
+                    ->displayFormat('d.m.Y')
+                    ->minDate(PersonalInfoForm::BIRTH_DATE_MIN)
+                    ->maxDate(now()),
                 TextInput::make('email')
                     ->label(__('auth::user.email'))
                     ->email()

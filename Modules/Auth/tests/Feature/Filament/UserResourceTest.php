@@ -77,6 +77,8 @@ class UserResourceTest extends AuthFilamentTestCase
                 'name' => 'jeanne',
                 'first_name' => 'Jeanne',
                 'last_name' => 'Dupont',
+                'gender' => 'female',
+                'birth_date' => '1990-04-12',
                 'email' => 'jeanne@example.com',
                 'locale' => 'en',
                 'password' => 'secret-password',
@@ -86,6 +88,8 @@ class UserResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors();
 
         $user = User::firstWhere('email', 'jeanne@example.com');
+        $this->assertSame('female', $user->gender->value);
+        $this->assertSame('1990-04-12', $user->birth_date->format('Y-m-d'));
         $this->assertTrue(Hash::check('secret-password', $user->password));
         $this->assertTrue($user->hasRole('editor'));
         $this->assertSame('jeanne', $user->name);
@@ -221,5 +225,21 @@ class UserResourceTest extends AuthFilamentTestCase
 
         $this->assertModelExists($admin);
         $this->assertModelMissing($other);
+    }
+
+    public function test_gender_is_required_and_birth_date_bounded_in_the_back_office(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Martin', 'email' => 'paul@example.com',
+                'locale' => 'fr', 'password' => 'secret-password', 'gender' => null,
+                'birth_date' => now()->addDay()->format('Y-m-d'),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['gender' => 'required', 'birth_date']);
+
+        $this->assertNull(User::firstWhere('email', 'paul@example.com'));
     }
 }

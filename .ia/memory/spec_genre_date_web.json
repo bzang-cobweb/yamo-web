@@ -1,0 +1,211 @@
+{
+  "chantier": "2026-11-16-genre-date-naissance",
+  "tache": "01",
+  "concept": "genre_date_web",
+  "titre": "Utilisateur (genre, date de naissance, initiales) et type de champ date du module Form — état avant chantier",
+  "date_audit": "2026-11-16",
+  "stack": "Laravel 13.42.0 (composer.lock:2420-2421), nwidart modules, Filament 5.11.3 (composer.lock:1268-1269), Scramble (composer.json:25, script openapi composer.json:83-84), tests SQLite :memory: (phpunit.xml:30-31)",
+  "profondeur": "Enveloppe calquée sur les specs existantes de .ia/memory (skill bza-dev:audit-source et bza-laravel:audit-laravel non disponibles dans .ia/skills : seul README.md). Extraction ciblée sur le périmètre de la tâche.",
+
+  "module_form": {
+    "FieldType": {
+      "fichier": "Modules/Form/app/Enums/FieldType.php",
+      "cases": "TEXT, HIDDEN, EMAIL, PASSWORD, NUMBER, TEXTAREA, SELECT, RADIO, CHECKBOX, CHECKBOX_GROUP, SWITCH (l.14-24) ; aucun type date",
+      "docblock": "ajouter un type demande son composant mobile (l.8-10)",
+      "hasOptions": "SELECT, RADIO, CHECKBOX_GROUP (l.29-32)",
+      "rules": "rules(array $optionValues): list<mixed>, match exhaustif sans default (l.40-50) : TEXT/HIDDEN/PASSWORD/TEXTAREA => ['string'] ; EMAIL => ['string','email'] ; NUMBER => ['numeric'] ; SELECT/RADIO => ['string', Rule::in($optionValues)] ; CHECKBOX/SWITCH => ['boolean'] ; CHECKBOX_GROUP => ['array']. Un nouveau case sans bras dans le match lève UnhandledMatchError."
+    },
+    "Field": {
+      "fichier": "Modules/Form/app/Support/Field.php",
+      "proprietes": "label, placeholder, help (?string), required bool=false, default mixed=null, options array<string,string> valeur=>libellé, rules list<mixed> (l.14-28)",
+      "constructeurs": "make(name, FieldType) l.35 ; une fabrique statique par type text..switch (l.40-93) ; pas de fabrique date",
+      "required": "required(bool $required = true) (l.116-121)",
+      "default": "default(mixed $value) (l.123-128) ; renvoyé tel quel dans toArray (l.193), sans conversion",
+      "options": "options(array<string,string>) (l.133-138)",
+      "rules": "rules(list) remplace (pas d'ajout) les règles propres (l.146-151)",
+      "validationRules": "values = clés d'options en string (l.161) ; presence = ['required'] ou ['nullable'] (l.162) ; CHECKBOX_GROUP à part (l.164-169) ; sinon [presence..., type->rules(values)..., rules propres...] (l.171)",
+      "toArray": "{name, type: type->value, label, placeholder, help, required, default, options: list<{value: (string) clé, label}>} (l.184-199), PHPDoc l.182",
+      "getLabel": "l.174-177"
+    },
+    "Form": "Modules/Form/app/Support/Form.php : rules() = collapse des validationRules (l.75-78) ; attributes() = libellés des champs non nuls (l.85-91), donc :attribute des messages = libellé du champ",
+    "FormBackedRequest": "Modules/Form/app/Http/Requests/FormBackedRequest.php : rules() et attributes() viennent du formulaire (l.24-35) ; seuls les champs du formulaire sont dans validated() (l.10-12)",
+    "FormResource": "Modules/Form/app/Http/Resources/FormResource.php : PHPDoc de toArray (l.18) recopie la forme de Field::toArray ; aucun type date énuméré",
+    "lang_mobile": "Modules/Form/lang/{fr,en}/mobile.php : clés form.loading, submitting, selectPlaceholder, showPassword, hidePassword, retry (l.7-14) ; aucun texte « Effacer »",
+    "FieldTest": {
+      "fichier": "Modules/Form/tests/Feature/FieldTest.php",
+      "formulaire_de_test": "un champ par type (l.27-39)",
+      "test_every_type_is_covered_by_the_test_form": "compare les types du formulaire de test à FieldType::cases() (l.65-70) : un case DATE impose un champ date dans le formulaire de test",
+      "valid": "données minimales valides (l.58-63)",
+      "test_required_fields_are_required": "liste exacte des champs requis (l.81-84)",
+      "test_type_rules_are_derived": "liste exacte des clés en erreur (l.86-104)",
+      "test_serialization_keeps_option_order_and_metadata": "assertSame de toArray du champ city (l.106-120)"
+    }
+  },
+
+  "modele_user": {
+    "fichier": "Modules/Auth/app/Models/User.php",
+    "fillable": "attribut #[Fillable(['name','first_name','last_name','email','locale','password'])] (l.28) ; pas de propriété $fillable",
+    "hidden": "#[Hidden(['password','remember_token'])] (l.29)",
+    "casts": "méthode casts() : email_verified_at => 'datetime', password => 'hashed' (l.50-56)",
+    "fullName": "accesseur Attribute::get, trim(first_name.' '.last_name) (l.61-64) ; utilisé par getFilamentName (l.107-110), Filament UserResource::getRecordTitle (Filament/Resources/UserResource.php:47), EditUser::getBreadcrumb (Pages/EditUser.php:22), CreateUserCommand (Console/CreateUserCommand.php:68)",
+    "initials": "absent",
+    "imports_enums": "PermissionEnum, RoleEnum (l.19-20)"
+  },
+
+  "enums_existants": {
+    "PermissionEnum": "Modules/Auth/app/Enums/PermissionEnum.php : backed string (l.9) ; seule méthode label(): __('auth::permission.names.'.value) (l.25-28) ; pas d'options()",
+    "RoleEnum": "Modules/Auth/app/Enums/RoleEnum.php : un case SUPER_ADMIN (l.8), aucune méthode",
+    "FieldType": "Modules/Form/app/Enums/FieldType.php : méthodes hasOptions(), rules()",
+    "modele_options": "le seul options() du projet est App\\Support\\Locales::options() : array<string,string> code => libellé (app/Support/Locales.php:37-42), consommé par Field::options (PreferencesForm.php:27) et Filament Select (UserForm.php:60)",
+    "HasLabel_filament": "aucun enum n'implémente Filament\\Support\\Contracts\\HasLabel (grep app Modules)"
+  },
+
+  "formulaire_personal": {
+    "fichier": "Modules/Auth/app/Forms/PersonalInfoForm.php",
+    "nom": "auth.profile.personal (l.17)",
+    "user": "$this->user instanceof User ? ... : null (l.22)",
+    "champs": "first_name puis last_name : text, label __('auth::user.first_name'|'last_name'), default valeur courante, required, rules ['max:255'] (l.25-34)",
+    "title": "__('auth::form.personal.title') (l.40)",
+    "submit": "__('auth::form.save') (l.45)",
+    "request": "Modules/Auth/app/Http/Requests/UpdatePersonalInfoRequest.php : authorize can('updateMe') (l.17-20), form() = new PersonalInfoForm($this->user()) (l.22-25) ; docblock « prénom, nom » (l.10)",
+    "controleur": "Modules/Auth/app/Http/Controllers/Api/PersonalInfoController.php : update -> new UserResource($service->update($user, $request->validated())) (l.18-24) ; docblock « Modifier son prénom et son nom » (l.16)",
+    "service": "Modules/Auth/app/Services/PersonalInfoService.php : PHPDoc array{first_name: string, last_name: string} (l.13) ; update écrit first_name et last_name par accès direct $data['...'] (l.17-20)",
+    "modele_select_options": "Modules/Auth/app/Forms/PreferencesForm.php : Field::select('locale')->options(Locales::options())->default(...)->required() (l.24-29)"
+  },
+
+  "UserResource_api": {
+    "fichier": "Modules/Auth/app/Http/Resources/UserResource.php",
+    "phpdoc": "@return array{id: int, name: string, first_name: string, last_name: string, email: string, locale: string, avatar_url: string|null} (l.15) — lu par Scramble",
+    "champs": "id, name, first_name, last_name, email, locale, avatar_url (l.19-27)",
+    "openapi": "openapi.json:636-673 schéma UserResource avec ces 7 propriétés ; régénération via composer openapi (scramble:export --fail-on-unknown, composer.json:83-84)"
+  },
+
+  "filament_fiche": {
+    "fichier": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php",
+    "section_generale": "Section columns(2) (l.33-35) : avatar (columnSpanFull), name (columnSpanFull), first_name, last_name, email, locale (Select, Locales::options, default, selectablePlaceholder(false), required l.58-63), password (l.64-71)",
+    "pages": "CreateUser et EditUser partagent le même schéma (UserResource.php:26-29, 36-43)",
+    "composants_disponibles": "Filament DatePicker et Radio présents (vendor/filament/forms/src/Components/DatePicker.php, Radio.php) ; DateTimePicker::maxDate/minDate (DateTimePicker.php:468, 479) ; format par défaut Y-m-d pour une date (DateTimePicker.php:736) ; HasOptions::options accepte array|Arrayable|string|Closure (Concerns/HasOptions.php:20)"
+  },
+
+  "factory": {
+    "fichier": "Modules/Auth/database/factories/UserFactory.php",
+    "definition": "name, first_name, last_name, locale, email, email_verified_at, password, remember_token (l.27-36) ; pas de gender ni birth_date",
+    "etats": "unverified() seul (l.42-47)",
+    "faker_locale": "fr_FR (config/app.php:85)"
+  },
+
+  "migrations": {
+    "dossier_module": "Modules/Auth/database/migrations, chargé par ModuleServiceProvider::loadMigrationsFrom (vendor/nwidart/laravel-modules/src/Support/ModuleServiceProvider.php:63-64)",
+    "existantes_module": [
+      "2026_11_15_141956_create_permission_tables.php",
+      "2026_11_15_160000_split_user_name_and_add_locale.php (first_name/last_name/locale, utilise ->after() l.17-19)",
+      "2026_11_15_170000_restore_user_name_as_unique_pseudonym.php (name unique, l.16-37)"
+    ],
+    "table_users_initiale": "database/migrations/0001_01_01_000000_create_users_table.php:14-22",
+    "style": "classe anonyme, docblock citant la décision (split l.8-11 ; restore l.8-11), up() et down() renseignés"
+  },
+
+  "traductions": {
+    "auth_user": "Modules/Auth/lang/fr/user.php et en/user.php : first_name, last_name, locale, sections... (fr l.3-27, en l.3-27) ; aucune clé gender, birth_date, male, female",
+    "auth_form": "Modules/Auth/lang/{fr,en}/form.php : personal.title (fr l.10-12, en l.10-12)",
+    "validation_fr": "lang/fr/validation.php : after l.9 « postérieure au :date », after_or_equal l.10, before l.19 « antérieure au :date », before_or_equal l.20, date l.32, date_format l.34 « ne correspond pas au format :format », enum l.49, in l.68 « Le champ :attribute est invalide. », required l.135 ; attributes l.161+ dont birthday l.171, date_of_birth l.189, gender l.202 ; aucune clé 'values'",
+    "validation_en": "lang/en/validation.php : after l.19, before l.29, date_format l.44, enum l.59, in l.78, required l.145, custom l.183, attributes [] l.200",
+    "mobile_messages_parite": "tests/Feature/Api/MessagesApiTest.php:49-60 exige les mêmes clés dans toutes les langues"
+  },
+
+  "config_app": {
+    "timezone": "'UTC' (config/app.php:68)",
+    "locale": "env APP_LOCALE, 'fr' (l.81)",
+    "fallback_locale": "'en' (l.83)",
+    "supported_locales": "['fr','en'] (l.89)",
+    "default_locale": "l.93",
+    "langue_de_requete": "compte connecté : la langue du compte l'emporte sur Accept-Language (FormsAndLocalesApiTest.php:106-107)"
+  },
+
+  "tests_a_impacter": [
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php:40-51 assertExactJson de UserResource (7 clés) : casse dès qu'on ajoute gender, birth_date, full_name, initials",
+    "Modules/Auth/tests/Feature/Api/ProfileFormsApiTest.php:41 assertJsonCount(2, 'data.fields') pour auth.profile.personal",
+    "Modules/Auth/tests/Feature/Api/ProfileFormsApiTest.php:48-56 PATCH personal-info sans gender attendu assertOk : échoue si gender requis",
+    "Modules/Auth/tests/Feature/Api/ProfileFormsApiTest.php:66-70 sans gender : l'assertion porte sur first_name seul, reste vraie mais gender sera aussi en erreur",
+    "Modules/Form/tests/Feature/FieldTest.php:65-70 couverture de tous les types",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:75-86 création sans gender avec assertHasNoFormErrors : échoue si gender requis dans la fiche",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:162-165 édition d'un User::factory() sans gender, assertHasNoFormErrors : échoue si gender requis et que la factory n'en donne pas",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php:128-136 et 144-153 : listes d'erreurs partielles, non bloquantes",
+    "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:29-44 assertExactJson du formulaire auth.login : non touché sauf changement de la forme de Field::toArray",
+    "Modules/Auth/tests/Feature/RestorePseudonymMigrationTest.php:19-37 insère des users sans gender/birth_date via DB::table : passe si les colonnes sont nullable"
+  ],
+
+  "pieges": [
+    "Sérialisation de date : json_encode d'un Carbon donne l'ISO complet \"2000-01-02T00:00:00.000000Z\" (vérifié par php -r) ; idem serializeDate (vendor/laravel/framework/src/Illuminate/Database/Eloquent/Concerns/HasAttributes.php:1662-1667). UserResource (accès explicite $this->birth_date) et Field::default (renvoyé tel quel, Field.php:193) doivent formater en Y-m-d ; un cast 'date:Y-m-d' n'agit que sur toArray/toJson du modèle, pas sur un Carbon renvoyé par la ressource.",
+    "Stockage : le cast 'date' écrit via fromDateTime au format getDateFormat() 'Y-m-d H:i:s' (HasAttributes.php:1101-1102, 1638-1643) ; sous SQLite (tests, phpunit.xml:30-31) la colonne contient \"2000-01-02 00:00:00\" : un assertDatabaseHas(['birth_date' => '2000-01-02']) échoue en test.",
+    "Fuseau : app.timezone UTC (config/app.php:68) ; before:today / after:... sont évalués en UTC ; asDate fait startOfDay (HasAttributes.php:1564-1567).",
+    "Messages before/after : replaceBefore remplace :date par getDisplayableValue si strtotime réussit (vendor/laravel/framework/src/Illuminate/Validation/Concerns/ReplacesAttributes.php:818-825), qui cherche validation.values.{attribut}.{valeur} (FormatsMessages.php:506-530) ; lang/fr/validation.php n'a pas de clé 'values' : before:today affichera « antérieure au today », after:1900-01-01 « postérieure au 1900-01-01 ».",
+    "date_format : :format remplacé par le paramètre brut (ReplacesAttributes.php:65-68) → « ne correspond pas au format Y-m-d ».",
+    "Bornes strictes : before/after sont stricts ; le contrat dit « antérieure à aujourd'hui » et « postérieure au 1er janvier 1900 » mais le sélecteur mobile est « limité à aujourd'hui » : un choix d'aujourd'hui serait refusé par before:today.",
+    "Radio : FieldType::RADIO ajoute déjà 'string' + Rule::in(clés d'options) (FieldType.php:46) ; un Rule::enum en plus doublerait la contrainte (messages 'in' fr l.68 vs 'enum' fr l.49). Les valeurs d'options sont castées en string (Field.php:161, 195) : les clés doivent être GenderEnum::value.",
+    "Default enum : json_encode d'un BackedEnum donne sa valeur (vérifié) ; un default enum passe donc, mais la valeur exposée n'est pas typée string dans le PHPDoc (mixed).",
+    "validated() : un champ nullable absent de la requête est absent de validated() ; PersonalInfoService lit les clés en accès direct (PersonalInfoService.php:18-19).",
+    "Field::rules() remplace la liste précédente (Field.php:146-151) : un appel unique avec toutes les règles propres.",
+    "Ordre des migrations : la nouvelle doit être datée après 2026_11_15_170000 ; ->after() est ignoré par SQLite ; la migration split utilise ->after (160000:17-19).",
+    "Initiales sans accent : Str::ascii donne Élodie→Elodie, Ängel→Angel, Çédric→Cedric, Øster→Oster, Œdipe→OEdipe, ß→ss (vérifié php -r) ; avec la langue 'de', Ängel→Aengel ; Str::substr/Str::upper multioctets à privilégier.",
+    "Match exhaustif : FieldType::rules() sans bras default (FieldType.php:42-49) ; un case DATE sans bras lève UnhandledMatchError.",
+    "Parité des textes mobiles : un texte « Effacer » ajouté à Modules/Form/lang/fr/mobile.php doit l'être aussi en en (MessagesApiTest.php:49-60).",
+    "fullName existe déjà en accesseur (User.php:61-64) mais n'est pas dans UserResource ni appended."
+  ],
+
+  "incertitudes": [
+    "Skill d'enveloppe bza-dev:audit-source non disponible localement : structure reprise des specs existantes (clés seulement).",
+    "Le contrat parle de « antérieure à aujourd'hui » : before:today ou before_or_equal:today non tranché par la source ; le comportement du sélecteur mobile (aujourd'hui sélectionnable) n'est pas audité ici.",
+    "Si birth_date absent de la requête doit signifier « inchangé » ou « effacé » : non précisé par la source.",
+    "Le middleware ConvertEmptyStringsToNull n'apparaît pas dans bootstrap/app.php:19-24 ; présence par défaut du framework non vérifiée dans ce dépôt.",
+    "Scramble : traduction d'un type enum/nullable dans openapi.json non vérifiée.",
+    "Filament : le libellé d'un enum dans Radio/Select via HasLabel non audité (aucun précédent dans le projet).",
+    "Contenu détaillé de UserTable, CreateUserCommandTest, AvatarApiTest, UserAvatarTest non lu (hors périmètre de la tâche) ; seule la recherche assertExactJson a été faite sur Modules/*/tests et tests."
+  ],
+
+  "fichiers_lus": [
+    "specs/2026-11-16-genre-date-naissance.md",
+    "Modules/Form/app/Enums/FieldType.php",
+    "Modules/Form/app/Support/Field.php",
+    "Modules/Form/app/Support/Form.php",
+    "Modules/Form/app/Support/FormRegistry.php",
+    "Modules/Form/app/Http/Requests/FormBackedRequest.php",
+    "Modules/Form/app/Http/Resources/FormResource.php",
+    "Modules/Form/app/Http/Controllers/Api/FormController.php",
+    "Modules/Form/lang/fr/mobile.php",
+    "Modules/Form/lang/en/mobile.php",
+    "Modules/Form/tests/Feature/FieldTest.php",
+    "Modules/Auth/app/Models/User.php",
+    "Modules/Auth/app/Enums/PermissionEnum.php",
+    "Modules/Auth/app/Enums/RoleEnum.php",
+    "Modules/Auth/app/Forms/PersonalInfoForm.php",
+    "Modules/Auth/app/Forms/PreferencesForm.php",
+    "Modules/Auth/app/Services/PersonalInfoService.php",
+    "Modules/Auth/app/Http/Resources/UserResource.php",
+    "Modules/Auth/app/Http/Requests/UpdatePersonalInfoRequest.php",
+    "Modules/Auth/app/Http/Controllers/Api/PersonalInfoController.php",
+    "Modules/Auth/app/Filament/Resources/UserResource.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/CreateUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/EditUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/ListUsers.php",
+    "Modules/Auth/app/Console/CreateUserCommand.php (l.30-70)",
+    "Modules/Auth/database/factories/UserFactory.php",
+    "Modules/Auth/database/migrations/2026_11_15_141956_create_permission_tables.php",
+    "Modules/Auth/database/migrations/2026_11_15_160000_split_user_name_and_add_locale.php",
+    "Modules/Auth/database/migrations/2026_11_15_170000_restore_user_name_as_unique_pseudonym.php",
+    "database/migrations/0001_01_01_000000_create_users_table.php (l.1-30)",
+    "Modules/Auth/lang/fr/user.php", "Modules/Auth/lang/en/user.php",
+    "Modules/Auth/lang/fr/form.php", "Modules/Auth/lang/en/form.php",
+    "lang/fr/validation.php (extraits)", "lang/en/validation.php (extraits)",
+    "config/app.php (l.55-95)", "phpunit.xml", "app/Support/Locales.php", "bootstrap/app.php (l.19-25)",
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php (l.1-80)",
+    "Modules/Auth/tests/Feature/Api/ProfileFormsApiTest.php",
+    "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php (l.1-180)",
+    "Modules/Auth/tests/Feature/RestorePseudonymMigrationTest.php",
+    "tests/Feature/Api/MessagesApiTest.php (l.1-80)",
+    "openapi.json (l.636-673)",
+    "vendor : Validation/Concerns/ReplacesAttributes.php, FormatsMessages.php, Eloquent/Concerns/HasAttributes.php, filament DateTimePicker.php, HasOptions.php, nwidart ModuleServiceProvider.php (extraits)"
+  ]
+}

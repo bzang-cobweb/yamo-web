@@ -87,6 +87,11 @@ final class Field
         return new self($name, FieldType::CHECKBOX_GROUP);
     }
 
+    public static function date(string $name): self
+    {
+        return new self($name, FieldType::DATE);
+    }
+
     public static function switch(string $name): self
     {
         return new self($name, FieldType::SWITCH);

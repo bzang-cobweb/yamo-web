@@ -10,6 +10,7 @@ return [
         'selectPlaceholder' => 'Choose…',
         'showPassword' => 'Show password',
         'hidePassword' => 'Hide password',
+        'clearDate' => 'Clear',
         'retry' => 'Try again',
     ],
 ];

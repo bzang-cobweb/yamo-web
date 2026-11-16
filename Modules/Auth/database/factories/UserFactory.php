@@ -5,6 +5,7 @@ namespace Modules\Auth\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 
 /**
@@ -28,6 +29,8 @@ class UserFactory extends Factory
             'name' => fake()->unique()->userName(),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
+            'gender' => fake()->randomElement(GenderEnum::cases()),
+            'birth_date' => fake()->optional()->dateTimeBetween('-80 years', '-16 years')?->format('Y-m-d'),
             'locale' => fake()->randomElement(config('app.supported_locales')),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

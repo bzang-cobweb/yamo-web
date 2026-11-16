@@ -10,6 +10,7 @@ return [
         'selectPlaceholder' => 'Choisir…',
         'showPassword' => 'Afficher le mot de passe',
         'hidePassword' => 'Masquer le mot de passe',
+        'clearDate' => 'Effacer',
         'retry' => 'Réessayer',
     ],
 ];

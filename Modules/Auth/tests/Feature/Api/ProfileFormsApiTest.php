@@ -27,48 +27,106 @@ class ProfileFormsApiTest extends TestCase
 
     // Informations personnelles
 
-    public function test_personal_info_form_offers_first_and_last_name_with_current_values(): void
+    public function test_personal_info_form_offers_the_four_fields_with_current_values(): void
     {
-        $user = $this->user();
+        $user = $this->user(['gender' => 'female', 'birth_date' => '1990-04-12']);
 
         $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
             ->assertOk()
             ->assertJsonPath('data.title', 'Informations personnelles')
-            ->assertJsonPath('data.fields.0.name', 'first_name')
+            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date'])
             ->assertJsonPath('data.fields.0.default', 'Jeanne')
-            ->assertJsonPath('data.fields.1.name', 'last_name')
             ->assertJsonPath('data.fields.1.default', 'Dupont')
-            ->assertJsonCount(2, 'data.fields');
+            // Genre : boutons radio, obligatoire, options de GenderEnum traduites.
+            ->assertJsonPath('data.fields.2.type', 'radio')
+            ->assertJsonPath('data.fields.2.required', true)
+            ->assertJsonPath('data.fields.2.default', 'female')
+            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme'], ['value' => 'female', 'label' => 'Femme']])
+            // Date de naissance : type date, facultative.
+            ->assertJsonPath('data.fields.3.type', 'date')
+            ->assertJsonPath('data.fields.3.required', false)
+            ->assertJsonPath('data.fields.3.default', '1990-04-12');
     }
 
-    public function test_personal_info_updates_first_and_last_name_only(): void
+    public function test_personal_info_updates_its_four_fields_only(): void
     {
         $user = $this->user(['name' => 'jeanne', 'email' => 'jeanne@example.com']);
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
-            'first_name' => 'Jeanne-Marie',
-            'last_name' => 'Durand',
+            'first_name' => 'Élodie',
+            'last_name' => 'Ängel',
+            'gender' => 'female',
+            'birth_date' => '1990-04-12',
             'email' => 'pirate@example.com',
             'locale' => 'en',
         ])
             ->assertOk()
-            ->assertJsonPath('data.first_name', 'Jeanne-Marie')
-            ->assertJsonPath('data.last_name', 'Durand');
+            ->assertJsonPath('data.first_name', 'Élodie')
+            ->assertJsonPath('data.full_name', 'Élodie Ängel')
+            ->assertJsonPath('data.initials', 'EA')
+            ->assertJsonPath('data.gender', 'female')
+            ->assertJsonPath('data.birth_date', '1990-04-12');
 
         $user->refresh();
-        $this->assertSame(['Jeanne-Marie', 'Durand', 'jeanne@example.com', 'fr'], [$user->first_name, $user->last_name, $user->email, $user->locale]);
+        $this->assertSame(['Élodie', 'Ängel', 'jeanne@example.com', 'fr'], [$user->first_name, $user->last_name, $user->email, $user->locale]);
+        $this->assertSame('1990-04-12', $user->birth_date->format('Y-m-d'));
     }
 
     public function test_personal_info_refuses_an_empty_name_with_a_translated_message(): void
     {
         $user = $this->user();
 
-        $response = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => '', 'last_name' => 'Durand'])
+        $response = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => '', 'last_name' => 'Durand', 'gender' => 'female'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['first_name']);
 
         $this->assertSame('Le champ Prénom est obligatoire.', $response->json('errors.first_name.0'));
         $this->assertSame('Jeanne', $user->fresh()->first_name);
+    }
+
+    public function test_gender_is_required_and_must_be_male_or_female(): void
+    {
+        $user = $this->user(['gender' => null]);
+
+        $missing = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => 'Jeanne', 'last_name' => 'Dupont'])
+            ->assertUnprocessable();
+        $this->assertSame('Le champ Genre est obligatoire.', $missing->json('errors.gender.0'));
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'other'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['gender']);
+
+        $this->assertNull($user->fresh()->gender);
+    }
+
+    public function test_birth_date_is_optional_and_an_empty_value_clears_it(): void
+    {
+        $user = $this->user(['gender' => 'male', 'birth_date' => '1990-04-12']);
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
+            'first_name' => 'Jean', 'last_name' => 'Dupont', 'gender' => 'male', 'birth_date' => '',
+        ])->assertOk()->assertJsonPath('data.birth_date', null);
+
+        $this->assertNull($user->fresh()->birth_date);
+    }
+
+    public function test_birth_date_must_be_between_1900_and_today_with_translated_messages(): void
+    {
+        $user = $this->user(['gender' => 'male']);
+        $base = ['first_name' => 'Jean', 'last_name' => 'Dupont', 'gender' => 'male'];
+
+        $future = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => now()->addDay()->format('Y-m-d')])
+            ->assertUnprocessable();
+        $this->assertStringContainsString("aujourd'hui", $future->json('errors.birth_date.0'));
+
+        $old = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => '1899-12-31'])
+            ->assertUnprocessable();
+        $this->assertStringContainsString('1er janvier 1900', $old->json('errors.birth_date.0'));
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => now()->format('Y-m-d')])->assertOk();
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => '31.12.1990'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['birth_date']);
     }
 
     // Mot de passe

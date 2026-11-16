@@ -287,4 +287,13 @@ return [
         'work' => 'travail',
         'year' => 'année',
     ],
+
+    // Bornes de date affichées dans les messages (before_or_equal:today…). Ajout du
+    // projet : à reporter si laravel-lang réécrit ce fichier.
+    'values' => [
+        'birth_date' => [
+            'today' => 'jour d\'aujourd\'hui',
+            '1900-01-01' => '1er janvier 1900',
+        ],
+    ],
 ];

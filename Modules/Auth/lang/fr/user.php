@@ -10,6 +10,12 @@ return [
     'last_name' => 'Nom',
     'avatar' => 'Photo de profil',
     'avatar_attribute' => 'photo de profil',
+    'gender' => 'Genre',
+    'genders' => [
+        'male' => 'Homme',
+        'female' => 'Femme',
+    ],
+    'birth_date' => 'Date de naissance',
     'locale' => 'Langue',
     'email' => 'Adresse e-mail',
     'password' => 'Mot de passe',

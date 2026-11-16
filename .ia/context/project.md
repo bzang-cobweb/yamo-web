@@ -41,7 +41,10 @@ elle est réputée vraie par construction.
   ressources Filament Utilisateurs, Rôles, Permissions (groupe « Accès »).
   Les permissions sont déclarées dans `Modules/Auth/app/Enums/PermissionEnum.php`
   et synchronisées en base par `AuthDatabaseSeeder`.
-  - `User` : `name` (pseudonyme, unique), `first_name`, `last_name`, `email`,
+  - `User` : `name` (pseudonyme, unique), `first_name`, `last_name`, `gender`
+    (`GenderEnum` male/female, `null` permis en base, exigé par le formulaire),
+    `birth_date` (date facultative), accesseurs `full_name` et `initials` (sans accent,
+    servis par l'API — l'app ne les recalcule pas), `email`,
     `locale` (valeurs de `config('app.supported_locales')`, domicile
     `App\Support\Locales`).
   - API mobile (`Modules/Auth/routes/api.php`) : `POST /api/v1/auth/login`
@@ -89,6 +92,9 @@ elle est réputée vraie par construction.
   `App\Exceptions\TranslatedApiErrors` (`lang/<langue>/api.php`). Un message propre
   à une policy est rendu tel quel. `SetLocale` passe avant l'authentification (ordre
   de priorité des middlewares), pour qu'un 401 sorte dans la langue de la requête.
+- **Bornes de date dans les messages** : `lang/<langue>/validation.php` porte une clé
+  `values` ajoutée par le projet (`today` → « aujourd'hui »…) : à reporter si
+  laravel-lang réécrit ce fichier.
 - **Formulaires** : titre et sous-titre facultatifs (`Form::title()`,
   `Form::subtitle()`). L'aide d'un champ (`Field::help()`) reste affichée même en
   cas d'erreur.

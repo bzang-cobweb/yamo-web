@@ -22,6 +22,8 @@ enum FieldType: string
     case CHECKBOX = 'checkbox';
     case CHECKBOX_GROUP = 'checkbox_group';
     case SWITCH = 'switch';
+    /** Date seule, au format `AAAA-MM-JJ`. */
+    case DATE = 'date';
 
     /**
      * Le champ propose une liste d'options.
@@ -46,6 +48,7 @@ enum FieldType: string
             self::SELECT, self::RADIO => ['string', Rule::in($optionValues)],
             self::CHECKBOX, self::SWITCH => ['boolean'],
             self::CHECKBOX_GROUP => ['array'],
+            self::DATE => ['date_format:Y-m-d'],
         };
     }
 }

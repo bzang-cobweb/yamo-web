@@ -36,6 +36,7 @@ class FieldTest extends TestCase
                     Field::checkbox('terms')->required(),
                     Field::checkboxGroup('tags')->options(['a' => 'A', 'b' => 'B']),
                     Field::switch('newsletter'),
+                    Field::date('birthday'),
                 ];
             }
 
@@ -122,5 +123,24 @@ class FieldTest extends TestCase
     public function test_attributes_use_field_labels(): void
     {
         $this->assertSame(['nickname' => 'Pseudonyme'], $this->form()->attributes());
+    }
+
+    public function test_a_date_field_accepts_only_yyyy_mm_dd_and_is_optional_unless_required(): void
+    {
+        $this->assertNotContains('birthday', $this->errors($this->valid()));
+        $this->assertNotContains('birthday', $this->errors([...$this->valid(), 'birthday' => null]));
+        $this->assertNotContains('birthday', $this->errors([...$this->valid(), 'birthday' => '1990-04-12']));
+        $this->assertContains('birthday', $this->errors([...$this->valid(), 'birthday' => '12.04.1990']));
+        $this->assertContains('birthday', $this->errors([...$this->valid(), 'birthday' => '1990-02-30']));
+    }
+
+    public function test_the_required_flag_is_sent_and_drives_the_rule(): void
+    {
+        $fields = collect($this->form()->fields())->keyBy('name');
+
+        $this->assertTrue($fields['nickname']->toArray()['required']);
+        $this->assertFalse($fields['birthday']->toArray()['required']);
+        $this->assertSame('required', $this->form()->rules()['nickname'][0]);
+        $this->assertSame('nullable', $this->form()->rules()['birthday'][0]);
     }
 }

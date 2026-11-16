@@ -33,7 +33,10 @@ class AuthApiTest extends TestCase
 
     public function test_login_returns_a_token_and_the_user_without_sensitive_data(): void
     {
-        $user = $this->user(['name' => 'jeanne', 'first_name' => 'Jeanne', 'last_name' => 'Dupont', 'locale' => 'en']);
+        $user = $this->user([
+            'name' => 'jeanne', 'first_name' => 'Jeanne', 'last_name' => 'Dupont', 'locale' => 'en',
+            'gender' => 'female', 'birth_date' => '1990-04-12',
+        ]);
 
         $response = $this->login()->assertOk();
 
@@ -43,6 +46,10 @@ class AuthApiTest extends TestCase
                 'name' => 'jeanne',
                 'first_name' => 'Jeanne',
                 'last_name' => 'Dupont',
+                'full_name' => 'Jeanne Dupont',
+                'initials' => 'JD',
+                'gender' => 'female',
+                'birth_date' => '1990-04-12',
                 'email' => 'jeanne@example.com',
                 'locale' => 'en',
                 'avatar_url' => null,

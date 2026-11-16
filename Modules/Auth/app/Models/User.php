@@ -14,8 +14,10 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Database\Factories\UserFactory;
+use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Services\AvatarService;
@@ -25,7 +27,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'first_name', 'last_name', 'email', 'locale', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'gender', 'birth_date', 'email', 'locale', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 #[UseFactory(UserFactory::class)]
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName
@@ -52,6 +54,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'gender' => GenderEnum::class,
+            'birth_date' => 'date',
         ];
     }
 
@@ -102,6 +106,25 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function getFilamentAvatarUrl(): ?string
     {
         return $this->avatarUrl();
+    }
+
+    /**
+     * Initiales pour l'avatar : première lettre du prénom et du nom, sinon du
+     * pseudonyme ; en majuscules et sans accent (« Élodie Ängel » → « EA »).
+     */
+    protected function initials(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $letters = collect([$this->first_name, $this->last_name])
+                ->map(fn (?string $part): string => mb_substr(trim((string) $part), 0, 1))
+                ->implode('');
+
+            if ($letters === '') {
+                $letters = mb_substr(trim((string) $this->name), 0, 1);
+            }
+
+            return Str::upper(Str::ascii($letters));
+        });
     }
 
     public function getFilamentName(): string

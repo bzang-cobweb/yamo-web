@@ -12,7 +12,7 @@ use Modules\Auth\Models\User;
 class UserResource extends JsonResource
 {
     /**
-     * @return array{id: int, name: string, first_name: string, last_name: string, email: string, locale: string, avatar_url: string|null}
+     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, email: string, locale: string, avatar_url: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -21,10 +21,23 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
+            'full_name' => $this->full_name,
+            'initials' => $this->initials,
+            'gender' => $this->gender?->value,
+            'birth_date' => $this->birthDate(),
             'email' => $this->email,
             'locale' => $this->locale,
             'avatar_url' => $this->avatarUrlFor($request),
         ];
+    }
+
+    /**
+     * Date de naissance seule, `AAAA-MM-JJ`, ou `null`. Méthode typée : le contrat
+     * OpenAPI ne sait pas typer le cast `date` lui-même.
+     */
+    private function birthDate(): ?string
+    {
+        return $this->resource->birth_date?->format('Y-m-d');
     }
 
     /**

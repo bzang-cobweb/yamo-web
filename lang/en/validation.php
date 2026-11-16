@@ -199,4 +199,12 @@ return [
 
     'attributes' => [],
 
+    // Bornes de date affichées dans les messages (before_or_equal:today…). Ajout du
+    // projet : à reporter si laravel-lang réécrit ce fichier.
+    'values' => [
+        'birth_date' => [
+            'today' => 'today',
+            '1900-01-01' => '1 January 1900',
+        ],
+    ],
 ];
