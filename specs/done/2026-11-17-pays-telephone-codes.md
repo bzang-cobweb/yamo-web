@@ -176,3 +176,74 @@
 - connexion Filament par code ;
 - régions des autres pays que la Suisse (à créer dans Filament) ;
 - afficher le statut en ligne dans l'app.
+
+## Ce que j'ai décidé seul
+
+- **Connexion par téléphone : format international obligatoire** (`+41 79 …` ou
+  `0041 …`). Sans pays choisi, un numéro national est ambigu ; l'aide du champ le dit.
+- **Seul un téléphone vérifié permet de se connecter.** Un numéro saisi dans Filament
+  sans vérification ne suffit pas.
+- **Erreur de connexion identique** pour un identifiant inconnu et un mot de passe faux
+  (`auth.failed`, sur `identifier`).
+- **Un défi par opération (UUID), un code par canal.** L'inscription avec e-mail et
+  téléphone demande l'e-mail puis le SMS ; l'API rend le prochain code à saisir (202).
+- **Validation du code : une route publique unique** (`POST /auth/codes/verify`), qui
+  aiguille selon l'opération. Un défi de changement n'est validable que par le compte
+  qui l'a ouvert (jeton lu s'il est présent). Renvoi : `POST /auth/codes/resend`.
+- **Réponses** : 202 et le défi tant qu'un code est attendu ; 201 avec le compte et
+  le jeton à la fin d'une inscription ; 200 sinon.
+- **Limites de fréquence** : connexion 5/min par identifiant et adresse IP ;
+  inscription 5/min par IP ; codes, changements et renvoi 10/min par IP.
+- **Unicité revérifiée à la validation du code** (après le qa-check) : une valeur prise
+  entre-temps par un autre compte est refusée proprement, pas par l'index unique.
+- **Le sélecteur de pays du téléphone n'est pas prérempli à l'inscription** : un
+  invité n'a pas de pays de profil.
+- Données de l'inscription en attente : chiffrées en base (`payload` chiffré), mot de
+  passe déjà haché.
+
+## Ce qui a été fait
+
+- **Partie A** — web `1247431`, mobile `9a05c86` : pays et régions (module
+  `Location`), téléphone, statut en ligne, champs `readonly`, listes dépendantes, types
+  `phone` et `code`. qa-check GO (`04-qa-check-partie-a.md`).
+- **Partie B, web** (`69fc8e4`) :
+  - table `verification_codes` et `VerificationCodeService` (6 chiffres hachés,
+    10 min, 5 essais, renvoi après 60 s) ;
+  - e-mail traduit, SMS par `SmsSender` → `LogSmsSender` ;
+  - contrôleurs et services Login, Register, EmailChange, PhoneChange, Verification ;
+  - formulaires `auth.register`, `auth.code`, `auth.profile.email`,
+    `auth.profile.phone` ;
+  - 164 tests, `openapi.json` régénéré.
+- **Partie B, mobile** (`e932262`) : `ChallengeFlow` (formulaire, puis code, renvoi,
+  retour) ; écrans connexion, Créer un compte, Ajouter/Changer l'e-mail et le numéro ;
+  un service par appel ; 69 tests.
+- **Simulateur iOS**, compte de test créé puis supprimé :
+  - inscription avec e-mail et téléphone, code e-mail lu dans Mailpit (dans la langue
+    de l'app), puis code SMS lu dans le journal ;
+  - le compte n'existe pas entre les deux codes ;
+  - changement de numéro : valeur actuelle en lecture seule avec son indicatif,
+    inchangée en base avant le code, puis confirmation ;
+  - connexion par téléphone : mot de passe seul → écran de code ; code faux refusé
+    (« Incorrect code. ») ; bon code → accueil.
+- **qa-check partie B** : GO, 0 bloquant (`qa-partie-b.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Changement d'e-mail dans le simulateur** : couvert par les tests API seulement
+  (formulaire affiché, pas envoyé).
+- **Renvoi du code et code expiré dans l'app** : couverts par les tests seulement.
+- **Android** et **remplissage automatique du code SMS** sur un vrai iPhone.
+- **Limites de fréquence de l'inscription et des codes** : déclarées, sans test du 429
+  (seule la connexion en a un).
+- **Essais concurrents** : `attempts` s'incrémente sans verrou ; quelques essais de
+  plus restent possibles en parallèle, bornés par la limite de fréquence.
+
+## Ce qui reste en suspens
+
+- **Fournisseur SMS réel** à choisir (hors périmètre). À ce moment, prévoir une
+  protection contre l'envoi massif vers des numéros quelconques depuis l'inscription.
+- **Ta session dans le simulateur** a été déconnectée pour les essais : il faut te
+  reconnecter, désormais avec mot de passe puis code reçu par e-mail (Mailpit).
+- **Deux liens « Retour »** sur l'écran de code d'un changement (celui du profil et
+  celui de l'étape) : fonctionnels, mais redondants.
+- **Mot de passe oublié** : hors périmètre, encore absent.
