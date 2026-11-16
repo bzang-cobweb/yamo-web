@@ -104,3 +104,66 @@ service mobile avec une méthode par appel.
 ## Hors périmètre
 
 Modifier l'e-mail ou le pseudonyme ; mot de passe oublié ; plus de deux onglets.
+
+---
+
+## Ce que j'ai décidé seul
+
+- **`FormBackedRequest`** (module Form) : une seule classe pour les FormRequest des
+  formulaires. Elle lit les règles et les libellés sur le formulaire, au lieu de
+  recopier ce mécanisme dans les trois requêtes.
+- **Mot de passe** :
+  - le nouveau doit être différent de l'ancien (`different:current_password`) ;
+  - une aide « 8 caractères au moins. » s'affiche sous le champ ;
+  - la route répond `204` (aucun contenu).
+- **Retour au profil** : par `router.dismissTo('/profile', { notice })`. Le message
+  découle du paramètre, sans état, et le paramètre est effacé quand on quitte le
+  profil.
+- **Liens du profil** : `Pressable` + `router.push`, et non `Link asChild`, qui
+  perdait le style calculé (défaut constaté dans le simulateur).
+- **Textes de l'accueil retirés** : `home.signedInAs`, `home.email`, `home.profile`.
+  `home.signOut` devient `profile.signOut`.
+- **Onglet Profil** : `popToTopOnBlur`. Revenir à l'onglet ramène au profil plutôt
+  qu'à un formulaire laissé ouvert.
+
+## Ce qui a été fait
+
+- **Web** (`16a7b94`) :
+  - trois formulaires (`auth.profile.personal`, `auth.profile.password`,
+    `auth.profile.preferences`), chacun avec son contrôleur, son service et sa
+    FormRequest ;
+  - suppression de `PATCH /api/v1/auth/me`, `UpdateMeRequest`,
+    `ProfileService::update` et `auth.profile.locale` ;
+  - textes de l'app ;
+  - 99 tests, `openapi.json` régénéré.
+- **Mobile** (`724a346`) :
+  - menu fixe à deux icônes ;
+  - accueil et profil ;
+  - trois écrans de formulaire et trois services ;
+  - `ApiClient.put` ;
+  - 44 tests, README.
+- **Simulateur iOS** (compte réel de l'humain, rien enregistré) :
+  - menu, profil complet, formulaire de mot de passe ;
+  - erreurs traduites sous chaque champ, avec l'aide conservée ;
+  - l'onglet Profil ramène au profil.
+- **Envois réels sur DDEV** (qa-check web, compte jetable) :
+  - les trois formulaires ;
+  - le changement de mot de passe garde l'appareil courant connecté et déconnecte
+    l'autre ;
+  - l'ancien mot de passe est refusé, le nouveau accepté.
+- **qa-check** : GO pour le web (`03-qa-check-web.md`) et GO pour le mobile
+  (`04-qa-check-mobile.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Enregistrement réussi depuis l'app** : retour au profil avec confirmation, nom mis
+  à jour à l'écran, bascule de langue après Préférences. L'app était connectée au
+  compte réel de l'humain, que je n'ai pas voulu modifier. Le chemin est couvert par
+  des tests (`ProfileFormScreen.test`) et l'API par l'envoi réel.
+- **Android**, et la lecture du menu par VoiceOver.
+
+## Ce qui reste en suspens
+
+- **Gestion des erreurs d'API** : elle reste dupliquée entre `DynamicForm`,
+  `FormLoader` et `AvatarPicker`. Signalé depuis deux chantiers.
+- **Pseudonyme et e-mail** : pas modifiables depuis l'app (hors périmètre).
