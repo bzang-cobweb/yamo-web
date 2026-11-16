@@ -127,3 +127,74 @@
 
 Textes modifiables depuis Filament ; textes gardés sur le téléphone pour un usage hors
 ligne ; textes du back-office Filament (déjà traduits par Laravel).
+
+---
+
+## Ce que j'ai décidé seul
+
+- **L'écran hors ligne couvre aussi un serveur injoignable**, et pas seulement l'absence
+  de réseau. L'essai réel l'a imposé : DDEV arrêté, son routeur répond 404. L'app
+  démarrait alors sans textes, affichait des clés brutes et renvoyait à la connexion
+  alors que la session était valide. Désormais, tout échec de chargement au démarrage
+  (langues, compte, textes) affiche l'écran local, sauf un jeton refusé, qui renvoie à
+  la connexion. Le message est élargi : « Connexion impossible. Vérifiez votre connexion
+  internet, puis réessayez. »
+- **Ordre des middlewares** : `SetLocale` passe avant l'authentification. Sans cela, un
+  401 sortait dans la langue par défaut, quelle que soit la langue demandée.
+- **Le 403 est traduit en plus du 401**, avec la même règle : seuls les messages par
+  défaut de Laravel sont remplacés, et un message propre à une policy est conservé (test
+  dédié).
+- **Textes servis aplatis**, sans préfixe de module. Un test interdit deux sources de
+  déclarer la même clé.
+- **Bouton Réessayer d'un formulaire** : local quand le réseau manque, servi par l'API
+  (`form.retry`) pour une autre erreur. Il remplace le glyphe `↻`.
+- **Rangement des médias** : le module et le champ sont en minuscules avec tirets
+  (`event-booking/cover-image`).
+
+## Ce qui a été fait
+
+- **Web** (`41f2c0d`) :
+  - `GET /api/v1/messages` : 21 textes, servis depuis les fichiers `mobile.php` de
+    l'application et des modules Auth et Form ;
+  - titre et sous-titre de `Form` : connexion « Se connecter » / « Sign in » ;
+  - aide sur le champ Langue ;
+  - 401 et 403 traduits ;
+  - médias rangés sous `<module>/<champ>/<uuid>/` ;
+  - 91 tests, `openapi.json` régénéré.
+- **Mobile** (`742e9ea`) :
+  - textes servis par l'API, rechargés au changement de langue sans démonter la
+    navigation ;
+  - `OfflineScreen` local avec Réessayer ;
+  - titre et sous-titre dans `DynamicForm` ;
+  - aide et erreur distinctes, plus de double aide ;
+  - 32 tests, README.
+- **Simulateur iOS** :
+  - connexion avec le titre et le sous-titre de l'API, dans la langue de l'appareil ;
+  - textes du compte une fois connecté ;
+  - aide sous le champ Langue ;
+  - passage en anglais sans quitter le Profil ;
+  - écran hors ligne avec DDEV arrêté, puis Réessayer → accueil, session conservée.
+- **qa-check** : GO pour le web (`03-qa-check-web.md`) et GO pour le mobile
+  (`04-qa-check-mobile.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Coupure réseau réelle** (mode avion) : seul le cas « serveur arrêté » a été joué.
+  La coupure réseau passe par le même chemin dans le code.
+- **Démarrage hors ligne, 401 au démarrage, conservation des textes au changement de
+  langue** : vérifiés dans le simulateur, mais aucun test automatisé ne couvre cette
+  logique d'`AuthProvider`.
+- **Envoi réel d'une photo par Filament** dans le nouveau rangement : couvert par un
+  test Livewire seulement.
+- **Android**.
+- **Un serveur qui ne répond jamais** : le client API n'a pas de délai d'expiration, et
+  l'app attendrait sur l'écran de démarrage.
+
+## Ce qui reste en suspens
+
+- **Délai d'expiration des requêtes** côté mobile (voir ci-dessus).
+- **Textes natifs figés au build** : celui de la demande d'accès aux photos d'iOS
+  (`photosPermission`, `app.json`) ne peut pas venir de l'API.
+- **Glyphes décoratifs** (`←`, `*`, `✓`) laissés dans l'app.
+- **Repli `field.label ?? field.name`** dans les libellés d'accessibilité (relevé
+  mineur de qa-check).
