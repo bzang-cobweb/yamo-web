@@ -18,5 +18,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::get('me', [ProfileController::class, 'show'])->can('me', User::class)->name('me');
         Route::patch('me', [ProfileController::class, 'update'])->can('updateMe', User::class)->name('me.update');
+        Route::post('me/avatar', [ProfileController::class, 'updateAvatar'])->can('updateMe', User::class)->name('me.avatar.update');
+        Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
     });
 });

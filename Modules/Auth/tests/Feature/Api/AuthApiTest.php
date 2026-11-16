@@ -45,6 +45,7 @@ class AuthApiTest extends TestCase
                 'last_name' => 'Dupont',
                 'email' => 'jeanne@example.com',
                 'locale' => 'en',
+                'avatar_url' => null,
             ],
             'token' => $response->json('token'),
         ]);

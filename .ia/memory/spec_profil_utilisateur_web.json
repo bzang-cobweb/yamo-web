@@ -1,0 +1,330 @@
+{
+  "concept": "profil_utilisateur_web",
+  "titre": "Profil utilisateur (web) — état avant l'ajout d'une photo de profil",
+  "chantier": "2026-11-16-photo-de-profil",
+  "tache": "01",
+  "date_audit": "2026-11-16",
+  "stack": "Laravel 13 / Filament 5 / Sanctum / nwidart modules / spatie medialibrary 11",
+  "profondeur": "Enveloppe remplie sans le texte du skill bza-dev:audit-source ni bza-laravel:audit-laravel chargé dans cette session : structure reconstituée, voir incertitudes.",
+  "fichiers_lus": [
+    "Modules/Auth/app/Models/User.php",
+    "Modules/Auth/app/Http/Resources/UserResource.php",
+    "Modules/Auth/app/Http/Controllers/Api/ProfileController.php",
+    "Modules/Auth/app/Http/Controllers/Api/LoginController.php",
+    "Modules/Auth/app/Services/ProfileService.php",
+    "Modules/Auth/app/Services/LoginService.php",
+    "Modules/Auth/app/Http/Requests/UpdateMeRequest.php",
+    "Modules/Auth/app/Forms/ProfileLocaleForm.php",
+    "Modules/Auth/routes/api.php",
+    "Modules/Auth/app/Providers/RouteServiceProvider.php",
+    "Modules/Auth/app/Providers/AuthServiceProvider.php",
+    "Modules/Auth/app/Policies/UserPolicy.php",
+    "Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php",
+    "Modules/Auth/app/Enums/PermissionEnum.php",
+    "Modules/Auth/app/Filament/Resources/UserResource.php",
+    "Modules/Auth/app/Filament/Resources/AbstractAuthResource.php",
+    "app/Filament/AbstractResource.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/CreateUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/EditUser.php",
+    "Modules/Auth/app/Filament/Resources/UserResource/Pages/ListUsers.php",
+    "app/Providers/Filament/AdminPanelProvider.php",
+    "app/Providers/AppServiceProvider.php",
+    "app/Http/Middleware/SetLocale.php",
+    "app/Http/Middleware/UseSanctumGuard.php",
+    "bootstrap/app.php",
+    "config/media-library.php",
+    "config/filesystems.php",
+    "config/queue.php (ligne 16 seulement)",
+    "config/app.php (ligne 55 seulement)",
+    "database/migrations/2026_11_15_140203_create_media_table.php",
+    "Modules/Auth/lang/fr/user.php",
+    "Modules/Auth/lang/en/user.php",
+    "phpunit.xml",
+    ".ddev/config.yaml (lignes 1-40, 254-263)",
+    "composer.json (lignes 14, 20, 25, 84 par grep)",
+    "composer.lock (lignes 1563, 5639, 5714, 5836)",
+    "tests/TestCase.php",
+    "tests/Feature/RouteGuardTest.php",
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php",
+    "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php (lignes 95-146)",
+    "Modules/Auth/tests/Feature/Filament/AuthFilamentTestCase.php",
+    "Modules/Auth/tests/Feature/Filament/UserResourceTest.php",
+    "Modules/Auth/tests/Feature/Filament/UserDeletionTokensTest.php",
+    "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php",
+    "vendor/filament/filament/src/FilamentManager.php (lignes 575-595)",
+    "vendor/filament/filament/src/Models/Contracts/HasAvatar.php",
+    "vendor/filament/filament/src/AvatarProviders/UiAvatarsProvider.php (ligne 29)",
+    "vendor/filament/filament/src/Panel/Concerns/HasAvatars.php (lignes 6-12)",
+    "vendor/spatie/laravel-medialibrary/src/Support/PathGenerator/DefaultPathGenerator.php (grep)",
+    "vendor/spatie/laravel-medialibrary/src/Support/UrlGenerator/DefaultUrlGenerator.php (grep)"
+  ],
+  "dependances": [
+    { "paquet": "spatie/laravel-medialibrary", "version": "11.23.13", "preuve": "composer.lock:5836 ; composer.json:20" },
+    { "paquet": "filament/spatie-laravel-media-library-plugin", "version": "v5.11.3", "preuve": "composer.lock:1563 ; composer.json:14" },
+    { "paquet": "spatie/image", "version": "3.9.10", "preuve": "composer.lock:5639" },
+    { "paquet": "spatie/image-optimizer", "version": "1.10.1", "preuve": "composer.lock:5714" },
+    { "paquet": "dedoc/scramble", "version": "^0.13.54", "preuve": "composer.json:25 ; export `scramble:export --fail-on-unknown` composer.json:84" }
+  ],
+  "modele": {
+    "classe": "Modules\\Auth\\Models\\User",
+    "fichier": "Modules/Auth/app/Models/User.php",
+    "etend": "Illuminate\\Foundation\\Auth\\User (User.php:14,25)",
+    "implemente": ["FilamentUser", "HasLocalePreference", "HasName (User.php:25)"],
+    "n_implemente_pas": ["Spatie\\MediaLibrary\\HasMedia", "Filament\\Models\\Contracts\\HasAvatar (User.php:5-8,25)"],
+    "traits": ["HasApiTokens", "HasFactory", "HasRoles", "Notifiable (User.php:28)"],
+    "fillable": ["name", "first_name", "last_name", "email", "locale", "password (User.php:22, attribut PHP #[Fillable])"],
+    "hidden": ["password", "remember_token (User.php:23)"],
+    "factory": "UserFactory via #[UseFactory] (User.php:24)",
+    "casts": { "email_verified_at": "datetime", "password": "hashed", "preuve": "User.php:44-50" },
+    "accesseurs": [{ "nom": "full_name", "valeur": "trim(first_name.' '.last_name)", "preuve": "User.php:55-58" }],
+    "evenements": [{ "evenement": "deleting", "effet": "supprime les jetons Sanctum ($user->tokens()->delete())", "preuve": "User.php:34-37" }],
+    "methodes": [
+      { "nom": "getFilamentName", "retour": "full_name", "preuve": "User.php:60-63" },
+      { "nom": "preferredLocale", "retour": "locale", "preuve": "User.php:65-68" },
+      { "nom": "canAccessPanel", "regle": "super admin ou permission admin.access", "preuve": "User.php:70-73" },
+      { "nom": "isSuperAdmin", "regle": "hasRole(RoleEnum::SUPER_ADMIN)", "preuve": "User.php:75-78" }
+    ],
+    "collections_media": "aucune : pas de registerMediaCollections ni registerMediaConversions (User.php entier) ; aucun modèle de app/ ni Modules/ n'utilise HasMedia/InteractsWithMedia (grep -rl vide)",
+    "ou_ajouter_la_collection": "Dans User.php : implémenter HasMedia (à côté de User.php:25), ajouter InteractsWithMedia à la liste de traits (User.php:28), puis registerMediaCollections()/registerMediaConversions() comme méthodes du modèle. booted() (User.php:34-37) existe déjà : si la suppression des fichiers doit y être ajoutée, l'ajouter dans la même méthode."
+  },
+  "table_media": {
+    "migration": "database/migrations/2026_11_15_140203_create_media_table.php",
+    "colonnes_utiles": [
+      "morphs('model') (ligne 14)",
+      "uuid nullable unique (ligne 15)",
+      "collection_name (16), name (17), file_name (18), mime_type (19)",
+      "disk (20), conversions_disk nullable (21), size (22)",
+      "manipulations, custom_properties, generated_conversions, responsive_images en json (23-26)",
+      "order_column (27), timestamps nullables (29)"
+    ]
+  },
+  "api": {
+    "montage_routes": "Route::middleware('api')->prefix('api')->name('api.') (Modules/Auth/app/Providers/RouteServiceProvider.php:48)",
+    "middleware_groupe_api": "UseSanctumGuard puis SetLocale ajoutés au groupe api (bootstrap/app.php:18) ; exceptions rendues en JSON pour api/* (bootstrap/app.php:21-23)",
+    "routes": [
+      { "methode": "POST", "uri": "api/v1/auth/login", "action": "LoginController@login", "garde": "throttle:auth-login, pas de can:", "preuve": "Modules/Auth/routes/api.php:13-15" },
+      { "methode": "POST", "uri": "api/v1/auth/logout", "action": "LogoutController@logout", "garde": "auth:sanctum, pas de can:", "preuve": "Modules/Auth/routes/api.php:18" },
+      { "methode": "GET", "uri": "api/v1/auth/me", "action": "ProfileController@show", "garde": "auth:sanctum + ->can('me', User::class)", "nom": "api.v1.auth.me", "preuve": "Modules/Auth/routes/api.php:17,19" },
+      { "methode": "PATCH", "uri": "api/v1/auth/me", "action": "ProfileController@update", "garde": "auth:sanctum + ->can('updateMe', User::class)", "nom": "api.v1.auth.me.update", "preuve": "Modules/Auth/routes/api.php:17,20" }
+    ],
+    "ou_ajouter_les_routes": "Dans le groupe auth:sanctum de Modules/Auth/routes/api.php:17-21, à la suite de me/me.update, avec ->can(...) (commentaire de convention api.php:9-10).",
+    "controleur": {
+      "classe": "Modules\\Auth\\Http\\Controllers\\Api\\ProfileController (pas de classe parente)",
+      "show": "renvoie new UserResource($request->user()) (ProfileController.php:19-22)",
+      "update": "UpdateMeRequest + ProfileService injectés, renvoie new UserResource($service->update($user, $request->validated())) (ProfileController.php:28-34)"
+    },
+    "service": {
+      "classe": "Modules\\Auth\\Services\\ProfileService (final)",
+      "methodes": [{ "nom": "update(User $user, array $data): User", "effet": "$user->update($data) puis retourne $user", "preuve": "ProfileService.php:18-23" }],
+      "remarque": "Aucune méthode liée aux médias aujourd'hui (ProfileService.php entier)."
+    },
+    "form_request": {
+      "classe": "Modules\\Auth\\Http\\Requests\\UpdateMeRequest",
+      "authorize": "$this->user()?->can('updateMe', User::class) ?? false — même capacité que la garde de route (UpdateMeRequest.php:17-22)",
+      "rules": "déléguées à ProfileLocaleForm::rules() (UpdateMeRequest.php:27-30,40-43)",
+      "attributes": "déléguées à ProfileLocaleForm::attributes() (UpdateMeRequest.php:35-38)",
+      "formulaire_lie": "ProfileLocaleForm, nom 'auth.profile.locale', un seul champ select 'locale' requis (Modules/Auth/app/Forms/ProfileLocaleForm.php:16-30) ; inscrit au FormRegistry (AuthServiceProvider.php:34-36)"
+    },
+    "ressource_json": {
+      "classe": "Modules\\Auth\\Http\\Resources\\UserResource",
+      "champs": ["id", "name", "first_name", "last_name", "email", "locale"],
+      "preuve": "Modules/Auth/app/Http/Resources/UserResource.php:19-26",
+      "phpdoc_forme": "@return array{id: int, name: string, first_name: string, last_name: string, email: string, locale: string} (UserResource.php:15) — lu par Scramble pour openapi.json (déduction de l'usage de Scramble, composer.json:25,84)",
+      "utilisateurs": [
+        "ProfileController::show (ProfileController.php:21)",
+        "ProfileController::update (ProfileController.php:33)",
+        "LoginController::login, avec ->additional(['token' => …]) (LoginController.php:24-27)"
+      ],
+      "requete_disponible": "toArray(Request $request) reçoit la requête (UserResource.php:17) : c'est là qu'un hôte/scheme de requête est accessible."
+    },
+    "langue_des_reponses": "SetLocale : langue du compte connecté par jeton, sinon Accept-Language, sinon défaut (app/Http/Middleware/SetLocale.php:20-26)"
+  },
+  "policy": {
+    "classe": "Modules\\Auth\\Policies\\UserPolicy",
+    "enregistrement": "Gate::policy(User::class, UserPolicy::class) (Modules/Auth/app/Providers/AuthServiceProvider.php:29)",
+    "before": "refuse 'delete' de son propre compte, même au super admin (UserPolicy.php:16-21), sinon super admin => true via HasBeforeAbility (UserPolicy.php:23 ; Concerns/HasBeforeAbility.php:13-16)",
+    "organisation": "chaque méthode distingue Filament::isServing() (permissions PermissionEnum) du site/API (règle « son propre compte ») (UserPolicy.php:26-103)",
+    "abilities": [
+      { "nom": "viewAny", "filament": "users.view", "hors_filament": "false", "preuve": "UserPolicy.php:26-34" },
+      { "nom": "view", "filament": "users.view", "hors_filament": "$model->is($user)", "preuve": "UserPolicy.php:36-44" },
+      { "nom": "me", "regle": "$this->view($user, $user)", "preuve": "UserPolicy.php:50-53" },
+      { "nom": "updateMe", "regle": "$this->update($user, $user)", "preuve": "UserPolicy.php:59-62" },
+      { "nom": "create", "filament": "users.create", "hors_filament": "false", "preuve": "UserPolicy.php:64-72" },
+      { "nom": "update", "filament": "users.update", "hors_filament": "$model->is($user)", "preuve": "UserPolicy.php:74-82" },
+      { "nom": "delete", "filament": "users.delete et pas soi-même", "hors_filament": "false", "preuve": "UserPolicy.php:84-93" },
+      { "nom": "deleteAny", "filament": "users.delete", "hors_filament": "false", "preuve": "UserPolicy.php:95-103" }
+    ],
+    "permissions": "Modules/Auth/app/Enums/PermissionEnum.php:11-23 (admin.access, users.view/create/update/delete, roles.*, permissions.view)",
+    "remarque": "me et updateMe ne prennent pas de modèle en argument : utilisés par ->can('me'|'updateMe', User::class) (api.php:19-20). Une nouvelle ability (ex. pour l'avatar) se déclare de la même façon, ou réutilise updateMe."
+  },
+  "filament": {
+    "ressource": {
+      "classe": "Modules\\Auth\\Filament\\Resources\\UserResource extends AbstractAuthResource (UserResource.php:16)",
+      "chaine_heritage": "AbstractAuthResource (groupe de navigation auth::navigation.group, AbstractAuthResource.php:12-15) -> App\\Filament\\AbstractResource (actions Edit/Delete, bulk Delete avec authorizeIndividualRecords('delete'), AbstractResource.php:22-42)",
+      "form": "UserForm::configure (UserResource.php:26-29)",
+      "table": "UserTable::configure (UserResource.php:31-34)",
+      "pages": "index ListUsers '/', create CreateUser '/create', edit EditUser '/{record}/edit' (UserResource.php:36-43)",
+      "titre": "recordTitleAttribute last_name (UserResource.php:24) ; getRecordTitle => full_name (UserResource.php:45-48)",
+      "recherche_globale": "name, first_name, last_name, email (UserResource.php:50-53)"
+    },
+    "formulaire": {
+      "fichier": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php",
+      "structure": "Schema columns(1) avec deux sections : getGeneralSection, getAccessSection (UserForm.php:17-25)",
+      "section_generale": "Section 'auth::user.sections.general', columns(2) : name (unique, requis, pleine largeur), first_name, last_name, email (unique), locale (Select Locales::options, défaut Locales::default), password (requis à la création seulement, déshydraté si rempli) (UserForm.php:27-68)",
+      "section_acces": "Select roles multiple, relation roles, super_admin masqué aux non-super-admins (UserForm.php:70-88)",
+      "ou_ajouter_le_champ_photo": "Dans getGeneralSection (UserForm.php:31-67) ou une section dédiée ajoutée à components (UserForm.php:21-24). Composant disponible : Filament\\Forms\\Components\\SpatieMediaLibraryFileUpload (vendor/filament/spatie-laravel-media-library-plugin/src/Forms/Components/SpatieMediaLibraryFileUpload.php)."
+    },
+    "table": {
+      "fichier": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php",
+      "tri_defaut": "last_name (UserTable.php:16)",
+      "colonnes": "name, first_name, last_name, email (triables, cherchables), locale (badge, libellé Locales::label), roles.name (badge), created_at (masquée par défaut) (UserTable.php:17-47)",
+      "filtres": "roles (relation, multiple), locale (UserTable.php:48-57)",
+      "actions": "UserResource::getActions() / getBulkActions() (UserTable.php:58-59)",
+      "ou_ajouter_la_vignette": "Première entrée du tableau columns (UserTable.php:17). Composant disponible : Filament\\Tables\\Columns\\SpatieMediaLibraryImageColumn (vendor/filament/spatie-laravel-media-library-plugin/src/Tables/Columns/SpatieMediaLibraryImageColumn.php)."
+    },
+    "pages": [
+      { "classe": "CreateUser extends CreateRecord, sans surcharge", "preuve": "Pages/CreateUser.php:8-11" },
+      { "classe": "EditUser extends EditRecord", "surcharges": "getHeaderActions => [DeleteAction] ; getBreadcrumb => full_name", "preuve": "Pages/EditUser.php:9-24" },
+      { "classe": "ListUsers extends ListRecords", "surcharges": "getHeaderActions => [CreateAction]", "preuve": "Pages/ListUsers.php:9-19" }
+    ],
+    "panel": {
+      "fichier": "app/Providers/Filament/AdminPanelProvider.php",
+      "id_path": "admin / admin (AdminPanelProvider.php:29-32)",
+      "decouverte_modules": "ressources/pages/widgets de chaque module actif (AdminPanelProvider.php:35-41)",
+      "avatar": "aucun réglage d'avatar dans le panel (AdminPanelProvider.php:43-75) ; aucun defaultAvatarProvider appelé",
+      "resolution_avatar_filament": "FilamentManager::getUserAvatarUrl : si l'utilisateur implémente HasAvatar => getFilamentAvatarUrl(), sinon getAttributeValue('avatar_url') ; si rempli => url($avatar) (sauf data:image/), sinon fournisseur par défaut (vendor/filament/filament/src/FilamentManager.php:580-592)",
+      "fournisseur_par_defaut": "UiAvatarsProvider (vendor/filament/filament/src/Panel/Concerns/HasAvatars.php:10), qui renvoie une URL https://ui-avatars.com/api/?name=…&format=svg (vendor/filament/filament/src/AvatarProviders/UiAvatarsProvider.php:29) : les « initiales » actuelles de la barre du haut viennent de ce service externe.",
+      "contrat_hasavatar": "public function getFilamentAvatarUrl(): ?string (vendor/filament/filament/src/Models/Contracts/HasAvatar.php:7)"
+    }
+  },
+  "configuration": {
+    "media_library": {
+      "fichier": "config/media-library.php",
+      "disk_name": "env('MEDIA_DISK', 'public') (ligne 36)",
+      "conversions_disk_name": "env('MEDIA_CONVERSIONS_DISK', null) => même disque que l'original (ligne 47)",
+      "max_file_size": "10 Mo (ligne 53)",
+      "disallowed_extensions": "FileAdder::$defaultDisallowedExtensions (ligne 65)",
+      "allowed_extensions": "null (ligne 75)",
+      "queue_connection_name": "env('QUEUE_CONNECTION', 'sync') (ligne 81)",
+      "queue_name": "env('MEDIA_QUEUE', '') (ligne 87)",
+      "queue_conversions_by_default": "env('QUEUE_CONVERSIONS_BY_DEFAULT', true) (ligne 92)",
+      "queue_conversions_after_database_commit": "env(..., true) (ligne 97)",
+      "file_namer": "DefaultFileNamer (ligne 139)",
+      "path_generator": "DefaultPathGenerator (ligne 144)",
+      "custom_path_generators": "vide, accepte Model::class => PathGenerator::class (lignes 154-158)",
+      "url_generator": "DefaultUrlGenerator (ligne 164)",
+      "moves_media_on_update": "false (ligne 170)",
+      "version_urls": "false (ligne 176)",
+      "image_optimizers": "Jpegoptim, Pngquant, Optipng, Svgo, Gifsicle, Cwebp, Avifenc (lignes 183-221)",
+      "image_driver": "env('IMAGE_DRIVER', 'gd') (ligne 245)",
+      "prefix": "env('MEDIA_PREFIX', '') (ligne 356)"
+    },
+    "chemins_medialibrary": "DefaultPathGenerator : base = [prefix/]{media->getKey()} ; original dans {base}/, conversions dans {base}/conversions/, responsive dans {base}/responsive-images/ (vendor/spatie/laravel-medialibrary/src/Support/PathGenerator/DefaultPathGenerator.php:12-44)",
+    "url_medialibrary": "DefaultUrlGenerator::getUrl => $this->getDisk()->url(chemin) (vendor/spatie/laravel-medialibrary/src/Support/UrlGenerator/DefaultUrlGenerator.php:12)",
+    "filesystems": {
+      "fichier": "config/filesystems.php",
+      "default": "env('FILESYSTEM_DISK', 'local') (ligne 16)",
+      "public": "driver local, root storage_path('app/public'), url rtrim(env('APP_URL', 'http://localhost'), '/').'/storage', visibility public (lignes 41-48)",
+      "links": "public_path('storage') => storage_path('app/public') (lignes 76-78)"
+    },
+    "queue": "connexion par défaut env('QUEUE_CONNECTION', 'database') (config/queue.php:16)",
+    "app_url": "env('APP_URL', 'http://localhost') (config/app.php:55)",
+    "tests": "QUEUE_CONNECTION=sync, SQLite mémoire (phpunit.xml:30-31,34) ; suite Modules = Modules/*/tests (phpunit.xml:14-16)"
+  },
+  "environnement_constate": {
+    "public_storage": "public/storage est un DOSSIER réel, pas un lien symbolique (stat => Directory, readlink vide), sur l'hôte comme dans le conteneur ; il contient seulement app/public/ vide. storage/app/public ne contient que .gitignore. public/storage est ignoré par git (.gitignore:23).",
+    "ddev_upload_dirs": "upload_dirs: storage/app/public (.ddev/config.yaml:12-13), docroot public (.ddev/config.yaml:3)",
+    "file_d_attente": "web_extra_daemons commenté (.ddev/config.yaml:263) ; aucun processus queue:work dans le conteneur (ddev exec ps aux | grep -c queue:work => 0)",
+    "extensions_conteneur": "gd et imagick chargés ; imagecreatefromwebp et imageavif présents ; Imagick::queryFormats contient AVIF, HEIC, HEIF, WEBP ; gd_info() sans clé 'HEIF Support' (ddev exec php -r)",
+    "extensions_hote": "PHP 8.4.1, gd chargé avec imagewebp, imagick absent (php -r sur l'hôte) — les tests tournent sur l'hôte",
+    "optimiseurs_conteneur": "cwebp, jpegoptim, pngquant, optipng, gifsicle, avifenc absents (command -v dans ddev exec)"
+  },
+  "traductions": {
+    "fichiers": "Modules/Auth/lang/fr/user.php, Modules/Auth/lang/en/user.php",
+    "cles_existantes": "singular, plural, title, name, name_help, first_name, last_name, locale, email, password, device_name, password_help, created_at, created, sections.general, sections.access (fr/user.php:4-21 ; en/user.php:4-21)",
+    "remarque": "Aucune clé pour une photo/avatar aujourd'hui ; device_name sert d'attribut de validation (fr/user.php:14)."
+  },
+  "tests_existants": [
+    { "fichier": "tests/Feature/RouteGuardTest.php", "objet": "toute route de contrôleur App\\ ou Modules\\*\\Http\\Controllers\\ porte un middleware can: sauf WITHOUT_CAN (login, logout, locales) ; et la liste d'exceptions ne nomme que des routes existantes", "preuve": "RouteGuardTest.php:16-20,22-42,44-51" },
+    { "fichier": "Modules/Auth/tests/Feature/Api/AuthApiTest.php", "objet": "login (réponse exacte data = 6 champs + token), erreurs, throttle, me (200/401/langue), logout, ancienne route /api/user absente", "preuve": "AuthApiTest.php:34-171", "point_sensible": "assertExactJson sur data (AuthApiTest.php:40-50) : tout champ ajouté à UserResource (ex. avatar_url) fait échouer ce test, car LoginController renvoie UserResource (LoginController.php:24)." },
+    { "fichier": "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php", "objet": "PATCH me : change la langue, refuse une langue indisponible (422), ignore les champs hors formulaire, 401 sans jeton", "preuve": "FormsAndLocalesApiTest.php:99-145" },
+    { "fichier": "Modules/Auth/tests/Feature/Filament/AuthFilamentTestCase.php", "objet": "base Filament : RefreshDatabase, seed AuthDatabaseSeeder, panel admin, serving ; actingAsUserWith(...permissions) et actingAsSuperAdmin()", "preuve": "AuthFilamentTestCase.php:13-46" },
+    { "fichier": "Modules/Auth/tests/Feature/Filament/UserResourceTest.php", "objet": "liste (droits, tri, recherche), création (rôle, langue, champs requis, unicité), édition (mot de passe conservé, droits), suppression (pas soi-même, bulk)", "preuve": "UserResourceTest.php:18-224" },
+    { "fichier": "Modules/Auth/tests/Feature/Filament/UserDeletionTokensTest.php", "objet": "suppression d'un compte (code, page d'édition, bulk) révoque ses jetons — prouve que les trois chemins déclenchent les événements du modèle", "preuve": "UserDeletionTokensTest.php:34-68" },
+    { "fichier": "Modules/Auth/tests/Feature/PolicyOutsideFilamentTest.php", "objet": "hors Filament : chacun voit/modifie son propre compte ; permissions back-office sans effet ; super admin ; accès panel", "preuve": "PolicyOutsideFilamentTest.php:28-79" }
+  ],
+  "pieges": [
+    {
+      "id": "conversions_en_file",
+      "constat": "queue_conversions_by_default vaut true par défaut (config/media-library.php:92) et la connexion des conversions vient de QUEUE_CONNECTION (ligne 81) ; la connexion par défaut de l'appli est 'database' (config/queue.php:16) ; aucun worker ne tourne dans DDEV (web_extra_daemons commenté, .ddev/config.yaml:263 ; aucun queue:work).",
+      "consequence": "Une conversion sans ->nonQueued() risque de n'être jamais générée en local ; les tests ne le verraient pas car phpunit force QUEUE_CONNECTION=sync (phpunit.xml:34).",
+      "reserve": "La valeur réelle de QUEUE_CONNECTION dans .env n'a pas été lue (garde-fou du projet)."
+    },
+    {
+      "id": "chemins_devinables",
+      "constat": "path_generator = DefaultPathGenerator (config/media-library.php:144), qui range sous la clé numérique du média (DefaultPathGenerator.php:36-44) ; custom_path_generators vide (lignes 154-158).",
+      "consequence": "URL de la forme /storage/{id}/… : séquentielle. La table media a une colonne uuid unique (create_media_table.php:15) utilisable par un PathGenerator dédié, enregistrable globalement (ligne 144) ou pour User seul (lignes 154-158).",
+      "reserve": "moves_media_on_update=false (ligne 170) : sans effet tant que le chemin ne dépend que de l'uuid."
+    },
+    {
+      "id": "url_depuis_app_url",
+      "constat": "Le disque public construit son URL depuis APP_URL + '/storage' (config/filesystems.php:44) et DefaultUrlGenerator passe par $disk->url() (DefaultUrlGenerator.php:12).",
+      "consequence": "getUrl()/getFirstMediaUrl() renvoient l'hôte et le schéma d'APP_URL quel que soit l'hôte de la requête ; le contrat demande que avatar_url suive l'hôte de la requête (UserResource::toArray reçoit $request, UserResource.php:17).",
+      "reserve": "La valeur d'APP_URL n'a pas été lue (.env, garde-fou) ; project.md donne https://yamo.ddev.site comme URL locale."
+    },
+    {
+      "id": "public_storage_pas_un_lien",
+      "constat": "public/storage est un dossier réel (hôte et conteneur), pas le lien prévu par filesystems.php:76-78 ; DDEV déclare upload_dirs storage/app/public avec docroot public (.ddev/config.yaml:3,12-13).",
+      "consequence": "Les fichiers écrits dans storage/app/public ne sont pas servis sous /storage tant que ce dossier occupe la place du lien ; storage:link échouera tant qu'il existe.",
+      "reserve": "Hypothèse non vérifiée : DDEV interprète upload_dirs relativement au docroot et crée public/storage/app/public. À confirmer avant de corriger (correction hors du périmètre de cet audit)."
+    },
+    {
+      "id": "login_renvoie_userresource",
+      "constat": "LoginController renvoie UserResource (LoginController.php:24) et AuthApiTest vérifie la réponse exacte (AuthApiTest.php:40-50).",
+      "consequence": "Ajouter avatar_url modifie aussi la réponse de login et casse ce test : à mettre à jour, avec le PHPDoc de forme (UserResource.php:15) pour openapi.json."
+    },
+    {
+      "id": "updateme_lie_au_module_form",
+      "constat": "UpdateMeRequest tire ses règles de ProfileLocaleForm (UpdateMeRequest.php:27-43) ; le module Form n'a pas de type fichier (types listés dans .ia/context/project.md).",
+      "consequence": "L'envoi de l'avatar ne passe pas par UpdateMeRequest ; le contrat prévoit un composant hors module Form. Modèle d'authorize à reprendre : UpdateMeRequest.php:19-22."
+    },
+    {
+      "id": "garde_can_obligatoire",
+      "constat": "RouteGuardTest échoue pour toute route de contrôleur sans can: hors liste WITHOUT_CAN (RouteGuardTest.php:16-20,33-41).",
+      "consequence": "Les routes POST/DELETE me/avatar doivent porter ->can(...), par exemple 'updateMe' (api.php:20), pour passer sans nouvelle exception (critère 9 du contrat)."
+    },
+    {
+      "id": "taille_max",
+      "constat": "max_file_size medialibrary = 10 Mo (config/media-library.php:53) ; le contrat demande 5 Mo.",
+      "consequence": "La limite de 5 Mo doit être portée par la validation (FormRequest, champ Filament) ; la limite medialibrary seule laisserait passer jusqu'à 10 Mo."
+    },
+    {
+      "id": "driver_image_et_heic",
+      "constat": "image_driver gd par défaut (config/media-library.php:245) ; dans le conteneur, gd n'expose pas de support HEIF alors qu'imagick liste HEIC ; sur l'hôte (tests), imagick est absent.",
+      "consequence": "Avec gd, HEIC ne se décode pas ; un test HEIC passerait ou échouerait différemment entre hôte et conteneur."
+    },
+    {
+      "id": "optimiseurs_absents",
+      "constat": "Les optimiseurs configurés (config/media-library.php:183-221) n'ont aucun binaire dans le conteneur (cwebp, jpegoptim, … absents).",
+      "consequence": "L'optimisation post-conversion de medialibrary ne s'applique pas ici ; la compression WebP exigée par l'avenant doit venir de l'encodage lui-même (qualité/format), pas de ces optimiseurs.",
+      "reserve": "Comportement exact de spatie/image-optimizer quand un binaire manque non vérifié dans le vendor."
+    },
+    {
+      "id": "avatar_filament_attribut_avatar_url",
+      "constat": "Sans HasAvatar, Filament lit l'attribut 'avatar_url' du modèle (FilamentManager.php:582-586).",
+      "consequence": "Un accesseur avatar_url sur User serait pris par Filament même sans HasAvatar ; une URL relative passe par url() (FilamentManager.php:589). Sans photo, le défaut actuel est ui-avatars.com, service externe (UiAvatarsProvider.php:29)."
+    }
+  ],
+  "incertitudes": [
+    "Skills bza-dev:audit-source et bza-laravel:audit-laravel non chargés dans cette session : l'enveloppe est reconstituée ; champs à réaligner si le contrat diffère.",
+    ".env non lu (garde-fou du projet) : valeurs réelles de APP_URL, QUEUE_CONNECTION, MEDIA_DISK, IMAGE_DRIVER, QUEUE_CONVERSIONS_BY_DEFAULT inconnues ; seuls les défauts des fichiers config sont certains.",
+    "Suppression des médias à la suppression du modèle par InteractsWithMedia : non vérifiée dans le vendor (critère 8 du contrat à prouver par test).",
+    "Cause du dossier public/storage (au lieu d'un lien) : l'interprétation upload_dirs relatif au docroot est une hypothèse.",
+    "Comportement de spatie/image-optimizer en l'absence de binaires : non vérifié.",
+    "Modules/Auth/database/factories/UserFactory.php, AuthDatabaseSeeder, LogoutController/LogoutService, LoginRequest, Modules/Form non relus en entier dans cet audit (hors du concept profil, ou seulement cités).",
+    "API de SpatieMediaLibraryFileUpload/SpatieMediaLibraryImageColumn (méthodes collection(), conversion(), disk()…) non lue : seule la présence des classes est constatée.",
+    "La réponse de Filament (barre du haut) passe par url() pour une URL relative ; le comportement avec une URL absolue construite depuis APP_URL n'a pas été testé."
+  ]
+}

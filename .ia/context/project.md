@@ -54,6 +54,12 @@ elle est réputée vraie par construction.
     modèle `User`) — pas une suppression de masse par requête
     (`User::where(…)->delete()`), qui ne déclenche pas les événements : passer
     par `$user->delete()`.
+  - Photo de profil : collection medialibrary `avatar` (un fichier, disque
+    `public`), `POST` / `DELETE /api/v1/auth/me/avatar`, champ et colonne Filament.
+    Règles et optimisation (WebP 512 px, l'original n'est jamais gardé) dans un seul
+    domicile, `Modules\Auth\Services\AvatarService`, appelé par l'API et par le
+    back-office. Vignette `thumb` 256 px produite sans file d'attente (aucun worker
+    ne tourne). `avatar_url` suit l'hôte de la requête (simulateur en HTTP).
   - Formulaires servis à l'app : `auth.login`, `auth.profile.locale`
     (`Modules/Auth/app/Forms/`, inscrits dans `AuthServiceProvider`).
 - **Form** (`Modules/Form`) : formulaires décrits par le serveur pour l'app mobile.
@@ -99,6 +105,12 @@ elle est réputée vraie par construction.
 - **Tout ce qui lit la base passe par DDEV** (`ddev artisan …`, `ddev composer …`) :
   sur l'hôte, l'hôte `db` est introuvable. Seuls les tests (SQLite mémoire) et Pint
   tournent sur l'hôte.
+- **Fichiers publics** : `public/storage` est un lien **relatif** vers
+  `../storage/app/public` (non versionné ; à recréer après un clone :
+  `ln -s ../storage/app/public public/storage` — `storage:link` crée un lien absolu
+  du conteneur, cassé côté Mac, et `--relative` demande un paquet absent). DDEV lit
+  `upload_dirs` depuis le docroot `public` : `../storage/app/public`. Les médias sont
+  rangés sous leur UUID (`App\Support\Media\UuidPathGenerator`).
 - **Contrat OpenAPI** : `ddev composer openapi` régénère `openapi.json` (Scramble,
   dérivé du code ; ne jamais l'éditer à la main). Documentation locale : `/docs/api`.
 - **Garde-fou** : une commande qui contient le texte `.env` est refusée — passer par

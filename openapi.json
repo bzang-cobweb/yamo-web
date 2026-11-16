@@ -277,6 +277,87 @@
                     }
                 }
             }
+        },
+        "/v1/auth/me/avatar": {
+            "post": {
+                "operationId": "v1.auth.me.avatar.update",
+                "summary": "Remplacer sa photo de profil (multipart, champ `avatar` : JPEG, PNG ou WebP,\n5 Mo au plus). L'image est optimis\u00e9e avant d'\u00eatre enregistr\u00e9e",
+                "tags": [
+                    "Profile"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAvatarRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.auth.me.avatar.destroy",
+                "summary": "Retirer sa photo de profil",
+                "tags": [
+                    "Profile"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -341,6 +422,22 @@
                 ],
                 "title": "LoginRequest"
             },
+            "UpdateAvatarRequest": {
+                "type": "object",
+                "description": "Envoi de sa propre photo de profil depuis l'app mobile (multipart, champ\n`avatar`). Les r\u00e8gles vivent dans `AvatarService`, partag\u00e9es avec le back-office.",
+                "properties": {
+                    "avatar": {
+                        "type": "string",
+                        "format": "binary",
+                        "contentMediaType": "application/octet-stream",
+                        "description": "Maximum file size: 5120 kilobytes."
+                    }
+                },
+                "required": [
+                    "avatar"
+                ],
+                "title": "UpdateAvatarRequest"
+            },
             "UpdateMeRequest": {
                 "type": "object",
                 "description": "Modification de son propre compte depuis l'app mobile. Seuls les champs des\nformulaires de profil sont accept\u00e9s (aujourd'hui : la langue) ; tout autre\nchamp envoy\u00e9 est ignor\u00e9.",
@@ -378,6 +475,12 @@
                     },
                     "locale": {
                         "type": "string"
+                    },
+                    "avatar_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -386,7 +489,8 @@
                     "first_name",
                     "last_name",
                     "email",
-                    "locale"
+                    "locale",
+                    "avatar_url"
                 ],
                 "title": "UserResource"
             }

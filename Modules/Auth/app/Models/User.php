@@ -3,6 +3,7 @@
 namespace Modules\Auth\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -17,15 +18,20 @@ use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Database\Factories\UserFactory;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Services\AvatarService;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'first_name', 'last_name', 'email', 'locale', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 #[UseFactory(UserFactory::class)]
-class User extends Authenticatable implements FilamentUser, HasLocalePreference, HasName
+class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, InteractsWithMedia, Notifiable;
 
     /**
      * Un compte supprimé emporte ses jetons d'API : Sanctum ne les supprime pas
@@ -55,6 +61,47 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     protected function fullName(): Attribute
     {
         return Attribute::get(fn (): string => trim($this->first_name.' '.$this->last_name));
+    }
+
+    /**
+     * Photo de profil : un seul fichier (une nouvelle photo remplace l'ancienne),
+     * déjà optimisé en WebP par `AvatarService`. Supprimer le compte la supprime.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(AvatarService::COLLECTION)
+            ->singleFile()
+            ->acceptsMimeTypes(['image/webp'])
+            ->useDisk('public');
+    }
+
+    /**
+     * Vignette carrée, produite tout de suite : aucune file d'attente ne tourne.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion(AvatarService::THUMB)
+            ->performOnCollections(AvatarService::COLLECTION)
+            ->fit(Fit::Crop, AvatarService::THUMB_SIZE, AvatarService::THUMB_SIZE)
+            ->format('webp')
+            ->quality(AvatarService::QUALITY)
+            ->nonOptimized()
+            ->nonQueued();
+    }
+
+    /**
+     * Adresse de la vignette de la photo de profil, ou `null` sans photo.
+     */
+    public function avatarUrl(): ?string
+    {
+        $url = $this->getFirstMediaUrl(AvatarService::COLLECTION, AvatarService::THUMB);
+
+        return $url === '' ? null : $url;
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        return $this->avatarUrl();
     }
 
     public function getFilamentName(): string

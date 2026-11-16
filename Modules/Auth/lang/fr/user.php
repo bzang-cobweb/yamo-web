@@ -8,6 +8,8 @@ return [
     'name_help' => 'Nom public, unique, affiché dans l\'application.',
     'first_name' => 'Prénom',
     'last_name' => 'Nom',
+    'avatar' => 'Photo de profil',
+    'avatar_attribute' => 'photo de profil',
     'locale' => 'Langue',
     'email' => 'Adresse e-mail',
     'password' => 'Mot de passe',

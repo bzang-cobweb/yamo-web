@@ -3,6 +3,7 @@
 namespace Modules\Auth\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
+use Modules\Auth\Http\Requests\UpdateAvatarRequest;
 use Modules\Auth\Http\Requests\UpdateMeRequest;
 use Modules\Auth\Http\Resources\UserResource;
 use Modules\Auth\Models\User;
@@ -31,5 +32,28 @@ class ProfileController
         $user = $request->user();
 
         return new UserResource($service->update($user, $request->validated()));
+    }
+
+    /**
+     * Remplacer sa photo de profil (multipart, champ `avatar` : JPEG, PNG ou WebP,
+     * 5 Mo au plus). L'image est optimisée avant d'être enregistrée.
+     */
+    public function updateAvatar(UpdateAvatarRequest $request, ProfileService $service): UserResource
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        return new UserResource($service->updateAvatar($user, $request->file('avatar')));
+    }
+
+    /**
+     * Retirer sa photo de profil.
+     */
+    public function destroyAvatar(Request $request, ProfileService $service): UserResource
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        return new UserResource($service->removeAvatar($user));
     }
 }

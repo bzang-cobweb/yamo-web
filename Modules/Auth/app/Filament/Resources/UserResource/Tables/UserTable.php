@@ -3,10 +3,12 @@
 namespace Modules\Auth\Filament\Resources\UserResource\Tables;
 
 use App\Support\Locales;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Modules\Auth\Filament\Resources\UserResource;
+use Modules\Auth\Services\AvatarService;
 
 abstract class UserTable
 {
@@ -15,6 +17,12 @@ abstract class UserTable
         return $table
             ->defaultSort('last_name')
             ->columns([
+                SpatieMediaLibraryImageColumn::make('avatar')
+                    ->label(__('auth::user.avatar'))
+                    ->collection(AvatarService::COLLECTION)
+                    ->conversion(AvatarService::THUMB)
+                    ->circular()
+                    ->imageSize(36),
                 TextColumn::make('name')
                     ->label(__('auth::user.name'))
                     ->sortable()
