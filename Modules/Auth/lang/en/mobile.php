@@ -15,6 +15,7 @@ return [
         'resend' => 'Resend the code',
         'resent' => 'New code sent.',
         'forgotPassword' => 'Forgot password?',
+        'forgotPasswordTitle' => 'Forgot password',
         'passwordReset' => 'Password changed, please sign in.',
         'previousStep' => 'Previous step',
         'signIn' => 'Sign in',

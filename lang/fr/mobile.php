@@ -4,6 +4,9 @@
 // (App\Support\MobileMessages). Variables au format :name.
 
 return [
+    'nav' => [
+        'back' => 'Retour',
+    ],
     'error' => [
         'unknown' => 'Une erreur est survenue. Réessayez.',
     ],
