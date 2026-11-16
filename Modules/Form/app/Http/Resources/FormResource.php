@@ -15,12 +15,14 @@ use Modules\Form\Support\Form;
 class FormResource extends JsonResource
 {
     /**
-     * @return array{name: string, fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}>, submit: array{label: string}}
+     * @return array{name: string, title: string|null, subtitle: string|null, fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}>, submit: array{label: string}}
      */
     public function toArray(Request $request): array
     {
         return [
             'name' => $this->resource->key(),
+            'title' => $this->resource->title(),
+            'subtitle' => $this->resource->subtitle(),
             'fields' => array_map(fn (Field $field): array => $field->toArray(), $this->resource->fields()),
             'submit' => ['label' => $this->resource->submitLabel()],
         ];

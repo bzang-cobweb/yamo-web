@@ -71,6 +71,19 @@ elle est réputée vraie par construction.
   type ajouté ici demande son composant côté mobile). Route
   `GET /api/v1/forms/{form}` (404 inconnu ; capacité `viewForm` : 401 invité,
   403 refusé).
+- **Textes de l'app mobile** : tous servis par `GET /api/v1/messages`
+  (`App\Support\MobileMessages`), depuis les fichiers `lang/<langue>/mobile.php` de
+  l'application et de chaque module. Les tableaux sont aplatis par clé, et les
+  variables s'écrivent `:name`. Seul le texte de l'absence de réseau est local à
+  l'app. Un texte ajouté à l'app s'ajoute en fr **et** en en : un test vérifie que les
+  deux langues ont les mêmes clés.
+- **Erreurs de l'API** : les refus par défaut (401, 403) sont traduits par
+  `App\Exceptions\TranslatedApiErrors` (`lang/<langue>/api.php`). Un message propre
+  à une policy est rendu tel quel. `SetLocale` passe avant l'authentification (ordre
+  de priorité des middlewares), pour qu'un 401 sorte dans la langue de la requête.
+- **Formulaires** : titre et sous-titre facultatifs (`Form::title()`,
+  `Form::subtitle()`). L'aide d'un champ (`Field::help()`) reste affichée même en
+  cas d'erreur.
 - **Langues** : `config('app.supported_locales')` (liste) et
   `config('app.default_locale')` (défaut stable — `app.locale` est réécrite à
   chaque requête) ; domicile `App\Support\Locales` ; `GET /api/v1/locales` public.
@@ -110,7 +123,8 @@ elle est réputée vraie par construction.
   `ln -s ../storage/app/public public/storage` — `storage:link` crée un lien absolu
   du conteneur, cassé côté Mac, et `--relative` demande un paquet absent). DDEV lit
   `upload_dirs` depuis le docroot `public` : `../storage/app/public`. Les médias sont
-  rangés sous leur UUID (`App\Support\Media\UuidPathGenerator`).
+  rangés sous `<module>/<champ>/<uuid>/` (`App\Support\Media\ModuleFieldPathGenerator`) :
+  aucun réglage à faire pour un nouveau média.
 - **Contrat OpenAPI** : `ddev composer openapi` régénère `openapi.json` (Scramble,
   dérivé du code ; ne jamais l'éditer à la main). Documentation locale : `/docs/api`.
 - **Garde-fou** : une commande qui contient le texte `.env` est refusée — passer par

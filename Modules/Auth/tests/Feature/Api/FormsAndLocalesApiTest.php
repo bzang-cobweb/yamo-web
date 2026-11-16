@@ -28,6 +28,8 @@ class FormsAndLocalesApiTest extends TestCase
 
         $fr->assertExactJson(['data' => [
             'name' => 'auth.login',
+            'title' => 'Se connecter',
+            'subtitle' => 'Accédez à votre compte yamo.',
             'fields' => [
                 [
                     'name' => 'email', 'type' => 'email', 'label' => 'Adresse e-mail', 'placeholder' => null,
@@ -43,8 +45,28 @@ class FormsAndLocalesApiTest extends TestCase
 
         $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/forms/auth.login')
             ->assertOk()
+            ->assertJsonPath('data.title', 'Sign in')
+            ->assertJsonPath('data.subtitle', 'Access your yamo account.')
             ->assertJsonPath('data.fields.0.label', 'Email address')
             ->assertJsonPath('data.submit.label', 'Sign in');
+    }
+
+    public function test_a_form_without_title_sends_null_and_a_field_can_carry_help(): void
+    {
+        $user = User::factory()->create(['locale' => 'fr']);
+
+        $this->withToken($this->tokenFor($user))->getJson('/api/v1/forms/auth.profile.locale')
+            ->assertOk()
+            ->assertJsonPath('data.title', null)
+            ->assertJsonPath('data.subtitle', null)
+            ->assertJsonPath('data.fields.0.help', "Langue de l'application et des e-mails.");
+    }
+
+    public function test_a_guest_asking_for_a_private_form_gets_a_translated_401(): void
+    {
+        $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.profile.locale')
+            ->assertUnauthorized()
+            ->assertExactJson(['message' => 'Vous devez vous connecter.']);
     }
 
     public function test_login_validation_comes_from_the_login_form(): void

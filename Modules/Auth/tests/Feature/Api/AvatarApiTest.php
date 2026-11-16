@@ -53,15 +53,15 @@ class AvatarApiTest extends TestCase
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize($disk->path($media->getPathRelativeToRoot()));
         $this->assertSame([512, 341], [$width, $height]);
-        $this->assertCount(1, $disk->files($media->uuid));
+        $this->assertCount(1, $disk->files('auth/avatar/'.$media->uuid));
 
         // Vignette carrée, produite tout de suite.
         [$thumbWidth, $thumbHeight] = getimagesize($disk->path($media->getPathRelativeToRoot(AvatarService::THUMB)));
         $this->assertSame([256, 256], [$thumbWidth, $thumbHeight]);
 
-        // Adresse sur l'hôte de la requête, rangée sous l'UUID, sans numéro séquentiel.
+        // Adresse sur l'hôte de la requête, rangée sous <module>/<champ>/<uuid>, sans numéro séquentiel.
         $this->assertStringEndsWith(
-            '/storage/'.$media->uuid.'/conversions/avatar-'.AvatarService::THUMB.'.webp',
+            '/storage/auth/avatar/'.$media->uuid.'/conversions/avatar-'.AvatarService::THUMB.'.webp',
             $response->json('data.avatar_url'),
         );
         $this->assertStringNotContainsString('/storage/'.$media->getKey().'/', $response->json('data.avatar_url'));
@@ -76,7 +76,7 @@ class AvatarApiTest extends TestCase
         $this->withToken($user->createToken('test')->plainTextToken)
             ->getJson('http://yamo.ddev.site/api/v1/auth/me')
             ->assertOk()
-            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/'.$uuid.'/conversions/avatar-thumb.webp');
+            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/auth/avatar/'.$uuid.'/conversions/avatar-thumb.webp');
     }
 
     public function test_a_new_photo_replaces_the_previous_one(): void
@@ -90,7 +90,7 @@ class AvatarApiTest extends TestCase
         $second = $this->avatarOf($user);
         $this->assertNotSame($first->uuid, $second->uuid);
         $this->assertSame(1, $user->fresh()->getMedia(AvatarService::COLLECTION)->count());
-        $this->assertSame([$second->uuid], Storage::disk('public')->directories());
+        $this->assertSame(['auth/avatar/'.$second->uuid], Storage::disk('public')->directories('auth/avatar'));
     }
 
     public function test_removing_the_photo_deletes_its_files(): void

@@ -197,6 +197,53 @@
                 }
             }
         },
+        "/v1/messages": {
+            "get": {
+                "operationId": "v1.messages.index",
+                "summary": "Tous les textes de l'app, dans la langue du compte connect\u00e9, sinon celle de\n`Accept-Language`. Variables au format `:name`",
+                "tags": [
+                    "Message"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "locale": {
+                                                    "type": "string",
+                                                    "description": "Langue des textes renvoy\u00e9s."
+                                                },
+                                                "messages": {
+                                                    "type": "object",
+                                                    "description": "Textes par cl\u00e9 (`home.greeting`).",
+                                                    "additionalProperties": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "locale",
+                                                "messages"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/me": {
             "get": {
                 "operationId": "v1.auth.me",
@@ -374,6 +421,12 @@
                     "name": {
                         "type": "string"
                     },
+                    "title": {
+                        "type": "null"
+                    },
+                    "subtitle": {
+                        "type": "null"
+                    },
                     "fields": {
                         "type": "array",
                         "items": {}
@@ -392,6 +445,8 @@
                 },
                 "required": [
                     "name",
+                    "title",
+                    "subtitle",
                     "fields",
                     "submit"
                 ],

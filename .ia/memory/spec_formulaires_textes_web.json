@@ -1,0 +1,244 @@
+{
+  "concept": "formulaires_textes_web",
+  "titre": "Formulaires servis à l'app, textes et langues de l'API, rendu du 401, chemins des médias (dépôt web)",
+  "chantier": "2026-11-16-textes-servis-par-api",
+  "tache": "01",
+  "date_audit": "2026-11-16",
+  "profondeur": "Skill bza-dev:audit-source et bza-laravel:audit-laravel introuvables sur le disque (find ~/.claude) : enveloppe reprise des clés communes des specs existantes (concept, chantier, tache, date_audit, fichiers_lus, incertitudes, stack, profondeur) ; extraction faite à la main, fichier:ligne à chaque affirmation.",
+  "stack": {
+    "laravel": "v13.42.0 — .ia/context/project.md (composer.lock:2420)",
+    "modules": "nwidart/laravel-modules v13.3.0 — .ia/context/project.md ; modules actifs Auth et Form — modules_statuses.json",
+    "medialibrary": "spatie/laravel-medialibrary 11.23.13 — .ia/context/project.md",
+    "langues": "app.locale 'fr' (config/app.php:81), fallback_locale 'en' (config/app.php:83), supported_locales ['fr','en'] (config/app.php:89), default_locale (config/app.php:93)"
+  },
+
+  "module_form": {
+    "Form": {
+      "fichier": "Modules/Form/app/Support/Form.php",
+      "constructeur": "__construct(protected ?Authenticatable $user = null) — :17",
+      "abstraites": ["static name(): string — :22", "fields(): array (list<Field>) — :38", "submitLabel(): string — :43"],
+      "concretes": [
+        "final key(): string → static::name() — :27-30",
+        "canBeViewedBy(?Authenticatable): bool, défaut $user !== null — :49-52",
+        "rules(): Arr::collapse des validationRules() de chaque champ — :59-62",
+        "attributes(): [name => label] des champs dont le label n'est pas null — :69-75"
+      ],
+      "absent": "Aucune méthode title() ni subtitle() aujourd'hui (fichier lu en entier, 76 lignes)."
+    },
+    "Field": {
+      "fichier": "Modules/Form/app/Support/Field.php",
+      "proprietes": "label, placeholder, help (?string, null) ; required false ; default null ; options [] ; rules [] — :14-28",
+      "fabriques": "make(), text, hidden, email, password, number, textarea, select, radio, checkbox, checkboxGroup, switch — :35-93",
+      "help": "help(string $help): self — :109-114 ; sérialisé sous 'help' — :191",
+      "toArray": "clés dans l'ordre : name, type, label, placeholder, help, required, default, options[{value,label}] — :184-199",
+      "validationRules": "required ou nullable + règles du type + rules() ; checkbox_group ajoute 'name.*' => ['string', Rule::in] — :159-172",
+      "usage_de_help": "Aucun appel à ->help( dans app/ ni Modules/*/app hors sa définition (grep 'help(' : seul Field.php:109)."
+    },
+    "FieldType": "Modules/Form/app/Enums/FieldType.php:12-24 (11 cas) ; hasOptions :29-32 ; rules() :40-50",
+    "FormRegistry": {
+      "fichier": "Modules/Form/app/Support/FormRegistry.php",
+      "register": "refuse une classe qui n'étend pas Form (InvalidArgumentException) ; indexe par $form::name() — :20-27",
+      "make": "new $class($user) ou null — :34-39",
+      "has/names": ":29-32, :44-47"
+    },
+    "FormResource": {
+      "fichier": "Modules/Form/app/Http/Resources/FormResource.php",
+      "toArray": "['name' => key(), 'fields' => map Field::toArray, 'submit' => ['label' => submitLabel()]] — :20-27",
+      "phpdoc_type_retour": "array{name, fields, submit} — :18 (Scramble s'en sert pour openapi.json : schéma FormResource sans title/subtitle, openapi.json:370-400)",
+      "enveloppe": "réponse sous 'data' (wrap JsonResource par défaut) — confirmé par Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:29"
+    },
+    "FormController": "Modules/Form/app/Http/Controllers/Api/FormController.php:20-23 — show(Form $form): FormResource ; docblock @unauthenticated :18",
+    "route": "Modules/Form/routes/api.php:10-12 — GET v1/forms/{form} ->can('viewForm','form') ->name('v1.forms.show') ; préfixe 'api' et nom 'api.' ajoutés par Modules/Form/app/Providers/RouteServiceProvider.php:48",
+    "provider": {
+      "fichier": "Modules/Form/app/Providers/FormServiceProvider.php",
+      "singleton": "FormRegistry en singleton — :21",
+      "binding": "Route::bind('form') → registre ->make($name, request()->user('sanctum')) ?? abort(404) — :30-31",
+      "gate": "viewForm : allow si canBeViewedBy ; invité → Response::denyWithStatus(401) ; sinon Response::deny() — :33-37",
+      "nameLower": "'form' — :48"
+    },
+    "web_routes": "Modules/Form/routes/web.php : aucune route",
+    "lang": "Le module Form n'a AUCUN dossier lang/ (find Modules/Form -type f : aucun fichier sous lang). Le namespace 'form' est tout de même déclaré au boot (voir traductions.enregistrement)."
+  },
+
+  "formulaires_auth": {
+    "inscription": "Modules/Auth/app/Providers/AuthServiceProvider.php:34-36 — registre résolu dans boot(), register(LoginForm), register(ProfileLocaleForm)",
+    "LoginForm": {
+      "fichier": "Modules/Auth/app/Forms/LoginForm.php",
+      "name": "'auth.login' — :17",
+      "champs": "email (label __('auth::user.email'), required, max:255) ; password (label __('auth::user.password'), required, max:255) — :22-31",
+      "submit": "__('auth::form.login.submit') — :36",
+      "public": "canBeViewedBy → true — :42-45"
+    },
+    "ProfileLocaleForm": {
+      "fichier": "Modules/Auth/app/Forms/ProfileLocaleForm.php",
+      "name": "'auth.profile.locale' — :18",
+      "champs": "select locale, label __('auth::user.locale'), options Locales::options(), default locale du compte sinon Locales::default(), required — :24-28 ; pas de help",
+      "submit": "__('auth::form.save') — :34"
+    },
+    "cles_de_langue_existantes": {
+      "Modules/Auth/lang/fr/form.php": "save 'Enregistrer' :4 ; login.submit 'Se connecter' :6",
+      "Modules/Auth/lang/en/form.php": "save 'Save' :4 ; login.submit 'Sign in' :6",
+      "Modules/Auth/lang/fr/user.php": "email 'Adresse e-mail' :14 ; password 'Mot de passe' :15 ; locale 'Langue' :13 ; name_help :8 ; password_help :17",
+      "Modules/Auth/lang/en/user.php": "email 'Email address' :14 ; password 'Password' :15 ; locale 'Language' :13"
+    },
+    "autres_fichiers_lang_auth": "navigation.php, permission.php, role.php (fr et en) — textes du back-office ; aucun mobile.php dans aucun module (find Modules -path '*/lang/*')"
+  },
+
+  "traductions": {
+    "enregistrement": {
+      "mecanisme": "Chaque module étend Nwidart\\Modules\\Support\\ModuleServiceProvider ; son boot() appelle registerTranslations() — vendor/nwidart/laravel-modules/src/Support/ModuleServiceProvider.php:60",
+      "registerTranslations": "si lang_path('modules/<nameLower>') existe → ce dossier ; sinon module_path(<Name>, config('modules.paths.generator.lang.path')) = Modules/<Name>/lang ; loadTranslationsFrom(chemin, <nameLower>) + loadJsonTranslationsFrom(chemin) — ModuleServiceProvider.php:121-133",
+      "chemin_lang_module": "config/modules.php:202 ('lang' => ['path' => 'lang', 'generate' => false])",
+      "lang_publie": "lang/modules/ et resources/lang/ absents (ls) → ce sont bien Modules/<Name>/lang qui servent",
+      "namespaces": "auth (Modules/Auth/app/Providers/AuthServiceProvider.php:51) ; form (Modules/Form/app/Providers/FormServiceProvider.php:48)",
+      "parent_boot_appele": "AuthServiceProvider::boot appelle parent::boot() — :27 ; FormServiceProvider::boot — :26",
+      "auto_discover_translations": "false — config/modules.php:248",
+      "addNamespace": "loadTranslationsFrom → translator->addNamespace(namespace, path) sans vérifier que le dossier existe — vendor/laravel/framework/src/Illuminate/Support/ServiceProvider.php:251-256 ; FileLoader::addNamespace :191-194 ; FileLoader::namespaces() renvoie tous les hints :201-204"
+    },
+    "lecture_d_un_fichier_entier": "__('auth::mobile') renvoie le tableau du fichier : Translator::getLine renvoie un tableau non vide en appliquant les remplacements à chaque feuille — vendor/laravel/framework/src/Illuminate/Translation/Translator.php:285-299 ; sans $replace les ':name' restent intacts",
+    "secours_de_langue": "Translator::get essaie [locale, fallback_locale] (localeArray) et renvoie la PREMIÈRE ligne non nulle — Translator.php:171-179 ; pour un groupe entier, c'est le tableau fr complet ou, s'il est absent/vide, le tableau en complet : aucune fusion clé par clé. Clé absente : la clé est renvoyée telle quelle — :189",
+    "application": {
+      "fichiers": "lang/en/{auth,pagination,passwords,validation}.php ; lang/fr/{actions,auth,http-statuses,pagination,passwords,validation}.php ; lang/fr.json (231 lignes) ; pas de lang/en.json ; pas de mobile.php",
+      "origine": "laravel-lang/common en dev — composer.json:27",
+      "erreur_inconnue_existante": "lang/fr/http-statuses.php:83 'unknownError' => 'Erreur inconnue' (aucun équivalent en/ : pas de lang/en/http-statuses.php)",
+      "http_statuses_401": "lang/fr/http-statuses.php:29 '401' => 'Non authentifié'",
+      "fr_json_pertinent": "'This action is unauthorized.' → lang/fr.json:200 ; 'Unauthorized' → :209 ; 'Server Error' → :174 ; 'Not Found' → :125 ; 'Too Many Requests' → :205 ; AUCUNE clé 'Unauthenticated.'"
+    }
+  },
+
+  "langues_api": {
+    "Locales": {
+      "fichier": "app/Support/Locales.php",
+      "values": "array_values(config('app.supported_locales')) — :17-20",
+      "default": "config('app.default_locale') — :26-29",
+      "options": "[code => label] — :37-42 ; label = ucfirst(Locale::getDisplayLanguage($code, $code)) — :44-47"
+    },
+    "LocaleController": "app/Http/Controllers/Api/LocaleController.php:19-29 — JSON {data: [{code,label}], default} ; @unauthenticated :17",
+    "route": "routes/api.php:12 — GET v1/locales, nom 'api.v1.locales.index' (préfixe 'api' par withRouting, bootstrap/app.php:13)",
+    "SetLocale": "app/Http/Middleware/SetLocale.php:18-29 — user('sanctum') HasLocalePreference → preferredLocale(), sinon getPreferredLanguage(Locales::values()) ; App::setLocale(valeur si supportée sinon Locales::default())",
+    "UseSanctumGuard": "app/Http/Middleware/UseSanctumGuard.php:18-23 — Auth::shouldUse('sanctum'), n'impose aucune connexion",
+    "groupe_api": "bootstrap/app.php:18 — $middleware->api(append: [UseSanctumGuard::class, SetLocale::class])"
+  },
+
+  "erreurs_401": {
+    "rendu_json": "bootstrap/app.php:21-23 — shouldRenderJsonWhen(api/* ou expectsJson) ; aucun render() ni renderable personnalisé",
+    "chemin_unauthenticated": [
+      "auth:sanctum échoue → Authenticate lance new AuthenticationException('Unauthenticated.', …) — vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php:101-102 (message par défaut aussi : Auth/AuthenticationException.php:38)",
+      "Handler::render aiguille vers unauthenticated() — Foundation/Exceptions/Handler.php:729",
+      "unauthenticated() → response()->json(['message' => $exception->getMessage()], 401) — Handler.php:854-857"
+    ],
+    "pourquoi_non_traduit": "Le message est une chaîne PHP littérale passée telle quelle ; ni Authenticate, ni AuthenticationException, ni Handler::unauthenticated n'appellent __() ; et lang/fr.json n'a pas de clé 'Unauthenticated.'. Ajouter la clé au JSON ne suffit donc pas : il faut un point où le message passe par __() (ex. rendu personnalisé dans withExceptions).",
+    "second_401_different": "Le 401 de GET /api/v1/forms/{form} (invité sur formulaire réservé) ne passe PAS par AuthenticationException : Gate viewForm → Response::denyWithStatus(401) (FormServiceProvider.php:35) → AuthorizationException avec statut → Handler::prepareException en fait HttpException(401, message de la réponse ?: SymfonyResponse::$statusTexts[401]) — Handler.php:774-776 ; $statusTexts[401] = 'Unauthorized' (vendor/symfony/http-foundation/Response.php:151). Message rendu : 'Unauthorized', pas 'Unauthenticated.'",
+    "403_non_traduit_non_plus": "Response::deny() sans message → AuthorizationException 'This action is unauthorized.' (Auth/Access/AuthorizationException.php:33) → AccessDeniedHttpException(getMessage()) — Handler.php:777 ; la clé existe dans lang/fr.json:200 mais le message n'est pas passé par __()",
+    "rendu_http_exception": "convertExceptionToArray : debug → message + trace ; sinon 'message' => getMessage() pour une HttpException — Handler.php:1136-1146",
+    "tests_401_existants": "assertUnauthorized() seul, sans contrôle du message : Modules/Auth/tests/Feature/Api/AuthApiTest.php:129,154,162 ; AvatarApiTest.php:138-139 ; FormsAndLocalesApiTest.php:66 (401 via Gate), :144"
+  },
+
+  "garde_des_routes": {
+    "fichier": "tests/Feature/RouteGuardTest.php",
+    "liste_exceptions": "WITHOUT_CAN URI => motif — :16-20 : api/v1/auth/login, api/v1/auth/logout, api/v1/locales",
+    "balayage": "toute route dont l'action commence par App\\Http\\Controllers\\ ou Modules\\<M>\\Http\\Controllers\\ doit porter un middleware 'can:' ou figurer dans la liste — :26-41",
+    "liste_a_jour": "chaque URI de la liste doit exister (exception obsolète sinon) — :44-51",
+    "consequence": "une route GET api/v1/messages sans can: devra être ajoutée à WITHOUT_CAN avec son motif ; une route en closure échapperait au balayage (:29)"
+  },
+
+  "tests_a_impacter": {
+    "reponse_exacte_formulaire": "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php:29-42 — assertExactJson du formulaire auth.login en fr (name, fields, submit) : échouera dès que title/subtitle sont ajoutés à FormResource. Partie en : :44-47 (assertJsonPath seulement).",
+    "autres_assertExactJson": "FormsAndLocalesApiTest.php:93-96 (locales, non concerné) ; AuthApiTest.php:40 (ressource User, non concernée)",
+    "serialisation_champ": "Modules/Form/tests/Feature/FieldTest.php:106-120 — assertSame sur Field::toArray (non concerné par title/subtitle, concerné si les clés du champ changent)",
+    "formulaire_anonyme_de_test": "FieldTest.php:18-46 — classe anonyme étendant Form (name, fields, submitLabel) : si title()/subtitle() deviennent abstraites, ce test casse ; facultatives par défaut null (contrat) → pas d'impact"
+  },
+
+  "medias": {
+    "generateur": {
+      "fichier": "app/Support/Media/UuidPathGenerator.php",
+      "getPath": "$media->uuid.'/' — :14-17",
+      "getPathForConversions": "$media->uuid.'/conversions/' — :19-22",
+      "getPathForResponsiveImages": "$media->uuid.'/responsive-images/' — :24-27"
+    },
+    "configuration": "config/media-library.php:3 (use) et :145 ('path_generator' => UuidPathGenerator::class) ; 'custom_path_generators' vide :155 ; disk_name env MEDIA_DISK défaut 'public' :36 ; prefix env MEDIA_PREFIX défaut '' :357",
+    "references_au_nom": "UuidPathGenerator cité dans app/Support/Media/UuidPathGenerator.php, config/media-library.php, .ia/context/project.md, .ia/runs/2026-11-16-photo-de-profil/03-qa-check-web.md, specs/done/2026-11-16-photo-de-profil.md, le contrat (grep -rl hors vendor/node_modules/storage)",
+    "donnees_disponibles_pour_le_nouveau_chemin": "collection 'avatar' = AvatarService::COLLECTION (Modules/Auth/app/Services/AvatarService.php:18), déclarée Modules/Auth/app/Models/User.php:72 ; nom de fichier 'avatar.webp' (AvatarService.php:78) ; conversion 'thumb' (AvatarService.php:20, User.php:83-85). Aucun morphMap/enforceMorphMap dans app/ ni Modules/*/app (grep) : model_type contient le FQCN.",
+    "tests_dependant_du_chemin": {
+      "Modules/Auth/tests/Feature/Api/AvatarApiTest.php": [
+        ":56 assertCount(1, $disk->files($media->uuid)) — dossier racine = uuid",
+        ":63-66 URL finit par '/storage/'.uuid.'/conversions/avatar-thumb.webp'",
+        ":67 URL ne contient pas '/storage/<id>/'",
+        ":79 URL exacte 'http://yamo.ddev.site/storage/'.uuid.'/conversions/avatar-thumb.webp'",
+        ":93 assertSame([$second->uuid], Storage::disk('public')->directories()) — deviendra ['auth']",
+        ":107, :150 allFiles() vide (inchangé ; les dossiers vides auth/avatar/ peuvent subsister, allFiles ne les compte pas)"
+      ],
+      "Modules/Auth/tests/Feature/Filament/UserAvatarTest.php": [
+        ":46 assertCount(1, files($media->uuid))",
+        ":69 contient '/conversions/avatar-thumb.webp' (reste vrai)",
+        ":74-75 getPathRelativeToRoot(THUMB) présent dans le HTML (suit le générateur)"
+      ]
+    }
+  },
+
+  "pieges": [
+    "Module Form sans dossier lang/ : créer Modules/Form/lang/{fr,en}/mobile.php suffit, le namespace 'form' pointe déjà vers Modules/Form/lang (ModuleServiceProvider.php:129-130).",
+    "Agréger par translator->getLoader()->namespaces() ramènerait aussi les namespaces des paquets (filament-*, etc. : loadTranslationsFrom dans vendor/filament/*/src/*ServiceProvider.php). Pour ne prendre que les modules : nwidart Module::allEnabled() (vendor/nwidart/laravel-modules/src/FileRepository.php:277) et getLowerName() (Module.php:108).",
+    "Secours fr→en par groupe entier, sans fusion par clé (Translator.php:171-179) : un mobile.php fr incomplet ne se complète pas avec en ; un mobile.php fr absent sert l'anglais en silence. D'où l'intérêt du test d'égalité des clés fr/en.",
+    "Clés aplaties sans préfixe de module (contrat : home.greeting) : deux modules qui déclarent la même clé de premier niveau s'écraseraient à la fusion ; rien dans le code actuel ne l'empêche.",
+    "__('mobile') pour le fichier de l'application consulte d'abord lang/<locale>.json pour la clé 'mobile' (Translator.php:158-160) ; aucune clé 'mobile' dans lang/fr.json aujourd'hui.",
+    "lang/en n'a ni en.json ni http-statuses.php : un texte commun de l'application (erreur inconnue) n'a d'existant qu'en fr (lang/fr/http-statuses.php:83).",
+    "Deux 401 distincts : 'Unauthenticated.' (auth:sanctum) et 'Unauthorized' (Gate viewForm denyWithStatus(401)) ; traduire seulement le premier laisse le second en anglais.",
+    "Ajouter title/subtitle à FormResource demande de mettre à jour son phpdoc de retour (FormResource.php:18) pour que openapi.json (Scramble) les décrive, puis de régénérer openapi.json.",
+    "Le binding {form} construit le formulaire avec request()->user('sanctum') (FormServiceProvider.php:30-31) : title()/subtitle() appelés dans la langue déjà fixée par SetLocale.",
+    "Medialibrary : le générateur reçoit le Media ; module à déduire de $media->model_type (FQCN, pas de morph map) et champ de $media->collection_name. Une morph map ajoutée plus tard changerait model_type en alias."
+  ],
+
+  "fichiers_lus": [
+    "specs/2026-11-16-textes-servis-par-api.md",
+    ".ia/context/project.md",
+    "Modules/Form/app/Support/Form.php",
+    "Modules/Form/app/Support/Field.php",
+    "Modules/Form/app/Support/FormRegistry.php",
+    "Modules/Form/app/Enums/FieldType.php",
+    "Modules/Form/app/Http/Resources/FormResource.php",
+    "Modules/Form/app/Http/Controllers/Api/FormController.php",
+    "Modules/Form/routes/api.php",
+    "Modules/Form/routes/web.php",
+    "Modules/Form/app/Providers/FormServiceProvider.php",
+    "Modules/Form/app/Providers/RouteServiceProvider.php",
+    "Modules/Form/config/config.php",
+    "Modules/Form/module.json",
+    "Modules/Form/tests/Feature/FieldTest.php",
+    "Modules/Auth/app/Forms/LoginForm.php",
+    "Modules/Auth/app/Forms/ProfileLocaleForm.php",
+    "Modules/Auth/app/Providers/AuthServiceProvider.php",
+    "Modules/Auth/module.json",
+    "Modules/Auth/routes/api.php",
+    "Modules/Auth/lang/{fr,en}/{form,navigation,permission,role,user}.php",
+    "lang/en/auth.php, lang/fr/auth.php (en entier) ; lang/fr.json, lang/fr/http-statuses.php, lang/*/validation.php (par recherche ciblée)",
+    "app/Support/Locales.php",
+    "app/Http/Controllers/Api/LocaleController.php",
+    "app/Http/Middleware/SetLocale.php",
+    "app/Http/Middleware/UseSanctumGuard.php",
+    "app/Providers/AppServiceProvider.php",
+    "bootstrap/app.php, bootstrap/providers.php",
+    "routes/api.php, routes/web.php",
+    "tests/Feature/RouteGuardTest.php",
+    "Modules/Auth/tests/Feature/Api/FormsAndLocalesApiTest.php",
+    "Modules/Auth/tests/Feature/Api/AuthApiTest.php (extrait :25-60 et recherches)",
+    "Modules/Auth/tests/Feature/Api/AvatarApiTest.php",
+    "Modules/Auth/tests/Feature/Filament/UserAvatarTest.php",
+    "app/Support/Media/UuidPathGenerator.php",
+    "config/media-library.php (extraits :1-20, :130-165, :350-360 et recherches)",
+    "config/modules.php (extrait :195-260)",
+    "config/app.php (extrait :75-95)",
+    "modules_statuses.json",
+    "openapi.json (extrait :360-420)",
+    "vendor : nwidart Support/ModuleServiceProvider.php (:40-140), Illuminate Auth/AuthenticationException.php, Auth/Middleware/Authenticate.php, Auth/Access/AuthorizationException.php, Auth/Access/Response.php, Foundation/Exceptions/Handler.php, Translation/Translator.php, Translation/FileLoader.php, Support/ServiceProvider.php (extraits ciblés)"
+  ],
+
+  "incertitudes": [
+    "Ordre d'exécution SetLocale / auth:sanctum : le 401 'Unauthenticated.' sera rendu dans la locale fixée par SetLocale si celui-ci (groupe api, bootstrap/app.php:18) s'exécute avant le middleware de route auth:sanctum. Déduit de l'ordre groupe puis route ; le tri par priorité des middlewares de Laravel n'a pas été lu — à confirmer par un test qui envoie Accept-Language: fr sans jeton.",
+    "Valeurs réelles de FileLoader::namespaces() à l'exécution non observées (pas d'artisan lancé, pour ne pas charger l'environnement) : la présence de namespaces vendor est déduite de loadTranslationsFrom dans vendor/filament.",
+    "Les fichiers lang de validation (fr 290 lignes, en 202) et lang/fr/actions.php, pagination, passwords n'ont pas été lus en entier : hors sujet sauf pour la recherche des clés 401/erreur.",
+    "Contrat : 'erreur inconnue' comme texte commun de l'application — l'emplacement (lang/{fr,en}/mobile.php à la racine) n'existe pas encore ; lang/fr/http-statuses.php:83 en a une version fr seulement.",
+    "Mise en kebab du nom de module pour le chemin des médias (contrat : « minuscules, tirets si composé ») : aucun module composé aujourd'hui (Auth, Form) ; nameLower des providers est en minuscules sans tiret (AuthServiceProvider.php:51) — la règle de conversion n'existe pas encore dans le code.",
+    "Fichiers Filament du champ avatar (Schemas/…) non relus ici : couverts par la spec du chantier photo de profil ; seul UserAvatarTest a été audité."
+  ]
+}

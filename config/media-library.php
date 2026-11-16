@@ -1,6 +1,6 @@
 <?php
 
-use App\Support\Media\UuidPathGenerator;
+use App\Support\Media\ModuleFieldPathGenerator;
 use Spatie\ImageOptimizer\Optimizers\Avifenc;
 use Spatie\ImageOptimizer\Optimizers\Cwebp;
 use Spatie\ImageOptimizer\Optimizers\Gifsicle;
@@ -141,8 +141,8 @@ return [
     /*
      * The class that contains the strategy for determining a media file's path.
      */
-    // Sous l'UUID du média, pas sous son numéro : adresses publiques non devinables.
-    'path_generator' => UuidPathGenerator::class,
+    // Sous <module>/<champ>/<uuid>/ : rangé par module et champ, adresses non devinables.
+    'path_generator' => ModuleFieldPathGenerator::class,
 
     /*
      * The class that contains the strategy for determining how to remove files.

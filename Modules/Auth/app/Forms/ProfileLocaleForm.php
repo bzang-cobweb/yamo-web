@@ -23,6 +23,7 @@ class ProfileLocaleForm extends Form
         return [
             Field::select('locale')
                 ->label(__('auth::user.locale'))
+                ->help(__('auth::form.profile.locale_help'))
                 ->options(Locales::options())
                 ->default($this->user instanceof User ? $this->user->locale : Locales::default())
                 ->required(),

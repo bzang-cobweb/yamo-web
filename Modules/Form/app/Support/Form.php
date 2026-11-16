@@ -43,6 +43,22 @@ abstract class Form
     abstract public function submitLabel(): string;
 
     /**
+     * Titre affiché au-dessus du formulaire, traduit ; aucun par défaut.
+     */
+    public function title(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Sous-titre affiché sous le titre, traduit ; aucun par défaut.
+     */
+    public function subtitle(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Qui peut demander la définition du formulaire. Par défaut : un compte
      * connecté. Un formulaire public (connexion) renvoie `true` pour un invité.
      */

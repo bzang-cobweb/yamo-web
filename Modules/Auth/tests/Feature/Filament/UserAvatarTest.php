@@ -43,7 +43,7 @@ class UserAvatarTest extends AuthFilamentTestCase
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
         $this->assertSame([512, 512], [$width, $height]);
-        $this->assertCount(1, Storage::disk('public')->files($media->uuid));
+        $this->assertCount(1, Storage::disk('public')->files('auth/avatar/'.$media->uuid));
     }
 
     public function test_a_file_that_is_not_an_image_is_refused(): void

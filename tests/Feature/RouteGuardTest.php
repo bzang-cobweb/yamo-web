@@ -17,6 +17,7 @@ class RouteGuardTest extends TestCase
         'api/v1/auth/login' => 'publique : connexion, limitée par throttle:auth-login',
         'api/v1/auth/logout' => 'agit sur le jeton de la requête, pas sur un modèle : gardée par auth:sanctum',
         'api/v1/locales' => 'publique : langues disponibles, aucune donnée de compte',
+        'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
     ];
 
     public function test_every_controller_route_is_guarded(): void

@@ -36,6 +36,16 @@ class LoginForm extends Form
         return __('auth::form.login.submit');
     }
 
+    public function title(): string
+    {
+        return __('auth::form.login.title');
+    }
+
+    public function subtitle(): string
+    {
+        return __('auth::form.login.subtitle');
+    }
+
     /**
      * Public : c'est le formulaire qu'on remplit avant d'être connecté.
      */
