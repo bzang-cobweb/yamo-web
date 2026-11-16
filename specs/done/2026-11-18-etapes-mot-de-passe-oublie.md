@@ -168,3 +168,69 @@ concernée**.
 - Étapes pour d'autres formulaires que l'inscription (le mécanisme les permet).
 - Mot de passe oublié dans le back-office Filament.
 - Envoi réel de SMS.
+
+## Ce que j'ai décidé seul
+
+- **Reconnaissance de l'identifiant regroupée** dans `Identifiers::resolve()` (e-mail,
+  ou téléphone international vérifié), utilisée par la connexion et le mot de passe
+  oublié.
+- **Unicité déclarée sur les champs** de l'inscription (`Rule::unique`, nouvelle règle
+  `UniquePhone`) plutôt que dans un *hook* de requête. Elle s'applique ainsi à chaque
+  étape comme à l'envoi final. `PhoneChangeRequest` utilise la même règle.
+- **Validation d'une étape** :
+  - limitée à 30 appels par minute ;
+  - soumise au même droit que l'affichage du formulaire (`viewForm`) : un formulaire
+    privé exige un compte ;
+  - 404 pour une étape inexistante, ou pour un formulaire sans étapes.
+- **Mot de passe oublié** :
+  - limité comme la connexion (`auth-login`), et le changement comme les codes
+    (`auth-codes`) ;
+  - le nouveau mot de passe n'est accepté que dans la durée d'un code après la
+    validation de celui-ci ;
+  - la validation du code répond `{next: "password", challenge}` (200).
+- **Textes « Suivant », « Précédent », « Étape x sur y »** dans le module Form : ils
+  sont génériques. La clé `profile.back`, devenue inutile, a été retirée.
+- **En-tête fixe** : une barre opaque au-dessus du défilement, avec un trait fin en
+  bas, et non un en-tête transparent.
+
+## Ce qui a été fait
+
+- **Web** (`59a7e99`) :
+  - réglages des codes dans `auth.verification_codes` ;
+  - renommage en `$codeService` ;
+  - relation manager Régions dans la fiche pays, ressource Régions supprimée ;
+  - étapes de formulaire (`Step`, `FormStepController`) ;
+  - inscription en 3 étapes avec le genre ;
+  - mot de passe oublié (formulaires, service, contrôleur, motif `reset_password`) ;
+  - 179 tests, `openapi.json` régénéré.
+- **Mobile** (`42e522d`) :
+  - `DynamicForm` à étapes, `BackHeader` ;
+  - écran Mot de passe oublié, services ;
+  - 76 tests.
+- **Simulateur iOS**, avec un compte de test créé puis supprimé :
+  - inscription en 3 étapes, avec les erreurs de l'étape 1 seulement, puis le genre
+    enregistré ;
+  - en-têtes « ← Se connecter » et « ← Profil » fixes pendant le défilement ;
+  - « Étape précédente » dans l'étape de code ;
+  - mot de passe oublié de bout en bout, retour à la connexion avec la confirmation ;
+  - en base : nouveau mot de passe valide, ancien refusé, 0 session.
+- **qa-check** : GO, 0 bloquant (`.ia/runs/2026-11-18-etapes-mot-de-passe-oublie/qa.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Temps de réponse** du mot de passe oublié : un identifiant connu envoie un e-mail,
+  un inconnu non. L'écart de durée pourrait trahir l'existence d'un compte.
+- **Défi factice** : saisir un code ou demander un renvoi pour un défi factice répond
+  « Ce code n'est plus valable », et non « Code incorrect ». Ce n'est pas exploitable
+  facilement, mais la réponse n'est pas identique à celle d'un vrai défi.
+- **Onglet Régions de Filament dans un navigateur** : couvert par les tests Livewire
+  seulement.
+- **Android**.
+
+## Ce qui reste en suspens
+
+- **Point 1 annulé** : l'e-mail reste dans le profil.
+- **Ta session dans le simulateur** est déconnectée par les essais : il faut te
+  reconnecter (mot de passe, puis code dans Mailpit).
+- **Lien « J'ai déjà un compte »** : il double l'en-tête « ← Se connecter » de
+  l'inscription. Il est gardé, mais on peut le retirer.
