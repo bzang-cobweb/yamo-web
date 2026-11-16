@@ -104,3 +104,64 @@ test le vérifie sur ces deux champs.
 
 D'autres genres que `male` et `female` ; afficher l'âge ; ajouter le genre et la date
 à la liste Filament ou à la commande `auth:create-user`.
+
+---
+
+## Ce que j'ai décidé seul
+
+- **Bornes de la date incluses** (`after_or_equal:1900-01-01`, `before_or_equal:today`).
+  Le contrat disait « antérieure à aujourd'hui », mais le calendrier de l'app permet de
+  choisir aujourd'hui : la borne doit l'accepter aussi. Une seule source pour la borne
+  basse : `PersonalInfoForm::BIRTH_DATE_MIN`, utilisée aussi par Filament.
+- **Messages des bornes traduits** par la clé `values` de `lang/<langue>/validation.php`
+  (« jour d'aujourd'hui », « 1er janvier 1900 »). Ces fichiers viennent de laravel-lang :
+  la clé est à reporter s'ils sont réécrits. C'est noté dans `project.md`.
+- **Validation du genre** : la règle `in` des boutons radio suffit, sans `Rule::enum` en
+  double.
+- **`birth_date` dans `UserResource`** : passe par une méthode typée, parce que Scramble
+  ne savait pas typer le cast `date` et refusait l'export.
+- **La fabrique de comptes** donne un genre aléatoire et une date facultative.
+- **Correction hors périmètre, trouvée par l'essai** : `useFormDefinition` avec
+  `gcTime: 0`. Un formulaire rouvert montrait les valeurs d'avant l'enregistrement. Le
+  défaut touchait déjà le prénom et le nom : le formulaire reprenait la définition gardée
+  en mémoire.
+- **Calendrier iOS** : il se replie dès qu'une date est choisie, et « Effacer » est placé
+  sous le champ, avant le calendrier.
+
+## Ce qui a été fait
+
+- **Web** (`0597a1d`) :
+  - `GenderEnum`, migration, accesseur `initials` (sans accent) ;
+  - type de champ `date` ;
+  - formulaire Informations personnelles à quatre champs ;
+  - `UserResource` avec `full_name`, `initials`, `gender` et `birth_date` ;
+  - fiche Filament ;
+  - 108 tests, `openapi.json` régénéré.
+- **Mobile** (`41d3843`) :
+  - `DateField` avec le sélecteur natif ;
+  - `User` étendu, avatar et profil branchés sur l'API ;
+  - correction du formulaire rouvert ;
+  - 51 tests, README.
+- **Simulateur iOS**, avec un compte de test créé puis supprimé (Élodie Ängel) :
+  - avatar « EA », nom complet affiché ;
+  - genre obligatoire refusé vide, avec un message traduit ;
+  - calendrier natif en français, jours futurs grisés ;
+  - enregistrement → retour au profil avec confirmation, valeurs en base ;
+  - « Effacer » vide la date en base ;
+  - formulaire rouvert à jour.
+- **Envoi réel sur DDEV** (qa-check web) : bornes, formats, effacement, initiales.
+- **qa-check** : GO pour le web (`03-qa-check-web.md`) et GO pour le mobile
+  (`04-qa-check-mobile.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Android** : la boîte de dialogue `DateTimePickerAndroid` a été relue, pas exécutée.
+- **Fiche Filament dans un navigateur** : couverte par les tests Livewire seulement.
+- **Messages de bornes en anglais** : non rejoués.
+
+## Ce qui reste en suspens
+
+- **Ta session dans le simulateur** a été déconnectée pour l'essai avec le compte de
+  test, comme le contrat le prévoyait. Il faut te reconnecter.
+- **Gestion des erreurs d'API** : toujours dupliquée entre `DynamicForm`, `FormLoader`
+  et `AvatarPicker`.
