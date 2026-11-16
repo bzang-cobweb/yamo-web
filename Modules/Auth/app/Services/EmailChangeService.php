@@ -13,7 +13,7 @@ use Modules\Auth\Models\VerificationCode;
  */
 final class EmailChangeService
 {
-    public function __construct(private readonly VerificationCodeService $codes) {}
+    public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
      * @param  array{email: string}  $data
@@ -21,9 +21,9 @@ final class EmailChangeService
      */
     public function start(User $user, array $data): array
     {
-        $challenge = $this->codes->start(VerificationPurpose::CHANGE_EMAIL, $user, [VerificationChannel::EMAIL->value => $data['email']]);
+        $challenge = $this->codeService->start(VerificationPurpose::CHANGE_EMAIL, $user, [VerificationChannel::EMAIL->value => $data['email']]);
 
-        return Challenges::describe($challenge, $this->codes);
+        return Challenges::describe($challenge, $this->codeService);
     }
 
     public function complete(VerificationCode $verified): User
@@ -31,7 +31,7 @@ final class EmailChangeService
         $user = $verified->user;
         Challenges::ensureFree('email', $verified->destination, $user->getKey());
         $user->forceFill(['email' => $verified->destination, 'email_verified_at' => now()])->save();
-        $this->codes->close($verified->challenge);
+        $this->codeService->close($verified->challenge);
 
         return $user;
     }

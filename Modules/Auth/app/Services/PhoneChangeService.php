@@ -14,7 +14,7 @@ use Modules\Auth\Support\PhoneNumbers;
  */
 final class PhoneChangeService
 {
-    public function __construct(private readonly VerificationCodeService $codes) {}
+    public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
      * @param  array{phone: string, phone_country: string}  $data
@@ -25,14 +25,14 @@ final class PhoneChangeService
         $country = PhoneNumbers::country($data['phone_country']);
         $phone = PhoneNumbers::toE164($data['phone'], (string) $country?->code);
 
-        $challenge = $this->codes->start(
+        $challenge = $this->codeService->start(
             VerificationPurpose::CHANGE_PHONE,
             $user,
             [VerificationChannel::SMS->value => $phone],
             ['phone_country_id' => $country?->getKey()],
         );
 
-        return Challenges::describe($challenge, $this->codes);
+        return Challenges::describe($challenge, $this->codeService);
     }
 
     public function complete(VerificationCode $verified): User
@@ -44,7 +44,7 @@ final class PhoneChangeService
             'phone_country_id' => ((array) $verified->payload)['phone_country_id'] ?? null,
             'phone_verified_at' => now(),
         ])->save();
-        $this->codes->close($verified->challenge);
+        $this->codeService->close($verified->challenge);
 
         return $user->unsetRelation('phoneCountry');
     }

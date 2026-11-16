@@ -69,6 +69,37 @@ abstract class Form
     }
 
     /**
+     * Étapes du formulaire, dans l'ordre. Aucune par défaut : le formulaire
+     * s'affiche d'un seul tenant. Chaque champ appartient à une seule étape.
+     *
+     * @return list<Step>
+     */
+    public function steps(): array
+    {
+        return [];
+    }
+
+    /**
+     * Règles des seuls champs de l'étape `$number` (à partir de 1), ou `null` si
+     * l'étape n'existe pas. Les règles qui lient deux champs d'une même étape
+     * (confirmation, « l'un ou l'autre ») s'appliquent.
+     *
+     * @return array<string, list<mixed>>|null
+     */
+    public function stepRules(int $number): ?array
+    {
+        $step = $this->steps()[$number - 1] ?? null;
+
+        if ($step === null) {
+            return null;
+        }
+
+        $fields = array_filter($this->fields(), fn (Field $field): bool => in_array($field->name, $step->fields, true));
+
+        return Arr::collapse(array_map(fn (Field $field): array => $field->validationRules(), array_values($fields)));
+    }
+
+    /**
      * Règles de validation de tous les champs.
      *
      * @return array<string, list<mixed>>

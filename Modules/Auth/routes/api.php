@@ -5,6 +5,7 @@ use Modules\Auth\Http\Controllers\Api\EmailChangeController;
 use Modules\Auth\Http\Controllers\Api\LoginController;
 use Modules\Auth\Http\Controllers\Api\LogoutController;
 use Modules\Auth\Http\Controllers\Api\PasswordController;
+use Modules\Auth\Http\Controllers\Api\PasswordResetController;
 use Modules\Auth\Http\Controllers\Api\PersonalInfoController;
 use Modules\Auth\Http\Controllers\Api\PhoneChangeController;
 use Modules\Auth\Http\Controllers\Api\PreferencesController;
@@ -23,6 +24,12 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::post('register', [RegisterController::class, 'register'])
         ->middleware('throttle:auth-register')
         ->name('register');
+    Route::post('password/forgot', [PasswordResetController::class, 'forgot'])
+        ->middleware('throttle:auth-login')
+        ->name('password.forgot');
+    Route::post('password/reset', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:auth-codes')
+        ->name('password.reset');
     Route::post('codes/verify', [VerificationController::class, 'verify'])
         ->middleware('throttle:auth-codes')
         ->name('codes.verify');

@@ -16,18 +16,31 @@ use Modules\Auth\Sms\SmsSender;
 
 /**
  * Seul domicile des codes de vérification : création, envoi (e-mail ou SMS),
- * vérification, renvoi. Un code a 6 chiffres, vaut 10 minutes, admet 5 essais, et
- * se renvoie au plus une fois par minute. Il n'est jamais stocké en clair.
+ * vérification, renvoi. Un code a 6 chiffres et n'est jamais stocké en clair. Sa
+ * durée, son nombre d'essais et le délai avant renvoi viennent de la config
+ * `auth.verification_codes` (par défaut 10 minutes, 5 essais, 60 secondes).
  */
 final class VerificationCodeService
 {
-    public const MINUTES = 10;
-
-    public const MAX_ATTEMPTS = 5;
-
-    public const RESEND_AFTER_SECONDS = 60;
-
     public function __construct(private readonly SmsSender $sms) {}
+
+    /** Durée de validité d'un code, en minutes. */
+    public function minutes(): int
+    {
+        return (int) config('auth.verification_codes.minutes', 10);
+    }
+
+    /** Essais permis avant que le code soit épuisé. */
+    public function maxAttempts(): int
+    {
+        return (int) config('auth.verification_codes.max_attempts', 5);
+    }
+
+    /** Délai minimal entre deux envois, en secondes. */
+    public function resendSeconds(): int
+    {
+        return (int) config('auth.verification_codes.resend_seconds', 60);
+    }
 
     /**
      * Ouvre un défi et envoie un code vers chaque destination.
@@ -73,14 +86,14 @@ final class VerificationCodeService
             throw $this->fail('expired');
         }
 
-        if ($pending->attempts >= self::MAX_ATTEMPTS) {
+        if ($pending->attempts >= $this->maxAttempts()) {
             throw $this->fail('exhausted');
         }
 
         if (! Hash::check($code, $pending->code_hash)) {
             $pending->increment('attempts');
 
-            throw $pending->attempts >= self::MAX_ATTEMPTS ? $this->fail('exhausted') : $this->fail('wrong');
+            throw $pending->attempts >= $this->maxAttempts() ? $this->fail('exhausted') : $this->fail('wrong');
         }
 
         $pending->forceFill(['verified_at' => now()])->save();
@@ -109,7 +122,7 @@ final class VerificationCodeService
             throw $this->fail('unknown');
         }
 
-        if ($pending->contains(fn (VerificationCode $code): bool => $code->sent_at->gt(now()->subSeconds(self::RESEND_AFTER_SECONDS)))) {
+        if ($pending->contains(fn (VerificationCode $code): bool => $code->sent_at->gt(now()->subSeconds($this->resendSeconds())))) {
             throw $this->fail('too_soon');
         }
 
@@ -129,13 +142,21 @@ final class VerificationCodeService
      */
     public static function mask(VerificationCode $code): string
     {
-        if ($code->channel === VerificationChannel::EMAIL) {
-            [$name, $domain] = explode('@', $code->destination, 2);
+        return self::maskDestination($code->channel, $code->destination);
+    }
+
+    /**
+     * E-mail → « j•••@example.com » ; téléphone → « +41 ••• 67 ».
+     */
+    public static function maskDestination(VerificationChannel $channel, string $destination): string
+    {
+        if ($channel === VerificationChannel::EMAIL && str_contains($destination, '@')) {
+            [$name, $domain] = explode('@', $destination, 2);
 
             return mb_substr($name, 0, 1).'•••@'.$domain;
         }
 
-        return mb_substr($code->destination, 0, 3).' ••• '.mb_substr($code->destination, -2);
+        return mb_substr($destination, 0, 3).' ••• '.mb_substr($destination, -2);
     }
 
     /**
@@ -149,13 +170,13 @@ final class VerificationCodeService
             'code_hash' => Hash::make($code),
             'attempts' => 0,
             'sent_at' => now(),
-            'expires_at' => now()->addMinutes(self::MINUTES),
+            'expires_at' => now()->addMinutes($this->minutes()),
         ])->save();
 
         if ($verification->channel === VerificationChannel::EMAIL) {
-            Mail::to($verification->destination)->locale(App::getLocale())->send(new VerificationCodeMail($code, self::MINUTES));
+            Mail::to($verification->destination)->locale(App::getLocale())->send(new VerificationCodeMail($code, $this->minutes()));
         } else {
-            $this->sms->send($verification->destination, __('auth::verification.sms', ['code' => $code, 'minutes' => self::MINUTES]));
+            $this->sms->send($verification->destination, __('auth::verification.sms', ['code' => $code, 'minutes' => $this->minutes()]));
         }
     }
 

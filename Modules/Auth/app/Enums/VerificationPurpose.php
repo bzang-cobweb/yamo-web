@@ -11,6 +11,7 @@ enum VerificationPurpose: string
     case REGISTER = 'register';
     case CHANGE_EMAIL = 'change_email';
     case CHANGE_PHONE = 'change_phone';
+    case RESET_PASSWORD = 'reset_password';
 
     /** Opération sur un compte connecté : le jeton de la requête doit être le sien. */
     public function needsSignedInUser(): bool

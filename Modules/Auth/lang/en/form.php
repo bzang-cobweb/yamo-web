@@ -12,6 +12,11 @@ return [
         'title' => 'Create an account',
         'submit' => 'Create my account',
         'contact_help' => 'An email, a phone number or both: a verification code is sent to each.',
+        'steps' => [
+            'identity' => 'About you',
+            'contact' => 'How to reach you',
+            'password' => 'Password',
+        ],
     ],
     'code' => [
         'label' => 'Code received',
@@ -26,6 +31,14 @@ return [
     'phone' => [
         'add' => 'Add a phone number',
         'change' => 'Change phone number',
+    ],
+    'password_forgot' => [
+        'title' => 'Forgot password',
+        'subtitle' => 'Enter the email or phone number of your account: we will send you a code.',
+    ],
+    'password_reset' => [
+        'title' => 'New password',
+        'submit' => 'Change password',
     ],
     'personal' => [
         'title' => 'Personal information',

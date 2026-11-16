@@ -2,10 +2,9 @@
 
 namespace Modules\Auth\Http\Requests;
 
-use Illuminate\Validation\Validator;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Models\User;
-use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Rules\UniquePhone;
 use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
@@ -24,22 +23,11 @@ class PhoneChangeRequest extends FormBackedRequest
         return new PhoneChangeForm($this->user());
     }
 
-    /**
-     * @return list<callable>
-     */
-    public function after(): array
+    public function rules(): array
     {
-        return [function (Validator $validator): void {
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
+        $rules = parent::rules();
+        $rules['phone'][] = new UniquePhone($this->user()?->getKey());
 
-            $data = $validator->validated();
-            $phone = PhoneNumbers::toE164($data['phone'], (string) $data['phone_country']);
-
-            if (User::query()->where('phone', $phone)->whereKeyNot($this->user()?->getKey())->exists()) {
-                $validator->errors()->add('phone', __('validation.unique', ['attribute' => __('auth::user.phone')]));
-            }
-        }];
+        return $rules;
     }
 }

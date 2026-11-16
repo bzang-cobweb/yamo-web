@@ -11,12 +11,14 @@ use Illuminate\Support\Str;
 use Modules\Auth\Console\CreateUserCommand;
 use Modules\Auth\Forms\CodeForm;
 use Modules\Auth\Forms\EmailChangeForm;
+use Modules\Auth\Forms\ForgotPasswordForm;
 use Modules\Auth\Forms\LoginForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Forms\RegisterForm;
+use Modules\Auth\Forms\ResetPasswordForm;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
@@ -55,6 +57,8 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(CodeForm::class);
         $registry->register(EmailChangeForm::class);
         $registry->register(PhoneChangeForm::class);
+        $registry->register(ForgotPasswordForm::class);
+        $registry->register(ResetPasswordForm::class);
 
         // Connexion API : 5 essais par minute pour un même identifiant depuis une même adresse.
         RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)

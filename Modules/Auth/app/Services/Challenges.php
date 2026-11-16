@@ -14,9 +14,9 @@ final class Challenges
     /**
      * @return array{challenge: string, channel: string, destination: string}
      */
-    public static function describe(string $challenge, VerificationCodeService $codes): array
+    public static function describe(string $challenge, VerificationCodeService $codeService): array
     {
-        $next = $codes->nextPending($challenge);
+        $next = $codeService->nextPending($challenge);
 
         return [
             'challenge' => $challenge,

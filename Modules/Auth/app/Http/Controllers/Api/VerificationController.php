@@ -12,6 +12,7 @@ use Modules\Auth\Http\Resources\UserResource;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\EmailChangeService;
 use Modules\Auth\Services\LoginService;
+use Modules\Auth\Services\PasswordResetService;
 use Modules\Auth\Services\PhoneChangeService;
 use Modules\Auth\Services\RegisterService;
 use Modules\Auth\Services\VerificationCodeService;
@@ -27,34 +28,42 @@ class VerificationController
      * - connexion : l'utilisateur et son jeton (`token`) ;
      * - inscription dont tous les codes sont validés : 201, le compte créé et son jeton ;
      * - inscription avec un autre code attendu : 202 et le prochain code à saisir ;
-     * - changement d'e-mail ou de téléphone (connecté) : l'utilisateur à jour.
+     * - changement d'e-mail ou de téléphone (connecté) : l'utilisateur à jour ;
+     * - mot de passe oublié : `{next: "password", challenge}`, puis
+     *   `POST /auth/password/reset`.
      *
      * @unauthenticated
      */
     public function verify(
         VerifyCodeRequest $request,
-        VerificationCodeService $codes,
+        VerificationCodeService $codeService,
         LoginService $login,
         RegisterService $register,
         EmailChangeService $emailChange,
         PhoneChangeService $phoneChange,
+        PasswordResetService $passwordReset,
     ): UserResource|JsonResponse {
         /** @var User|null $actingUser */
         $actingUser = $request->user('sanctum');
         $channel = $request->filled('channel') ? VerificationChannel::from((string) $request->input('channel')) : null;
         $deviceName = (string) ($request->input('device_name') ?: 'app');
 
-        $verified = $codes->verify((string) $request->input('challenge'), $channel, (string) $request->input('code'), $actingUser);
+        $verified = $codeService->verify((string) $request->input('challenge'), $channel, (string) $request->input('code'), $actingUser);
 
         $result = match ($verified->purpose) {
             VerificationPurpose::LOGIN => $login->complete($verified, $deviceName),
             VerificationPurpose::REGISTER => $register->complete($verified, $deviceName),
             VerificationPurpose::CHANGE_EMAIL => $emailChange->complete($verified),
             VerificationPurpose::CHANGE_PHONE => $phoneChange->complete($verified),
+            VerificationPurpose::RESET_PASSWORD => $passwordReset->confirm($verified),
         };
 
         if ($result instanceof User) {
             return new UserResource($result);
+        }
+
+        if (isset($result['next'])) {
+            return response()->json($result);
         }
 
         if (! isset($result['token'])) {
@@ -73,11 +82,11 @@ class VerificationController
      *
      * @unauthenticated
      */
-    public function resend(ResendCodeRequest $request, VerificationCodeService $codes): Response
+    public function resend(ResendCodeRequest $request, VerificationCodeService $codeService): Response
     {
         /** @var User|null $actingUser */
         $actingUser = $request->user('sanctum');
-        $codes->resend((string) $request->input('challenge'), $actingUser);
+        $codeService->resend((string) $request->input('challenge'), $actingUser);
 
         return response()->noContent();
     }

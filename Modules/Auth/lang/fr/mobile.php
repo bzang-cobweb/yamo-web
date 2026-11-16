@@ -14,6 +14,10 @@ return [
         'codeSent' => 'Code envoyé à :destination.',
         'resend' => 'Renvoyer le code',
         'resent' => 'Nouveau code envoyé.',
+        'forgotPassword' => 'Mot de passe oublié ?',
+        'passwordReset' => 'Mot de passe modifié, connectez-vous.',
+        'previousStep' => 'Étape précédente',
+        'signIn' => 'Se connecter',
     ],
     'home' => [
         'greeting' => 'Bonjour :name',
@@ -32,7 +36,6 @@ return [
         'signOut' => 'Se déconnecter',
         'title' => 'Profil',
         'saved' => 'Modifications enregistrées.',
-        'back' => 'Retour',
     ],
     'avatar' => [
         'label' => 'Photo de profil',

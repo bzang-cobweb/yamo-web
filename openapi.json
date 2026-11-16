@@ -123,6 +123,68 @@
                 "security": []
             }
         },
+        "/v1/forms/{form}/steps/{step}": {
+            "post": {
+                "operationId": "v1.forms.steps.validate",
+                "summary": "Valider l'\u00e9tape `{step}` (\u00e0 partir de 1) : seuls ses champs sont v\u00e9rifi\u00e9s, avec\nles r\u00e8gles du formulaire. Rien n'est enregistr\u00e9. 204 si l'\u00e9tape est valide,\n422 avec les erreurs sinon, 404 si l'\u00e9tape n'existe pas. L'envoi final se fait\npar l'appel propre au formulaire, qui valide tout",
+                "tags": [
+                    "FormStep"
+                ],
+                "parameters": [
+                    {
+                        "name": "form",
+                        "in": "path",
+                        "required": true,
+                        "description": "The form ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "step",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/locales": {
             "get": {
                 "operationId": "v1.locales.index",
@@ -323,6 +385,108 @@
                         "$ref": "#/components/responses/ValidationException"
                     }
                 }
+            }
+        },
+        "/v1/auth/password/forgot": {
+            "post": {
+                "operationId": "v1.auth.password.forgot",
+                "summary": "E-mail ou t\u00e9l\u00e9phone (format international) : un code y part si un compte\ncorrespond. La r\u00e9ponse est la m\u00eame qu'un compte existe ou non. Le code se valide\npar `POST /auth/codes/verify`, qui r\u00e9pond `{next: \"password\", challenge}`",
+                "tags": [
+                    "PasswordReset"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ForgotPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 202
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/password/reset": {
+            "post": {
+                "operationId": "v1.auth.password.reset",
+                "summary": "Nouveau mot de passe, pour un d\u00e9fi dont le code vient d'\u00eatre valid\u00e9. Toutes les\nsessions de l'app sont ferm\u00e9es ; on se reconnecte avec le nouveau mot de passe",
+                "tags": [
+                    "PasswordReset"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
             }
         },
         "/v1/auth/me/personal-info": {
@@ -655,7 +819,7 @@
         "/v1/auth/codes/verify": {
             "post": {
                 "operationId": "v1.auth.codes.verify",
-                "summary": "Valider un code. Selon l'op\u00e9ration du d\u00e9fi :\n- connexion : l'utilisateur et son jeton (`token`) ;\n- inscription dont tous les codes sont valid\u00e9s : 201, le compte cr\u00e9\u00e9 et son jeton ;\n- inscription avec un autre code attendu : 202 et le prochain code \u00e0 saisir ;\n- changement d'e-mail ou de t\u00e9l\u00e9phone (connect\u00e9) : l'utilisateur \u00e0 jour",
+                "summary": "Valider un code. Selon l'op\u00e9ration du d\u00e9fi :\n- connexion : l'utilisateur et son jeton (`token`) ;\n- inscription dont tous les codes sont valid\u00e9s : 201, le compte cr\u00e9\u00e9 et son jeton ;\n- inscription avec un autre code attendu : 202 et le prochain code \u00e0 saisir ;\n- changement d'e-mail ou de t\u00e9l\u00e9phone (connect\u00e9) : l'utilisateur \u00e0 jour ;\n- mot de passe oubli\u00e9 : `{next: \"password\", challenge}`, puis\n  `POST /auth/password/reset`",
                 "tags": [
                     "Verification"
                 ],
@@ -671,7 +835,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "`UserResource`\n\n`UserResource`",
+                        "description": "`UserResource`\n\n\n\n`UserResource`",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -690,6 +854,85 @@
                                             "required": [
                                                 "data",
                                                 "token"
+                                            ]
+                                        },
+                                        {
+                                            "anyOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "user": {
+                                                            "anyOf": [
+                                                                {
+                                                                    "$ref": "#/components/schemas/User"
+                                                                },
+                                                                {
+                                                                    "type": "null"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "token": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "user",
+                                                        "token"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "challenge": {
+                                                            "type": "string"
+                                                        },
+                                                        "channel": {
+                                                            "type": "string"
+                                                        },
+                                                        "destination": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "challenge",
+                                                        "channel",
+                                                        "destination"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "user": {
+                                                            "$ref": "#/components/schemas/User"
+                                                        },
+                                                        "token": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "user",
+                                                        "token"
+                                                    ]
+                                                },
+                                                {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "next": {
+                                                            "type": "string",
+                                                            "const": "password"
+                                                        },
+                                                        "challenge": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "next",
+                                                        "challenge"
+                                                    ]
+                                                }
                                             ]
                                         },
                                         {
@@ -772,6 +1015,22 @@
                                         },
                                         {
                                             "$ref": "#/components/schemas/User"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "next": {
+                                                    "type": "string",
+                                                    "const": "password"
+                                                },
+                                                "challenge": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "next",
+                                                "challenge"
+                                            ]
                                         }
                                     ]
                                 }
@@ -875,6 +1134,20 @@
                 ],
                 "title": "EmailChangeRequest"
             },
+            "ForgotPasswordRequest": {
+                "type": "object",
+                "description": "Mot de passe oubli\u00e9, premi\u00e8re \u00e9tape : r\u00e8gles du formulaire `auth.password.forgot`.",
+                "properties": {
+                    "identifier": {
+                        "type": "string",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "identifier"
+                ],
+                "title": "ForgotPasswordRequest"
+            },
             "FormResource": {
                 "type": "object",
                 "properties": {
@@ -889,6 +1162,11 @@
                     },
                     "fields": {
                         "type": "array",
+                        "items": {}
+                    },
+                    "steps": {
+                        "type": "array",
+                        "description": "\u00c9tapes (titre, noms des champs) ; vide pour un formulaire d'un seul tenant.",
                         "items": {}
                     },
                     "submit": {
@@ -908,6 +1186,7 @@
                     "title",
                     "subtitle",
                     "fields",
+                    "steps",
                     "submit"
                 ],
                 "title": "FormResource"
@@ -1210,7 +1489,7 @@
             },
             "RegisterRequest": {
                 "type": "object",
-                "description": "Cr\u00e9er un compte : r\u00e8gles du formulaire `auth.register`, puis unicit\u00e9 du\npseudonyme, de l'e-mail et du t\u00e9l\u00e9phone (compar\u00e9 en E.164).",
+                "description": "Cr\u00e9er un compte : toutes les r\u00e8gles du formulaire `auth.register`, unicit\u00e9 du\npseudonyme, de l'e-mail et du t\u00e9l\u00e9phone comprise (d\u00e9clar\u00e9e sur ses champs, donc\nv\u00e9rifi\u00e9e aussi \u00e0 chaque \u00e9tape).",
                 "properties": {
                     "name": {
                         "type": "string",
@@ -1223,6 +1502,13 @@
                     "last_name": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female"
+                        ]
                     },
                     "email": {
                         "type": [
@@ -1503,6 +1789,7 @@
                     "name",
                     "first_name",
                     "last_name",
+                    "gender",
                     "password",
                     "password_confirmation"
                 ],
@@ -1521,6 +1808,28 @@
                     "challenge"
                 ],
                 "title": "ResendCodeRequest"
+            },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "description": "Nouveau mot de passe : r\u00e8gles du formulaire `auth.password.reset`, plus le d\u00e9fi\ndont le code a \u00e9t\u00e9 valid\u00e9.",
+                "properties": {
+                    "password": {
+                        "type": "string"
+                    },
+                    "password_confirmation": {
+                        "type": "string"
+                    },
+                    "challenge": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "password",
+                    "password_confirmation",
+                    "challenge"
+                ],
+                "title": "ResetPasswordRequest"
             },
             "UpdateAvatarRequest": {
                 "type": "object",
@@ -1851,6 +2160,7 @@
                             "4",
                             "5",
                             "6",
+                            "27",
                             "7",
                             "8",
                             "9",
@@ -1864,6 +2174,7 @@
                             "17",
                             "18",
                             "19",
+                            "28",
                             "20",
                             "21",
                             "22",

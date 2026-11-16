@@ -16,10 +16,10 @@ use Modules\Auth\Support\PhoneNumbers;
  */
 final class RegisterService
 {
-    public function __construct(private readonly VerificationCodeService $codes) {}
+    public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
-     * @param  array{name: string, first_name: string, last_name: string, email?: string|null, phone?: string|null, phone_country?: string|null, password: string}  $data
+     * @param  array{name: string, first_name: string, last_name: string, gender: string, email?: string|null, phone?: string|null, phone_country?: string|null, password: string}  $data
      * @return array{challenge: string, channel: string, destination: string}
      */
     public function start(array $data): array
@@ -28,7 +28,7 @@ final class RegisterService
         $phone = filled($data['phone'] ?? null) && $country !== null ? PhoneNumbers::toE164($data['phone'], $country->code) : null;
         $email = filled($data['email'] ?? null) ? $data['email'] : null;
 
-        $challenge = $this->codes->start(
+        $challenge = $this->codeService->start(
             VerificationPurpose::REGISTER,
             null,
             array_filter([VerificationChannel::EMAIL->value => $email, VerificationChannel::SMS->value => $phone]),
@@ -36,6 +36,7 @@ final class RegisterService
                 'name' => $data['name'],
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
+                'gender' => $data['gender'],
                 'email' => $email,
                 'phone' => $phone,
                 'phone_country_id' => $phone === null ? null : $country?->getKey(),
@@ -44,7 +45,7 @@ final class RegisterService
             ],
         );
 
-        return Challenges::describe($challenge, $this->codes);
+        return Challenges::describe($challenge, $this->codeService);
     }
 
     /**
@@ -54,8 +55,8 @@ final class RegisterService
      */
     public function complete(VerificationCode $verified, string $deviceName): array
     {
-        if ($this->codes->nextPending($verified->challenge) !== null) {
-            return Challenges::describe($verified->challenge, $this->codes);
+        if ($this->codeService->nextPending($verified->challenge) !== null) {
+            return Challenges::describe($verified->challenge, $this->codeService);
         }
 
         $payload = (array) $verified->payload;
@@ -69,7 +70,7 @@ final class RegisterService
             'email_verified_at' => $payload['email'] !== null ? now() : null,
             'phone_verified_at' => $payload['phone'] !== null ? now() : null,
         ])->save();
-        $this->codes->close($verified->challenge);
+        $this->codeService->close($verified->challenge);
 
         return ['user' => $user, 'token' => Challenges::token($user, $deviceName)];
     }

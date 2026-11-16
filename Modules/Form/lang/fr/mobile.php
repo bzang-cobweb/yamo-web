@@ -13,5 +13,8 @@ return [
         'clearDate' => 'Effacer',
         'search' => 'Rechercher…',
         'retry' => 'Réessayer',
+        'next' => 'Suivant',
+        'previous' => 'Précédent',
+        'stepOf' => 'Étape :current sur :total',
     ],
 ];

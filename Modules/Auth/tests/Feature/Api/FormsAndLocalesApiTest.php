@@ -40,6 +40,7 @@ class FormsAndLocalesApiTest extends TestCase
                     'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
                 ],
             ],
+            'steps' => [],
             'submit' => ['label' => 'Se connecter'],
         ]]);
 

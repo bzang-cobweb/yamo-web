@@ -129,6 +129,29 @@ class VerificationCodesApiTest extends TestCase
         $this->assertSame(0, PersonalAccessToken::count());
     }
 
+    public function test_code_limits_come_from_the_auth_config(): void
+    {
+        $this->assertSame(10, config('auth.verification_codes.minutes'));
+        $this->assertSame(5, config('auth.verification_codes.max_attempts'));
+        $this->assertSame(60, config('auth.verification_codes.resend_seconds'));
+
+        config(['auth.verification_codes.max_attempts' => 2, 'auth.verification_codes.minutes' => 1, 'auth.verification_codes.resend_seconds' => 5]);
+        $this->jeanne();
+        $login = fn () => $this->postJson('/api/v1/auth/login', ['identifier' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+
+        $challenge = $login();
+        $code = $this->emailCode('jeanne@example.com');
+        $this->verify($challenge, $this->wrong($code))->assertJsonPath('errors.code.0', trans('auth::verification.errors.wrong', [], 'en'));
+        $this->verify($challenge, $this->wrong($code))->assertJsonPath('errors.code.0', trans('auth::verification.errors.exhausted', [], 'en'));
+
+        $this->travel(6)->seconds();
+        $this->postJson('/api/v1/auth/codes/resend', ['challenge' => $challenge])->assertNoContent();
+
+        $this->travel(61)->seconds();
+        $this->verify($challenge, $this->emailCode('jeanne@example.com'))
+            ->assertJsonPath('errors.code.0', trans('auth::verification.errors.expired', [], 'en'));
+    }
+
     public function test_an_unknown_challenge_is_refused(): void
     {
         $this->verify('9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d', '123456')
@@ -174,6 +197,7 @@ class VerificationCodesApiTest extends TestCase
             'name' => 'marie',
             'first_name' => 'Marie',
             'last_name' => 'Curie',
+            'gender' => 'female',
             'email' => 'marie@example.com',
             'password' => 'Secret-password-1',
             'password_confirmation' => 'Secret-password-1',
@@ -191,6 +215,7 @@ class VerificationCodesApiTest extends TestCase
         $user = User::query()->where('name', 'marie')->sole();
         $response->assertJsonPath('data.id', $user->id)->assertJsonPath('data.email', 'marie@example.com')->assertJsonStructure(['token']);
         $this->assertNotNull($user->email_verified_at);
+        $this->assertSame('female', $user->gender->value);
         $this->assertNull($user->phone);
         $this->assertTrue(Hash::check('Secret-password-1', $user->password));
     }
@@ -350,8 +375,8 @@ class VerificationCodesApiTest extends TestCase
     public function test_register_and_code_forms_are_public(): void
     {
         $this->getJson('/api/v1/forms/auth.register')->assertOk()
-            ->assertJsonPath('data.fields.4.name', 'phone')
-            ->assertJsonPath('data.fields.4.type', 'phone');
+            ->assertJsonPath('data.fields.5.name', 'phone')
+            ->assertJsonPath('data.fields.5.type', 'phone');
         $this->getJson('/api/v1/forms/auth.code')->assertOk()
             ->assertJsonPath('data.fields.0.type', 'code');
     }

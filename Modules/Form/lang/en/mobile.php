@@ -13,5 +13,8 @@ return [
         'clearDate' => 'Clear',
         'search' => 'Search…',
         'retry' => 'Try again',
+        'next' => 'Next',
+        'previous' => 'Previous',
+        'stepOf' => 'Step :current of :total',
     ],
 ];
