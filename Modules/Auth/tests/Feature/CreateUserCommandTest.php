@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Modules\Auth\Database\Seeders\AuthDatabaseSeeder;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Country;
 use Tests\TestCase;
 
 class CreateUserCommandTest extends TestCase
@@ -85,5 +86,34 @@ class CreateUserCommandTest extends TestCase
         ])->assertFailed();
 
         $this->assertSame(1, User::count());
+    }
+
+    public function test_creates_a_user_with_a_phone_only_stored_in_e164(): void
+    {
+        Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
+
+        $this->artisan('auth:create-user', [
+            '--name' => 'paul', '--first-name' => 'Paul', '--last-name' => 'Martin',
+            '--phone' => '079 123 45 67', '--phone-country' => 'ch',
+            '--password' => 'secret-password', '--locale' => 'fr',
+        ])->assertSuccessful();
+
+        $user = User::firstWhere('name', 'paul');
+        $this->assertNull($user->email);
+        $this->assertSame('+41791234567', $user->phone);
+        $this->assertSame('CH', $user->phoneCountry->code);
+        $this->assertNotNull($user->phone_verified_at);
+    }
+
+    public function test_refuses_an_account_without_email_nor_phone_and_an_invalid_phone(): void
+    {
+        Country::factory()->create(['code' => 'CH']);
+
+        $this->artisan('auth:create-user', [
+            '--name' => 'paul', '--first-name' => 'Paul', '--last-name' => 'Martin',
+            '--phone' => '123', '--phone-country' => 'CH', '--password' => 'x', '--locale' => 'fr',
+        ])->assertFailed();
+
+        $this->assertSame(0, User::where('name', 'paul')->count());
     }
 }

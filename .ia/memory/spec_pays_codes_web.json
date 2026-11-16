@@ -1,0 +1,216 @@
+{
+  "concept": "pays_codes_web",
+  "chantier": "2026-11-17-pays-telephone-codes",
+  "date": "2026-11-16",
+  "stack": "Laravel 13.42 / Filament 5.11.3 / nwidart laravel-modules 13.3.0 / spatie translatable 6.15.0 + lara-zeus/spatie-translatable 2.0.1 / propaganistas laravel-phone 6.1.0 + giggsey libphonenumber-for-php-lite 9.0.43 (versions : vendor/composer/installed.json)",
+  "profondeur": "enveloppe générique : le skill bza-dev:audit-source et bza-laravel:audit-laravel ne sont pas accessibles depuis cet agent (voir incertitudes)",
+
+  "modules_nwidart": {
+    "creer_un_module": [
+      "Commande : `php artisan module:make Location` (dans DDEV : `ddev exec php artisan module:make Location`). Elle lance elle-même `composer dump-autoload` (vendor/nwidart/laravel-modules/src/Commands/Make/ModuleMakeCommand.php:82).",
+      "Stubs : ceux du vendor, pas de stubs publiés. `stubs.enabled` = false et `stubs.path` = vendor/nwidart/laravel-modules/src/Commands/stubs (config/modules.php:37-39). Fichiers générés : routes web/api, views, config, composer.json, assets, vite, package.json (config/modules.php:40-51).",
+      "Dossiers générés (generate=true) : app/Providers, route-provider, app/Http/Controllers, config, database/factories, database/migrations, database/seeders, resources/assets, resources/views, routes, tests/Feature, tests/Unit (config/modules.php:179-216). Les dossiers non générés (lang, app/Models, Policies, Enums, Filament…) se créent à la main. `lang` est à generate=false (config/modules.php:202).",
+      "composer.json du module : vendor `nwidart` et auteur par défaut, via env MODULE_VENDOR / MODULE_AUTHOR_* (config/modules.php:290-295). Modules/Auth/composer.json:2 = \"nwidart/auth\". Autoload PSR-4 : Modules\\X\\ → app/, Factories, Seeders (Modules/Auth/composer.json:18-29).",
+      "merge-plugin : le composer.json racine inclut déjà `Modules/*/composer.json` (composer.json, extra.merge-plugin.include) et autorise wikimedia/composer-merge-plugin (allow-plugins), présent dans vendor/wikimedia/composer-merge-plugin. Aucune édition du composer.json racine n'est nécessaire.",
+      "Activation : FileActivator sur base_path('modules_statuses.json') (config/modules.php:328-335). Le fichier vaut aujourd'hui {\"Auth\": true, \"Form\": true}. module:make y inscrit le module (ModuleGenerator.php:421 setActiveByName).",
+      "module.json : name, alias, priority 0, providers = [ServiceProvider du module] (Modules/Auth/module.json:1-11)."
+    ],
+    "structure_module_existant": {
+      "provider_principal": "AuthServiceProvider extends Nwidart ModuleServiceProvider (Modules/Auth/app/Providers/AuthServiceProvider.php:25). Dans boot() (l.27-45) : parent::boot(), Gate::policy() pour chaque modèle (l.31-33), inscription des formulaires dans FormRegistry (l.36-40), RateLimiter 'auth-login' (l.43-44). Propriétés $name/$nameLower (l.50-55), $commands (l.62-64), $providers = [EventServiceProvider, RouteServiceProvider] (l.71-74).",
+      "ModuleServiceProvider vendor": "boot() charge les migrations du module via loadMigrationsFrom (vendor/nwidart/laravel-modules/src/Support/ModuleServiceProvider.php:56-64). registerTranslations() fait loadTranslationsFrom(lang, $nameLower), d'où le namespace `auth::` (l.121-131). registerConfig (l.141). registerCommands (l.81-83).",
+      "routes": "RouteServiceProvider du module : api → middleware('api')->prefix('api')->name('api.'), fichier routes/api.php (Modules/Auth/app/Providers/RouteServiceProvider.php:46-49). web → middleware('web') (l.36-39). Modules/Form/app/Providers/RouteServiceProvider.php:46-49 est identique.",
+      "routes_auth_api": "Modules/Auth/routes/api.php:15-29 : groupe prefix('v1/auth')->name('v1.auth.'). `login` POST + throttle:auth-login (l.16-18). Sous auth:sanctum (l.20) : logout, me, me/personal-info (PATCH), me/password (PUT), me/preferences (PATCH), me/avatar (POST/DELETE). Chaque route porte ->can('me'|'updateMe', User::class).",
+      "lang": "Modules/<M>/lang/{fr,en}/*.php, lus par __('auth::fichier.cle'). Fichiers d'Auth : form, mobile, navigation, permission, role, user. `mobile.php` de chaque module est servi par GET /api/v1/messages (app/Support/MobileMessages.php:59-67). Une clé définie deux fois lève LogicException (l.40-41).",
+      "migrations": "Modules/Auth/database/migrations/*. Auto-découverte : config/modules.php:238 'migrations' => true. Elles sont triées par nom de fichier avec celles de database/migrations. La dernière est 2026_11_16_120000_add_gender_and_birth_date_to_users.php.",
+      "seeders": "Modules/Auth/database/seeders/AuthDatabaseSeeder.php. Le DatabaseSeeder racine n'appelle que AuthDatabaseSeeder (database/seeders/DatabaseSeeder.php:13-16). Un seeder de module (pays, cantons) doit y être ajouté.",
+      "factories": "Modules/Auth/database/factories/UserFactory.php, reliée au modèle par #[UseFactory(UserFactory::class)] (Modules/Auth/app/Models/User.php:32).",
+      "module_Form": "Pas de dossier Filament. FormServiceProvider (Modules/Form/app/Providers/FormServiceProvider.php) : singleton FormRegistry (l.21), Route::bind('form') qui fait 404 si le formulaire est inconnu (l.30-31), Gate 'viewForm' qui renvoie 401 à un invité et 403 sinon (l.33-37)."
+    },
+    "filament": {
+      "decouverte_panel": "AdminPanelProvider boucle sur Module::allEnabled() et appelle discoverResources(in: <module>/app/Filament/Resources, for: 'Modules\\<Nom>\\Filament\\Resources'), puis discoverPages et discoverWidgets (app/Providers/Filament/AdminPanelProvider.php:35-41). Un module activé voit donc ses ressources découvertes sans rien enregistrer. Le panel est enregistré dans bootstrap/providers.php:8.",
+      "AbstractResource": "app/Filament/AbstractResource.php:17-43 : getActions() = [EditAction, DeleteAction] (l.22-28) ; getBulkActions() = BulkActionGroup[DeleteBulkAction->authorizeIndividualRecords('delete')] (l.33-42).",
+      "AbstractAuthResource": "Modules/Auth/app/Filament/Resources/AbstractAuthResource.php:10-16. Elle ne fait que getNavigationGroup() → __('auth::navigation.group') (lang fr : 'Accès', Modules/Auth/lang/fr/navigation.php:4). Pour un module Location, l'équivalent serait une AbstractLocationResource avec son propre groupe. Ce n'est pas dans la source.",
+      "decoupage_ressource": "Exemple : RoleResource (Modules/Auth/app/Filament/Resources/RoleResource.php:15-53). $model, $navigationIcon (Heroicon), $navigationSort, $recordTitleAttribute ; form() → <X>Resource/Schemas/<X>Form::configure ; table() → <X>Resource/Tables/<X>Table::configure ; getPages() index/create/edit ; getModelLabel/getPluralModelLabel traduits. UserTable branche recordActions(UserResource::getActions()) et toolbarActions(UserResource::getBulkActions()) (UserTable.php:66-67).",
+      "groupes_navigation": "Un seul groupe existe : 'auth::navigation.group'. UserResource navigationSort 10 (UserResource.php:22), RoleResource 20 (RoleResource.php:21)."
+    },
+    "policies_permissions": {
+      "enregistrement": "Gate::policy() dans le boot du provider de module (AuthServiceProvider.php:31-33). Aucune auto-découverte de policy dans le module.",
+      "patron_policy": "Trait HasBeforeAbility : before() renvoie true pour le super admin, sinon null (Modules/Auth/app/Policies/Concerns/HasBeforeAbility.php:13-16). Chaque méthode a deux branches. Si Filament::isServing() : hasPermissionTo(PermissionEnum::X). Sinon (site et API) : false ou le propriétaire (RolePolicy.php:15-73, UserPolicy.php:26-104).",
+      "PermissionEnum": "Modules/Auth/app/Enums/PermissionEnum.php:9-29 : valeurs 'domaine.action' (admin.access, users.*, roles.*, permissions.view). label() lit __('auth::permission.names.'.$value) (l.25-28). Le point devient un niveau de tableau : names.users.view (Modules/Auth/lang/fr/permission.php:13-31).",
+      "AuthDatabaseSeeder": "Fait findOrCreate de chaque cas de PermissionEnum, puis SUPPRIME toute permission absente de l'enum (Modules/Auth/database/seeders/AuthDatabaseSeeder.php:22-28). Il crée ensuite les rôles de RoleEnum (l.30-32). Il est rejouable. Une permission d'un autre module doit donc figurer dans PermissionEnum (module Auth), sinon le seeder l'efface.",
+      "tests_impactes_par_nouvelles_permissions": "PermissionResourceTest.php:26 compte count(PermissionEnum::cases()). PolicyOutsideFilamentTest.php:43 donne toutes les permissions."
+    }
+  },
+
+  "translatable": {
+    "modele_traduisible_existant": "Aucun. Aucun `HasTranslations` dans app/, Modules/, database/ ni tests/ (grep). Country et Region seraient les premiers.",
+    "config": "Pas de config/translatable.php publié. spatie/laravel-translatable 6.15 se règle par Translatable::fallback() (vendor/spatie/laravel-translatable/src/Translatable.php:31-37). Sans réglage, getTranslation() replie sur config('app.fallback_locale') = 'en' (vendor/.../HasTranslations.php:300-308 ; config/app.php:83). fallbackAny vaut false (Translatable.php:18).",
+    "locales_app": "config('app.supported_locales') = ['fr','en'] (config/app.php:89). Domicile : App\\Support\\Locales (app/Support/Locales.php:17-20). Langue par défaut : config('app.default_locale') (l.26-29 ; config/app.php:93).",
+    "plugin_filament": "SpatieTranslatablePlugin::make()->defaultLocales(config('app.supported_locales')) dans le panel (app/Providers/Filament/AdminPanelProvider.php:48-51).",
+    "branchement_ressource": [
+      "Ressource : `use LaraZeus\\SpatieTranslatable\\Resources\\Concerns\\Translatable;`. getTranslatableLocales() renvoie filament('spatie-translatable')->getDefaultLocales(), soit ['fr','en']. getTranslatableAttributes() exige que le modèle utilise HasTranslations et déclare $translatable, sinon RuntimeException (vendor/lara-zeus/spatie-translatable/src/Resources/Concerns/Translatable.php:10-38).",
+      "Pages : un trait par type de page, Resources/Pages/{ListRecords,CreateRecord,EditRecord,ViewRecord,ManageRecords}/Concerns/Translatable.php. EditRecord : handleRecordUpdate écrit la locale active et les autres locales saisies via setTranslation (EditRecord/Concerns/Translatable.php:44-78).",
+      "Sélecteur : action LaraZeus\\SpatieTranslatable\\Actions\\LocaleSwitcher (SelectAction, nom 'activeLocale') à mettre dans getHeaderActions() de la page (src/Actions/LocaleSwitcher.php:7-24). Une variante table existe : src/Tables/Actions/LocaleSwitcher.php."
+    ]
+  },
+
+  "form_module": {
+    "Field": {
+      "fichier": "Modules/Form/app/Support/Field.php (final class)",
+      "etat": "label, placeholder, help, required=false, default=null, options array<string,string> valeur=>libellé, rules list (l.14-28). Constructeur privé (name, FieldType) (l.30-33).",
+      "fabriques": "make(name, type) (l.35-38), puis une fabrique par type : text, hidden, email, password, number, textarea, select, radio, checkbox, checkboxGroup, date, switch (l.40-98).",
+      "setters": "label/placeholder/help (l.100-119), required(bool=true) (l.121-126), default(mixed) (l.128-133), options(array<string,string>) (l.138-143), rules(list) qui REMPLACE les règles au lieu de les ajouter (l.151-156).",
+      "validationRules": "presence = required ? ['required'] : ['nullable'] (l.167). CHECKBOX_GROUP renvoie deux clés, name et name.* (l.169-174). Les autres types renvoient [name => [presence, ...type->rules(values), ...rules]] (l.176). Les valeurs d'options sont converties en string (l.166).",
+      "toArray": "{name, type, label, placeholder, help, required, default, options:[{value:(string),label}]} (l.189-204). Le PHPDoc de forme (l.187) est lu par Scramble pour openapi.json.",
+      "ajouts_contrat": [
+        "readonly : à ajouter dans l'état, le setter et toArray. Form::rules() (Modules/Form/app/Support/Form.php:75-78) et attributes() (l.85-91) parcourent tous les champs : un champ readonly doit en être exclu pour n'être « jamais validé ». FormBackedRequest::validated() ignore déjà les clés sans règle (Modules/Form/app/Http/Requests/FormBackedRequest.php:9-13, 24-27).",
+        "depends_on et options avec parent : options() n'accepte que valeur=>libellé (Field.php:24-25, 136-143) et toArray ne sort que value et label (l.199-202). Il faut une nouvelle forme d'option, par exemple {value,label,parent}. De plus, Rule::in(toutes les valeurs) (FieldType.php:48) ne vérifie pas l'appartenance au parent : une règle en plus est nécessaire (région ∈ pays).",
+        "type phone : il faut une case dans FieldType, un bras dans rules() (le match est sans default, FieldType.php:44-52) et une fabrique. validationRules() doit aussi produire une règle pour `<champ>_country`, sur le modèle de CHECKBOX_GROUP qui renvoie déjà deux clés (Field.php:169-174).",
+        "type code : nouvelle case et nouveau bras dans rules(), par exemple string + digits:6."
+      ]
+    },
+    "FieldType": "Modules/Form/app/Enums/FieldType.php:12-54. Cases text, hidden, email, password, number, textarea, select, radio, checkbox, checkbox_group, switch, date. hasOptions() = select, radio, checkbox_group (l.31-34). rules() est un match exhaustif (l.42-53) : select et radio → ['string', Rule::in(values)] (l.48). Le commentaire l.8-10 dit qu'un nouveau type demande son composant mobile.",
+    "Form": "Modules/Form/app/Support/Form.php:15-92. Constructeur (?Authenticatable $user) (l.17). Méthodes : name() statique abstraite, fields(), submitLabel(), title()/subtitle() (null par défaut), canBeViewedBy() (connecté par défaut, l.65-68), rules() = Arr::collapse des validationRules (l.75-78), attributes() = libellés (l.85-91).",
+    "FormRegistry": "Modules/Form/app/Support/FormRegistry.php:20-27 register(class) ; make(name, user) instancie le formulaire (l.34-39). Les formulaires sont inscrits dans le boot des providers de module (AuthServiceProvider.php:36-40).",
+    "FormResource": "Modules/Form/app/Http/Resources/FormResource.php:20-29 : {name, title, subtitle, fields: Field::toArray[], submit:{label}}. Le PHPDoc de forme l.18 duplique celui de Field (à mettre à jour avec readonly et depends_on).",
+    "FormBackedRequest": "Modules/Form/app/Http/Requests/FormBackedRequest.php:14-36. form() abstraite ; rules() = form()->rules() ; attributes() = form()->attributes().",
+    "FormController_route": "GET api/v1/forms/{form} ->can('viewForm','form') (Modules/Form/routes/api.php:10-12) ; FormController::show (Modules/Form/app/Http/Controllers/Api/FormController.php:20-23).",
+    "tests_Form_impactes": [
+      "FieldTest.php:66-71 exige que le formulaire de test couvre tous les FieldType : il faut y ajouter phone et code (l.27-40).",
+      "FieldTest.php:107-121 fait un assertSame sur le toArray exact : ajouter readonly ou depends_on le casse.",
+      "FormsAndLocalesApiTest.php:29-44 fait un assertExactJson du formulaire auth.login (clés de champ exactes, champ `email` de type email) : il est cassé par les nouvelles clés et par le login par e-mail ou téléphone."
+    ]
+  },
+
+  "auth_module": {
+    "User": {
+      "fichier": "Modules/Auth/app/Models/User.php",
+      "fillable": "#[Fillable(['name','first_name','last_name','gender','birth_date','email','locale','password'])] (l.30). #[Hidden(['password','remember_token'])] (l.31).",
+      "traits_interfaces": "HasApiTokens, HasFactory, HasRoles, InteractsWithMedia, Notifiable (l.36). Implémente FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName (l.33).",
+      "booted": "deleting → tokens()->delete() (l.42-45).",
+      "casts": "email_verified_at datetime, password hashed, gender GenderEnum, birth_date date (l.52-60).",
+      "accessors": "fullName (l.65-68), initials (l.115-128). Méthodes avatarUrl() (l.99-104), getFilamentName() = full_name (l.130-133), preferredLocale() = locale (l.135-138), canAccessPanel() = super admin ou admin.access (l.140-143), isSuperAdmin() (l.145-148).",
+      "colonnes_actuelles": "users : id, email unique non nullable (database/migrations/0001_01_01_000000_create_users_table.php:17), email_verified_at, password, remember_token, timestamps. Ajouts : first_name, last_name, locale(5) (Modules/Auth/database/migrations/2026_11_15_160000_split_user_name_and_add_locale.php:17-19), name unique (2026_11_15_170000…:17,35-36), gender string(16) nullable et birth_date nullable (2026_11_16_120000…:17-18)."
+    },
+    "UserResource_api": "Modules/Auth/app/Http/Resources/UserResource.php:17-32. 11 clés : id, name, first_name, last_name, full_name, initials, gender, birth_date, email, locale, avatar_url. Le PHPDoc de forme (l.15) déclare `email: string` : il passe à string|null pour Scramble. Des méthodes privées typées servent l'OpenAPI (l.38-52).",
+    "Filament_UserResource": "Modules/Auth/app/Filament/Resources/UserResource.php:16-64 : extends AbstractAuthResource, recherche globale sur name, first_name, last_name, email (l.50-53). Pages : List, Create (vide, CreateUser.php:8-11) et Edit (DeleteAction, breadcrumb, EditUser.php:9-24).",
+    "UserForm": "Modules/Auth/app/Filament/Resources/UserResource/Schemas/UserForm.php. Section générale (l.35-89) : avatar, name unique required, first_name, last_name, gender en **Radio**->options(GenderEnum::options())->inline()->required() (l.57-61), birth_date DatePicker (l.62-67), email ->email()->unique(ignoreRecord)->**required()** (l.68-73), locale Select (l.74-79), password required à la création seulement (l.80-87). Section accès : roles (l.113-131).",
+    "UserTable": "Modules/Auth/app/Filament/Resources/UserResource/Tables/UserTable.php:15-68. Colonnes : avatar, name, first_name, last_name, email, locale (badge), roles.name, created_at (masquée). Filtres roles et locale. Aucune colonne de statut en ligne.",
+    "login": {
+      "LoginController": "Modules/Auth/app/Http/Controllers/Api/LoginController.php:20-28 : appelle LoginService->login(validated) et renvoie UserResource avec additional(['token'=>…]). Annoté @unauthenticated (l.18) pour Scramble.",
+      "LoginService": "Modules/Auth/app/Services/LoginService.php:21-36 : Auth::guard('web')->validate(['email','password']). En cas d'échec : ValidationException sur la clé 'email' avec __('auth.failed') (l.25-27). Puis getLastAttempted(), puis createToken(device_name) (l.42-45).",
+      "LoginRequest": "Modules/Auth/app/Http/Requests/LoginRequest.php:26-43 : règles = LoginForm->rules() + device_name required|string|max:255 ; attributes du formulaire + device_name. authorize() vaut true (l.18-21).",
+      "LoginForm": "Modules/Auth/app/Forms/LoginForm.php:13-56 : nom 'auth.login' ; champs Field::email('email') required max:255 et Field::password('password') required max:255 (l.22-31) ; title, subtitle, submit (auth::form.login.*) ; canBeViewedBy vaut true (l.52-55).",
+      "rate_limiter": "RateLimiter::for('auth-login') : 5 par minute, clé lower(input('email')).'|'.ip (Modules/Auth/app/Providers/AuthServiceProvider.php:43-44). Appliqué par throttle:auth-login (routes/api.php:17).",
+      "LogoutService": "Modules/Auth/app/Services/LogoutService.php:17-24 : supprime currentAccessToken() si c'est un PersonalAccessToken."
+    },
+    "CreateUserCommand": "Modules/Auth/app/Console/CreateUserCommand.php. Signature avec --name, --first-name, --last-name, --email, --password, --locale, --super-admin (l.22-29). Prompts : email text(required:true) (l.39). Validation : email required|email|max:255|unique (l.48). Après création : forceFill email_verified_at=now (l.62). Message auth::user.created avec :email (l.68 ; Modules/Auth/lang/fr/user.php:28).",
+    "UserFactory": "Modules/Auth/database/factories/UserFactory.php:26-40 : email unique safeEmail, email_verified_at now, gender aléatoire, birth_date optionnelle, locale parmi supported_locales. État unverified() (l.45-50).",
+    "PersonalInfo": {
+      "PersonalInfoForm": "Modules/Auth/app/Forms/PersonalInfoForm.php:15-62 : nom 'auth.profile.personal'. Champs first_name et last_name (text required max:255), gender en **Field::radio** options GenderEnum::options() required default valeur courante (l.40-44), birth_date en date facultative after_or_equal:1900-01-01 et before_or_equal:today (l.46-49). Constante BIRTH_DATE_MIN (l.18), réutilisée par UserForm.php:66.",
+      "PersonalInfoService": "Modules/Auth/app/Services/PersonalInfoService.php:15-26 : update first_name, last_name, gender, birth_date ?? null.",
+      "UpdatePersonalInfoRequest": "Modules/Auth/app/Http/Requests/UpdatePersonalInfoRequest.php:12-26 : FormBackedRequest, authorize = can('updateMe'), form() = new PersonalInfoForm($this->user()).",
+      "PersonalInfoController": "Modules/Auth/app/Http/Controllers/Api/PersonalInfoController.php:18-24."
+    },
+    "ProfileController": "Modules/Auth/app/Http/Controllers/Api/ProfileController.php:19-45 : show (me), updateAvatar, destroyAvatar. Ces actions passent par ProfileService (Modules/Auth/app/Services/ProfileService.php:11-35). Modèle « un contrôleur et un service par formulaire » : PersonalInfo, Password et Preferences ont chacun Controller, Service et Request.",
+    "GenderEnum": "Modules/Auth/app/Enums/GenderEnum.php:8-29 : male, female ; label() lit auth::user.genders.* ; options() renvoie valeur => libellé.",
+    "RouteGuardTest": "tests/Feature/RouteGuardTest.php:16-21, WITHOUT_CAN = api/v1/auth/login, api/v1/auth/logout, api/v1/locales, api/v1/messages. Toute route de contrôleur sans `can:` doit y figurer avec son motif (l.37). test_the_exception_list_only_names_existing_routes (l.45-52) échoue si une URI listée disparaît. Les nouvelles routes publiques (inscription, code de connexion, renvoi de code) devront y être déclarées.",
+    "tests_touches": {
+      "login_en_deux_etapes": [
+        "AuthApiTest.php:24-32, helper login() qui poste email, password, device_name et lit `token` dans la réponse. Il est utilisé par test_login_returns_a_token… (l.34-66, assertExactJson sur data + token), test_me_* (l.122-147) et test_logout_revokes_only_the_current_token (l.149-165). Tous sont cassés si /login ne rend plus le jeton de session.",
+        "AuthApiTest.php:68-95 : erreurs sur la clé 'email', l'identique pour un mot de passe faux ou un e-mail inconnu, champs requis ['email','password','device_name'].",
+        "AuthApiTest.php:110-120 : throttle à la 6e tentative, la clé du limiteur lisant input('email').",
+        "FormsAndLocalesApiTest.php:25-52 : assertExactJson du formulaire auth.login (champ email de type email). Lignes 72-79 : LoginRequest = LoginForm + device_name.",
+        "Les autres tests API prennent leur jeton par createToken() direct et ne dépendent pas du login : AvatarApiTest.php:30, FormsAndLocalesApiTest.php:22, ProfileFormsApiTest.php:25."
+      ],
+      "email_nullable": [
+        "Filament UserResourceTest.php:127-141 attend 'email' => 'required' à la création.",
+        "CreateUserCommandTest.php:23-89 passe toujours --email. test_refuses_an_unsupported_locale_and_a_taken_email (l.58-72).",
+        "AuthApiTest.php:43-58 : assertExactJson de UserResource (11 clés). Il est cassé par country, region, phone, last_seen_at et is_online."
+      ],
+      "genre_select": [
+        "ProfileFormsApiTest.php:40-44 : assertJsonPath('data.fields.2.type', 'radio'). Ligne 37 : noms de champs exactement ['first_name','last_name','gender','birth_date'], cassé par l'ajout de country et region.",
+        "ProfileFormsApiTest.php:51-72 test_personal_info_updates_its_four_fields_only (nom et contenu).",
+        "Filament UserResourceTest.php:70-98 et :230-244 remplissent 'gender' : ils restent compatibles avec un Select si les clés sont les mêmes (non vérifié par exécution)."
+      ],
+      "messages_mobile": "tests/Feature/Api/MessagesApiTest.php:49-59 : fr et en doivent avoir exactement les mêmes clés de textes mobiles."
+    }
+  },
+
+  "mail_queue_logs": {
+    "mail": "config/mail.php:17 'default' => env('MAIL_MAILER','log'). Valeur résolue dans DDEV (tinker, sans lire .env) : mail.default=smtp, host 127.0.0.1, port 1025 (Mailpit de DDEV ; `ddev describe` affiche Mailpit https://yamo.ddev.site:8026). from.address = hello@example.com (config/mail.php:113-115). Tests : MAIL_MAILER=array (phpunit.xml:33).",
+    "mailables_notifications": "Aucun. Pas de `extends Mailable`, pas de `extends Notification`, ni Mail:: ni Notification:: dans app, Modules ou tests (grep). User utilise Notifiable (User.php:36) et HasLocalePreference (l.135-138) : un envoi à un User prend sa langue.",
+    "queue": "config/queue.php:16 'default' => env('QUEUE_CONNECTION','database'). Valeur résolue en DDEV : database. Aucun worker n'est déclaré dans .ddev/config.yaml (pas de web_extra_daemons). Tests : sync (phpunit.xml:34). Le commentaire User.php:83 indique « aucune file d'attente ne tourne ».",
+    "logging": "config/logging.php:21 default env('LOG_CHANNEL','stack') ; stack → env('LOG_STACK','single') (l.55-57) ; single → storage/logs/laravel.log (l.61-64). Résolu en DDEV : stack → [single]. Il n'y a pas de canal dédié aux SMS : un LogSmsSender écrirait dans laravel.log, à moins d'ajouter un canal."
+  },
+
+  "laravel_phone": {
+    "provider": "PhoneServiceProvider enregistre la règle chaîne `phone` par extendDependent (vendor/propaganistas/laravel-phone/src/PhoneServiceProvider.php:15-25) et Rule::phone() (l.27-29). Le paquet est auto-découvert (bootstrap/cache/packages.php:269).",
+    "regle_pays_depuis_un_champ": "Rules\\Phone::getCountryFieldValue lit Arr::get(data, countryField ?: $attribute.'_country') (vendor/propaganistas/laravel-phone/src/Rules/Phone.php:167-171). Sans paramètre, le champ `phone` lit donc `phone_country`, ce qui correspond à la convention du contrat `<champ>_country`. Autres moyens : ->countryField('x') (l.108-113), ou un paramètre chaîne qui est une clé des données (l.192-193). Pays fixes : ->country('CH') (l.99-106). Le pays doit être un **code ISO-2 de région libphonenumber** : la liste candidate est filtrée par isValidCountry (vendor/propaganistas/laravel-phone/src/PhoneNumber.php:44-46, 92-100). La validation vérifie isOfCountry puis isValid() (Rules/Phone.php:76-90). Options : mobile(), lenient(), international() (l.139-165).",
+    "message": "En cas d'échec : $fail('validation.phone')->translate() (Rules/Phone.php:57). La clé `validation.phone` n'existe NI dans lang/en/validation.php NI dans lang/fr/validation.php (grep). Seul l'attribut 'phone' => 'téléphone' existe (lang/fr/validation.php:233). Le README propose 'The :attribute field must be a valid number.' (vendor/propaganistas/laravel-phone/README.md:41).",
+    "casts": "Casts disponibles : E164PhoneNumberCast, RawPhoneNumberCast, PhoneNumberCast. E164PhoneNumberCast::set() convertit en E.164 avec les pays possibles = paramètres du cast + attribut `<clé>_country` du modèle (src/Casts/E164PhoneNumberCast.php:34-47 ; src/Casts/PhoneNumberCast.php:19-32). get() renvoie un PhoneNumber, ou lève UnexpectedValueException si la valeur n'est pas internationale (E164PhoneNumberCast.php:14-27). serialize() renvoie formatE164 (l.52-59). Avec `phone_country_id` (et non `phone_country`), le cast ne trouve pas le pays tout seul : il faut passer une valeur déjà en E.164 ou un PhoneNumber.",
+    "PhoneNumber": "new PhoneNumber(string $number, array|string|null $country) (src/PhoneNumber.php:28-32). getCountry() (l.34-70), isOfCountry (l.75), isValid (l.208), formatE164 (l.157), formatInternational (l.147), formatNational (l.152). jsonSerialize renvoie l'E.164 (l.281-284).",
+    "libphonenumber_lite": "PhoneNumberUtil::getInstance() (vendor/giggsey/libphonenumber-for-php-lite/src/PhoneNumberUtil.php:394). getSupportedRegions(): string[] (l.621-624). getCountryCodeForRegion(string): int, qui vaut 0 si la région est invalide (l.2276-2282). Aussi : parse (l.2976), format (l.1119), isValidNumberForRegion (l.2923), getExampleNumber (l.3051). Vérifié en exécution : 245 régions, CH → 41, XK présent, AQ absent. AC et TA sont présents dans libphonenumber mais absents des locales ICU."
+  },
+
+  "php_intl": {
+    "environnement": "DDEV : PHP 8.4.20, intl chargé, ICU 76.1. Hôte : PHP 8.4.1, ICU 76.1 (vérifié par `ddev exec php -r` et `php -r`). DDEV php_version \"8.4\", base mariadb 11.8 (.ddev/config.yaml:4, 9-11) ; database.default résolu = mariadb. Tests : SQLite :memory: (phpunit.xml:30-31).",
+    "getDisplayRegion": "Disponible. Locale::getDisplayRegion('-DE','de') = Deutschland, ('-JP','ja') = 日本, ('-CH','de') = Schweiz (vérifié). Déjà utilisé dans le projet sous la forme Locale::getDisplayLanguage (app/Support/Locales.php:46).",
+    "addLikelySubtags": "**INDISPONIBLE** en PHP 8.4. method_exists('Locale','addLikelySubtags') = false, et l'appel lève « Call to undefined method » (vérifié en DDEV et sur l'hôte). Le bundle ICU 'likelySubtags' n'existe pas. Le bundle 'likely' (format compact) ne rend rien pour und_DE. 'supplementalData' et 'territoryInfo' sont introuvables via ResourceBundle.",
+    "alternative_observee": "ResourceBundle::getLocales('') renvoie 869 locales, dont 246 régions avec une locale langue_RÉGION sans script. Elles sont ambiguës pour la langue native : CH → de, en, fr, gsw, it, pt, rm, wae ; CM → 14 locales ; CN → bo, ii, ko, ug, za sans zh (zh_Hans_CN a un script) ; AQ → aucune. Il faut donc une table pays → langue native, explicite ou heuristique. La source ne la fournit pas."
+  },
+
+  "middleware_api": {
+    "bootstrap": "bootstrap/app.php:19-24 : $middleware->api(append: [UseSanctumGuard::class, SetLocale::class]) ; SetLocale passe avant AuthenticatesRequests (prependToPriorityList).",
+    "lecture_utilisateur": "SetLocale lit $request->user('sanctum') lui-même, sur toute route API, même publique (app/Http/Middleware/SetLocale.php:20). UseSanctumGuard fait Auth::shouldUse('sanctum') (app/Http/Middleware/UseSanctumGuard.php:20). Un middleware last_seen_at ajouté au même endroit (append du groupe api) peut lire l'utilisateur de la même façon.",
+    "exceptions": "bootstrap/app.php:25-29 : JSON pour api/* ; TranslatedApiErrors traduit 401 et 403 (app/Exceptions/TranslatedApiErrors.php:23-34)."
+  },
+
+  "openapi": "composer script `openapi` = scramble:export --fail-on-unknown (composer.json scripts.openapi). export_path 'openapi.json' (config/scramble.php:33). Schéma de sécurité bearer global, routes publiques marquées @unauthenticated (app/Providers/AppServiceProvider.php:27-31).",
+
+  "pieges": [
+    "Locale::addLikelySubtags n'existe pas en PHP 8.4 (DDEV 8.4.20). Le nom natif ne peut pas se déduire automatiquement de la région : il faut une table pays → langue.",
+    "Le plugin lara-zeus a defaultLocales = ['fr','en'] (AdminPanelProvider.php:50). Un nom « natif » stocké sous une clé de langue (de, ja…) ne sera ni affiché ni éditable dans le LocaleSwitcher Filament. La locale native peut aussi coïncider avec fr ou en (France, Royaume-Uni). Le contrat ne dit pas sous quelle clé stocker le natif.",
+    "spatie getTranslation replie sur 'en' (config/app.php:83) si la locale demandée manque.",
+    "La règle `phone` attend un code ISO-2 dans `<champ>_country`. Si l'app envoie l'id du Country, il faut le convertir en code avant la validation (prepareForValidation ou règle objet ->country($code)).",
+    "La clé de traduction validation.phone manque en fr et en en. Sans elle, le message affiché est la clé brute (critère 5 : « message traduit »).",
+    "FieldType SELECT et RADIO imposent 'string' + Rule::in(valeurs string) (FieldType.php:48 ; Field.php:166). Un id envoyé en entier JSON (country_id: 12) échoue sur 'string'. De son côté, default() renvoie la valeur brute (Field.php:198) : un entier ne correspond pas à l'option '12' côté app.",
+    "Rule::in sur toutes les régions ne vérifie pas que la région appartient au pays (critère 4) : il faut une règle dédiée.",
+    "Field::rules() remplace la liste au lieu de l'allonger (Field.php:151-156).",
+    "AuthDatabaseSeeder supprime toute permission absente de PermissionEnum (l.26-28). Les permissions countries.* et regions.* d'un module Location doivent être déclarées dans Modules/Auth/app/Enums/PermissionEnum.php, avec leurs libellés dans Modules/Auth/lang/{fr,en}/permission.php sous names.<domaine>.<action>.",
+    "Policies : Gate::policy dans le provider du module. Le comportement de Filament v5 sans policy n'a pas été vérifié (voir incertitudes). Avec une policy suivant le patron, tout est refusé hors Filament : prévoir l'accès API aux listes de pays et de régions (ou passer par les options de formulaire).",
+    "Le limiteur auth-login lit input('email') (AuthServiceProvider.php:44). Avec un identifiant unique « e-mail ou téléphone » sous un autre nom de champ, la clé devient vide pour tout le monde (5 essais par minute et par IP).",
+    "LoginService valide via Auth::guard('web')->validate(['email'=>…]) (LoginService.php:25). Pour le téléphone, la clé de credentials doit être 'phone' avec la valeur en E.164.",
+    "Si le jeton d'étape est un jeton Sanctum, auth:sanctum l'acceptera sur toutes les routes : aucune route ne contrôle les abilities (Modules/Auth/routes/api.php:20-27). Sanctum n'a pas d'expiration (config/sanctum.php:53).",
+    "Le mailer résolu en DDEV est smtp:1025 (Mailpit). La queue par défaut est database et aucun worker ne tourne : un Mailable ShouldQueue ou une Notification queued ne partirait pas en local. Il faut envoyer en synchrone.",
+    "Envoyer un code vers une NOUVELLE adresse (ou à l'inscription, sans User) ne passe pas par HasLocalePreference : il faut fixer la langue explicitement (Mail::to(adresse)->locale(app()->getLocale())).",
+    "Mettre à jour last_seen_at par $user->update() touche aussi updated_at : utiliser saveQuietly ou une requête directe sans timestamps. Le middleware s'exécute aussi sur les routes publiques : il faut tester la présence d'un utilisateur.",
+    "La migration de users doit suivre celle de countries et regions (clés étrangères). nwidart charge les migrations de tous les modules, triées par nom de fichier : il faut horodater après 2026_11_16_120000.",
+    "email : la colonne est unique et non nullable (create_users_table.php:17). Une colonne unique nullable accepte plusieurs NULL en MariaDB et en SQLite.",
+    "UserForm : email ->required() (UserForm.php:73) et gender en Radio (l.57-61). CreateUserCommand : email required (l.39 et 48), et le message auth::user.created interpole :email (l.68).",
+    "PHPDoc de forme lus par Scramble à mettre à jour : UserResource.php:15 (email string), Field.php:187, FormResource.php:18.",
+    "FieldTest exige la couverture de tous les types (l.66-71), et le toArray exact (l.107-121).",
+    "La commande module:make génère aussi package.json, vite.config.js et resources/assets. Le composer.json du module porte le nom nwidart/<module>, comme les modules existants."
+  ],
+
+  "incertitudes": [
+    "Les skills bza-dev:audit-source (enveloppe) et bza-laravel:audit-laravel ne sont pas lisibles depuis cet agent : la structure de ce JSON est libre, et les specs existantes n'ont pas été lues (règle de l'audit frais).",
+    "La clé de stockage du nom natif n'est pas tranchée (locale ISO de la langue native ? attribut séparé ?). Le contrat dit « traduisible : natif + fr + en ».",
+    "Le comportement de Filament v5 sans policy pour une ressource n'a pas été vérifié dans le vendor.",
+    "Le Select Filament pour gender (au lieu de Radio) n'a pas été testé avec fillForm.",
+    "La route de Mailpit SMTP (127.0.0.1:1025 dans le conteneur web) est déduite de la config résolue et de `ddev describe`. Aucun envoi n'a été fait.",
+    "Le mobile n'est pas audité (hors périmètre de cette tâche)."
+  ],
+
+  "fichiers_lus": [
+    "specs/2026-11-17-pays-telephone-codes.md",
+    "composer.json (et git diff), modules_statuses.json, config/modules.php, config/app.php (80-95), config/auth.php (grep), config/mail.php (grep), config/queue.php (14-20), config/logging.php (grep), config/database.php (grep), config/cache.php (grep), config/sanctum.php (grep), config/scramble.php (grep), phpunit.xml (grep), .ddev/config.yaml (grep)",
+    "bootstrap/app.php, bootstrap/providers.php, app/Providers/AppServiceProvider.php, app/Providers/Filament/AdminPanelProvider.php, app/Filament/AbstractResource.php, app/Http/Middleware/SetLocale.php, app/Http/Middleware/UseSanctumGuard.php, app/Support/MobileMessages.php, app/Support/Locales.php, app/Exceptions/TranslatedApiErrors.php (1-34), routes/api.php, database/seeders/DatabaseSeeder.php, database/migrations/0001_01_01_000000_create_users_table.php",
+    "Modules/Auth : module.json, composer.json, config/config.php, routes/api.php, routes/web.php, Providers/{AuthServiceProvider,RouteServiceProvider,EventServiceProvider}.php, Models/User.php, Enums/{PermissionEnum,RoleEnum,GenderEnum}.php, Policies/{UserPolicy,RolePolicy,PermissionPolicy (1-40)}.php, Policies/Concerns/HasBeforeAbility.php, Filament/Resources/{AbstractAuthResource,UserResource,RoleResource}.php, UserResource/{Schemas/UserForm,Tables/UserTable,Pages/CreateUser,Pages/EditUser,Pages/ListUsers}.php, Http/Controllers/Api/{LoginController,LogoutController,PersonalInfoController,ProfileController}.php, Http/Requests/{LoginRequest,UpdatePersonalInfoRequest}.php, Http/Resources/UserResource.php, Forms/{LoginForm,PersonalInfoForm}.php, Services/{LoginService,LogoutService,PersonalInfoService,ProfileService}.php, Console/CreateUserCommand.php, database/factories/UserFactory.php, database/seeders/AuthDatabaseSeeder.php, database/migrations/{2026_11_15_160000,2026_11_15_170000,2026_11_16_120000}*.php, lang/fr/{form,navigation,permission (1-30),user (grep)}.php",
+    "Modules/Auth/tests : Feature/Api/AuthApiTest.php (en entier), FormsAndLocalesApiTest.php (25-80 + grep), ProfileFormsApiTest.php (28-73 + grep), AvatarApiTest.php (grep), CreateUserCommandTest.php (grep + 58-72), Filament/AuthFilamentTestCase.php, Filament/UserResourceTest.php (grep), PolicyOutsideFilamentTest.php (1-30), Unit/UserInitialsTest.php (grep)",
+    "Modules/Form : module.json, Providers/{FormServiceProvider,RouteServiceProvider}.php, Support/{Field,Form,FormRegistry}.php, Enums/FieldType.php, Http/Resources/FormResource.php, Http/Requests/FormBackedRequest.php, Http/Controllers/Api/FormController.php, routes/api.php, lang/fr/mobile.php, tests/Feature/FieldTest.php",
+    "tests/Feature/RouteGuardTest.php, tests/TestCase.php, tests/Feature/Api/MessagesApiTest.php (grep)",
+    "vendor : lara-zeus/spatie-translatable/src/{Resources/Concerns/Translatable,Actions/LocaleSwitcher,Resources/Pages/ListRecords/Concerns/Translatable,Resources/Pages/EditRecord/Concerns/Translatable}.php, SpatieTranslatablePlugin.php (grep) ; spatie/laravel-translatable/src/{HasTranslations (grep),Translatable (grep)}.php ; propaganistas/laravel-phone/src/{Rules/Phone,PhoneServiceProvider,Casts/E164PhoneNumberCast,Casts/PhoneNumberCast}.php, PhoneNumber.php (20-100, 270-300, grep) ; giggsey/libphonenumber-for-php-lite/src/PhoneNumberUtil.php (615-630, 2268-2290, grep) ; nwidart/laravel-modules/src/{Support/ModuleServiceProvider (grep),Commands/Make/ModuleMakeCommand (grep),Generators/ModuleGenerator (grep),Providers/ConsoleServiceProvider (grep)}.php",
+    "Exécutions : ddev exec php -r (intl, Locale, ResourceBundle), php -r (libphonenumber regions), ddev exec php artisan tinker (config résolue : mail, queue, logging, database, cache — sans lire .env), ddev describe (Mailpit)"
+  ]
+}

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -21,13 +22,15 @@ use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Services\AvatarService;
+use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'first_name', 'last_name', 'gender', 'birth_date', 'email', 'locale', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id', 'email', 'phone', 'phone_country_id', 'locale', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 #[UseFactory(UserFactory::class)]
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName
@@ -56,7 +59,39 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'password' => 'hashed',
             'gender' => GenderEnum::class,
             'birth_date' => 'date',
+            'phone_verified_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
+    }
+
+    /** Vu dans ces dernières minutes : en ligne. */
+    public const ONLINE_MINUTES = 5;
+
+    /** @return BelongsTo<Country, $this> */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    /** @return BelongsTo<Region, $this> */
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    /** Pays de l'indicatif du téléphone. @return BelongsTo<Country, $this> */
+    public function phoneCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'phone_country_id');
+    }
+
+    /**
+     * En ligne : vu par l'API dans les `ONLINE_MINUTES` dernières minutes.
+     */
+    protected function isOnline(): Attribute
+    {
+        return Attribute::get(fn (): bool => $this->last_seen_at !== null
+            && $this->last_seen_at->gte(now()->subMinutes(self::ONLINE_MINUTES)));
     }
 
     /**

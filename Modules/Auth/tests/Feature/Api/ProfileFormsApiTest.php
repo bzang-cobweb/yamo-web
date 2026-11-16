@@ -5,6 +5,8 @@ namespace Modules\Auth\Tests\Feature\Api;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Tests\TestCase;
 
 /**
@@ -34,14 +36,14 @@ class ProfileFormsApiTest extends TestCase
         $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
             ->assertOk()
             ->assertJsonPath('data.title', 'Informations personnelles')
-            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date'])
+            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id'])
             ->assertJsonPath('data.fields.0.default', 'Jeanne')
             ->assertJsonPath('data.fields.1.default', 'Dupont')
-            // Genre : boutons radio, obligatoire, options de GenderEnum traduites.
-            ->assertJsonPath('data.fields.2.type', 'radio')
+            // Genre : liste déroulante, obligatoire, options de GenderEnum traduites.
+            ->assertJsonPath('data.fields.2.type', 'select')
             ->assertJsonPath('data.fields.2.required', true)
             ->assertJsonPath('data.fields.2.default', 'female')
-            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme'], ['value' => 'female', 'label' => 'Femme']])
+            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme', 'hint' => null, 'parent' => null], ['value' => 'female', 'label' => 'Femme', 'hint' => null, 'parent' => null]])
             // Date de naissance : type date, facultative.
             ->assertJsonPath('data.fields.3.type', 'date')
             ->assertJsonPath('data.fields.3.required', false)
@@ -127,6 +129,44 @@ class ProfileFormsApiTest extends TestCase
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => '31.12.1990'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['birth_date']);
+    }
+
+    public function test_country_and_region_are_saved_and_the_region_must_belong_to_the_country(): void
+    {
+        $user = $this->user(['gender' => 'female']);
+        $switzerland = Country::factory()->create(['code' => 'CH']);
+        $france = Country::factory()->create(['code' => 'FR']);
+        $geneva = Region::factory()->for($switzerland)->create();
+        $brittany = Region::factory()->for($france)->create();
+        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female'];
+
+        $form = $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
+        $region = collect($form->json('data.fields'))->firstWhere('name', 'region_id');
+        $this->assertSame('country_id', $region['depends_on']);
+        $this->assertContains(['value' => (string) $geneva->getKey(), 'label' => (string) $geneva->name, 'hint' => null, 'parent' => (string) $switzerland->getKey()], $region['options']);
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'country_id' => (string) $switzerland->getKey(), 'region_id' => (string) $brittany->getKey()])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['region_id']);
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'country_id' => (string) $switzerland->getKey(), 'region_id' => (string) $geneva->getKey()])
+            ->assertOk()
+            ->assertJsonPath('data.country.code', 'CH')
+            ->assertJsonPath('data.region.id', $geneva->getKey());
+    }
+
+    public function test_an_inactive_country_is_not_offered_nor_accepted(): void
+    {
+        $user = $this->user(['gender' => 'female']);
+        $hidden = Country::factory()->create(['code' => 'XK', 'active' => false]);
+
+        $form = $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
+        $country = collect($form->json('data.fields'))->firstWhere('name', 'country_id');
+        $this->assertNotContains((string) $hidden->getKey(), array_column($country['options'], 'value'));
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
+            'first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female', 'country_id' => (string) $hidden->getKey(),
+        ])->assertUnprocessable()->assertJsonValidationErrors(['country_id']);
     }
 
     // Mot de passe

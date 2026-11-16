@@ -24,13 +24,17 @@ enum FieldType: string
     case SWITCH = 'switch';
     /** Date seule, au format `AAAA-MM-JJ`. */
     case DATE = 'date';
+    /** Pays (indicatif) + numéro, validé selon le pays ; voir `Field::phone()`. */
+    case PHONE = 'phone';
+    /** Code de vérification à 6 chiffres. */
+    case CODE = 'code';
 
     /**
      * Le champ propose une liste d'options.
      */
     public function hasOptions(): bool
     {
-        return in_array($this, [self::SELECT, self::RADIO, self::CHECKBOX_GROUP], true);
+        return in_array($this, [self::SELECT, self::RADIO, self::CHECKBOX_GROUP, self::PHONE], true);
     }
 
     /**
@@ -49,6 +53,8 @@ enum FieldType: string
             self::CHECKBOX, self::SWITCH => ['boolean'],
             self::CHECKBOX_GROUP => ['array'],
             self::DATE => ['date_format:Y-m-d'],
+            self::PHONE => ['string', 'phone'],
+            self::CODE => ['string', 'digits:6'],
         };
     }
 }

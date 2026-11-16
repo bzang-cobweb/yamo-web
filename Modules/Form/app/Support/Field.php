@@ -4,6 +4,7 @@ namespace Modules\Form\Support;
 
 use Illuminate\Validation\Rule;
 use Modules\Form\Enums\FieldType;
+use Modules\Form\Rules\OptionBelongsToParent;
 
 /**
  * Un champ de formulaire : ce que l'app affiche (libellé, type, options…) et
@@ -19,9 +20,21 @@ final class Field
 
     private bool $required = false;
 
+    /** Affiché, non modifiable, jamais validé ni enregistré. */
+    private bool $readonly = false;
+
+    /** Liste dépendante : nom du champ parent (ex. le pays d'une région). */
+    private ?string $dependsOn = null;
+
     private mixed $default = null;
 
-    /** @var array<string, string> valeur => libellé, dans l'ordre d'affichage */
+    /**
+     * valeur => libellé, ou valeur => [libellé, indication, parent], dans l'ordre
+     * d'affichage. L'indication complète le libellé (ex. l'indicatif d'un pays) ;
+     * le parent sert aux listes dépendantes.
+     *
+     * @var array<string, string|array{label: string, hint?: string|null, parent?: string|int|null}>
+     */
     private array $options = [];
 
     /** @var list<mixed> */
@@ -92,6 +105,24 @@ final class Field
         return new self($name, FieldType::DATE);
     }
 
+    /**
+     * Téléphone : un pays (son indicatif) et un numéro, sur une ligne. Valeurs
+     * envoyées : `<nom>` (numéro) et `<nom>_country` (code ISO du pays). Les options
+     * sont les pays proposés ; la valeur par défaut est `['country' => …, 'number' => …]`.
+     */
+    public static function phone(string $name): self
+    {
+        return new self($name, FieldType::PHONE);
+    }
+
+    /**
+     * Code de vérification à 6 chiffres.
+     */
+    public static function code(string $name): self
+    {
+        return new self($name, FieldType::CODE);
+    }
+
     public static function switch(string $name): self
     {
         return new self($name, FieldType::SWITCH);
@@ -125,6 +156,29 @@ final class Field
         return $this;
     }
 
+    public function readonly(bool $readonly = true): self
+    {
+        $this->readonly = $readonly;
+
+        return $this;
+    }
+
+    /**
+     * Liste dépendante : seules les options dont le parent vaut la valeur du champ
+     * `$field` sont proposées et acceptées.
+     */
+    public function dependsOn(string $field): self
+    {
+        $this->dependsOn = $field;
+
+        return $this;
+    }
+
+    public function isReadonly(): bool
+    {
+        return $this->readonly;
+    }
+
     public function default(mixed $value): self
     {
         $this->default = $value;
@@ -133,7 +187,7 @@ final class Field
     }
 
     /**
-     * @param  array<string, string>  $options  valeur => libellé
+     * @param  array<string, string|array{label: string, hint?: string|null, parent?: string|int|null}>  $options
      */
     public function options(array $options): self
     {
@@ -163,8 +217,29 @@ final class Field
      */
     public function validationRules(): array
     {
+        // Lecture seule : rien n'est attendu ni pris en compte pour ce champ.
+        if ($this->readonly) {
+            return [];
+        }
+
         $values = array_map('strval', array_keys($this->options));
         $presence = $this->required ? ['required'] : ['nullable'];
+
+        if ($this->type === FieldType::PHONE) {
+            // Le numéro est vérifié selon le pays choisi (`<nom>_country`, code ISO).
+            return [
+                $this->name => [...$presence, 'string', 'phone', ...$this->rules],
+                $this->name.'_country' => [$this->required ? 'required' : 'required_with:'.$this->name, 'nullable', 'string', Rule::in($values)],
+            ];
+        }
+
+        if ($this->dependsOn !== null) {
+            $parents = collect($this->options)
+                ->map(fn (string|array $option): ?string => is_array($option) && isset($option['parent']) ? (string) $option['parent'] : null)
+                ->all();
+
+            return [$this->name => [...$presence, ...$this->type->rules($values), new OptionBelongsToParent($this->dependsOn, $parents), ...$this->rules]];
+        }
 
         if ($this->type === FieldType::CHECKBOX_GROUP) {
             return [
@@ -184,7 +259,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, depends_on: string|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -195,9 +270,16 @@ final class Field
             'placeholder' => $this->placeholder,
             'help' => $this->help,
             'required' => $this->required,
+            'readonly' => $this->readonly,
+            'depends_on' => $this->dependsOn,
             'default' => $this->default,
             'options' => collect($this->options)
-                ->map(fn (string $label, string|int $value): array => ['value' => (string) $value, 'label' => $label])
+                ->map(fn (string|array $option, string|int $value): array => [
+                    'value' => (string) $value,
+                    'label' => is_array($option) ? $option['label'] : $option,
+                    'hint' => is_array($option) ? ($option['hint'] ?? null) : null,
+                    'parent' => is_array($option) && isset($option['parent']) ? (string) $option['parent'] : null,
+                ])
                 ->values()
                 ->all(),
         ];

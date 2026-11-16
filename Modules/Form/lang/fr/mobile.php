@@ -11,6 +11,7 @@ return [
         'showPassword' => 'Afficher le mot de passe',
         'hidePassword' => 'Masquer le mot de passe',
         'clearDate' => 'Effacer',
+        'search' => 'Rechercher…',
         'retry' => 'Réessayer',
     ],
 ];

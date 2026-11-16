@@ -12,7 +12,7 @@ use Modules\Auth\Models\User;
 class UserResource extends JsonResource
 {
     /**
-     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, email: string, locale: string, avatar_url: string|null}
+     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, email: string|null, phone: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -25,10 +25,48 @@ class UserResource extends JsonResource
             'initials' => $this->initials,
             'gender' => $this->gender?->value,
             'birth_date' => $this->birthDate(),
+            'country' => $this->countryData(),
+            'region' => $this->regionData(),
             'email' => $this->email,
+            /** E.164 (`+41791234567`), ou `null`. */
+            'phone' => $this->phone,
+            /** Code ISO du pays de l'indicatif du téléphone. */
+            'phone_country' => $this->phoneCountryCode(),
+            'last_seen_at' => $this->lastSeenAt(),
+            'is_online' => $this->resource->is_online,
             'locale' => $this->locale,
             'avatar_url' => $this->avatarUrlFor($request),
         ];
+    }
+
+    /**
+     * @return array{code: string, name: string, dial_code: string}|null
+     */
+    private function countryData(): ?array
+    {
+        $country = $this->resource->country;
+
+        return $country === null ? null : ['code' => $country->code, 'name' => $country->label(), 'dial_code' => $country->dial_code];
+    }
+
+    /**
+     * @return array{id: int, name: string}|null
+     */
+    private function regionData(): ?array
+    {
+        $region = $this->resource->region;
+
+        return $region === null ? null : ['id' => $region->getKey(), 'name' => (string) $region->name];
+    }
+
+    private function phoneCountryCode(): ?string
+    {
+        return $this->resource->phoneCountry?->code;
+    }
+
+    private function lastSeenAt(): ?string
+    {
+        return $this->resource->last_seen_at?->toIso8601String();
     }
 
     /**

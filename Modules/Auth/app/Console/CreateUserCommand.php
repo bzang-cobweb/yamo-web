@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
@@ -23,7 +24,9 @@ class CreateUserCommand extends Command
         {--name= : Pseudonyme (unique)}
         {--first-name= : Prénom}
         {--last-name= : Nom}
-        {--email= : Adresse e-mail}
+        {--email= : Adresse e-mail (e-mail et/ou téléphone)}
+        {--phone= : Numéro de téléphone}
+        {--phone-country= : Code ISO du pays du téléphone (ex. CH)}
         {--password= : Mot de passe (demandé de façon masquée s\'il est omis)}
         {--locale= : Langue préférée}
         {--super-admin : Attribuer le rôle super administrateur}';
@@ -36,7 +39,10 @@ class CreateUserCommand extends Command
             'name' => $this->option('name') ?? text(__('auth::user.name'), required: true),
             'first_name' => $this->option('first-name') ?? text(__('auth::user.first_name'), required: true),
             'last_name' => $this->option('last-name') ?? text(__('auth::user.last_name'), required: true),
-            'email' => $this->option('email') ?? text(__('auth::user.email'), required: true),
+            // Avec --phone, l'e-mail est facultatif et n'est pas demandé.
+            'email' => $this->option('email') ?? ($this->option('phone') !== null ? null : (text(__('auth::user.email')) ?: null)),
+            'phone' => $this->option('phone'),
+            'phone_country' => $this->option('phone-country') !== null ? strtoupper($this->option('phone-country')) : null,
             'password' => $this->option('password') ?? password(__('auth::user.password'), required: true),
             'locale' => $this->option('locale') ?? select(__('auth::user.locale'), Locales::options(), default: Locales::default()),
         ];
@@ -45,7 +51,10 @@ class CreateUserCommand extends Command
             'name' => ['required', 'string', 'max:255', Rule::unique(User::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique(User::class)],
+            // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux.
+            'email' => ['nullable', 'required_without:phone', 'email', 'max:255', Rule::unique(User::class)],
+            'phone' => ['nullable', 'required_without:email', 'string', 'phone'],
+            'phone_country' => ['nullable', 'required_with:phone', Rule::exists('countries', 'code')],
             'password' => ['required', 'string', 'max:255'],
             'locale' => ['required', Rule::in(Locales::values())],
         ]);
@@ -58,14 +67,27 @@ class CreateUserCommand extends Command
             return self::FAILURE;
         }
 
-        $user = User::create($validator->validated());
-        $user->forceFill(['email_verified_at' => now()])->save();
+        $data = $validator->validated();
+        $country = PhoneNumbers::country($data['phone_country'] ?? null);
+        unset($data['phone_country']);
+
+        if (isset($data['phone'])) {
+            $data['phone'] = PhoneNumbers::toE164($data['phone'], (string) $country?->code);
+            $data['phone_country_id'] = $country?->getKey();
+        }
+
+        // Compte créé par un administrateur : ses identifiants sont tenus pour vérifiés.
+        $user = User::create($data);
+        $user->forceFill([
+            'email_verified_at' => $user->email !== null ? now() : null,
+            'phone_verified_at' => $user->phone !== null ? now() : null,
+        ])->save();
 
         if ($this->option('super-admin')) {
             $user->assignRole(RoleEnum::SUPER_ADMIN);
         }
 
-        $this->components->info(__('auth::user.created', ['name' => $user->full_name, 'email' => $user->email]));
+        $this->components->info(__('auth::user.created', ['name' => $user->full_name, 'email' => $user->email ?? $user->phone]));
 
         return self::SUCCESS;
     }

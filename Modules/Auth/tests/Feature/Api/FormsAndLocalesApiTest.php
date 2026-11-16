@@ -33,11 +33,11 @@ class FormsAndLocalesApiTest extends TestCase
             'fields' => [
                 [
                     'name' => 'email', 'type' => 'email', 'label' => 'Adresse e-mail', 'placeholder' => null,
-                    'help' => null, 'required' => true, 'default' => null, 'options' => [],
+                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
                 ],
                 [
                     'name' => 'password', 'type' => 'password', 'label' => 'Mot de passe', 'placeholder' => null,
-                    'help' => null, 'required' => true, 'default' => null, 'options' => [],
+                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
                 ],
             ],
             'submit' => ['label' => 'Se connecter'],
@@ -100,8 +100,8 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertJsonPath('data.fields.0.type', 'select')
             ->assertJsonPath('data.fields.0.default', 'en')
             ->assertJsonPath('data.fields.0.options', [
-                ['value' => 'fr', 'label' => 'Français'],
-                ['value' => 'en', 'label' => 'English'],
+                ['value' => 'fr', 'label' => 'Français', 'hint' => null, 'parent' => null],
+                ['value' => 'en', 'label' => 'English', 'hint' => null, 'parent' => null],
             ])
             // Compte connecté : la langue du compte l'emporte sur l'en-tête.
             ->assertJsonPath('data.fields.0.label', 'Language')

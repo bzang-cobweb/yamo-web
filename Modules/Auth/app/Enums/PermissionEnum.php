@@ -22,6 +22,16 @@ enum PermissionEnum: string
 
     case VIEW_PERMISSIONS = 'permissions.view';
 
+    case VIEW_COUNTRIES = 'countries.view';
+    case CREATE_COUNTRIES = 'countries.create';
+    case UPDATE_COUNTRIES = 'countries.update';
+    case DELETE_COUNTRIES = 'countries.delete';
+
+    case VIEW_REGIONS = 'regions.view';
+    case CREATE_REGIONS = 'regions.create';
+    case UPDATE_REGIONS = 'regions.update';
+    case DELETE_REGIONS = 'regions.delete';
+
     public function label(): string
     {
         return __('auth::permission.names.'.$this->value);

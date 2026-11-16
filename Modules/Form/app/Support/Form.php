@@ -4,6 +4,7 @@ namespace Modules\Form\Support;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Arr;
+use Modules\Form\Enums\FieldType;
 
 /**
  * Un formulaire décrit par le serveur : l'app mobile affiche ses champs, et la
@@ -86,7 +87,9 @@ abstract class Form
     {
         return collect($this->fields())
             ->filter(fn (Field $field): bool => $field->getLabel() !== null)
-            ->mapWithKeys(fn (Field $field): array => [$field->name => $field->getLabel()])
+            ->flatMap(fn (Field $field): array => $field->type === FieldType::PHONE
+                ? [$field->name => $field->getLabel(), $field->name.'_country' => $field->getLabel()]
+                : [$field->name => $field->getLabel()])
             ->all();
     }
 }

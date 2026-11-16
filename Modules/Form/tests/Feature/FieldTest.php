@@ -37,6 +37,10 @@ class FieldTest extends TestCase
                     Field::checkboxGroup('tags')->options(['a' => 'A', 'b' => 'B']),
                     Field::switch('newsletter'),
                     Field::date('birthday'),
+                    Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41'], 'FR' => ['label' => 'France', 'hint' => '+33']]),
+                    Field::code('otp'),
+                    Field::text('locked')->readonly()->required(),
+                    Field::select('canton')->dependsOn('city')->options(['g1' => ['label' => 'Genève-ville', 'parent' => 'ge'], 'v1' => ['label' => 'Lausanne', 'parent' => 'vd']]),
                 ];
             }
 
@@ -67,7 +71,7 @@ class FieldTest extends TestCase
     {
         $types = array_map(fn (Field $field): string => $field->type->value, $this->form()->fields());
 
-        $this->assertEqualsCanonicalizing(array_column(FieldType::cases(), 'value'), $types);
+        $this->assertEqualsCanonicalizing(array_column(FieldType::cases(), 'value'), array_values(array_unique($types)));
     }
 
     public function test_valid_data_passes(): void
@@ -115,8 +119,13 @@ class FieldTest extends TestCase
             'placeholder' => null,
             'help' => null,
             'required' => true,
+            'readonly' => false,
+            'depends_on' => null,
             'default' => null,
-            'options' => [['value' => 'ge', 'label' => 'Genève'], ['value' => 'vd', 'label' => 'Vaud']],
+            'options' => [
+                ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],
+                ['value' => 'vd', 'label' => 'Vaud', 'hint' => null, 'parent' => null],
+            ],
         ], $city);
     }
 
@@ -142,5 +151,39 @@ class FieldTest extends TestCase
         $this->assertFalse($fields['birthday']->toArray()['required']);
         $this->assertSame('required', $this->form()->rules()['nickname'][0]);
         $this->assertSame('nullable', $this->form()->rules()['birthday'][0]);
+    }
+
+    public function test_a_readonly_field_is_sent_but_never_validated(): void
+    {
+        $locked = collect($this->form()->fields())->firstWhere('name', 'locked');
+
+        $this->assertTrue($locked->toArray()['readonly']);
+        $this->assertArrayNotHasKey('locked', $this->form()->rules());
+        $this->assertNotContains('locked', $this->errors($this->valid()));
+    }
+
+    public function test_a_dependent_option_must_belong_to_the_chosen_parent(): void
+    {
+        $canton = collect($this->form()->fields())->firstWhere('name', 'canton')->toArray();
+        $this->assertSame('city', $canton['depends_on']);
+        $this->assertSame('ge', $canton['options'][0]['parent']);
+
+        $this->assertNotContains('canton', $this->errors([...$this->valid(), 'city' => 'ge', 'canton' => 'g1']));
+        $this->assertContains('canton', $this->errors([...$this->valid(), 'city' => 'ge', 'canton' => 'v1']));
+    }
+
+    public function test_a_phone_is_checked_against_the_chosen_country(): void
+    {
+        $this->assertNotContains('mobile', $this->errors([...$this->valid(), 'mobile' => '079 123 45 67', 'mobile_country' => 'CH']));
+        $this->assertContains('mobile', $this->errors([...$this->valid(), 'mobile' => '123', 'mobile_country' => 'CH']));
+        $this->assertContains('mobile_country', $this->errors([...$this->valid(), 'mobile' => '079 123 45 67']));
+        $this->assertContains('mobile_country', $this->errors([...$this->valid(), 'mobile' => '079 123 45 67', 'mobile_country' => 'DE']));
+    }
+
+    public function test_a_code_has_exactly_six_digits(): void
+    {
+        $this->assertNotContains('otp', $this->errors([...$this->valid(), 'otp' => '012345']));
+        $this->assertContains('otp', $this->errors([...$this->valid(), 'otp' => '12345']));
+        $this->assertContains('otp', $this->errors([...$this->valid(), 'otp' => '12a456']));
     }
 }

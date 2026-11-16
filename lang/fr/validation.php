@@ -288,6 +288,10 @@ return [
         'year' => 'année',
     ],
 
+    // Numéro de téléphone (propaganistas/laravel-phone). Ajout du projet : à reporter
+    // si laravel-lang réécrit ce fichier.
+    'phone' => 'Le champ :attribute doit être un numéro de téléphone valide pour le pays choisi.',
+
     // Bornes de date affichées dans les messages (before_or_equal:today…). Ajout du
     // projet : à reporter si laravel-lang réécrit ce fichier.
     'values' => [

@@ -2,6 +2,7 @@
 
 use App\Exceptions\TranslatedApiErrors;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrackLastSeen;
 use App\Http\Middleware\UseSanctumGuard;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
@@ -17,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(append: [UseSanctumGuard::class, SetLocale::class]);
+        $middleware->api(append: [UseSanctumGuard::class, SetLocale::class, TrackLastSeen::class]);
         // La langue est fixée avant l'authentification : un refus (401) est rendu
         // dans la langue de la requête. SetLocale lit lui-même le jeton (garde sanctum).
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: SetLocale::class);

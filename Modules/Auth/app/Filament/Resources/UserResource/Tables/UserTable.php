@@ -3,11 +3,13 @@
 namespace Modules\Auth\Filament\Resources\UserResource\Tables;
 
 use App\Support\Locales;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Modules\Auth\Filament\Resources\UserResource;
+use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
 
 abstract class UserTable
@@ -23,6 +25,11 @@ abstract class UserTable
                     ->conversion(AvatarService::THUMB)
                     ->circular()
                     ->imageSize(36),
+                // Pastille « en ligne » : vu par l'API dans les 5 dernières minutes.
+                IconColumn::make('is_online')
+                    ->label(__('auth::user.online'))
+                    ->boolean()
+                    ->state(fn (User $record): bool => $record->is_online),
                 TextColumn::make('name')
                     ->label(__('auth::user.name'))
                     ->sortable()

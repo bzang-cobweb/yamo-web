@@ -4,13 +4,14 @@ namespace Modules\Auth\Filament\Resources\UserResource\Schemas;
 
 use App\Support\Locales;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -19,6 +20,9 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Support\PhoneNumbers;
+use Modules\Location\Models\Country;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 abstract class UserForm
 {
@@ -54,10 +58,9 @@ abstract class UserForm
                     ->maxLength(255)
                     ->required(),
                 // Mêmes règles que le formulaire Informations personnelles de l'app.
-                Radio::make('gender')
+                Select::make('gender')
                     ->label(__('auth::user.gender'))
                     ->options(GenderEnum::options())
-                    ->inline()
                     ->required(),
                 DatePicker::make('birth_date')
                     ->label(__('auth::user.birth_date'))
@@ -65,12 +68,44 @@ abstract class UserForm
                     ->displayFormat('d.m.Y')
                     ->minDate(PersonalInfoForm::BIRTH_DATE_MIN)
                     ->maxDate(now()),
+                Select::make('country_id')
+                    ->label(__('auth::user.country'))
+                    ->options(fn (): array => PersonalInfoForm::countryOptions())
+                    ->searchable()
+                    ->live()
+                    ->afterStateUpdated(fn (Set $set) => $set('region_id', null)),
+                // Région : seulement celles du pays choisi, comme dans l'app.
+                Select::make('region_id')
+                    ->label(__('auth::user.region'))
+                    ->options(fn (Get $get): array => collect(PersonalInfoForm::regionOptions())
+                        ->filter(fn (array $region): bool => $region['parent'] === (string) $get('country_id'))
+                        ->map(fn (array $region): string => $region['label'])
+                        ->all())
+                    ->disabled(fn (Get $get): bool => blank($get('country_id'))),
+                // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux.
                 TextInput::make('email')
                     ->label(__('auth::user.email'))
                     ->email()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
-                    ->required(),
+                    ->requiredWithout('phone'),
+                Select::make('phone_country_id')
+                    ->label(__('auth::user.phone_country'))
+                    ->options(fn (): array => Country::query()->active()->get()
+                        ->mapWithKeys(fn (Country $country): array => [$country->getKey() => $country->label().' ('.$country->dial_code.')'])
+                        ->sort()
+                        ->all())
+                    ->searchable()
+                    ->requiredWith('phone'),
+                TextInput::make('phone')
+                    ->label(__('auth::user.phone'))
+                    ->tel()
+                    ->unique(ignoreRecord: true)
+                    ->requiredWithout('email')
+                    // Numéro vérifié selon le pays choisi, enregistré en E.164.
+                    ->rule(fn (Get $get) => (new Phone)->country(Country::query()->find($get('phone_country_id'))?->code ?? 'ZZ'))
+                    ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => blank($state) ? null
+                        : PhoneNumbers::toE164($state, (string) Country::query()->find($get('phone_country_id'))?->code)),
                 Select::make('locale')
                     ->label(__('auth::user.locale'))
                     ->options(Locales::options())

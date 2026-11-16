@@ -29,5 +29,17 @@ return [
         'permissions' => [
             'view' => 'View permissions',
         ],
+        'countries' => [
+            'view' => 'View countries',
+            'create' => 'Create countries',
+            'update' => 'Edit countries',
+            'delete' => 'Delete countries',
+        ],
+        'regions' => [
+            'view' => 'View regions',
+            'create' => 'Create regions',
+            'update' => 'Edit regions',
+            'delete' => 'Delete regions',
+        ],
     ],
 ];

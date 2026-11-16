@@ -199,6 +199,10 @@ return [
 
     'attributes' => [],
 
+    // Numéro de téléphone (propaganistas/laravel-phone). Ajout du projet : à reporter
+    // si laravel-lang réécrit ce fichier.
+    'phone' => 'The :attribute field must be a valid phone number for the selected country.',
+
     // Bornes de date affichées dans les messages (before_or_equal:today…). Ajout du
     // projet : à reporter si laravel-lang réécrit ce fichier.
     'values' => [

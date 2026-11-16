@@ -12,6 +12,7 @@ use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\ListUsers;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Country;
 
 class UserResourceTest extends AuthFilamentTestCase
 {
@@ -135,7 +136,9 @@ class UserResourceTest extends AuthFilamentTestCase
                 'name' => 'required',
                 'first_name' => 'required',
                 'last_name' => 'required',
-                'email' => 'required',
+                // Ni e-mail ni téléphone : l'un des deux est exigé.
+                'email' => 'required_without',
+                'phone' => 'required_without',
                 'password' => 'required',
             ]);
     }
@@ -241,5 +244,35 @@ class UserResourceTest extends AuthFilamentTestCase
             ->assertHasFormErrors(['gender' => 'required', 'birth_date']);
 
         $this->assertNull(User::firstWhere('email', 'paul@example.com'));
+    }
+
+    public function test_a_user_created_with_a_phone_only_is_stored_in_e164(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+        $switzerland = Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
+
+        Livewire::test(CreateUser::class)
+            ->fillForm([
+                'name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Martin', 'gender' => 'male',
+                'locale' => 'fr', 'password' => 'secret-password',
+                'phone_country_id' => $switzerland->getKey(), 'phone' => '079 123 45 67',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $user = User::firstWhere('name', 'paul');
+        $this->assertNull($user->email);
+        $this->assertSame('+41791234567', $user->phone);
+    }
+
+    public function test_the_list_shows_who_is_online(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS);
+        $online = User::factory()->create(['last_seen_at' => now()]);
+        $offline = User::factory()->create(['last_seen_at' => now()->subHour()]);
+
+        Livewire::test(ListUsers::class)
+            ->assertTableColumnStateSet('is_online', true, $online)
+            ->assertTableColumnStateSet('is_online', false, $offline);
     }
 }

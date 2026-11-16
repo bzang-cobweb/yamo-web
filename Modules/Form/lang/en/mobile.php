@@ -11,6 +11,7 @@ return [
         'showPassword' => 'Show password',
         'hidePassword' => 'Hide password',
         'clearDate' => 'Clear',
+        'search' => 'Search…',
         'retry' => 'Try again',
     ],
 ];

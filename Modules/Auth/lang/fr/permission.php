@@ -29,5 +29,17 @@ return [
         'permissions' => [
             'view' => 'Voir les permissions',
         ],
+        'countries' => [
+            'view' => 'Voir les pays',
+            'create' => 'Créer des pays',
+            'update' => 'Modifier les pays',
+            'delete' => 'Supprimer des pays',
+        ],
+        'regions' => [
+            'view' => 'Voir les régions',
+            'create' => 'Créer des régions',
+            'update' => 'Modifier les régions',
+            'delete' => 'Supprimer des régions',
+        ],
     ],
 ];
