@@ -1,0 +1,60 @@
+<?php
+
+namespace Modules\Auth\Forms;
+
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Validation\Rules\Password;
+use Modules\Auth\Support\PhoneNumbers;
+use Modules\Form\Support\Field;
+use Modules\Form\Support\Form;
+
+/**
+ * Créer un compte depuis l'app : pseudonyme, prénom, nom, e-mail et/ou téléphone
+ * (au moins l'un des deux), mot de passe. Un code part vers chaque identifiant ;
+ * le compte n'existe qu'une fois tous les codes validés.
+ */
+class RegisterForm extends Form
+{
+    public static function name(): string
+    {
+        return 'auth.register';
+    }
+
+    public function fields(): array
+    {
+        return [
+            Field::text('name')->label(__('auth::user.name'))->help(__('auth::user.name_help'))->required()->rules(['max:255']),
+            Field::text('first_name')->label(__('auth::user.first_name'))->required()->rules(['max:255']),
+            Field::text('last_name')->label(__('auth::user.last_name'))->required()->rules(['max:255']),
+            Field::email('email')
+                ->label(__('auth::user.email'))
+                ->help(__('auth::form.register.contact_help'))
+                ->rules(['required_without:phone', 'max:255']),
+            Field::phone('phone')
+                ->label(__('auth::user.phone'))
+                ->options(PhoneNumbers::countryOptions())
+                ->rules(['required_without:email']),
+            Field::password('password')
+                ->label(__('auth::user.password'))
+                ->help(__('auth::form.password.help'))
+                ->required()
+                ->rules([Password::defaults(), 'confirmed']),
+            Field::password('password_confirmation')->label(__('auth::user.password_confirmation_plain'))->required(),
+        ];
+    }
+
+    public function title(): string
+    {
+        return __('auth::form.register.title');
+    }
+
+    public function submitLabel(): string
+    {
+        return __('auth::form.register.submit');
+    }
+
+    public function canBeViewedBy(?Authenticatable $user): bool
+    {
+        return true;
+    }
+}

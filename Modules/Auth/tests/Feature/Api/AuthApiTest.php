@@ -6,11 +6,19 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Auth\Models\User;
+use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Tests\TestCase;
 
 class AuthApiTest extends TestCase
 {
+    use CapturesVerificationCodes;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->captureVerificationCodes();
+    }
 
     private function user(array $attributes = []): User
     {
@@ -21,13 +29,29 @@ class AuthApiTest extends TestCase
         ]);
     }
 
+    /**
+     * Première étape : identifiants.
+     */
     private function login(array $overrides = []): TestResponse
     {
         return $this->postJson('/api/v1/auth/login', [
-            'email' => 'jeanne@example.com',
+            'identifier' => 'jeanne@example.com',
             'password' => 'secret-password',
-            'device_name' => 'iPhone de Jeanne',
             ...$overrides,
+        ]);
+    }
+
+    /**
+     * Connexion complète : identifiants, puis le code reçu par e-mail.
+     */
+    private function signIn(string $deviceName = 'iPhone de Jeanne'): TestResponse
+    {
+        $challenge = $this->login()->assertAccepted()->json('challenge');
+
+        return $this->postJson('/api/v1/auth/codes/verify', [
+            'challenge' => $challenge,
+            'code' => $this->emailCode('jeanne@example.com'),
+            'device_name' => $deviceName,
         ]);
     }
 
@@ -38,7 +62,7 @@ class AuthApiTest extends TestCase
             'gender' => 'female', 'birth_date' => '1990-04-12',
         ]);
 
-        $response = $this->login()->assertOk();
+        $response = $this->signIn()->assertOk();
 
         $response->assertExactJson([
             'data' => [
@@ -77,7 +101,7 @@ class AuthApiTest extends TestCase
 
         $this->login(['password' => 'wrong'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email'])
+            ->assertJsonValidationErrors(['identifier'])
             ->assertJsonMissingPath('token');
 
         $this->assertSame(0, PersonalAccessToken::count());
@@ -88,7 +112,7 @@ class AuthApiTest extends TestCase
         $this->user();
 
         $wrongPassword = $this->login(['password' => 'wrong'])->json('errors');
-        $unknownEmail = $this->login(['email' => 'nobody@example.com'])->assertUnprocessable()->json('errors');
+        $unknownEmail = $this->login(['identifier' => 'nobody@example.com'])->assertUnprocessable()->json('errors');
 
         $this->assertSame($wrongPassword, $unknownEmail);
     }
@@ -97,7 +121,7 @@ class AuthApiTest extends TestCase
     {
         $this->postJson('/api/v1/auth/login', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email', 'password', 'device_name']);
+            ->assertJsonValidationErrors(['identifier', 'password']);
     }
 
     public function test_login_error_is_translated_from_accept_language(): void
@@ -105,8 +129,8 @@ class AuthApiTest extends TestCase
         $this->user();
 
         // Le client de test de Symfony envoie « en-us » par défaut : chaque langue est demandée.
-        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['password' => 'wrong'])->json('errors.email.0');
-        $en = $this->withHeader('Accept-Language', 'en')->login(['password' => 'wrong'])->json('errors.email.0');
+        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['password' => 'wrong'])->json('errors.identifier.0');
+        $en = $this->withHeader('Accept-Language', 'en')->login(['password' => 'wrong'])->json('errors.identifier.0');
 
         $this->assertSame(trans('auth.failed', [], 'fr'), $fr);
         $this->assertSame(trans('auth.failed', [], 'en'), $en);
@@ -128,7 +152,7 @@ class AuthApiTest extends TestCase
     public function test_me_returns_the_authenticated_user(): void
     {
         $user = $this->user(['name' => 'jeanne']);
-        $token = $this->login()->json('token');
+        $token = $this->signIn()->json('token');
 
         $this->withToken($token)->getJson('/api/v1/auth/me')
             ->assertOk()
@@ -145,7 +169,7 @@ class AuthApiTest extends TestCase
     public function test_me_answers_in_the_user_locale(): void
     {
         $this->user(['locale' => 'en']);
-        $token = $this->login()->json('token');
+        $token = $this->signIn()->json('token');
 
         $this->withToken($token)->withHeader('Accept-Language', 'fr')->getJson('/api/v1/auth/me')->assertOk();
 
@@ -155,8 +179,9 @@ class AuthApiTest extends TestCase
     public function test_logout_revokes_only_the_current_token(): void
     {
         $user = $this->user();
-        $phone = $this->login()->json('token');
-        $tablet = $this->login(['device_name' => 'iPad'])->json('token');
+        $phone = $this->signIn()->json('token');
+        $this->travel(61)->seconds();
+        $tablet = $this->signIn('iPad')->json('token');
 
         $this->withToken($phone)->postJson('/api/v1/auth/logout')->assertNoContent();
 
@@ -178,7 +203,7 @@ class AuthApiTest extends TestCase
     public function test_the_former_default_user_route_is_gone(): void
     {
         $user = $this->user();
-        $token = $this->login()->json('token');
+        $token = $this->signIn()->json('token');
 
         $this->withToken($token)->getJson('/api/user')->assertNotFound();
         $this->assertNotNull($user);

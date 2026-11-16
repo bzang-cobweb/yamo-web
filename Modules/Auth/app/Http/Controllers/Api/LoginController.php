@@ -2,28 +2,27 @@
 
 namespace Modules\Auth\Http\Controllers\Api;
 
+use Illuminate\Http\JsonResponse;
 use Modules\Auth\Http\Requests\LoginRequest;
-use Modules\Auth\Http\Resources\UserResource;
 use Modules\Auth\Services\LoginService;
 
 /**
- * Connexion de l'application mobile par jeton Sanctum.
+ * Connexion de l'application mobile, première étape (formulaire `auth.login`).
  */
 class LoginController
 {
     /**
-     * Connexion : renvoie l'utilisateur et un jeton à envoyer ensuite en
-     * `Authorization: Bearer <token>`.
+     * Connexion : e-mail ou téléphone (format international) et mot de passe. Si les
+     * identifiants sont justes, un code part vers cet e-mail ou ce téléphone ; la
+     * réponse décrit le défi à valider par `POST /auth/codes/verify`, qui seul rend
+     * le jeton.
      *
      * @unauthenticated
+     *
+     * @response 202 array{challenge: string, channel: 'email'|'sms', destination: string}
      */
-    public function login(LoginRequest $request, LoginService $service): UserResource
+    public function login(LoginRequest $request, LoginService $service): JsonResponse
     {
-        ['user' => $user, 'token' => $token] = $service->login($request->validated());
-
-        return (new UserResource($user))->additional([
-            /** Jeton Sanctum de l'appareil. */
-            'token' => $token,
-        ]);
+        return response()->json($service->start($request->validated()), 202);
     }
 }

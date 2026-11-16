@@ -32,8 +32,8 @@ class FormsAndLocalesApiTest extends TestCase
             'subtitle' => 'Accédez à votre compte yamo.',
             'fields' => [
                 [
-                    'name' => 'email', 'type' => 'email', 'label' => 'Adresse e-mail', 'placeholder' => null,
-                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
+                    'name' => 'identifier', 'type' => 'text', 'label' => 'E-mail ou téléphone', 'placeholder' => null,
+                    'help' => 'Un téléphone se saisit au format international, par exemple +41 79 123 45 67.', 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
                 ],
                 [
                     'name' => 'password', 'type' => 'password', 'label' => 'Mot de passe', 'placeholder' => null,
@@ -47,7 +47,7 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.title', 'Sign in')
             ->assertJsonPath('data.subtitle', 'Access your yamo account.')
-            ->assertJsonPath('data.fields.0.label', 'Email address')
+            ->assertJsonPath('data.fields.0.label', 'Email or phone')
             ->assertJsonPath('data.submit.label', 'Sign in');
     }
 
@@ -73,9 +73,7 @@ class FormsAndLocalesApiTest extends TestCase
     {
         $rules = (new LoginRequest)->rules();
 
-        $this->assertSame((new LoginForm)->rules(), array_diff_key($rules, ['device_name' => true]));
-        $this->assertArrayHasKey('device_name', $rules);
-        $this->assertNotContains('device_name', array_column((new LoginForm)->fields(), 'name'));
+        $this->assertSame((new LoginForm)->rules(), $rules);
     }
 
     public function test_unknown_form_returns_404(): void

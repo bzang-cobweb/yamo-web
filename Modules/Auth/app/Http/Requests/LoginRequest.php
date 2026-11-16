@@ -2,15 +2,14 @@
 
 namespace Modules\Auth\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Modules\Auth\Forms\LoginForm;
+use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
- * Connexion de l'application mobile. Les règles des champs saisis viennent du
- * formulaire `auth.login` que l'app affiche ; `device_name`, renseigné par l'app,
- * nomme le jeton créé.
+ * Connexion, première étape : règles du formulaire `auth.login` (e-mail ou
+ * téléphone, mot de passe).
  */
-class LoginRequest extends FormRequest
+class LoginRequest extends FormBackedRequest
 {
     /**
      * Route publique, limitée en fréquence (`throttle:auth-login`).
@@ -20,25 +19,8 @@ class LoginRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, list<mixed>>
-     */
-    public function rules(): array
+    protected function form(): LoginForm
     {
-        return [
-            ...(new LoginForm)->rules(),
-            'device_name' => ['required', 'string', 'max:255'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function attributes(): array
-    {
-        return [
-            ...(new LoginForm)->attributes(),
-            'device_name' => __('auth::user.device_name'),
-        ];
+        return new LoginForm;
     }
 }

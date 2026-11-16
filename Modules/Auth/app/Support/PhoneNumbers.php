@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Support;
 
+use Illuminate\Support\Facades\App;
 use Modules\Location\Models\Country;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
@@ -25,6 +26,42 @@ final class PhoneNumbers
     public static function national(string $e164): string
     {
         return (new PhoneNumber($e164))->formatNational();
+    }
+
+    /**
+     * Pays actifs proposés par un champ téléphone : code ISO => libellé et indicatif.
+     *
+     * @return array<string, array{label: string, hint: string}>
+     */
+    public static function countryOptions(): array
+    {
+        $collator = new \Collator(App::getLocale());
+
+        return Country::query()->active()->get()
+            ->sort(fn (Country $a, Country $b): int => (int) $collator->compare($a->label(), $b->label()))
+            ->mapWithKeys(fn (Country $country): array => [$country->code => ['label' => $country->label(), 'hint' => $country->dial_code]])
+            ->all();
+    }
+
+    /**
+     * Identifiant de connexion saisi en format international (`+41 79…`, `0041…`)
+     * → E.164, ou `null` si ce n'en est pas un.
+     */
+    public static function fromInternational(string $value): ?string
+    {
+        $value = preg_replace('/^00/', '+', preg_replace('/[\s.\-()]/', '', $value) ?? '') ?? '';
+
+        if (! str_starts_with($value, '+')) {
+            return null;
+        }
+
+        try {
+            $phone = new PhoneNumber($value);
+
+            return $phone->isValid() ? $phone->formatE164() : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

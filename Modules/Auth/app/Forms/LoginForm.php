@@ -7,8 +7,9 @@ use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 
 /**
- * Connexion de l'app mobile. `device_name` n'en fait pas partie : l'app le
- * renseigne elle-même (décision 2026-11-15-contrat-mobile-features-formulaires, D).
+ * Connexion de l'app mobile, première étape : e-mail ou téléphone (format
+ * international) et mot de passe. Un code est ensuite envoyé à cet e-mail ou ce
+ * téléphone (formulaire `auth.code`). `device_name` part avec le code.
  */
 class LoginForm extends Form
 {
@@ -20,8 +21,9 @@ class LoginForm extends Form
     public function fields(): array
     {
         return [
-            Field::email('email')
-                ->label(__('auth::user.email'))
+            Field::text('identifier')
+                ->label(__('auth::user.identifier'))
+                ->help(__('auth::form.login.identifier_help'))
                 ->required()
                 ->rules(['max:255']),
             Field::password('password')

@@ -16,6 +16,66 @@
         }
     ],
     "paths": {
+        "/v1/auth/me/email": {
+            "post": {
+                "operationId": "v1.auth.me.email.store",
+                "summary": "Un code part vers la nouvelle adresse ; elle n'est enregistr\u00e9e qu'une fois le\ncode valid\u00e9 par `POST /auth/codes/verify`",
+                "tags": [
+                    "EmailChange"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailChangeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 202
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/forms/{form}": {
             "get": {
                 "operationId": "v1.forms.show",
@@ -116,7 +176,7 @@
         "/v1/auth/login": {
             "post": {
                 "operationId": "v1.auth.login",
-                "summary": "Connexion : renvoie l'utilisateur et un jeton \u00e0 envoyer ensuite en\n`Authorization: Bearer <token>`",
+                "summary": "Connexion : e-mail ou t\u00e9l\u00e9phone (format international) et mot de passe. Si les\nidentifiants sont justes, un code part vers cet e-mail ou ce t\u00e9l\u00e9phone ; la\nr\u00e9ponse d\u00e9crit le d\u00e9fi \u00e0 valider par `POST /auth/codes/verify`, qui seul rend\nle jeton",
                 "tags": [
                     "Login"
                 ],
@@ -132,24 +192,12 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "`UserResource`",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/UserResource"
-                                        },
-                                        "token": {
-                                            "type": "string",
-                                            "description": "Jeton Sanctum de l'appareil."
-                                        }
-                                    },
-                                    "required": [
-                                        "data",
-                                        "token"
-                                    ]
+                                    "type": "integer",
+                                    "const": 202
                                 }
                             }
                         }
@@ -308,6 +356,66 @@
                                     },
                                     "required": [
                                         "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/me/phone": {
+            "post": {
+                "operationId": "v1.auth.me.phone.store",
+                "summary": "Un code part par SMS vers le nouveau num\u00e9ro ; il n'est enregistr\u00e9 qu'une fois\nle code valid\u00e9 par `POST /auth/codes/verify`",
+                "tags": [
+                    "PhoneChange"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PhoneChangeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 202
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
                                     ]
                                 }
                             }
@@ -488,6 +596,260 @@
                     }
                 }
             }
+        },
+        "/v1/auth/register": {
+            "post": {
+                "operationId": "v1.auth.register",
+                "summary": "Inscription : un code part vers l'e-mail et/ou le t\u00e9l\u00e9phone saisis. Le compte\nn'est cr\u00e9\u00e9 qu'une fois tous les codes valid\u00e9s par `POST /auth/codes/verify`",
+                "tags": [
+                    "Register"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 202
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/codes/verify": {
+            "post": {
+                "operationId": "v1.auth.codes.verify",
+                "summary": "Valider un code. Selon l'op\u00e9ration du d\u00e9fi :\n- connexion : l'utilisateur et son jeton (`token`) ;\n- inscription dont tous les codes sont valid\u00e9s : 201, le compte cr\u00e9\u00e9 et son jeton ;\n- inscription avec un autre code attendu : 202 et le prochain code \u00e0 saisir ;\n- changement d'e-mail ou de t\u00e9l\u00e9phone (connect\u00e9) : l'utilisateur \u00e0 jour",
+                "tags": [
+                    "Verification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`\n\n`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/UserResource"
+                                                },
+                                                "token": {
+                                                    "type": "string",
+                                                    "description": "Jeton Sanctum de l'appareil."
+                                                }
+                                            },
+                                            "required": [
+                                                "data",
+                                                "token"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "$ref": "#/components/schemas/UserResource"
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "user": {
+                                                    "anyOf": [
+                                                        {
+                                                            "$ref": "#/components/schemas/User"
+                                                        },
+                                                        {
+                                                            "type": "null"
+                                                        }
+                                                    ]
+                                                },
+                                                "token": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "user",
+                                                "token"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "challenge": {
+                                                    "type": "string"
+                                                },
+                                                "channel": {
+                                                    "type": "string"
+                                                },
+                                                "destination": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "challenge",
+                                                "channel",
+                                                "destination"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "token": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "user",
+                                                "token"
+                                            ]
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/v1/auth/codes/resend": {
+            "post": {
+                "operationId": "v1.auth.codes.resend",
+                "summary": "Renvoyer les codes encore attendus d'un d\u00e9fi (60 secondes au moins apr\u00e8s le\ndernier envoi)",
+                "tags": [
+                    "Verification"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
         }
     },
     "components": {
@@ -498,6 +860,21 @@
             }
         },
         "schemas": {
+            "EmailChangeRequest": {
+                "type": "object",
+                "description": "Ajouter ou changer son e-mail : r\u00e8gles du formulaire `auth.profile.email`, et une\nadresse que personne d'autre n'a.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "EmailChangeRequest"
+            },
             "FormResource": {
                 "type": "object",
                 "properties": {
@@ -535,30 +912,615 @@
                 ],
                 "title": "FormResource"
             },
+            "GenderEnum": {
+                "type": "string",
+                "description": "Genre d'un utilisateur (d\u00e9cision 2026-11-16-contrat-genre-date-naissance).\n",
+                "enum": [
+                    "male",
+                    "female"
+                ],
+                "title": "GenderEnum"
+            },
             "LoginRequest": {
                 "type": "object",
-                "description": "Connexion de l'application mobile. Les r\u00e8gles des champs saisis viennent du\nformulaire `auth.login` que l'app affiche ; `device_name`, renseign\u00e9 par l'app,\nnomme le jeton cr\u00e9\u00e9.",
+                "description": "Connexion, premi\u00e8re \u00e9tape : r\u00e8gles du formulaire `auth.login` (e-mail ou\nt\u00e9l\u00e9phone, mot de passe).",
                 "properties": {
-                    "email": {
+                    "identifier": {
                         "type": "string",
-                        "format": "email",
                         "maxLength": 255
                     },
                     "password": {
                         "type": "string",
                         "maxLength": 255
-                    },
-                    "device_name": {
-                        "type": "string",
-                        "maxLength": 255
                     }
                 },
                 "required": [
-                    "email",
-                    "password",
-                    "device_name"
+                    "identifier",
+                    "password"
                 ],
                 "title": "LoginRequest"
+            },
+            "PhoneChangeRequest": {
+                "type": "object",
+                "description": "Ajouter ou changer son t\u00e9l\u00e9phone : r\u00e8gles du formulaire `auth.profile.phone`\n(num\u00e9ro valide pour le pays choisi), et un num\u00e9ro que personne d'autre n'a.",
+                "properties": {
+                    "phone": {
+                        "type": "string"
+                    },
+                    "phone_country": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "AF",
+                            "ZA",
+                            "AL",
+                            "DZ",
+                            "DE",
+                            "AD",
+                            "AO",
+                            "AI",
+                            "AG",
+                            "SA",
+                            "AR",
+                            "AM",
+                            "AW",
+                            "AU",
+                            "AT",
+                            "AZ",
+                            "BS",
+                            "BH",
+                            "BD",
+                            "BB",
+                            "BE",
+                            "BZ",
+                            "BJ",
+                            "BM",
+                            "BT",
+                            "BY",
+                            "BO",
+                            "BA",
+                            "BW",
+                            "BR",
+                            "BN",
+                            "BG",
+                            "BF",
+                            "BI",
+                            "KH",
+                            "CM",
+                            "CA",
+                            "CV",
+                            "CL",
+                            "CN",
+                            "CY",
+                            "CO",
+                            "KM",
+                            "CG",
+                            "CD",
+                            "KP",
+                            "KR",
+                            "CR",
+                            "CI",
+                            "HR",
+                            "CU",
+                            "CW",
+                            "DK",
+                            "DJ",
+                            "DM",
+                            "EG",
+                            "AE",
+                            "EC",
+                            "ER",
+                            "ES",
+                            "EE",
+                            "SZ",
+                            "VA",
+                            "US",
+                            "ET",
+                            "FJ",
+                            "FI",
+                            "FR",
+                            "GA",
+                            "GM",
+                            "GE",
+                            "GH",
+                            "GI",
+                            "GR",
+                            "GD",
+                            "GL",
+                            "GP",
+                            "GU",
+                            "GT",
+                            "GG",
+                            "GN",
+                            "GQ",
+                            "GW",
+                            "GY",
+                            "GF",
+                            "HT",
+                            "HN",
+                            "HU",
+                            "CX",
+                            "AC",
+                            "IM",
+                            "NF",
+                            "AX",
+                            "KY",
+                            "CC",
+                            "CK",
+                            "FO",
+                            "FK",
+                            "MP",
+                            "MH",
+                            "SB",
+                            "TC",
+                            "VG",
+                            "VI",
+                            "IN",
+                            "ID",
+                            "IQ",
+                            "IR",
+                            "IE",
+                            "IS",
+                            "IL",
+                            "IT",
+                            "JM",
+                            "JP",
+                            "JE",
+                            "JO",
+                            "KZ",
+                            "KE",
+                            "KG",
+                            "KI",
+                            "XK",
+                            "KW",
+                            "RE",
+                            "LA",
+                            "LS",
+                            "LV",
+                            "LB",
+                            "LR",
+                            "LY",
+                            "LI",
+                            "LT",
+                            "LU",
+                            "MK",
+                            "MG",
+                            "MY",
+                            "MW",
+                            "MV",
+                            "ML",
+                            "MT",
+                            "MA",
+                            "MQ",
+                            "MU",
+                            "MR",
+                            "YT",
+                            "MX",
+                            "FM",
+                            "MD",
+                            "MC",
+                            "MN",
+                            "ME",
+                            "MS",
+                            "MZ",
+                            "MM",
+                            "NA",
+                            "NR",
+                            "NP",
+                            "NI",
+                            "NE",
+                            "NG",
+                            "NU",
+                            "NO",
+                            "NC",
+                            "NZ",
+                            "OM",
+                            "UG",
+                            "UZ",
+                            "PK",
+                            "PW",
+                            "PA",
+                            "PG",
+                            "PY",
+                            "NL",
+                            "BQ",
+                            "PE",
+                            "PH",
+                            "PL",
+                            "PF",
+                            "PR",
+                            "PT",
+                            "QA",
+                            "HK",
+                            "MO",
+                            "CF",
+                            "DO",
+                            "RO",
+                            "GB",
+                            "RU",
+                            "RW",
+                            "EH",
+                            "BL",
+                            "KN",
+                            "SM",
+                            "MF",
+                            "SX",
+                            "PM",
+                            "VC",
+                            "SH",
+                            "LC",
+                            "SV",
+                            "WS",
+                            "AS",
+                            "ST",
+                            "SN",
+                            "RS",
+                            "SC",
+                            "SL",
+                            "SG",
+                            "SK",
+                            "SI",
+                            "SO",
+                            "SD",
+                            "SS",
+                            "LK",
+                            "SE",
+                            "CH",
+                            "SR",
+                            "SJ",
+                            "SY",
+                            "TJ",
+                            "TW",
+                            "TZ",
+                            "TD",
+                            "CZ",
+                            "IO",
+                            "PS",
+                            "TH",
+                            "TL",
+                            "TG",
+                            "TK",
+                            "TO",
+                            "TT",
+                            "TA",
+                            "TN",
+                            "TM",
+                            "TR",
+                            "TV",
+                            "UA",
+                            "UY",
+                            "VU",
+                            "VE",
+                            "VN",
+                            "WF",
+                            "YE",
+                            "ZM",
+                            "ZW",
+                            null
+                        ]
+                    }
+                },
+                "required": [
+                    "phone",
+                    "phone_country"
+                ],
+                "title": "PhoneChangeRequest"
+            },
+            "RegisterRequest": {
+                "type": "object",
+                "description": "Cr\u00e9er un compte : r\u00e8gles du formulaire `auth.register`, puis unicit\u00e9 du\npseudonyme, de l'e-mail et du t\u00e9l\u00e9phone (compar\u00e9 en E.164).",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "email",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone_country": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "AF",
+                            "ZA",
+                            "AL",
+                            "DZ",
+                            "DE",
+                            "AD",
+                            "AO",
+                            "AI",
+                            "AG",
+                            "SA",
+                            "AR",
+                            "AM",
+                            "AW",
+                            "AU",
+                            "AT",
+                            "AZ",
+                            "BS",
+                            "BH",
+                            "BD",
+                            "BB",
+                            "BE",
+                            "BZ",
+                            "BJ",
+                            "BM",
+                            "BT",
+                            "BY",
+                            "BO",
+                            "BA",
+                            "BW",
+                            "BR",
+                            "BN",
+                            "BG",
+                            "BF",
+                            "BI",
+                            "KH",
+                            "CM",
+                            "CA",
+                            "CV",
+                            "CL",
+                            "CN",
+                            "CY",
+                            "CO",
+                            "KM",
+                            "CG",
+                            "CD",
+                            "KP",
+                            "KR",
+                            "CR",
+                            "CI",
+                            "HR",
+                            "CU",
+                            "CW",
+                            "DK",
+                            "DJ",
+                            "DM",
+                            "EG",
+                            "AE",
+                            "EC",
+                            "ER",
+                            "ES",
+                            "EE",
+                            "SZ",
+                            "VA",
+                            "US",
+                            "ET",
+                            "FJ",
+                            "FI",
+                            "FR",
+                            "GA",
+                            "GM",
+                            "GE",
+                            "GH",
+                            "GI",
+                            "GR",
+                            "GD",
+                            "GL",
+                            "GP",
+                            "GU",
+                            "GT",
+                            "GG",
+                            "GN",
+                            "GQ",
+                            "GW",
+                            "GY",
+                            "GF",
+                            "HT",
+                            "HN",
+                            "HU",
+                            "CX",
+                            "AC",
+                            "IM",
+                            "NF",
+                            "AX",
+                            "KY",
+                            "CC",
+                            "CK",
+                            "FO",
+                            "FK",
+                            "MP",
+                            "MH",
+                            "SB",
+                            "TC",
+                            "VG",
+                            "VI",
+                            "IN",
+                            "ID",
+                            "IQ",
+                            "IR",
+                            "IE",
+                            "IS",
+                            "IL",
+                            "IT",
+                            "JM",
+                            "JP",
+                            "JE",
+                            "JO",
+                            "KZ",
+                            "KE",
+                            "KG",
+                            "KI",
+                            "XK",
+                            "KW",
+                            "RE",
+                            "LA",
+                            "LS",
+                            "LV",
+                            "LB",
+                            "LR",
+                            "LY",
+                            "LI",
+                            "LT",
+                            "LU",
+                            "MK",
+                            "MG",
+                            "MY",
+                            "MW",
+                            "MV",
+                            "ML",
+                            "MT",
+                            "MA",
+                            "MQ",
+                            "MU",
+                            "MR",
+                            "YT",
+                            "MX",
+                            "FM",
+                            "MD",
+                            "MC",
+                            "MN",
+                            "ME",
+                            "MS",
+                            "MZ",
+                            "MM",
+                            "NA",
+                            "NR",
+                            "NP",
+                            "NI",
+                            "NE",
+                            "NG",
+                            "NU",
+                            "NO",
+                            "NC",
+                            "NZ",
+                            "OM",
+                            "UG",
+                            "UZ",
+                            "PK",
+                            "PW",
+                            "PA",
+                            "PG",
+                            "PY",
+                            "NL",
+                            "BQ",
+                            "PE",
+                            "PH",
+                            "PL",
+                            "PF",
+                            "PR",
+                            "PT",
+                            "QA",
+                            "HK",
+                            "MO",
+                            "CF",
+                            "DO",
+                            "RO",
+                            "GB",
+                            "RU",
+                            "RW",
+                            "EH",
+                            "BL",
+                            "KN",
+                            "SM",
+                            "MF",
+                            "SX",
+                            "PM",
+                            "VC",
+                            "SH",
+                            "LC",
+                            "SV",
+                            "WS",
+                            "AS",
+                            "ST",
+                            "SN",
+                            "RS",
+                            "SC",
+                            "SL",
+                            "SG",
+                            "SK",
+                            "SI",
+                            "SO",
+                            "SD",
+                            "SS",
+                            "LK",
+                            "SE",
+                            "CH",
+                            "SR",
+                            "SJ",
+                            "SY",
+                            "TJ",
+                            "TW",
+                            "TZ",
+                            "TD",
+                            "CZ",
+                            "IO",
+                            "PS",
+                            "TH",
+                            "TL",
+                            "TG",
+                            "TK",
+                            "TO",
+                            "TT",
+                            "TA",
+                            "TN",
+                            "TM",
+                            "TR",
+                            "TV",
+                            "UA",
+                            "UY",
+                            "VU",
+                            "VE",
+                            "VN",
+                            "WF",
+                            "YE",
+                            "ZM",
+                            "ZW",
+                            null
+                        ]
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "password_confirmation": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "first_name",
+                    "last_name",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "RegisterRequest"
+            },
+            "ResendCodeRequest": {
+                "type": "object",
+                "description": "Renvoyer les codes encore attendus d'un d\u00e9fi.",
+                "properties": {
+                    "challenge": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
+                },
+                "required": [
+                    "challenge"
+                ],
+                "title": "ResendCodeRequest"
             },
             "UpdateAvatarRequest": {
                 "type": "object",
@@ -651,18 +1613,18 @@
                             "5",
                             "32",
                             "173",
+                            "94",
                             "6",
                             "237",
                             "157",
                             "185",
                             "167",
                             "132",
-                            "197",
                             "55",
+                            "197",
                             "151",
                             "91",
                             "122",
-                            "94",
                             "219",
                             "102",
                             "8",
@@ -677,39 +1639,62 @@
                             "216",
                             "69",
                             "178",
+                            "90",
                             "165",
                             "53",
                             "193",
-                            "90",
                             "45",
                             "118",
                             "9",
+                            "28",
+                            "233",
+                            "187",
+                            "137",
                             "34",
                             "154",
                             "133",
+                            "37",
+                            "1",
+                            "116",
                             "203",
                             "149",
                             "33",
                             "106",
                             "85",
+                            "243",
                             "98",
                             "141",
+                            "30",
                             "11",
                             "140",
-                            "30",
                             "182",
                             "12",
                             "174",
                             "42",
                             "89",
-                            "110",
                             "105",
+                            "110",
                             "186",
                             "188",
-                            "243",
                             "181",
                             "176",
                             "35",
+                            "62",
+                            "112",
+                            "43",
+                            "196",
+                            "150",
+                            "15",
+                            "61",
+                            "206",
+                            "139",
+                            "172",
+                            "17",
+                            "215",
+                            "201",
+                            "21",
+                            "24",
+                            "25",
                             "73",
                             "63",
                             "227",
@@ -728,8 +1713,8 @@
                             "209",
                             "164",
                             "228",
-                            "220",
                             "126",
+                            "220",
                             "131",
                             "153",
                             "224",
@@ -755,12 +1740,13 @@
                             "155",
                             "159",
                             "238",
-                            "18",
                             "163",
+                            "18",
                             "123",
                             "77",
                             "129",
                             "198",
+                            "239",
                             "177",
                             "92",
                             "99",
@@ -768,7 +1754,6 @@
                             "47",
                             "210",
                             "65",
-                            "239",
                             "231",
                             "121",
                             "245",
@@ -779,21 +1764,21 @@
                             "189",
                             "31",
                             "194",
+                            "51",
                             "64",
                             "49",
                             "212",
                             "19",
                             "142",
-                            "51",
                             "236",
                             "217",
                             "218",
+                            "101",
+                            "10",
                             "38",
                             "41",
                             "26",
                             "115",
-                            "101",
-                            "10",
                             "81",
                             "183",
                             "14",
@@ -808,6 +1793,7 @@
                             "208",
                             "4",
                             "104",
+                            "86",
                             "162",
                             "113",
                             "97",
@@ -818,15 +1804,14 @@
                             "114",
                             "79",
                             "76",
+                            "46",
                             "39",
                             "191",
-                            "46",
                             "48",
                             "226",
-                            "86",
                             "240",
-                            "120",
                             "222",
+                            "120",
                             "100",
                             "169",
                             "111",
@@ -851,29 +1836,6 @@
                             "230",
                             "124",
                             "128",
-                            "28",
-                            "233",
-                            "187",
-                            "137",
-                            "37",
-                            "1",
-                            "116",
-                            "62",
-                            "112",
-                            "43",
-                            "196",
-                            "15",
-                            "61",
-                            "206",
-                            "139",
-                            "172",
-                            "17",
-                            "215",
-                            "201",
-                            "21",
-                            "24",
-                            "25",
-                            "150",
                             null
                         ]
                     },
@@ -886,9 +1848,9 @@
                             "2",
                             "3",
                             "1",
-                            "6",
                             "4",
                             "5",
+                            "6",
                             "7",
                             "8",
                             "9",
@@ -936,6 +1898,128 @@
                     "locale"
                 ],
                 "title": "UpdatePreferencesRequest"
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
+                    "gender": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/GenderEnum"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "birth_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "country_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "region_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "phone_country_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "phone_verified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "email_verified_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "last_seen_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "first_name",
+                    "last_name",
+                    "gender",
+                    "birth_date",
+                    "country_id",
+                    "region_id",
+                    "email",
+                    "phone",
+                    "phone_country_id",
+                    "phone_verified_at",
+                    "locale",
+                    "email_verified_at",
+                    "created_at",
+                    "updated_at",
+                    "last_seen_at"
+                ],
+                "title": "User"
             },
             "UserResource": {
                 "type": "object",
@@ -1074,6 +2158,50 @@
                     "avatar_url"
                 ],
                 "title": "UserResource"
+            },
+            "VerificationChannel": {
+                "type": "string",
+                "description": "Canal d'envoi d'un code : l'e-mail ou le t\u00e9l\u00e9phone (SMS).\n",
+                "enum": [
+                    "email",
+                    "sms"
+                ],
+                "title": "VerificationChannel"
+            },
+            "VerifyCodeRequest": {
+                "type": "object",
+                "description": "Valider un code : r\u00e8gles du formulaire `auth.code`, plus le d\u00e9fi (et le canal\nquand il y en a plusieurs) et le nom de l'appareil pour une connexion.",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "challenge": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "channel": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/VerificationChannel"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "device_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "code",
+                    "challenge"
+                ],
+                "title": "VerifyCodeRequest"
             }
         },
         "responses": {

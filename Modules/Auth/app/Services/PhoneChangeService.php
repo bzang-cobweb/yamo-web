@@ -1,0 +1,51 @@
+<?php
+
+namespace Modules\Auth\Services;
+
+use Modules\Auth\Enums\VerificationChannel;
+use Modules\Auth\Enums\VerificationPurpose;
+use Modules\Auth\Models\User;
+use Modules\Auth\Models\VerificationCode;
+use Modules\Auth\Support\PhoneNumbers;
+
+/**
+ * Ajouter ou changer son téléphone : un code part par SMS au nouveau numéro, qui
+ * n'est enregistré qu'une fois le code validé.
+ */
+final class PhoneChangeService
+{
+    public function __construct(private readonly VerificationCodeService $codes) {}
+
+    /**
+     * @param  array{phone: string, phone_country: string}  $data
+     * @return array{challenge: string, channel: string, destination: string}
+     */
+    public function start(User $user, array $data): array
+    {
+        $country = PhoneNumbers::country($data['phone_country']);
+        $phone = PhoneNumbers::toE164($data['phone'], (string) $country?->code);
+
+        $challenge = $this->codes->start(
+            VerificationPurpose::CHANGE_PHONE,
+            $user,
+            [VerificationChannel::SMS->value => $phone],
+            ['phone_country_id' => $country?->getKey()],
+        );
+
+        return Challenges::describe($challenge, $this->codes);
+    }
+
+    public function complete(VerificationCode $verified): User
+    {
+        $user = $verified->user;
+        Challenges::ensureFree('phone', $verified->destination, $user->getKey());
+        $user->forceFill([
+            'phone' => $verified->destination,
+            'phone_country_id' => ((array) $verified->payload)['phone_country_id'] ?? null,
+            'phone_verified_at' => now(),
+        ])->save();
+        $this->codes->close($verified->challenge);
+
+        return $user->unsetRelation('phoneCountry');
+    }
+}
