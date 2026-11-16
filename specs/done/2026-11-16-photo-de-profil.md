@@ -86,3 +86,71 @@
 
 Appareil photo, photo sur la future partie publique du site, modération des images,
 plusieurs photos par compte.
+
+---
+
+## Ce que j'ai décidé seul
+
+- **Corriger la configuration DDEV** (`.ddev/config.yaml`) : `upload_dirs` était lu depuis
+  le docroot `public`. DDEV créait donc un faux dossier `public/storage`, et aucun fichier
+  public n'aurait été servi. Il vaut maintenant `../storage/app/public`. `public/storage`
+  est un lien **relatif** créé à la main : `storage:link` produit un lien absolu du
+  conteneur, cassé côté Mac, et `--relative` demande un paquet absent. Noté dans
+  `project.md`.
+- **Un seul domicile, `AvatarService`**, pour les règles d'envoi et l'optimisation.
+  L'API l'appelle, et le champ Filament aussi (`saveUploadedFileUsing`).
+- **Chemins sous l'UUID pour tous les médias** (`UuidPathGenerator` global), et pas
+  seulement pour la photo : aucun média n'existait encore.
+- **`bail` sur les règles** : un refus donne un seul message (écart mineur relevé par
+  qa-check web).
+- **Envoi du fichier par son contenu (Base64 → `bytes()`)**, sans `expo-file-system`.
+  Le `fetch` global d'Expo ne lit pas la forme `{ uri }` de React Native. La voie
+  documentée par Expo (`File` d'`expo-file-system`) aurait été une dépendance non
+  autorisée.
+- **Libellé de validation en minuscules** (`avatar_attribute`), comme `device_name`.
+- **Compte de test jetable** (`diag-avatar@example.test`) pour la vérification réelle.
+  Il a été supprimé en fin de chantier, avec ses jetons et sa photo.
+
+## Ce qui a été fait
+
+- **Web** (`8bacb51`) :
+  - collection `avatar` : un seul fichier, WebP de 512 px au plus, l'original n'est
+    jamais conservé ;
+  - vignette de 256 px produite sans file d'attente ;
+  - `POST` et `DELETE /api/v1/auth/me/avatar`, et `avatar_url` sur l'hôte de la requête ;
+  - Filament : champ dans la fiche, vignette dans la liste, avatar de la barre du haut ;
+  - 80 tests ; `openapi.json` régénéré.
+  - Essai réel : une photo de 3,7 Mo est stockée en WebP de 2 Ko, avec une vignette
+    de 1 Ko servie en HTTP.
+- **Mobile** (`c023dc8`) :
+  - `expo-image-picker` (galerie seulement), recadrage et compression avant l'envoi ;
+  - `ProfileService.uploadAvatar` et `removeAvatar`, `ApiClient.postForm` et `delete` ;
+  - `Avatar` sur l'Accueil, `AvatarPicker` dans Profil ;
+  - textes fr et en ; 24 tests ; README.
+- **De bout en bout dans le simulateur iOS** :
+  - choix d'une image, photo ronde dans Profil et sur l'Accueil ;
+  - la photo est toujours là après redémarrage d'Expo Go ;
+  - après le retrait, les initiales reviennent et le disque est vide.
+- **qa-check** : GO pour le web (`03-qa-check-web.md`) et GO pour le mobile
+  (`04-qa-check-mobile.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Back-office dans un navigateur** : seuls les tests Livewire couvrent le champ, la
+  colonne et l'avatar de la barre du haut.
+- **Android** : sélecteur, recadrage et envoi non testés.
+- **Vraie photo HEIC d'un iPhone** : iOS la convertit en JPEG avant de la donner au
+  sélecteur, mais cela n'a pas été observé.
+- **Vraie image valide de plus de 5 Mo** : la règle est testée avec un faux fichier.
+- **Photo non carrée** : iOS rend l'image entière si l'on ne recadre pas (constaté :
+  512 × 384). La vignette est recadrée au centre, donc l'affichage reste rond.
+- **Comportement en production** : disque, adresse publique, en-têtes de cache.
+
+## Ce qui reste en suspens
+
+- **Recréer `public/storage` après un clone** : `ln -s ../storage/app/public public/storage`.
+  C'est noté dans `project.md`, mais rien ne l'automatise.
+- **Pas de purge d'un fichier orphelin** si l'enregistrement en base échoue après
+  l'écriture du fichier (cas non observé).
+- **Vulnérabilités npm modérées existantes** (chaîne jest, `glob`, `minimatch`) :
+  antérieures à ce chantier, non traitées.
