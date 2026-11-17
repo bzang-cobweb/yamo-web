@@ -11,9 +11,9 @@ use Tests\TestCase;
 
 /**
  * « Mes adresses » dans l'app : la liste, le formulaire (vide ou lié à une
- * `UserAddress`), les envois qu'ils décrivent et les suggestions de la rue
- * (décisions 2026-11-18-adresses-liste-generique et
- * 2026-11-18-adresse-du-compte-modele).
+ * `UserAddress`) et les envois qu'ils décrivent ; ni coordonnées ni suggestions,
+ * réservées au back-office (décisions 2026-11-18-adresses-liste-generique,
+ * 2026-11-18-adresse-du-compte-modele et 2026-11-18-adresse-app-simplifiee).
  */
 class AddressApiTest extends TestCase
 {
@@ -89,7 +89,7 @@ class AddressApiTest extends TestCase
         ]], $items);
     }
 
-    public function test_the_empty_form_starts_with_the_account_as_recipient_and_suggests_streets(): void
+    public function test_the_empty_form_starts_with_the_account_as_recipient_without_coordinates_or_suggestions(): void
     {
         $user = User::factory()->create(['gender' => 'male', 'first_name' => 'Paul', 'last_name' => 'Martin']);
 
@@ -104,10 +104,10 @@ class AddressApiTest extends TestCase
             ->json('data.fields');
 
         $fields = array_column($data, null, 'name');
-        $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city', 'latitude', 'longitude'], array_keys($fields));
+        // Latitude, longitude et suggestions de rue sont réservées au back-office.
+        $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city'], array_keys($fields));
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
-        $this->assertSame(['endpoint' => '/v1/addresses/suggestions', 'params' => ['country_id'], 'min_length' => 3], $fields['street']['suggestions']);
-        $this->assertNull($fields['zip']['suggestions']);
+        $this->assertNull($fields['street']['suggestions']);
     }
 
     public function test_the_form_for_one_of_its_addresses_is_prefilled_and_sent_to_its_route(): void
@@ -128,7 +128,7 @@ class AddressApiTest extends TestCase
         $this->assertSame(['female', 'Léa', 'Roux'], [$defaults['gender'], $defaults['first_name'], $defaults['last_name']]);
         $this->assertSame((string) $address->country_id, $defaults['country_id']);
         $this->assertSame('Rue du Lac 4', $defaults['street']);
-        $this->assertSame('46.2043907', $defaults['latitude']);
+        $this->assertArrayNotHasKey('latitude', $defaults);
     }
 
     public function test_the_form_for_another_account_address_is_404(): void
@@ -147,17 +147,19 @@ class AddressApiTest extends TestCase
             ->assertOk();
     }
 
-    public function test_adding_a_new_address_creates_it_with_its_recipient(): void
+    public function test_adding_a_new_address_creates_it_with_its_recipient_and_no_coordinates(): void
     {
         $user = User::factory()->create();
 
+        // Des coordonnées envoyées par l'app sont ignorées : elles se saisissent au back-office.
         $this->asUser($user)->postJson('/api/v1/auth/me/addresses', $this->input($this->switzerland(), ['latitude' => '46.2', 'longitude' => '6.1']))
             ->assertNoContent();
 
         $entry = $user->addresses()->sole();
         $this->assertSame('Jeanne Dupont', $entry->recipient());
         $this->assertSame('Rue du Lac 4', $entry->address->street);
-        $this->assertSame('46.2000000', $entry->address->latitude);
+        $this->assertNull($entry->address->latitude);
+        $this->assertNull($entry->address->longitude);
     }
 
     public function test_adding_an_existing_address_reuses_it(): void
@@ -176,9 +178,9 @@ class AddressApiTest extends TestCase
     public function test_invalid_input_is_reported_under_the_fields(): void
     {
         $this->asUser(User::factory()->create())
-            ->postJson('/api/v1/auth/me/addresses', ['country_id' => '999', 'street' => '', 'zip' => '1200', 'city' => 'Genève', 'latitude' => '91', 'gender' => 'other'])
+            ->postJson('/api/v1/auth/me/addresses', ['country_id' => '999', 'street' => '', 'zip' => '1200', 'city' => 'Genève', 'gender' => 'other'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['gender', 'first_name', 'last_name', 'country_id', 'street', 'latitude']);
+            ->assertJsonValidationErrors(['gender', 'first_name', 'last_name', 'country_id', 'street']);
     }
 
     public function test_changing_an_address_leaves_the_shared_one_intact(): void
@@ -221,31 +223,10 @@ class AddressApiTest extends TestCase
         $this->assertSame(0, $intruder->addresses()->count());
     }
 
-    public function test_suggestions_give_at_most_five_addresses_of_the_country_without_coordinates(): void
+    public function test_there_is_no_address_search_for_the_app(): void
     {
-        $country = $this->switzerland();
-        foreach (range(1, 6) as $number) {
-            Address::factory()->for($country)->create(['street' => "Rue du Lac {$number}", 'zip' => '1200', 'city' => 'Genève', 'latitude' => '46.2']);
-        }
-        Address::factory()->create(['street' => 'Rue du Lac 1']);
+        Address::factory()->create(['street' => 'Rue du Lac 4']);
 
-        $data = $this->asUser(User::factory()->create())
-            ->getJson("/api/v1/addresses/suggestions?q=du%20lac&country_id={$country->getKey()}")
-            ->assertOk()
-            ->json('data');
-
-        $this->assertCount(5, $data);
-        $this->assertSame([
-            'label' => 'Rue du Lac 1 — 1200 Genève',
-            'values' => ['country_id' => (string) $country->getKey(), 'street' => 'Rue du Lac 1', 'zip' => '1200', 'city' => 'Genève'],
-        ], $data[0]);
-    }
-
-    public function test_suggestions_need_an_account_and_three_characters(): void
-    {
-        $this->getJson('/api/v1/addresses/suggestions?q=rue')->assertUnauthorized();
-        $this->asUser(User::factory()->create())->getJson('/api/v1/addresses/suggestions?q=ru')
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['q']);
+        $this->asUser(User::factory()->create())->getJson('/api/v1/addresses/suggestions?q=rue')->assertNotFound();
     }
 }

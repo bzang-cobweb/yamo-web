@@ -25,6 +25,9 @@ class AddressService
     /** Champs de l'adresse partagée. */
     public const ADDRESS_FIELDS = ['country_id', 'street', 'zip', 'city', 'latitude', 'longitude'];
 
+    /** Longueur minimale de la rue avant de proposer des adresses existantes (back-office). */
+    public const SUGGESTION_MIN_LENGTH = 3;
+
     /** Champs du destinataire, propres au compte. */
     public const RECIPIENT_FIELDS = ['gender', 'first_name', 'last_name'];
 

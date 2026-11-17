@@ -5,8 +5,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Location\Http\Controllers\Api\AddressController;
-use Modules\Location\Http\Controllers\Api\AddressSuggestionController;
-use Modules\Location\Models\Address;
 use Modules\Location\Models\UserAddress;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -18,10 +16,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('{userAddress}', [AddressController::class, 'update'])->can('update', 'userAddress')->name('update');
         Route::delete('{userAddress}', [AddressController::class, 'destroy'])->can('delete', 'userAddress')->name('destroy');
     });
-
-    // Suggestions pendant la saisie de la rue : 30 recherches par minute au plus.
-    Route::get('v1/addresses/suggestions', [AddressSuggestionController::class, 'index'])
-        ->can('viewAny', Address::class)
-        ->middleware('throttle:30,1')
-        ->name('v1.addresses.suggestions');
 });

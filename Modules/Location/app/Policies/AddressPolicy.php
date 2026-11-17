@@ -9,10 +9,10 @@ use Modules\Auth\Policies\Concerns\HasBeforeAbility;
 use Modules\Location\Models\Address;
 
 /**
- * Adresses partagées d'un pays. Back-office : permissions `addresses.*`. Site et
- * API : un compte lit les suggestions d'adresses existantes, mais ne gère que
- * ses `UserAddress` (`UserAddressPolicy`, décision
- * 2026-11-18-adresse-du-compte-modele).
+ * Adresses partagées d'un pays, gérées dans le back-office seul (permissions
+ * `addresses.*`). Site et API : un compte ne gère que ses `UserAddress`
+ * (`UserAddressPolicy`, décisions 2026-11-18-adresse-du-compte-modele et
+ * 2026-11-18-adresse-app-simplifiee).
  */
 class AddressPolicy
 {
@@ -20,12 +20,7 @@ class AddressPolicy
 
     public function viewAny(User $user): bool
     {
-        if (Filament::isServing()) {
-            return $user->hasPermissionTo(PermissionEnum::VIEW_ADDRESSES);
-        }
-
-        // Site et API : suggestions de la saisie d'une adresse (rue, NPA, ville).
-        return true;
+        return Filament::isServing() && $user->hasPermissionTo(PermissionEnum::VIEW_ADDRESSES);
     }
 
     public function view(User $user, Address $address): bool

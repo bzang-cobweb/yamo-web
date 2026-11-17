@@ -9,7 +9,6 @@ use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
 use Modules\Location\Filament\Forms\SingleCountry;
-use Modules\Location\Http\Controllers\Api\AddressSuggestionController;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\UserAddress;
 
@@ -18,10 +17,11 @@ use Modules\Location\Models\UserAddress;
  * en ajouter une (`POST /api/v1/auth/me/addresses`), ou liée à l'une de ses
  * adresses (`?record=12`, une `UserAddress`) pour la modifier
  * (`PATCH …/addresses/12`). Destinataire (genre, prénom, nom, préremplis depuis
- * le compte à l'ajout), puis pays, rue, NPA et ville obligatoires ; latitude et
- * longitude facultatives, saisies à la main. La rue propose les adresses
- * existantes du pays (décisions 2026-11-18-adresses-liste-generique et
- * 2026-11-18-adresse-du-compte-modele).
+ * le compte à l'ajout), puis pays, rue, NPA et ville obligatoires. Latitude,
+ * longitude et suggestions de rue sont réservées au back-office : une adresse
+ * créée depuis l'app n'a pas de coordonnées (décisions
+ * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
+ * 2026-11-18-adresse-app-simplifiee).
  */
 class AddressForm extends Form
 {
@@ -74,7 +74,6 @@ class AddressForm extends Form
             Field::text('street')
                 ->label(__('location::address.street'))
                 ->default($address?->street)
-                ->suggestions('api.v1.addresses.suggestions', ['country_id'], AddressSuggestionController::MIN_LENGTH)
                 ->required()
                 ->maxLength(255),
             Field::text('zip')
@@ -87,14 +86,6 @@ class AddressForm extends Form
                 ->default($address?->city)
                 ->required()
                 ->maxLength(255),
-            Field::number('latitude')
-                ->label(__('location::address.latitude'))
-                ->default($address?->latitude)
-                ->rules(['between:-90,90']),
-            Field::number('longitude')
-                ->label(__('location::address.longitude'))
-                ->default($address?->longitude)
-                ->rules(['between:-180,180']),
         ];
     }
 

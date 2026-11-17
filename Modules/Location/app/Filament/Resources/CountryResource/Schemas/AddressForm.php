@@ -11,7 +11,6 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Location\Filament\Forms\SingleCountry;
-use Modules\Location\Http\Controllers\Api\AddressSuggestionController;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Services\AddressService;
@@ -19,7 +18,8 @@ use Modules\Location\Services\AddressService;
 /**
  * Formulaire d'une adresse dans le back-office. Dans la fiche d'un pays, le pays
  * est implicite ; dans celle d'un utilisateur, il se choisit. Les bornes sont
- * celles du formulaire `location.address` de l'app.
+ * celles du formulaire `location.address` de l'app ; latitude, longitude et
+ * suggestions de rue n'existent qu'ici (décision 2026-11-18-adresse-app-simplifiee).
  */
 abstract class AddressForm
 {
@@ -74,7 +74,7 @@ abstract class AddressForm
             ->live(debounce: 400)
             ->autocomplete(false)
             ->helperText(__('location::address.suggestion_help'))
-            ->datalist(fn (Get $get, ?string $state): array => mb_strlen(trim((string) $state)) < AddressSuggestionController::MIN_LENGTH
+            ->datalist(fn (Get $get, ?string $state): array => mb_strlen(trim((string) $state)) < AddressService::SUGGESTION_MIN_LENGTH
                 ? []
                 : app(AddressService::class)->suggest((string) $state, $get('country_id'), 10)
                     ->map(fn (Address $address): string => $address->suggestionLabel())
