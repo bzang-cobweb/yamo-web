@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Models;
 
+use Collator;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\App;
 use Modules\Location\Database\Factories\CountryFactory;
 use Spatie\Translatable\HasTranslations;
 
@@ -49,6 +51,31 @@ class Country extends Model
     public function regions(): HasMany
     {
         return $this->hasMany(Region::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * Ses adresses (décision 2026-11-18-adresses-liste-generique).
+     *
+     * @return HasMany<Address, $this>
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Pays actifs, par libellé dans la langue courante (tri selon la langue).
+     *
+     * @return array<string, string>
+     */
+    public static function options(): array
+    {
+        $collator = new Collator(App::getLocale());
+
+        return static::query()->active()->get()
+            ->mapWithKeys(fn (self $country): array => [(string) $country->getKey() => $country->label()])
+            ->sort(fn (string $a, string $b): int => (int) $collator->compare($a, $b))
+            ->all();
     }
 
     /**

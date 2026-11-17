@@ -10,6 +10,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\FormRegistry;
+use Modules\Form\Support\ListingRegistry;
 use Modules\Form\Support\Submission;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -54,13 +55,20 @@ class ProfileFormSubmissionApiTest extends TestCase
             ->assertJsonPath('data.submit.success', ['action' => $action, 'message' => $message]);
     }
 
-    public function test_every_menu_link_opens_a_form_sent_to_an_existing_api_route(): void
+    public function test_every_menu_link_opens_a_form_sent_to_an_existing_api_route_or_a_list(): void
     {
         $user = User::factory()->create();
         $registry = app(FormRegistry::class);
 
         foreach (ProfileMenuKey::cases() as $key) {
-            $submission = $registry->make($key->form(), $user)?->submission();
+            if ($key->list() !== null) {
+                $this->assertNull($key->form(), "{$key->value} : un lien ouvre un formulaire ou une liste, pas les deux.");
+                $this->assertTrue(app(ListingRegistry::class)->has($key->list()), "{$key->value} : liste inconnue.");
+
+                continue;
+            }
+
+            $submission = $registry->make((string) $key->form(), $user)?->submission();
 
             $this->assertNotNull($submission, "{$key->value} : formulaire inconnu ou sans envoi décrit.");
             $route = Route::getRoutes()->match(request()->create('/api'.$submission->endpoint, $submission->method));

@@ -27,16 +27,20 @@ final readonly class Submission
     ) {}
 
     /**
-     * L'envoi vers la route d'API nommée `$name` (`api.v1.auth.me.personal-info.update`).
+     * L'envoi vers la route d'API nommée `$name` (`api.v1.auth.me.personal-info.update`),
+     * avec ses paramètres (`['address' => 12]`) s'il en a.
+     *
+     * @param  array<string, mixed>  $parameters
      */
-    public static function toRoute(string $name, SuccessAction $success, string $message, bool $destructive = false): self
+    public static function toRoute(string $name, SuccessAction $success, string $message, bool $destructive = false, array $parameters = []): self
     {
         $route = Route::getRoutes()->getByName($name)
             ?? throw new LogicException("Route d'envoi inconnue : {$name}");
 
         $method = collect($route->methods())->first(fn (string $method): bool => $method !== 'HEAD');
+        $path = ltrim(route($name, $parameters, false), '/');
 
-        return new self($method, '/'.Str::after($route->uri(), 'api/'), $success, $message, $destructive);
+        return new self($method, '/'.Str::after($path, 'api/'), $success, $message, $destructive);
     }
 
     /**

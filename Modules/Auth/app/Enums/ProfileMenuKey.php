@@ -10,12 +10,16 @@ use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Listing;
+use Modules\Location\Lists\AddressListing;
 
 /**
- * Les liens possibles du menu du profil : chacun ouvre un formulaire, que l'app
- * affiche et envoie selon sa définition (`Form::submission()`), sans le connaître
- * d'avance. Ajouter un lien = un cas ici, son formulaire et sa route d'API, sans
- * nouvelle version de l'app (décision 2026-11-17-formulaires-profil-generiques).
+ * Les liens possibles du menu du profil : chacun ouvre soit un formulaire, que
+ * l'app affiche et envoie selon sa définition (`Form::submission()`), soit une
+ * liste (`Listing`), sans les connaître d'avance. Ajouter un lien = un cas ici,
+ * son formulaire ou sa liste et ses routes d'API, sans nouvelle version de l'app
+ * (décisions 2026-11-17-formulaires-profil-generiques et
+ * 2026-11-18-adresses-liste-generique).
  * L'ordre du menu est fixé par `ProfileMenuService`.
  */
 enum ProfileMenuKey: string
@@ -25,13 +29,14 @@ enum ProfileMenuKey: string
     case PHONE = 'phone';
     case PASSWORD = 'password';
     case PREFERENCES = 'preferences';
+    case ADDRESSES = 'addresses';
 
     /**
-     * Formulaire ouvert par le lien.
+     * Formulaire ouvert par le lien, ou `null` pour un lien vers une liste.
      *
-     * @return class-string<Form>
+     * @return class-string<Form>|null
      */
-    public function formClass(): string
+    public function formClass(): ?string
     {
         return match ($this) {
             self::PERSONAL => PersonalInfoForm::class,
@@ -39,15 +44,41 @@ enum ProfileMenuKey: string
             self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
             self::PREFERENCES => PreferencesForm::class,
+            default => null,
+        };
+    }
+
+    /**
+     * Liste ouverte par le lien, ou `null` pour un lien vers un formulaire.
+     *
+     * @return class-string<Listing>|null
+     */
+    public function listingClass(): ?string
+    {
+        return match ($this) {
+            self::ADDRESSES => AddressListing::class,
+            default => null,
         };
     }
 
     /**
      * Nom du formulaire dans l'API (`auth.profile.personal`), que l'app ouvre.
      */
-    public function form(): string
+    public function form(): ?string
     {
-        return $this->formClass()::name();
+        $class = $this->formClass();
+
+        return $class === null ? null : $class::name();
+    }
+
+    /**
+     * Nom de la liste dans l'API (`location.addresses`), que l'app ouvre.
+     */
+    public function list(): ?string
+    {
+        $class = $this->listingClass();
+
+        return $class === null ? null : $class::name();
     }
 
     /**
@@ -73,6 +104,7 @@ enum ProfileMenuKey: string
             self::PHONE => filled($user->phone) ? 'changePhone' : 'addPhone',
             self::PASSWORD => 'password',
             self::PREFERENCES => 'preferences',
+            self::ADDRESSES => 'addresses',
         });
     }
 }

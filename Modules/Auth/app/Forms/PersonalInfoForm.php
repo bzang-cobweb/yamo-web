@@ -76,12 +76,7 @@ class PersonalInfoForm extends Form
      */
     public static function countryOptions(): array
     {
-        $collator = new Collator(App::getLocale());
-
-        return Country::query()->active()->get()
-            ->mapWithKeys(fn (Country $country): array => [(string) $country->getKey() => $country->label()])
-            ->sort(fn (string $a, string $b): int => (int) $collator->compare($a, $b))
-            ->all();
+        return Country::options();
     }
 
     /**

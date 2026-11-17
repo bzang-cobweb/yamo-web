@@ -26,10 +26,14 @@ class ProfileMenuService
         ProfileMenuKey::PHONE,
         ProfileMenuKey::PASSWORD,
         ProfileMenuKey::PREFERENCES,
+        ProfileMenuKey::ADDRESSES,
     ];
 
     /**
-     * @return Collection<int, array{key: string, label: string, form: string}>
+     * Chaque lien porte soit `form`, soit `list` : une version de l'app qui ne
+     * connaît pas les listes ignore un lien sans `form`.
+     *
+     * @return Collection<int, array{key: string, label: string, form?: string, list?: string}>
      */
     public function for(User $user): Collection
     {
@@ -38,7 +42,7 @@ class ProfileMenuService
             ->map(fn (ProfileMenuKey $key): array => [
                 'key' => $key->value,
                 'label' => $key->labelFor($user),
-                'form' => $key->form(),
+                ...($key->form() !== null ? ['form' => $key->form()] : ['list' => $key->list()]),
             ])
             ->values();
     }

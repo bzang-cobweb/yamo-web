@@ -41,6 +41,12 @@ return [
             'update' => 'Edit regions',
             'delete' => 'Delete regions',
         ],
+        'addresses' => [
+            'view' => 'View addresses',
+            'create' => 'Create addresses',
+            'update' => 'Edit addresses and link them to accounts',
+            'delete' => 'Delete addresses',
+        ],
         'settings' => [
             'update' => 'Edit the application settings',
         ],

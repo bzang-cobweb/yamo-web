@@ -149,6 +149,118 @@
                 }
             }
         },
+        "/v1/auth/me/addresses": {
+            "post": {
+                "operationId": "v1.auth.me.addresses.store",
+                "summary": "Ajouter une adresse : l'adresse identique existante est reprise, sinon\nelle est cr\u00e9\u00e9e, puis rattach\u00e9e au compte",
+                "tags": [
+                    "Address"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/auth/me/addresses/{address}": {
+            "patch": {
+                "operationId": "v1.auth.me.addresses.update",
+                "summary": "Changer une de ses adresses : la nouvelle saisie est reprise ou cr\u00e9\u00e9e, et\nremplace l'ancienne pour ce compte seul. L'ancienne n'est pas modifi\u00e9e",
+                "tags": [
+                    "Address"
+                ],
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "path",
+                        "required": true,
+                        "description": "The address ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.auth.me.addresses.destroy",
+                "summary": "Retirer une de ses adresses ; elle reste dans son pays",
+                "tags": [
+                    "Address"
+                ],
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "path",
+                        "required": true,
+                        "description": "The address ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/app": {
             "get": {
                 "operationId": "v1.app.show",
@@ -242,7 +354,7 @@
         "/v1/forms/{form}": {
             "get": {
                 "operationId": "v1.forms.show",
-                "summary": "D\u00e9finition d'un formulaire : champs (libell\u00e9s traduits), options, valeurs\npar d\u00e9faut, bouton d'envoi. Formulaire inconnu : 404 ; formulaire r\u00e9serv\u00e9\ndemand\u00e9 sans jeton : 401",
+                "summary": "D\u00e9finition d'un formulaire : champs (libell\u00e9s traduits), options, valeurs\npar d\u00e9faut, bouton d'envoi. Formulaire inconnu : 404 ; formulaire r\u00e9serv\u00e9\ndemand\u00e9 sans jeton : 401. `record` lie le formulaire \u00e0 un enregistrement\n(une adresse) : pr\u00e9rempli et envoy\u00e9 pour le modifier ; 404 s'il n'est pas\nau compte. Un formulaire qui n'en a pas l'usage l'ignore",
                 "tags": [
                     "Form"
                 ],
@@ -254,6 +366,15 @@
                         "description": "The form ID",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "record",
+                        "in": "query",
+                        "description": "Identifiant de l'enregistrement \u00e0 modifier. @example 12",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 64
                         }
                     }
                 ],
@@ -275,6 +396,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -346,6 +470,52 @@
                     }
                 },
                 "security": []
+            }
+        },
+        "/v1/lists/{list}": {
+            "get": {
+                "operationId": "v1.lists.show",
+                "summary": "Une liste : titre, texte quand elle est vide, bouton de cr\u00e9ation, items\n(titre, sous-titre, formulaire d'\u00e9dition, retrait). Liste inconnue : 404 ;\ndemand\u00e9e sans jeton : 401",
+                "tags": [
+                    "Listing"
+                ],
+                "parameters": [
+                    {
+                        "name": "list",
+                        "in": "path",
+                        "required": true,
+                        "description": "The list ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ListingResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ListingResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
             }
         },
         "/v1/locales": {
@@ -892,7 +1062,7 @@
         "/v1/auth/me/menu": {
             "get": {
                 "operationId": "v1.auth.me.menu",
-                "summary": "Liens du menu du profil, dans l'ordre, chacun avec sa cl\u00e9, son libell\u00e9 dans\nla langue du compte et le nom du formulaire qu'il ouvre dans l'app",
+                "summary": "Liens du menu du profil, dans l'ordre, chacun avec sa cl\u00e9, son libell\u00e9 dans\nla langue du compte, et le nom du formulaire (`form`) ou de la liste\n(`list`) qu'il ouvre dans l'app",
                 "tags": [
                     "ProfileMenu"
                 ],
@@ -916,7 +1086,8 @@
                                                             "email",
                                                             "phone",
                                                             "password",
-                                                            "preferences"
+                                                            "preferences",
+                                                            "addresses"
                                                         ]
                                                     },
                                                     "label": {
@@ -924,12 +1095,14 @@
                                                     },
                                                     "form": {
                                                         "type": "string"
+                                                    },
+                                                    "list": {
+                                                        "type": "string"
                                                     }
                                                 },
                                                 "required": [
                                                     "key",
-                                                    "label",
-                                                    "form"
+                                                    "label"
                                                 ]
                                             }
                                         }
@@ -1302,6 +1475,297 @@
             }
         },
         "schemas": {
+            "AddressRequest": {
+                "type": "object",
+                "description": "Ajout ou changement d'une adresse du compte, valid\u00e9 par le formulaire\n`location.address` : une seule source de r\u00e8gles. La route porte la garde de\n`AddressPolicy`.",
+                "properties": {
+                    "country_id": {
+                        "type": "string",
+                        "enum": [
+                            "75",
+                            "29",
+                            "146",
+                            "82",
+                            "50",
+                            "158",
+                            "109",
+                            "3",
+                            "2",
+                            "229",
+                            "54",
+                            "156",
+                            "138",
+                            "60",
+                            "40",
+                            "242",
+                            "7",
+                            "235",
+                            "221",
+                            "5",
+                            "32",
+                            "173",
+                            "94",
+                            "6",
+                            "237",
+                            "157",
+                            "185",
+                            "167",
+                            "132",
+                            "55",
+                            "197",
+                            "151",
+                            "91",
+                            "122",
+                            "219",
+                            "102",
+                            "8",
+                            "103",
+                            "56",
+                            "71",
+                            "148",
+                            "57",
+                            "134",
+                            "107",
+                            "108",
+                            "216",
+                            "69",
+                            "178",
+                            "90",
+                            "165",
+                            "53",
+                            "193",
+                            "45",
+                            "118",
+                            "9",
+                            "28",
+                            "233",
+                            "187",
+                            "137",
+                            "34",
+                            "154",
+                            "133",
+                            "37",
+                            "1",
+                            "116",
+                            "203",
+                            "149",
+                            "33",
+                            "106",
+                            "85",
+                            "243",
+                            "98",
+                            "141",
+                            "30",
+                            "11",
+                            "140",
+                            "182",
+                            "12",
+                            "174",
+                            "42",
+                            "89",
+                            "105",
+                            "110",
+                            "186",
+                            "188",
+                            "181",
+                            "176",
+                            "35",
+                            "62",
+                            "112",
+                            "43",
+                            "196",
+                            "150",
+                            "15",
+                            "61",
+                            "206",
+                            "139",
+                            "172",
+                            "17",
+                            "215",
+                            "201",
+                            "21",
+                            "24",
+                            "25",
+                            "73",
+                            "63",
+                            "227",
+                            "78",
+                            "144",
+                            "145",
+                            "234",
+                            "36",
+                            "13",
+                            "68",
+                            "44",
+                            "225",
+                            "27",
+                            "119",
+                            "244",
+                            "209",
+                            "164",
+                            "228",
+                            "126",
+                            "220",
+                            "131",
+                            "153",
+                            "224",
+                            "96",
+                            "84",
+                            "171",
+                            "152",
+                            "143",
+                            "168",
+                            "125",
+                            "59",
+                            "130",
+                            "223",
+                            "88",
+                            "147",
+                            "80",
+                            "190",
+                            "95",
+                            "87",
+                            "127",
+                            "52",
+                            "214",
+                            "155",
+                            "159",
+                            "238",
+                            "163",
+                            "18",
+                            "123",
+                            "77",
+                            "129",
+                            "198",
+                            "239",
+                            "177",
+                            "92",
+                            "99",
+                            "207",
+                            "47",
+                            "210",
+                            "65",
+                            "231",
+                            "121",
+                            "245",
+                            "74",
+                            "204",
+                            "179",
+                            "199",
+                            "189",
+                            "31",
+                            "194",
+                            "51",
+                            "64",
+                            "49",
+                            "212",
+                            "19",
+                            "142",
+                            "236",
+                            "217",
+                            "218",
+                            "101",
+                            "10",
+                            "38",
+                            "41",
+                            "26",
+                            "115",
+                            "81",
+                            "183",
+                            "14",
+                            "160",
+                            "184",
+                            "20",
+                            "180",
+                            "23",
+                            "135",
+                            "16",
+                            "175",
+                            "208",
+                            "4",
+                            "104",
+                            "86",
+                            "162",
+                            "113",
+                            "97",
+                            "66",
+                            "170",
+                            "166",
+                            "117",
+                            "114",
+                            "79",
+                            "76",
+                            "46",
+                            "39",
+                            "191",
+                            "48",
+                            "226",
+                            "240",
+                            "222",
+                            "120",
+                            "100",
+                            "169",
+                            "111",
+                            "232",
+                            "67",
+                            "195",
+                            "93",
+                            "213",
+                            "200",
+                            "22",
+                            "136",
+                            "83",
+                            "241",
+                            "72",
+                            "211",
+                            "161",
+                            "192",
+                            "202",
+                            "58",
+                            "70",
+                            "205",
+                            "230",
+                            "124",
+                            "128"
+                        ]
+                    },
+                    "street": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "zip": {
+                        "type": "string",
+                        "maxLength": 20
+                    },
+                    "city": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "latitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": -90,
+                        "maximum": 90
+                    },
+                    "longitude": {
+                        "type": [
+                            "number",
+                            "null"
+                        ],
+                        "minimum": -180,
+                        "maximum": 180
+                    }
+                },
+                "required": [
+                    "country_id",
+                    "street",
+                    "zip",
+                    "city"
+                ],
+                "title": "AddressRequest"
+            },
             "ApplicationResource": {
                 "type": "object",
                 "properties": {
@@ -1689,6 +2153,38 @@
                     "female"
                 ],
                 "title": "GenderEnum"
+            },
+            "ListingResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "empty": {
+                        "type": "null",
+                        "description": "Texte affich\u00e9 quand la liste est vide."
+                    },
+                    "create": {
+                        "type": "null",
+                        "description": "Bouton de cr\u00e9ation : libell\u00e9 et formulaire ouvert ; absent pour une liste en lecture seule."
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Items : `edit` ouvre le formulaire li\u00e9 \u00e0 l'enregistrement (`?record=`), `delete` d\u00e9crit le retrait.",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "name",
+                    "title",
+                    "empty",
+                    "create",
+                    "items"
+                ],
+                "title": "ListingResource"
             },
             "LoginRequest": {
                 "type": "object",

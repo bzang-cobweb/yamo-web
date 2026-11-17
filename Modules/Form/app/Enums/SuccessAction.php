@@ -14,4 +14,10 @@ enum SuccessAction: string
 
     /** Message, puis déconnexion (compte supprimé). */
     case SIGN_OUT = 'sign-out';
+
+    /**
+     * Retour à l'écran précédent (une liste), qui affiche le message et se
+     * recharge (décision 2026-11-18-adresses-liste-generique).
+     */
+    case BACK = 'back';
 }

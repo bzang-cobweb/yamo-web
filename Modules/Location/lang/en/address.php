@@ -1,0 +1,29 @@
+<?php
+
+return [
+    'singular' => 'address',
+    'plural' => 'addresses',
+    'title' => 'Addresses',
+    'country' => 'Country',
+    'street' => 'Street',
+    'zip' => 'Postcode',
+    'city' => 'City',
+    'latitude' => 'Latitude',
+    'longitude' => 'Longitude',
+    'users_count' => 'Accounts',
+    'duplicate' => 'This address already exists in this country.',
+    'detach' => 'Remove',
+    'form' => [
+        'create_title' => 'Add an address',
+        'edit_title' => 'Edit address',
+        'save' => 'Save',
+        'saved' => 'Address saved.',
+    ],
+    'list' => [
+        'title' => 'My addresses',
+        'empty' => 'No address yet.',
+        'create' => 'Add an address',
+        'confirm' => 'Remove this address?',
+        'detached' => 'Address removed.',
+    ],
+];

@@ -32,6 +32,11 @@ enum PermissionEnum: string
     case UPDATE_REGIONS = 'regions.update';
     case DELETE_REGIONS = 'regions.delete';
 
+    case VIEW_ADDRESSES = 'addresses.view';
+    case CREATE_ADDRESSES = 'addresses.create';
+    case UPDATE_ADDRESSES = 'addresses.update';
+    case DELETE_ADDRESSES = 'addresses.delete';
+
     case UPDATE_SETTINGS = 'settings.update';
 
     public function label(): string

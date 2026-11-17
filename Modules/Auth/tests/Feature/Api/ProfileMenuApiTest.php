@@ -32,26 +32,28 @@ class ProfileMenuApiTest extends TestCase
         $this->getJson('/api/v1/auth/me/menu')->assertUnauthorized();
     }
 
-    public function test_lists_the_five_forms_in_the_service_order(): void
+    public function test_lists_the_five_forms_then_the_addresses_in_the_service_order(): void
     {
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
-        $this->assertSame(['personal', 'email', 'phone', 'password', 'preferences'], array_column($menu, 'key'));
+        $this->assertSame(['personal', 'email', 'phone', 'password', 'preferences', 'addresses'], array_column($menu, 'key'));
         $this->assertSame(
-            ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences'],
+            ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences', 'Mes adresses'],
             array_column($menu, 'label'),
         );
         $this->assertSame(
             ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.preferences'],
             array_column($menu, 'form'),
         );
+        // Un lien vers une liste n'a pas de `form` : une version de l'app sans listes l'ignore.
+        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'location.addresses'], $menu[5]);
     }
 
     public function test_a_disabled_channel_removes_its_link(): void
     {
         config(['auth.channels' => ['email' => false, 'phone' => true]]);
 
-        $this->assertSame(['personal', 'phone', 'password', 'preferences'], array_column($this->menu($this->user()), 'key'));
+        $this->assertSame(['personal', 'phone', 'password', 'preferences', 'addresses'], array_column($this->menu($this->user()), 'key'));
     }
 
     public function test_labels_follow_the_account_language(): void

@@ -53,6 +53,17 @@ abstract class Form
     }
 
     /**
+     * Le formulaire lié à l'enregistrement `$key` (`?record=12`) : prérempli, et
+     * envoyé pour le modifier. Par défaut, `record` est ignoré. Un formulaire
+     * qui le prend en compte répond 404 pour un enregistrement que le compte ne
+     * peut pas modifier (décision 2026-11-18-adresses-liste-generique).
+     */
+    public function forRecord(string $key): static
+    {
+        return $this;
+    }
+
+    /**
      * Titre affiché au-dessus du formulaire, traduit ; aucun par défaut.
      */
     public function title(): ?string

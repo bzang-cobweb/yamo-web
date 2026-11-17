@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Auth\Filament\Resources\UserResource\Pages\CreateUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\ListUsers;
+use Modules\Auth\Filament\Resources\UserResource\RelationManagers\AddressesRelationManager;
 use Modules\Auth\Filament\Resources\UserResource\Schemas\UserForm;
 use Modules\Auth\Filament\Resources\UserResource\Tables\UserTable;
 use Modules\Auth\Models\User;
@@ -50,6 +51,16 @@ class UserResource extends AbstractAuthResource
     public static function table(Table $table): Table
     {
         return UserTable::configure($table);
+    }
+
+    /**
+     * Ses adresses, sur le pivot (décision 2026-11-18-adresses-liste-generique).
+     */
+    public static function getRelations(): array
+    {
+        return [
+            AddressesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

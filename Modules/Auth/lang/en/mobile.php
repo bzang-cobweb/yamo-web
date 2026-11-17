@@ -30,6 +30,7 @@ return [
         'personalInfo' => 'Personal information',
         'password' => 'Change password',
         'preferences' => 'Preferences',
+        'addresses' => 'My addresses',
         'passwordSaved' => 'Password changed.',
         'addEmail' => 'Add an email address',
         'changeEmail' => 'Change email address',

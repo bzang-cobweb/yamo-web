@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Location\Filament\Resources\CountryResource\Pages\CreateCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\EditCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\ListCountries;
+use Modules\Location\Filament\Resources\CountryResource\RelationManagers\AddressesRelationManager;
 use Modules\Location\Filament\Resources\CountryResource\RelationManagers\RegionsRelationManager;
 use Modules\Location\Filament\Resources\CountryResource\Schemas\CountryForm;
 use Modules\Location\Filament\Resources\CountryResource\Tables\CountryTable;
@@ -38,6 +39,7 @@ class CountryResource extends AbstractLocationResource
     {
         return [
             RegionsRelationManager::class,
+            AddressesRelationManager::class,
         ];
     }
 

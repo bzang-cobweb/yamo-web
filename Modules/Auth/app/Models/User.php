@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -23,6 +24,7 @@ use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Services\AvatarService;
+use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Spatie\Image\Enums\Fit;
@@ -85,6 +87,17 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function phoneCountry(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'phone_country_id');
+    }
+
+    /**
+     * Ses adresses, partagées avec d'autres comptes le cas échéant, dans l'ordre
+     * de rattachement (décision 2026-11-18-adresses-liste-generique).
+     *
+     * @return BelongsToMany<Address, $this>
+     */
+    public function addresses(): BelongsToMany
+    {
+        return $this->belongsToMany(Address::class)->withTimestamps()->orderByPivot('id');
     }
 
     /**

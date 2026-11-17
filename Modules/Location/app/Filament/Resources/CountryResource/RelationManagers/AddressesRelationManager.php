@@ -1,0 +1,90 @@
+<?php
+
+namespace Modules\Location\Filament\Resources\CountryResource\RelationManagers;
+
+use App\Filament\AbstractResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Modules\Location\Filament\Resources\CountryResource\Schemas\AddressForm;
+use Modules\Location\Models\Address;
+use Modules\Location\Models\Country;
+use Modules\Location\Rules\UniqueAddress;
+
+/**
+ * Adresses d'un pays, gérées depuis sa fiche. Une adresse n'existe qu'une fois :
+ * un doublon (même rue, NPA et ville, sans casse ni espaces) est refusé
+ * (décision 2026-11-18-adresses-liste-generique). Chaque action passe par
+ * `AddressPolicy`.
+ */
+class AddressesRelationManager extends RelationManager
+{
+    protected static string $relationship = 'addresses';
+
+    public function form(Schema $schema): Schema
+    {
+        /** @var Country $country */
+        $country = $this->getOwnerRecord();
+
+        return AddressForm::configure(
+            $schema,
+            streetRule: fn (?Address $record, Get $get): UniqueAddress => new UniqueAddress($country->getKey(), $get('zip'), $get('city'), $record),
+        );
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('street')
+            ->defaultSort('street')
+            ->columns([
+                TextColumn::make('street')
+                    ->label(__('location::address.street'))
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('zip')
+                    ->label(__('location::address.zip'))
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('city')
+                    ->label(__('location::address.city'))
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('latitude')
+                    ->label(__('location::address.latitude'))
+                    ->toggleable(),
+                TextColumn::make('longitude')
+                    ->label(__('location::address.longitude'))
+                    ->toggleable(),
+                TextColumn::make('users_count')
+                    ->label(__('location::address.users_count'))
+                    ->counts('users')
+                    ->sortable(),
+            ])
+            ->headerActions([
+                CreateAction::make(),
+            ])
+            ->recordActions(AbstractResource::getActions())
+            ->toolbarActions(AbstractResource::getBulkActions());
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        /** @var Country $ownerRecord */
+        return __('location::address.title').' ('.$ownerRecord->addresses()->count().')';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('location::address.singular');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('location::address.plural');
+    }
+}

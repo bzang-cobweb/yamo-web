@@ -96,7 +96,7 @@ class RegionsRelationManagerTest extends AuthFilamentTestCase
 
     public function test_there_is_no_standalone_regions_page_any_more(): void
     {
-        $this->assertSame([RegionsRelationManager::class], CountryResource::getRelations());
+        $this->assertContains(RegionsRelationManager::class, CountryResource::getRelations());
         $this->assertFalse(class_exists('Modules\\Location\\Filament\\Resources\\RegionResource'));
     }
 
