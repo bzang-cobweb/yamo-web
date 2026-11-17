@@ -83,17 +83,15 @@ class PersonalInfoForm extends Form
     }
 
     /**
-     * Régions actives des pays actifs, chacune avec son pays pour parent.
+     * Régions actives des pays actifs, chacune avec son pays pour parent, dans
+     * l'ordre réglé dans le back-office.
      *
      * @return array<string, array{label: string, parent: string}>
      */
     public static function regionOptions(): array
     {
-        // Tri selon la langue : « Bâle » avant « Berne ».
-        $collator = new Collator(App::getLocale());
-
-        return Region::query()->active()->whereHas('country', fn ($query) => $query->active())->get()
-            ->sort(fn (Region $a, Region $b): int => (int) $collator->compare((string) $a->name, (string) $b->name))
+        return Region::query()->active()->whereHas('country', fn ($query) => $query->active())
+            ->orderBy('position')->orderBy('id')->get()
             ->mapWithKeys(fn (Region $region): array => [
                 (string) $region->getKey() => ['label' => (string) $region->name, 'parent' => (string) $region->country_id],
             ])

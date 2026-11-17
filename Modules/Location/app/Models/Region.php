@@ -13,12 +13,15 @@ use Modules\Location\Database\Factories\RegionFactory;
 use Spatie\Translatable\HasTranslations;
 
 /**
- * Une région d'un pays (canton, État…) : `name` traduit (fr, en).
+ * Une région d'un pays (canton, État…) : `name` traduit (fr, en), `position`
+ * dans son pays, réglée dans le back-office. Une région créée sans position se
+ * place à la fin de son pays.
  *
  * @property int $country_id
  * @property bool $active
+ * @property int $position
  */
-#[Fillable(['country_id', 'name', 'active'])]
+#[Fillable(['country_id', 'name', 'active', 'position'])]
 #[UseFactory(RegionFactory::class)]
 class Region extends Model
 {
@@ -35,7 +38,17 @@ class Region extends Model
     {
         return [
             'active' => 'boolean',
+            'position' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $region): void {
+            if ($region->position === null) {
+                $region->position = (int) static::query()->where('country_id', $region->country_id)->max('position') + 1;
+            }
+        });
     }
 
     /**

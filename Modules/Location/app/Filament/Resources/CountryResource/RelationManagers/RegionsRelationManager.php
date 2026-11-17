@@ -18,8 +18,9 @@ use Modules\Location\Models\Region;
 
 /**
  * Régions d'un pays, gérées depuis sa fiche (décision
- * 2026-11-18-contrat-etapes-mot-de-passe-oublie). Chaque action passe par
- * `RegionPolicy`.
+ * 2026-11-18-contrat-etapes-mot-de-passe-oublie), dans leur ordre, réglé par
+ * glisser-déposer (décision 2026-11-17-tri-regions-menu-profil). Chaque action,
+ * le réordonnancement compris, passe par `RegionPolicy`.
  */
 class RegionsRelationManager extends RelationManager
 {
@@ -34,7 +35,8 @@ class RegionsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('name')
-            ->defaultSort('id')
+            ->reorderable('position')
+            ->defaultSort('position')
             ->columns([
                 TextColumn::make('name')
                     ->label(__('location::region.name'))

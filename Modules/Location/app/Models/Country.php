@@ -42,11 +42,13 @@ class Country extends Model
     }
 
     /**
+     * Ses régions, dans l'ordre réglé dans le back-office.
+     *
      * @return HasMany<Region, $this>
      */
     public function regions(): HasMany
     {
-        return $this->hasMany(Region::class);
+        return $this->hasMany(Region::class)->orderBy('position')->orderBy('id');
     }
 
     /**

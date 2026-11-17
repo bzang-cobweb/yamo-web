@@ -178,6 +178,18 @@ class ProfileFormsApiTest extends TestCase
             ->assertJsonPath('data.region.id', $geneva->getKey());
     }
 
+    public function test_regions_are_offered_in_the_back_office_order(): void
+    {
+        $switzerland = Country::factory()->create(['code' => 'CH']);
+        $zurich = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Zurich', 'en' => 'Zurich'], 'position' => 1]);
+        $argovie = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Argovie', 'en' => 'Aargau'], 'position' => 2]);
+
+        $form = $this->asUser($this->user())->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
+        $region = collect($form->json('data.fields'))->firstWhere('name', 'region_id');
+
+        $this->assertSame([(string) $zurich->getKey(), (string) $argovie->getKey()], array_column($region['options'], 'value'));
+    }
+
     public function test_an_inactive_country_is_not_offered_nor_accepted(): void
     {
         $user = $this->user(['gender' => 'female']);

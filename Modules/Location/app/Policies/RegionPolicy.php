@@ -71,4 +71,17 @@ class RegionPolicy
         // Site et API : les régions ne sont gérées que dans le back-office.
         return false;
     }
+
+    /**
+     * Ordonner les régions d'un pays : c'est les modifier.
+     */
+    public function reorder(User $user): bool
+    {
+        if (Filament::isServing()) {
+            return $user->hasPermissionTo(PermissionEnum::UPDATE_REGIONS);
+        }
+
+        // Site et API : les régions ne sont gérées que dans le back-office.
+        return false;
+    }
 }

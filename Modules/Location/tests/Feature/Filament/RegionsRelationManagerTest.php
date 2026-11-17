@@ -99,4 +99,40 @@ class RegionsRelationManagerTest extends AuthFilamentTestCase
         $this->assertSame([RegionsRelationManager::class], CountryResource::getRelations());
         $this->assertFalse(class_exists('Modules\\Location\\Filament\\Resources\\RegionResource'));
     }
+
+    public function test_regions_are_listed_and_reordered_by_position(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES, PermissionEnum::UPDATE_COUNTRIES, PermissionEnum::VIEW_REGIONS, PermissionEnum::UPDATE_REGIONS);
+        $switzerland = Country::factory()->create();
+        [$vaud, $geneva, $bern] = Region::factory()->for($switzerland)->count(3)->create()->all();
+
+        $this->manager($switzerland)
+            ->assertCanSeeTableRecords([$vaud, $geneva, $bern], inOrder: true)
+            ->call('reorderTable', [(string) $bern->getKey(), (string) $vaud->getKey(), (string) $geneva->getKey()]);
+
+        $this->assertSame(
+            [$bern->getKey(), $vaud->getKey(), $geneva->getKey()],
+            $switzerland->regions()->pluck('id')->all(),
+        );
+    }
+
+    public function test_reordering_needs_the_update_permission(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES, PermissionEnum::UPDATE_COUNTRIES, PermissionEnum::VIEW_REGIONS);
+        $switzerland = Country::factory()->create();
+        [$vaud, $geneva] = Region::factory()->for($switzerland)->count(2)->create()->all();
+
+        $this->manager($switzerland)->call('reorderTable', [(string) $geneva->getKey(), (string) $vaud->getKey()]);
+
+        $this->assertSame([$vaud->getKey(), $geneva->getKey()], $switzerland->regions()->pluck('id')->all());
+    }
+
+    public function test_a_new_region_goes_to_the_end_of_its_country(): void
+    {
+        $switzerland = Country::factory()->create();
+        Region::factory()->for($switzerland)->create(['position' => 7]);
+        Region::factory()->create(['position' => 40]);
+
+        $this->assertSame(8, Region::factory()->for($switzerland)->create()->position);
+    }
 }
