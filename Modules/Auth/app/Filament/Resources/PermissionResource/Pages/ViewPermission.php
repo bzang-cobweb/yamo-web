@@ -2,15 +2,13 @@
 
 namespace Modules\Auth\Filament\Resources\PermissionResource\Pages;
 
+use App\Filament\Pages\Concerns\HasRecordTitleBreadcrumbs;
 use Filament\Resources\Pages\ViewRecord;
 use Modules\Auth\Filament\Resources\PermissionResource;
 
 class ViewPermission extends ViewRecord
 {
-    protected static string $resource = PermissionResource::class;
+    use HasRecordTitleBreadcrumbs;
 
-    public function getBreadcrumb(): string
-    {
-        return $this->record->name ?? parent::getBreadcrumb();
-    }
+    protected static string $resource = PermissionResource::class;
 }

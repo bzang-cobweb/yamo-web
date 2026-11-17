@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\AbstractResource;
+use App\Filament\NavigationGroup;
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
@@ -61,7 +62,7 @@ class SettingResource extends AbstractResource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('settings.navigation_group');
+        return NavigationGroup::Settings->label();
     }
 
     public static function getNavigationLabel(): string

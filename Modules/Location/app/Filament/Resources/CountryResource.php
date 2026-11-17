@@ -5,6 +5,7 @@ namespace Modules\Location\Filament\Resources;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Modules\Location\Filament\Resources\CountryResource\Pages\CreateCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\EditCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\ListCountries;
@@ -47,6 +48,11 @@ class CountryResource extends AbstractLocationResource
             'create' => CreateCountry::route('/create'),
             'edit' => EditCountry::route('/{record}/edit'),
         ];
+    }
+
+    public static function getRecordTitle(?Model $record): ?string
+    {
+        return $record instanceof Country ? $record->label() : null;
     }
 
     public static function getModelLabel(): string
