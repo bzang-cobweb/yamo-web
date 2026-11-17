@@ -889,6 +889,63 @@
                 }
             }
         },
+        "/v1/auth/me/menu": {
+            "get": {
+                "operationId": "v1.auth.me.menu",
+                "summary": "Liens du menu du profil, dans l'ordre, chacun avec la cl\u00e9 de l'\u00e9cran qu'il\nouvre et son libell\u00e9 dans la langue du compte",
+                "tags": [
+                    "ProfileMenu"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "key": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "personal",
+                                                            "email",
+                                                            "phone",
+                                                            "password",
+                                                            "preferences"
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "key",
+                                                    "label"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/auth/register": {
             "post": {
                 "operationId": "v1.auth.register",
@@ -2886,16 +2943,25 @@
                         ],
                         "enum": [
                             "2",
+                            "35",
                             "3",
+                            "36",
                             "1",
-                            "4",
-                            "5",
-                            "6",
                             "27",
+                            "4",
+                            "33",
+                            "5",
+                            "34",
+                            "6",
+                            "32",
                             "7",
+                            "30",
                             "8",
+                            "31",
                             "9",
+                            "28",
                             "10",
+                            "29",
                             "11",
                             "12",
                             "13",
@@ -2905,7 +2971,6 @@
                             "17",
                             "18",
                             "19",
-                            "28",
                             "20",
                             "21",
                             "22",

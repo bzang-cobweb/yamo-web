@@ -11,6 +11,7 @@ use Modules\Auth\Http\Controllers\Api\PersonalInfoController;
 use Modules\Auth\Http\Controllers\Api\PhoneChangeController;
 use Modules\Auth\Http\Controllers\Api\PreferencesController;
 use Modules\Auth\Http\Controllers\Api\ProfileController;
+use Modules\Auth\Http\Controllers\Api\ProfileMenuController;
 use Modules\Auth\Http\Controllers\Api\RegisterController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
 use Modules\Auth\Models\User;
@@ -44,6 +45,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::get('me', [ProfileController::class, 'show'])->can('me', User::class)->name('me');
+        Route::get('me/menu', [ProfileMenuController::class, 'index'])->can('me', User::class)->name('me.menu');
         Route::delete('me', [AccountController::class, 'destroy'])->can('deleteMe', User::class)->name('me.destroy');
         Route::patch('me/personal-info', [PersonalInfoController::class, 'update'])->can('updateMe', User::class)->name('me.personal-info.update');
         Route::put('me/password', [PasswordController::class, 'update'])->can('updateMe', User::class)->name('me.password.update');
