@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-17-regions-alphabetiques-menu-en-code.md
+
 # `2026-11-17` — Régions ordonnées ; menu du profil géré dans le back-office
 
 - **Type** : décision
