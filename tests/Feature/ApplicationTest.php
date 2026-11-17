@@ -33,7 +33,7 @@ class ApplicationTest extends AuthFilamentTestCase
     {
         Setting::current()->update(['description' => ['fr' => 'Une app pour se retrouver', 'en' => 'An app to meet']]);
 
-        $this->get('/')
+        $this->withHeader('Accept-Language', 'fr')->get('/')
             ->assertOk()
             ->assertSee('images/logo/yamo-logo-vertical-couleur.svg')
             ->assertSee('images/logo/yamo-logo-vertical-inverse.svg')
@@ -46,6 +46,37 @@ class ApplicationTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::UPDATE_SETTINGS);
 
         Livewire::test(EditSettings::class)->assertFormFieldDoesNotExist('logo');
+    }
+
+    public function test_home_page_offers_every_language_and_marks_the_current_one(): void
+    {
+        $this->withHeader('Accept-Language', 'fr')->get('/')
+            ->assertOk()
+            ->assertSee(route('locale.switch', 'en'), false)
+            ->assertSee('English')
+            ->assertSee('lang="fr" aria-current="true">Français', false)
+            ->assertSee('lang="en" aria-current="false">English', false);
+    }
+
+    public function test_the_chosen_language_is_kept_for_the_home_page(): void
+    {
+        Setting::current()->update(['description' => ['fr' => 'Bienvenue', 'en' => 'Welcome']]);
+
+        $this->get('/locale/en')->assertRedirect(route('home'))->assertSessionHas('locale', 'en');
+
+        $this->get('/')->assertSee('Welcome')->assertDontSee('Bienvenue')->assertSee('<html lang="en">', false);
+    }
+
+    public function test_the_browser_language_applies_until_one_is_chosen(): void
+    {
+        Setting::current()->update(['description' => ['fr' => 'Bienvenue', 'en' => 'Welcome']]);
+
+        $this->withHeader('Accept-Language', 'en-GB,en;q=0.9')->get('/')->assertSee('Welcome');
+    }
+
+    public function test_an_unknown_language_is_refused(): void
+    {
+        $this->get('/locale/xx')->assertNotFound();
     }
 
     public function test_settings_page_is_forbidden_without_permission(): void

@@ -222,6 +222,16 @@ class VerificationCodesApiTest extends TestCase
         $this->assertTrue(Hash::check('Secret-password-1', $user->password));
     }
 
+    public function test_register_creates_the_account_in_the_language_chosen_in_the_app(): void
+    {
+        $challenge = $this->withHeader('Accept-Language', 'en')->register()->assertAccepted()->json('challenge');
+
+        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
+            ->assertCreated()
+            ->assertJsonPath('data.locale', 'en');
+        $this->assertSame('en', User::query()->where('name', 'marie')->sole()->locale);
+    }
+
     public function test_register_saves_the_optional_birth_date_within_bounds(): void
     {
         $this->register(['birth_date' => '1899-12-31'])->assertUnprocessable()->assertJsonValidationErrors('birth_date');

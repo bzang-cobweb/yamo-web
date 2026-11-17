@@ -1,4 +1,4 @@
-{{-- Page d'accueil : logo centré (fichiers livrés dans public/images/logo) et description, réglée dans le back-office (page Application). --}}
+{{-- Page d'accueil : choix de la langue, logo centré (fichiers livrés dans public/images/logo) et description, réglée dans le back-office (page Application). --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -18,10 +18,26 @@
             main { width: 100%; max-width: 36rem; padding: 2rem 1rem; text-align: center; }
             .home__name { margin: 0; line-height: 0; }
             .home__logo { display: block; width: 12rem; height: auto; margin: 0 auto; }
+            .home__locales { position: absolute; top: 1rem; right: 1rem; display: flex; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+            .home__locale { display: block; padding: .25rem .75rem; border: 1px solid transparent; border-radius: 999px; color: var(--muted); font-size: .875rem; text-decoration: none; }
+            .home__locale:hover { color: var(--text); }
+            .home__locale--current { border-color: currentColor; color: var(--text); font-weight: 600; }
             .home__description { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.125rem; line-height: 1.6; white-space: pre-line; }
         </style>
     </head>
     <body>
+        @if (count($locales) > 1)
+            <nav aria-label="{{ __('home.locales') }}">
+                <ul class="home__locales">
+                    @foreach ($locales as $code => $label)
+                        @php($current = $code === app()->getLocale())
+                        <li>
+                            <a @class(['home__locale', 'home__locale--current' => $current]) href="{{ route('locale.switch', $code) }}" hreflang="{{ $code }}" lang="{{ $code }}" aria-current="{{ $current ? 'true' : 'false' }}">{{ $label }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </nav>
+        @endif
         <main class="home">
             <h1 class="home__name">
                 <picture>
