@@ -35,7 +35,7 @@ class AuthApiTest extends TestCase
     private function login(array $overrides = []): TestResponse
     {
         return $this->postJson('/api/v1/auth/login', [
-            'identifier' => 'jeanne@example.com',
+            'channel' => 'email', 'email' => 'jeanne@example.com',
             'password' => 'secret-password',
             ...$overrides,
         ]);
@@ -103,7 +103,7 @@ class AuthApiTest extends TestCase
 
         $this->login(['password' => 'wrong'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['identifier'])
+            ->assertJsonValidationErrors(['email'])
             ->assertJsonMissingPath('token');
 
         $this->assertSame(0, PersonalAccessToken::count());
@@ -114,7 +114,7 @@ class AuthApiTest extends TestCase
         $this->user();
 
         $wrongPassword = $this->login(['password' => 'wrong'])->json('errors');
-        $unknownEmail = $this->login(['identifier' => 'nobody@example.com'])->assertUnprocessable()->json('errors');
+        $unknownEmail = $this->login(['channel' => 'email', 'email' => 'nobody@example.com'])->assertUnprocessable()->json('errors');
 
         $this->assertSame($wrongPassword, $unknownEmail);
     }
@@ -123,7 +123,7 @@ class AuthApiTest extends TestCase
     {
         $this->postJson('/api/v1/auth/login', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['identifier', 'password']);
+            ->assertJsonValidationErrors(['channel', 'password']);
     }
 
     public function test_login_error_is_translated_from_accept_language(): void
@@ -131,8 +131,8 @@ class AuthApiTest extends TestCase
         $this->user();
 
         // Le client de test de Symfony envoie « en-us » par défaut : chaque langue est demandée.
-        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['password' => 'wrong'])->json('errors.identifier.0');
-        $en = $this->withHeader('Accept-Language', 'en')->login(['password' => 'wrong'])->json('errors.identifier.0');
+        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['password' => 'wrong'])->json('errors.email.0');
+        $en = $this->withHeader('Accept-Language', 'en')->login(['password' => 'wrong'])->json('errors.email.0');
 
         $this->assertSame(trans('auth.failed', [], 'fr'), $fr);
         $this->assertSame(trans('auth.failed', [], 'en'), $en);

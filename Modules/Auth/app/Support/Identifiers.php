@@ -6,55 +6,58 @@ use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Models\User;
 
 /**
- * Identifiant saisi pour se connecter ou retrouver son compte : un e-mail, un
- * téléphone au format international (`+41 79…`, `0041…`), ou un numéro national
- * avec son pays (champ téléphone, quand l'application n'a que ce canal). Seul
- * domicile de cette reconnaissance (connexion, mot de passe oublié).
+ * Identifiant saisi pour se connecter ou retrouver son compte : un e-mail, ou un
+ * numéro avec son pays (champs `email`, `phone` et `phone_country` des formulaires
+ * de connexion et de mot de passe oublié). Seul domicile de cette reconnaissance.
  */
 final class Identifiers
 {
     /**
      * Le canal visé, la destination normalisée (e-mail tel quel, téléphone en E.164,
-     * ou la saisie brute si elle n'en est pas un) et le compte correspondant, s'il
-     * existe. Un téléphone n'identifie un compte que s'il a été vérifié.
+     * ou la saisie brute s'il n'en est pas un), le champ saisi et le compte
+     * correspondant, s'il existe. Un téléphone n'identifie un compte que s'il a été
+     * vérifié.
      *
-     * @param  string|null  $country  pays du numéro (code ISO), s'il a été saisi à part
-     * @return array{channel: VerificationChannel, destination: string, user: User|null}
+     * @param  array{email?: string|null, phone?: string|null, phone_country?: string|null}  $data  champs validés du formulaire
+     * @return array{channel: VerificationChannel, destination: string, field: string, user: User|null}
      */
-    public static function resolve(string $identifier, ?string $country = null): array
+    public static function resolve(array $data): array
     {
-        $identifier = trim($identifier);
+        $email = trim((string) ($data['email'] ?? ''));
 
-        if ($country !== null && $country !== '') {
-            $identifier = self::toInternational($identifier, $country);
-        }
-
-        if (str_contains($identifier, '@')) {
+        if ($email !== '') {
             return [
                 'channel' => VerificationChannel::EMAIL,
-                'destination' => $identifier,
-                'user' => User::query()->where('email', $identifier)->first(),
+                'destination' => $email,
+                'field' => 'email',
+                'user' => User::query()->where('email', $email)->first(),
             ];
         }
 
-        $phone = PhoneNumbers::fromInternational($identifier);
+        $number = trim((string) ($data['phone'] ?? ''));
+        $phone = self::toE164($number, (string) ($data['phone_country'] ?? ''));
 
         return [
             'channel' => VerificationChannel::SMS,
-            'destination' => $phone ?? $identifier,
+            'destination' => $phone ?? $number,
+            'field' => 'phone',
             'user' => $phone === null ? null : User::query()->where('phone', $phone)->whereNotNull('phone_verified_at')->first(),
         ];
     }
 
     /**
-     * Numéro national et pays → E.164 ; saisie inchangée si le numéro n'est pas valide.
+     * Numéro national et pays → E.164, ou `null` s'il n'est pas valide.
      */
-    private static function toInternational(string $number, string $country): string
+    private static function toE164(string $number, string $country): ?string
     {
+        if ($number === '' || $country === '') {
+            return null;
+        }
+
         try {
             return PhoneNumbers::toE164($number, strtoupper($country));
         } catch (\Throwable) {
-            return $number;
+            return null;
         }
     }
 }

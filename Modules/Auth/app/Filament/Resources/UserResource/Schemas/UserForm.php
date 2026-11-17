@@ -24,6 +24,7 @@ use Modules\Auth\Services\AvatarService;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
+use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Country;
 use Propaganistas\LaravelPhone\Rules\Phone;
 
@@ -71,12 +72,12 @@ abstract class UserForm
                     ->displayFormat('d.m.Y')
                     ->minDate(PersonalInfoForm::BIRTH_DATE_MIN)
                     ->maxDate(now()),
-                Select::make('country_id')
+                SingleCountry::lock(Select::make('country_id')
                     ->label(__('auth::user.country'))
                     ->options(fn (): array => PersonalInfoForm::countryOptions())
                     ->searchable()
                     ->live()
-                    ->afterStateUpdated(fn (Set $set) => $set('region_id', null)),
+                    ->afterStateUpdated(fn (Set $set) => $set('region_id', null))),
                 // Région : seulement celles du pays choisi, comme dans l'app.
                 Select::make('region_id')
                     ->label(__('auth::user.region'))
@@ -100,7 +101,7 @@ abstract class UserForm
                     ->visible(AuthChannels::email())
                     ->required(! AuthChannels::phone())
                     ->when(AuthChannels::both(), fn (TextInput $input): TextInput => $input->requiredWithout('phone')),
-                Select::make('phone_country_id')
+                SingleCountry::lock(Select::make('phone_country_id')
                     ->label(__('auth::user.phone_country'))
                     ->options(fn (): array => Country::query()->active()->get()
                         ->mapWithKeys(fn (Country $country): array => [$country->getKey() => $country->label().' ('.$country->dial_code.')'])
@@ -108,7 +109,9 @@ abstract class UserForm
                         ->all())
                     ->searchable()
                     ->visible(AuthChannels::phone())
-                    ->requiredWith('phone'),
+                    ->requiredWith('phone'))
+                    // Sans numéro, pas de pays du téléphone, même choisi d'office.
+                    ->dehydrateStateUsing(fn (mixed $state, Get $get): mixed => blank($get('phone')) ? null : $state),
                 TextInput::make('phone')
                     ->label(__('auth::user.phone'))
                     ->tel()

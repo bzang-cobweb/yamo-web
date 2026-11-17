@@ -6,7 +6,6 @@ return [
         'title' => 'Se connecter',
         'subtitle' => 'Accédez à votre compte yamo.',
         'submit' => 'Se connecter',
-        'identifier_help' => 'Un téléphone se saisit au format international, par exemple +41 79 123 45 67.',
     ],
     'register' => [
         'title' => 'Créer un compte',

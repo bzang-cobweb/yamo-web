@@ -34,7 +34,12 @@ class PasswordResetApiTest extends TestCase
 
     private function forgot(string $identifier): TestResponse
     {
-        return $this->postJson('/api/v1/auth/password/forgot', ['identifier' => $identifier]);
+        // Un e-mail, ou un numéro suisse saisi au format national.
+        $payload = str_contains($identifier, '@')
+            ? ['channel' => 'email', 'email' => $identifier]
+            : ['channel' => 'phone', 'phone' => $identifier, 'phone_country' => 'CH'];
+
+        return $this->postJson('/api/v1/auth/password/forgot', $payload);
     }
 
     private function reset(string $challenge, string $password = 'New-password-42', ?string $confirmation = null): TestResponse
@@ -71,7 +76,7 @@ class PasswordResetApiTest extends TestCase
         $this->assertSame(0, VerificationCode::count());
 
         // On se reconnecte avec le nouveau mot de passe (puis un code).
-        $this->postJson('/api/v1/auth/login', ['identifier' => 'jeanne@example.com', 'password' => 'New-password-42'])->assertAccepted();
+        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'New-password-42'])->assertAccepted();
     }
 
     public function test_an_unknown_identifier_gets_the_same_answer_and_nothing_is_sent(): void
@@ -135,7 +140,7 @@ class PasswordResetApiTest extends TestCase
     {
         $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.password.forgot')->assertOk()
             ->assertJsonPath('data.title', 'Mot de passe oublié')
-            ->assertJsonPath('data.fields.0.name', 'identifier');
+            ->assertJsonPath('data.fields.0.name', 'channel');
         $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/forms/auth.password.reset')->assertOk()
             ->assertJsonPath('data.title', 'New password')
             ->assertJsonPath('data.fields.0.type', 'password')

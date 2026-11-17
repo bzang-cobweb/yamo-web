@@ -28,13 +28,15 @@ enum FieldType: string
     case PHONE = 'phone';
     /** Code de vérification à 6 chiffres. */
     case CODE = 'code';
+    /** Choix parmi quelques options, en boutons côte à côte (ex. « E-mail | Téléphone »). */
+    case SEGMENTED = 'segmented';
 
     /**
      * Le champ propose une liste d'options.
      */
     public function hasOptions(): bool
     {
-        return in_array($this, [self::SELECT, self::RADIO, self::CHECKBOX_GROUP, self::PHONE], true);
+        return in_array($this, [self::SELECT, self::RADIO, self::SEGMENTED, self::CHECKBOX_GROUP, self::PHONE], true);
     }
 
     /**
@@ -49,7 +51,7 @@ enum FieldType: string
             self::TEXT, self::HIDDEN, self::PASSWORD, self::TEXTAREA => ['string'],
             self::EMAIL => ['string', 'email'],
             self::NUMBER => ['numeric'],
-            self::SELECT, self::RADIO => ['string', Rule::in($optionValues)],
+            self::SELECT, self::RADIO, self::SEGMENTED => ['string', Rule::in($optionValues)],
             self::CHECKBOX, self::SWITCH => ['boolean'],
             self::CHECKBOX_GROUP => ['array'],
             self::DATE => ['date_format:Y-m-d'],

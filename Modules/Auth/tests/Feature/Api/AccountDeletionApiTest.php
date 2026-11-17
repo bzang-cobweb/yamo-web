@@ -60,7 +60,7 @@ class AccountDeletionApiTest extends TestCase
 
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
-        $this->postJson('/api/v1/auth/login', ['identifier' => 'jeanne@example.com', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
             ->assertUnprocessable();
     }
 

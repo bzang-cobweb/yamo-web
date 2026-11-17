@@ -23,7 +23,7 @@ class ForgotPasswordForm extends Form
     public function fields(): array
     {
         return [
-            $this->identifierField(),
+            ...$this->identifierFields(),
         ];
     }
 

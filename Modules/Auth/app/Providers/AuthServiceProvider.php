@@ -63,9 +63,10 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(ForgotPasswordForm::class);
         $registry->register(ResetPasswordForm::class);
 
-        // Connexion API : 5 essais par minute pour un même identifiant depuis une même adresse.
+        // Connexion API : 5 essais par minute pour un même identifiant (e-mail ou
+        // numéro) depuis une même adresse.
         RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)
-            ->by(Str::lower((string) $request->input('identifier')).'|'.$request->ip()));
+            ->by(Str::lower((string) ($request->input('email') ?: $request->input('phone_country').$request->input('phone'))).'|'.$request->ip()));
         // Inscription : 5 demandes par minute depuis une même adresse.
         RateLimiter::for('auth-register', fn (Request $request): Limit => Limit::perMinute(5)->by((string) $request->ip()));
         // Codes (envoi, validation, renvoi) : 10 appels par minute depuis une même adresse.

@@ -26,23 +26,26 @@ class FormsAndLocalesApiTest extends TestCase
     {
         $fr = $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.login')->assertOk();
 
-        $fr->assertExactJson(['data' => [
-            'name' => 'auth.login',
-            'title' => 'Se connecter',
-            'subtitle' => 'Accédez à votre compte yamo.',
-            'fields' => [
-                [
-                    'name' => 'identifier', 'type' => 'text', 'label' => 'E-mail ou téléphone', 'placeholder' => null,
-                    'help' => 'Un téléphone se saisit au format international, par exemple +41 79 123 45 67.', 'required' => true, 'readonly' => false, 'depends_on' => null, 'max_length' => null, 'default' => null, 'options' => [],
-                ],
-                [
-                    'name' => 'password', 'type' => 'password', 'label' => 'Mot de passe', 'placeholder' => null,
-                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'max_length' => null, 'default' => null, 'options' => [],
-                ],
-            ],
-            'steps' => [],
-            'submit' => ['label' => 'Se connecter'],
-        ]]);
+        // Les deux canaux : le sélecteur « E-mail | Téléphone », puis un seul champ visible.
+        $fr->assertJsonPath('data.name', 'auth.login')
+            ->assertJsonPath('data.title', 'Se connecter')
+            ->assertJsonPath('data.subtitle', 'Accédez à votre compte yamo.')
+            ->assertJsonPath('data.submit.label', 'Se connecter')
+            ->assertJsonPath('data.fields.0.name', 'channel')
+            ->assertJsonPath('data.fields.0.type', 'segmented')
+            ->assertJsonPath('data.fields.0.default', 'email')
+            ->assertJsonPath('data.fields.0.options', [
+                ['value' => 'email', 'label' => 'E-mail', 'hint' => null, 'parent' => null],
+                ['value' => 'phone', 'label' => 'Téléphone', 'hint' => null, 'parent' => null],
+            ])
+            ->assertJsonPath('data.fields.1.name', 'email')
+            ->assertJsonPath('data.fields.1.type', 'email')
+            ->assertJsonPath('data.fields.1.visible_when', ['field' => 'channel', 'value' => 'email'])
+            ->assertJsonPath('data.fields.2.name', 'phone')
+            ->assertJsonPath('data.fields.2.type', 'phone')
+            ->assertJsonPath('data.fields.2.visible_when', ['field' => 'channel', 'value' => 'phone'])
+            ->assertJsonPath('data.fields.3.name', 'password')
+            ->assertJsonPath('data.fields.3.type', 'password');
 
         $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/forms/auth.login')
             ->assertOk()
@@ -74,7 +77,7 @@ class FormsAndLocalesApiTest extends TestCase
     {
         $rules = (new LoginRequest)->rules();
 
-        $this->assertSame((new LoginForm)->rules(), $rules);
+        $this->assertEquals((new LoginForm)->rules(), $rules);
     }
 
     public function test_unknown_form_returns_404(): void

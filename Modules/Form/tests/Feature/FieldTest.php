@@ -39,6 +39,8 @@ class FieldTest extends TestCase
                     Field::date('birthday'),
                     Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41'], 'FR' => ['label' => 'France', 'hint' => '+33']]),
                     Field::code('otp'),
+                    Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
+                    Field::text('pager')->visibleWhen('contact', 'sms')->required(),
                     Field::text('locked')->readonly()->required(),
                     Field::select('canton')->dependsOn('city')->options(['g1' => ['label' => 'Genève-ville', 'parent' => 'ge'], 'v1' => ['label' => 'Lausanne', 'parent' => 'vd']]),
                 ];
@@ -120,7 +122,9 @@ class FieldTest extends TestCase
             'help' => null,
             'required' => true,
             'readonly' => false,
+            'locked' => false,
             'depends_on' => null,
+            'visible_when' => null,
             'max_length' => null,
             'default' => null,
             'options' => [
@@ -128,6 +132,38 @@ class FieldTest extends TestCase
                 ['value' => 'vd', 'label' => 'Vaud', 'hint' => null, 'parent' => null],
             ],
         ], $city);
+    }
+
+    public function test_a_field_hidden_by_its_condition_is_neither_required_nor_kept(): void
+    {
+        $this->assertNotContains('pager', $this->errors($this->valid()));
+        $this->assertNotContains('pager', $this->errors([...$this->valid(), 'contact' => 'mail']));
+        $this->assertContains('pager', $this->errors([...$this->valid(), 'contact' => 'sms']));
+        $this->assertContains('contact', $this->errors([...$this->valid(), 'contact' => 'fax']));
+
+        $validated = Validator::make([...$this->valid(), 'contact' => 'mail', 'pager' => '123'], $this->form()->rules())->validated();
+        $this->assertArrayNotHasKey('pager', $validated);
+
+        $pager = collect($this->form()->fields())->firstWhere('name', 'pager')->toArray();
+        $this->assertSame(['field' => 'contact', 'value' => 'sms'], $pager['visible_when']);
+    }
+
+    public function test_a_single_option_is_chosen_and_locked_but_still_validated(): void
+    {
+        $country = Field::select('country')->options(['ch' => 'Suisse'])->required();
+        $phone = Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41']])->default(['country' => null, 'number' => '079']);
+        $region = Field::select('region')->dependsOn('country')->options(['vd' => ['label' => 'Vaud', 'parent' => 'ch']]);
+
+        $this->assertTrue($country->toArray()['locked']);
+        $this->assertSame('ch', $country->toArray()['default']);
+        $this->assertSame(['country' => 'CH', 'number' => '079'], $phone->toArray()['default']);
+        $this->assertTrue($phone->toArray()['locked']);
+        // Une liste dépendante n'est jamais verrouillée : ses options suivent le parent.
+        $this->assertFalse($region->toArray()['locked']);
+        // Verrouillé n'est pas lecture seule : la valeur est validée.
+        $this->assertArrayHasKey('country', $country->validationRules());
+        $this->assertTrue(Validator::make(['country' => 'fr'], $country->validationRules())->fails());
+        $this->assertFalse(Field::select('city')->options(['ge' => 'Genève', 'vd' => 'Vaud'])->toArray()['locked']);
     }
 
     public function test_attributes_use_field_labels(): void

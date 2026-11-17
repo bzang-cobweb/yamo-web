@@ -24,7 +24,7 @@ class LoginForm extends Form
     public function fields(): array
     {
         return [
-            $this->identifierField(),
+            ...$this->identifierFields(),
             Field::password('password')
                 ->label(__('auth::user.password'))
                 ->required()

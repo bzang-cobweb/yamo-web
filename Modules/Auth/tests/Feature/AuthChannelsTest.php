@@ -65,8 +65,11 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertSame(__('auth::form.register.contact_help', [], 'fr'), $register['email']['help']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertSame('E-mail ou téléphone', $login['identifier']['label']);
-        $this->assertNotNull($login['identifier']['help']);
+        // Sélecteur « E-mail | Téléphone », puis le champ choisi.
+        $this->assertSame(['channel', 'email', 'phone', 'password'], array_keys($login));
+        $this->assertSame('segmented', $login['channel']['type']);
+        $this->assertSame(['field' => 'channel', 'value' => 'email'], $login['email']['visible_when']);
+        $this->assertSame(['field' => 'channel', 'value' => 'phone'], $login['phone']['visible_when']);
 
         $this->getJson('/api/v1/app')->assertJsonPath('data.channels', ['email' => true, 'phone' => true]);
     }
@@ -83,10 +86,10 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertSame(['email'], $form['steps'][1]['fields']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertSame('email', $login['identifier']['type']);
-        $this->assertSame(__('auth::user.email', [], 'fr'), $login['identifier']['label']);
-        $this->assertNull($login['identifier']['help']);
-        $this->assertSame('email', $this->fieldsOf($this->form('auth.password.forgot'))['identifier']['type']);
+        $this->assertSame(['email', 'password'], array_keys($login));
+        $this->assertSame('email', $login['email']['type']);
+        $this->assertNull($login['email']['visible_when']);
+        $this->assertSame(['email'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
         $this->assertStringNotContainsString('téléphone', $this->form('auth.password.forgot')['subtitle']);
 
         // Un téléphone ne s'inscrit pas : l'e-mail est obligatoire, le numéro ignoré.
@@ -106,11 +109,10 @@ class AuthChannelsTest extends AuthFilamentTestCase
 
         // Le pays et le numéro, sur une ligne (champ téléphone), sans aide sur le format.
         $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertSame('phone', $login['identifier']['type']);
-        $this->assertSame(__('auth::user.phone', [], 'fr'), $login['identifier']['label']);
-        $this->assertNull($login['identifier']['help']);
-        $this->assertContains('CH', array_column($login['identifier']['options'], 'value'));
-        $this->assertSame('phone', $this->fieldsOf($this->form('auth.password.forgot'))['identifier']['type']);
+        $this->assertSame(['phone', 'password'], array_keys($login));
+        $this->assertSame('phone', $login['phone']['type']);
+        $this->assertContains('CH', array_column($login['phone']['options'], 'value'));
+        $this->assertSame(['phone'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
 
         $this->register(['email' => 'marie@example.com'])
             ->assertUnprocessable()->assertJsonValidationErrors('phone')->assertJsonMissingValidationErrors('email');
@@ -124,24 +126,24 @@ class AuthChannelsTest extends AuthFilamentTestCase
             'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',
         ]);
 
-        $this->postJson('/api/v1/auth/login', ['identifier' => '079 123 45 67', 'identifier_country' => 'CH', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms');
-        $this->postJson('/api/v1/auth/password/forgot', ['identifier' => '079 123 45 67', 'identifier_country' => 'CH'])
+        $this->postJson('/api/v1/auth/password/forgot', ['phone' => '079 123 45 67', 'phone_country' => 'CH'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms');
 
         // Sans pays, le champ téléphone est incomplet.
-        $this->postJson('/api/v1/auth/login', ['identifier' => '079 123 45 67', 'password' => 'secret-password'])
-            ->assertUnprocessable()->assertJsonValidationErrors('identifier_country');
+        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67', 'password' => 'secret-password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('phone_country');
     }
 
     public function test_email_only_refuses_an_identifier_that_is_not_an_email(): void
     {
         $this->channels(email: true, phone: false);
 
-        $this->postJson('/api/v1/auth/login', ['identifier' => '+41 79 123 45 67', 'password' => 'secret-password'])
-            ->assertUnprocessable()->assertJsonValidationErrors('identifier');
+        $this->postJson('/api/v1/auth/login', ['email' => '+41 79 123 45 67', 'password' => 'secret-password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
     public function test_a_disabled_channel_cannot_be_added_or_changed(): void
@@ -169,7 +171,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
             'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',
         ]);
 
-        $this->postJson('/api/v1/auth/login', ['identifier' => '+41 79 123 45 67', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms');
     }
@@ -204,6 +206,46 @@ class AuthChannelsTest extends AuthFilamentTestCase
 
         $this->channels(email: true, phone: false);
         $this->assertSame(['name', 'first_name', 'last_name', 'email'], UserResource::getGloballySearchableAttributes());
+    }
+
+    public function test_a_single_active_country_is_chosen_and_locked_everywhere(): void
+    {
+        // Seul pays actif : la Suisse (créée dans setUp).
+        $phone = $this->fieldsOf($this->form('auth.register'))['phone'];
+        $this->assertTrue($phone['locked']);
+        $this->assertSame(['country' => 'CH', 'number' => null], $phone['default']);
+
+        $login = $this->fieldsOf($this->form('auth.login'));
+        $this->assertTrue($login['phone']['locked']);
+
+        $user = User::factory()->create(['country_id' => null]);
+        $personal = $this->fieldsOf($this->withToken($user->createToken('t')->plainTextToken)->getJson('/api/v1/forms/auth.profile.personal')->json('data'));
+        $this->assertTrue($personal['country_id']['locked']);
+        $this->assertSame((string) Country::query()->value('id'), $personal['country_id']['default']);
+        $this->assertFalse($personal['region_id']['locked']);
+
+        // Un second pays actif : plus rien n'est verrouillé.
+        Country::factory()->create(['code' => 'FR', 'dial_code' => '+33']);
+        $this->assertFalse($this->fieldsOf($this->form('auth.register'))['phone']['locked']);
+    }
+
+    public function test_the_back_office_locks_a_single_active_country_and_saves_it(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
+        $switzerland = Country::query()->where('code', 'CH')->value('id');
+
+        Livewire::test(CreateUser::class)
+            ->assertFormFieldDisabled('country_id')
+            ->assertFormFieldDisabled('phone_country_id')
+            ->assertSchemaStateSet(['country_id' => $switzerland, 'phone_country_id' => $switzerland])
+            ->fillForm(['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'gender' => 'female', 'email' => 'marie@example.com', 'phone' => '079 123 45 67', 'password' => 'Secret-password-1'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $marie = User::query()->where('name', 'marie')->sole();
+        $this->assertSame($switzerland, $marie->country_id);
+        $this->assertSame($switzerland, $marie->phone_country_id);
+        $this->assertSame('+41791234567', $marie->phone);
     }
 
     public function test_the_create_user_command_follows_the_channels(): void

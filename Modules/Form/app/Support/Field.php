@@ -28,6 +28,14 @@ final class Field
 
     private mixed $default = null;
 
+    /**
+     * Affiché seulement quand un autre champ a une valeur donnée ; masqué, il
+     * n'est ni validé ni pris en compte.
+     *
+     * @var array{field: string, value: string}|null
+     */
+    private ?array $visibleWhen = null;
+
     /** Texte sur plusieurs lignes : nombre maximal de caractères. */
     public const TEXTAREA_MAX_LENGTH = 1000;
 
@@ -53,6 +61,11 @@ final class Field
     public static function make(string $name, FieldType $type): self
     {
         return new self($name, $type);
+    }
+
+    public static function segmented(string $name): self
+    {
+        return new self($name, FieldType::SEGMENTED);
     }
 
     public static function text(string $name): self
@@ -184,6 +197,47 @@ final class Field
     }
 
     /**
+     * N'afficher (et ne valider) ce champ que si `$field` vaut `$value`.
+     */
+    public function visibleWhen(string $field, string $value): self
+    {
+        $this->visibleWhen = ['field' => $field, 'value' => $value];
+
+        return $this;
+    }
+
+    /**
+     * Une liste (ou le pays d'un téléphone) qui n'a qu'une option : elle est
+     * choisie d'office et ne peut pas changer. Contrairement à `readonly`, la
+     * valeur est envoyée et validée (décision 2026-11-20-pays-unique-identifiant-double).
+     */
+    public function isLocked(): bool
+    {
+        return in_array($this->type, [FieldType::SELECT, FieldType::PHONE], true)
+            && $this->dependsOn === null
+            && count($this->options) === 1;
+    }
+
+    /**
+     * Valeur initiale envoyée à l'app : l'option unique d'un champ verrouillé
+     * quand rien d'autre n'est choisi.
+     */
+    private function initialValue(): mixed
+    {
+        if (! $this->isLocked()) {
+            return $this->default;
+        }
+
+        $only = (string) array_key_first($this->options);
+
+        if ($this->type === FieldType::PHONE) {
+            return ['country' => $only, 'number' => is_array($this->default) ? ($this->default['number'] ?? null) : null];
+        }
+
+        return $only;
+    }
+
+    /**
      * Nombre maximal de caractères : validé par le serveur, envoyé à l'app (qui
      * bloque la saisie au-delà et affiche un compteur).
      */
@@ -247,6 +301,21 @@ final class Field
             return [];
         }
 
+        if ($this->visibleWhen === null) {
+            return $this->ownRules();
+        }
+
+        // Masqué par sa condition : exclu de la validation et des données validées.
+        $condition = 'exclude_unless:'.$this->visibleWhen['field'].','.$this->visibleWhen['value'];
+
+        return array_map(fn (array $rules): array => [$condition, ...$rules], $this->ownRules());
+    }
+
+    /**
+     * @return array<string, list<mixed>>
+     */
+    private function ownRules(): array
+    {
         $values = array_map('strval', array_keys($this->options));
         $presence = $this->required ? ['required'] : ['nullable'];
 
@@ -286,7 +355,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, depends_on: string|null, max_length: int|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -298,9 +367,13 @@ final class Field
             'help' => $this->help,
             'required' => $this->required,
             'readonly' => $this->readonly,
+            /** Option unique, choisie d'office : non modifiable, mais envoyée. */
+            'locked' => $this->isLocked(),
             'depends_on' => $this->dependsOn,
+            /** Afficher seulement quand le champ `field` vaut `value`. */
+            'visible_when' => $this->visibleWhen,
             'max_length' => $this->maxLength,
-            'default' => $this->default,
+            'default' => $this->initialValue(),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [
                     'value' => (string) $value,

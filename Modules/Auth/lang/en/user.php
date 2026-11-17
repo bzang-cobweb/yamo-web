@@ -32,6 +32,8 @@ return [
     'new_password' => 'New password',
     'password_confirmation' => 'Confirm new password',
     'identifier' => 'Email or phone',
+    'channel_email' => 'Email',
+    'channel_phone' => 'Phone',
     'current_email' => 'Current email address',
     'new_email' => 'New email address',
     'current_phone' => 'Current number',

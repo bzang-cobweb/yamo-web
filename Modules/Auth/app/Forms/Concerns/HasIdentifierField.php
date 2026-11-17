@@ -9,33 +9,33 @@ use Modules\Form\Support\Field;
 /**
  * Identifiant du compte (connexion, mot de passe oublié), selon les canaux de
  * l'application :
- * - les deux : un texte, e-mail ou téléphone au format international ;
  * - l'e-mail seul : un champ e-mail (clavier e-mail) ;
- * - le téléphone seul : un champ téléphone, le pays et le numéro sur une ligne
- *   (`identifier` et `identifier_country`).
+ * - le téléphone seul : le pays et le numéro sur une ligne (`phone`, `phone_country`) ;
+ * - les deux : un sélecteur « E-mail | Téléphone » (`channel`) et le seul champ choisi
+ *   (décision 2026-11-20-pays-unique-identifiant-double).
  */
 trait HasIdentifierField
 {
-    protected function identifierField(): Field
+    /**
+     * @return list<Field>
+     */
+    protected function identifierFields(): array
     {
-        if (AuthChannels::both()) {
-            return Field::text('identifier')
+        $email = Field::email('email')->label(__('auth::user.email'))->required()->rules(['max:255']);
+        $phone = Field::phone('phone')->label(__('auth::user.phone'))->options(PhoneNumbers::countryOptions())->required();
+
+        if (! AuthChannels::both()) {
+            return [AuthChannels::email() ? $email : $phone];
+        }
+
+        return [
+            Field::segmented('channel')
                 ->label(__('auth::user.identifier'))
-                ->help(__('auth::form.login.identifier_help'))
-                ->required()
-                ->rules(['max:255']);
-        }
-
-        if (AuthChannels::email()) {
-            return Field::email('identifier')
-                ->label(__('auth::user.email'))
-                ->required()
-                ->rules(['max:255']);
-        }
-
-        return Field::phone('identifier')
-            ->label(__('auth::user.phone'))
-            ->options(PhoneNumbers::countryOptions())
-            ->required();
+                ->options(['email' => __('auth::user.channel_email'), 'phone' => __('auth::user.channel_phone')])
+                ->default('email')
+                ->required(),
+            $email->visibleWhen('channel', 'email'),
+            $phone->visibleWhen('channel', 'phone'),
+        ];
     }
 }
