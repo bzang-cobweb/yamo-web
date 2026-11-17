@@ -35,6 +35,8 @@ return [
     'password_forgot' => [
         'title' => 'Mot de passe oublié',
         'subtitle' => 'Saisissez l\'e-mail ou le téléphone de votre compte : un code vous sera envoyé.',
+        'subtitle_email' => 'Saisissez l\'e-mail de votre compte : un code vous sera envoyé.',
+        'subtitle_phone' => 'Saisissez le téléphone de votre compte : un code vous sera envoyé.',
     ],
     'password_reset' => [
         'title' => 'Nouveau mot de passe',

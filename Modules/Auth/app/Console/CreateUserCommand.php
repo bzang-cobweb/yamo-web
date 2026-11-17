@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 
 use function Laravel\Prompts\password;
@@ -39,8 +40,9 @@ class CreateUserCommand extends Command
             'name' => $this->option('name') ?? text(__('auth::user.name'), required: true),
             'first_name' => $this->option('first-name') ?? text(__('auth::user.first_name'), required: true),
             'last_name' => $this->option('last-name') ?? text(__('auth::user.last_name'), required: true),
-            // Avec --phone, l'e-mail est facultatif et n'est pas demandé.
-            'email' => $this->option('email') ?? ($this->option('phone') !== null ? null : (text(__('auth::user.email')) ?: null)),
+            // Avec --phone, l'e-mail est facultatif et n'est pas demandé ; il ne
+            // l'est jamais si l'application n'a pas le canal e-mail.
+            'email' => $this->option('email') ?? ($this->option('phone') !== null || ! AuthChannels::email() ? null : (text(__('auth::user.email')) ?: null)),
             'phone' => $this->option('phone'),
             'phone_country' => $this->option('phone-country') !== null ? strtoupper($this->option('phone-country')) : null,
             'password' => $this->option('password') ?? password(__('auth::user.password'), required: true),
@@ -51,9 +53,14 @@ class CreateUserCommand extends Command
             'name' => ['required', 'string', 'max:255', Rule::unique(User::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux.
-            'email' => ['nullable', 'required_without:phone', 'email', 'max:255', Rule::unique(User::class)],
-            'phone' => ['nullable', 'required_without:email', 'string', 'phone'],
+            // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux, et
+            // seulement sur les canaux actifs de l'application.
+            'email' => AuthChannels::email()
+                ? ['nullable', AuthChannels::phone() ? 'required_without:phone' : 'required', 'email', 'max:255', Rule::unique(User::class)]
+                : ['prohibited'],
+            'phone' => AuthChannels::phone()
+                ? ['nullable', AuthChannels::email() ? 'required_without:email' : 'required', 'string', 'phone']
+                : ['prohibited'],
             'phone_country' => ['nullable', 'required_with:phone', Rule::exists('countries', 'code')],
             'password' => ['required', 'string', 'max:255'],
             'locale' => ['required', Rule::in(Locales::values())],

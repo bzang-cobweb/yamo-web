@@ -14,6 +14,12 @@ return [
         'resend_seconds' => (int) env('AUTH_CODE_RESEND_SECONDS', 60),
     ],
 
+    // Canaux de compte : e-mail, téléphone ou les deux ; au moins un.
+    'channels' => [
+        'email' => (bool) filter_var(env('AUTH_CHANNEL_EMAIL', true), FILTER_VALIDATE_BOOL),
+        'phone' => (bool) filter_var(env('AUTH_CHANNEL_PHONE', true), FILTER_VALIDATE_BOOL),
+    ],
+
     // Suppression de son compte : récupérable pendant ce délai, purgée ensuite.
     'account_deletion' => [
         // Jours pendant lesquels un administrateur peut restaurer le compte.

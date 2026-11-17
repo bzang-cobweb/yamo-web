@@ -5,6 +5,7 @@ namespace Modules\Auth\Http\Requests;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Rules\UniquePhone;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
@@ -13,9 +14,12 @@ use Modules\Form\Http\Requests\FormBackedRequest;
  */
 class PhoneChangeRequest extends FormBackedRequest
 {
+    /**
+     * Même capacité que la garde de la route, et canal actif dans l'application.
+     */
     public function authorize(): bool
     {
-        return $this->user()?->can('updateMe', User::class) ?? false;
+        return AuthChannels::phone() && ($this->user()?->can('updateMe', User::class) ?? false);
     }
 
     protected function form(): PhoneChangeForm

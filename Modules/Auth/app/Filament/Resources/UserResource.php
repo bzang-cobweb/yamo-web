@@ -15,6 +15,7 @@ use Modules\Auth\Filament\Resources\UserResource\Pages\ListUsers;
 use Modules\Auth\Filament\Resources\UserResource\Schemas\UserForm;
 use Modules\Auth\Filament\Resources\UserResource\Tables\UserTable;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\AuthChannels;
 
 class UserResource extends AbstractAuthResource
 {
@@ -67,7 +68,12 @@ class UserResource extends AbstractAuthResource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'first_name', 'last_name', 'email'];
+        // Les identifiants ne sont cherchés que sur les canaux actifs de l'application.
+        return [
+            'name', 'first_name', 'last_name',
+            ...(AuthChannels::email() ? ['email'] : []),
+            ...(AuthChannels::phone() ? ['phone'] : []),
+        ];
     }
 
     public static function getModelLabel(): string

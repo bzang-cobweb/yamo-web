@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 use Modules\Auth\Filament\Resources\UserResource;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Support\AuthChannels;
+use Modules\Auth\Support\PhoneNumbers;
 
 abstract class UserTable
 {
@@ -46,7 +48,14 @@ abstract class UserTable
                 TextColumn::make('email')
                     ->label(__('auth::user.email'))
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->visible(AuthChannels::email()),
+                TextColumn::make('phone')
+                    ->label(__('auth::user.phone'))
+                    ->formatStateUsing(fn (string $state): string => PhoneNumbers::international($state))
+                    ->searchable()
+                    ->visible(AuthChannels::phone())
+                    ->toggleable(isToggledHiddenByDefault: AuthChannels::email()),
                 TextColumn::make('locale')
                     ->label(__('auth::user.locale'))
                     ->formatStateUsing(fn (string $state): string => Locales::label($state))

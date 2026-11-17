@@ -3,6 +3,7 @@
 namespace Modules\Auth\Forms;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 
@@ -22,8 +23,8 @@ class LoginForm extends Form
     {
         return [
             Field::text('identifier')
-                ->label(__('auth::user.identifier'))
-                ->help(__('auth::form.login.identifier_help'))
+                ->label(AuthChannels::identifierLabel())
+                ->help(AuthChannels::identifierHelp())
                 ->required()
                 ->rules(['max:255']),
             Field::password('password')

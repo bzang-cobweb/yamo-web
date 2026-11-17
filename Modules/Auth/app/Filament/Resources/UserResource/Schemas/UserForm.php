@@ -21,6 +21,7 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
@@ -89,13 +90,16 @@ abstract class UserForm
                     ->maxLength(Field::TEXTAREA_MAX_LENGTH)
                     ->rows(4)
                     ->columnSpanFull(),
-                // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux.
+                // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux ;
+                // un canal désactivé dans l'application disparaît (sa valeur reste en base).
                 TextInput::make('email')
                     ->label(__('auth::user.email'))
                     ->email()
                     ->maxLength(255)
                     ->unique(ignoreRecord: true)
-                    ->requiredWithout('phone'),
+                    ->visible(AuthChannels::email())
+                    ->required(! AuthChannels::phone())
+                    ->when(AuthChannels::both(), fn (TextInput $input): TextInput => $input->requiredWithout('phone')),
                 Select::make('phone_country_id')
                     ->label(__('auth::user.phone_country'))
                     ->options(fn (): array => Country::query()->active()->get()
@@ -103,12 +107,15 @@ abstract class UserForm
                         ->sort()
                         ->all())
                     ->searchable()
+                    ->visible(AuthChannels::phone())
                     ->requiredWith('phone'),
                 TextInput::make('phone')
                     ->label(__('auth::user.phone'))
                     ->tel()
                     ->unique(ignoreRecord: true)
-                    ->requiredWithout('email')
+                    ->visible(AuthChannels::phone())
+                    ->required(! AuthChannels::email())
+                    ->when(AuthChannels::both(), fn (TextInput $input): TextInput => $input->requiredWithout('email'))
                     // Numéro vérifié selon le pays choisi, enregistré en E.164.
                     ->rule(fn (Get $get) => (new Phone)->country(Country::query()->find($get('phone_country_id'))?->code ?? 'ZZ'))
                     ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => blank($state) ? null

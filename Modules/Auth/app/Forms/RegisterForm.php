@@ -8,6 +8,7 @@ use Illuminate\Validation\Rules\Password;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Rules\UniquePhone;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -15,7 +16,7 @@ use Modules\Form\Support\Step;
 
 /**
  * Créer un compte depuis l'app, en trois étapes : qui (pseudonyme, prénom, nom,
- * genre, date de naissance et description facultatives), comment joindre (e-mail et/ou téléphone), mot de passe. Chaque étape est
+ * genre, date de naissance et description facultatives), comment joindre (e-mail et/ou téléphone, selon les canaux de l'application), mot de passe. Chaque étape est
  * validée avant la suivante, l'unicité comprise ; l'envoi final valide tout. Un code
  * part vers chaque identifiant, et le compte n'existe qu'une fois tous validés.
  */
@@ -45,14 +46,7 @@ class RegisterForm extends Form
                 ->label(__('auth::user.birth_date'))
                 ->rules(['after_or_equal:'.PersonalInfoForm::BIRTH_DATE_MIN, 'before_or_equal:today']),
             Field::textarea('description')->label(__('auth::user.description')),
-            Field::email('email')
-                ->label(__('auth::user.email'))
-                ->help(__('auth::form.register.contact_help'))
-                ->rules(['required_without:phone', 'max:255', Rule::unique(User::class, 'email')]),
-            Field::phone('phone')
-                ->label(__('auth::user.phone'))
-                ->options(PhoneNumbers::countryOptions())
-                ->rules(['required_without:email', new UniquePhone]),
+            ...$this->contactFields(),
             Field::password('password')
                 ->label(__('auth::user.password'))
                 ->help(__('auth::form.password.help'))
@@ -62,11 +56,42 @@ class RegisterForm extends Form
         ];
     }
 
+    /**
+     * Comment joindre le compte, selon les canaux de l'application : l'un ou
+     * l'autre (ou les deux) quand les deux sont actifs, sinon celui qui l'est,
+     * obligatoire.
+     *
+     * @return list<Field>
+     */
+    private function contactFields(): array
+    {
+        $both = AuthChannels::both();
+        $fields = [];
+
+        if (AuthChannels::email()) {
+            $fields[] = Field::email('email')
+                ->label(__('auth::user.email'))
+                ->help($both ? __('auth::form.register.contact_help') : null)
+                ->required(! $both)
+                ->rules([...($both ? ['required_without:phone'] : []), 'max:255', Rule::unique(User::class, 'email')]);
+        }
+
+        if (AuthChannels::phone()) {
+            $fields[] = Field::phone('phone')
+                ->label(__('auth::user.phone'))
+                ->options(PhoneNumbers::countryOptions())
+                ->required(! $both)
+                ->rules([...($both ? ['required_without:email'] : []), new UniquePhone]);
+        }
+
+        return $fields;
+    }
+
     public function steps(): array
     {
         return [
             Step::make(__('auth::form.register.steps.identity'), ['name', 'first_name', 'last_name', 'gender', 'birth_date', 'description']),
-            Step::make(__('auth::form.register.steps.contact'), ['email', 'phone']),
+            Step::make(__('auth::form.register.steps.contact'), array_keys(array_filter(AuthChannels::enabled()))),
             Step::make(__('auth::form.register.steps.password'), ['password', 'password_confirmation']),
         ];
     }

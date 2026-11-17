@@ -2,7 +2,9 @@
 
 namespace Modules\Auth\Forms;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -47,5 +49,13 @@ class PhoneChangeForm extends Form
     public function submitLabel(): string
     {
         return __('auth::form.code.send');
+    }
+
+    /**
+     * Un compte connecté, si le canal est actif dans l'application.
+     */
+    public function canBeViewedBy(?Authenticatable $user): bool
+    {
+        return $user !== null && AuthChannels::phone();
     }
 }

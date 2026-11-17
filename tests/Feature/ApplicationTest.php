@@ -18,7 +18,7 @@ class ApplicationTest extends AuthFilamentTestCase
     {
         $this->getJson('/api/v1/app')
             ->assertOk()
-            ->assertExactJson(['data' => ['name' => config('app.name'), 'description' => null]]);
+            ->assertExactJson(['data' => ['name' => config('app.name'), 'description' => null, 'channels' => ['email' => true, 'phone' => true]]]);
     }
 
     public function test_api_returns_the_description_in_the_requested_language(): void

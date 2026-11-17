@@ -35,6 +35,8 @@ return [
     'password_forgot' => [
         'title' => 'Forgot password',
         'subtitle' => 'Enter the email or phone number of your account: we will send you a code.',
+        'subtitle_email' => 'Enter the email of your account: we will send you a code.',
+        'subtitle_phone' => 'Enter the phone number of your account: we will send you a code.',
     ],
     'password_reset' => [
         'title' => 'New password',

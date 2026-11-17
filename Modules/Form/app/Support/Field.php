@@ -151,7 +151,7 @@ final class Field
         return $this;
     }
 
-    public function help(string $help): self
+    public function help(?string $help): self
     {
         $this->help = $help;
 

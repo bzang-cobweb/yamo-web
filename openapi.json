@@ -1193,11 +1193,28 @@
                             "null"
                         ],
                         "description": "Description dans la langue de la requ\u00eate, ou `null`."
+                    },
+                    "channels": {
+                        "type": "object",
+                        "description": "Canaux de compte de l'application (`AUTH_CHANNEL_EMAIL`, `AUTH_CHANNEL_PHONE`) : au moins un est actif.",
+                        "properties": {
+                            "email": {
+                                "type": "boolean"
+                            },
+                            "phone": {
+                                "type": "boolean"
+                            }
+                        },
+                        "required": [
+                            "email",
+                            "phone"
+                        ]
                     }
                 },
                 "required": [
                     "name",
-                    "description"
+                    "description",
+                    "channels"
                 ],
                 "title": "ApplicationResource"
             },
