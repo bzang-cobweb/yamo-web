@@ -34,7 +34,7 @@ final class TranslatableTabs
     {
         return Tabs::make($key)
             ->key($key)
-            ->contained(false)
+            ->contained(true)
             ->tabs(array_map(
                 fn (string $locale): Tab => Tab::make(Locales::label($locale))
                     ->key("{$key}-{$locale}")
