@@ -1,0 +1,25 @@
+# `2026-11-18` — Adresse du compte : modèle `UserAddress` avec destinataire, rue avec suggestions
+
+- **Type** : décision
+- **Question posée** :
+  - contrat `specs/2026-11-18-adresse-du-compte-modele.md` : le pivot devient un modèle, destinataire, colonne « Comptes » retirée ;
+  - trois questions ouvertes : champs obligatoires, même adresse deux fois, noms ;
+  - portée des suggestions de rue dans l'app.
+- **Réponse** : « ok validé », avec l'ajout des suggestions de rue. Pour l'app : « All, with limits ».
+  - `address_user` devient le modèle `UserAddress` (table `user_addresses`), avec genre, prénom et nom obligatoires, préremplis depuis le compte à l'ajout.
+  - Un compte peut avoir la même adresse plusieurs fois, avec des destinataires différents.
+  - La colonne « Comptes » disparaît de la fiche du pays.
+  - En tapant la rue, des adresses existantes sont proposées, et en choisir une remplit les champs de l'adresse.
+  - Dans l'app, les suggestions portent sur tout le pays choisi, à partir de 3 caractères, 5 au plus, sans coordonnées.
+- **Motif** : le destinataire appartient à l'entrée du compte, pas à l'adresse partagée. Les suggestions évitent de ressaisir une adresse connue.
+- **Portée** :
+  - module Location (`UserAddress`, `AddressService`, suggestions) ;
+  - module Auth (fiche utilisateur) ;
+  - module Form (champ à suggestions) ;
+  - app mobile (saisie à suggestions).
+- **Corollaires** :
+  - remplace, dans `2026-11-18-adresses-liste-generique`, le pivot et l'unicité compte et adresse ;
+  - changer le destinataire modifie la `UserAddress` sur place ; changer l'adresse la fait pointer vers l'adresse identique, reprise ou créée ;
+  - un compte connecté peut découvrir quelles adresses existent dans un pays (rue, NPA, ville), sans nom ni coordonnées : **risque assumé**, borné par 3 caractères minimum, 5 résultats et la limite de débit de l'API ;
+  - un nouveau type de saisie demande une version de l'app.
+- **Tranché par** : humain
