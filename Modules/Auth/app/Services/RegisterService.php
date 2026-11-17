@@ -9,6 +9,7 @@ use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Inscription depuis l'app : un code part vers l'e-mail et/ou le téléphone saisis ;
@@ -62,17 +63,26 @@ final class RegisterService
         }
 
         $payload = (array) $verified->payload;
-        Challenges::ensureFree('name', $payload['name']);
-        Challenges::ensureFree('email', $payload['email']);
-        Challenges::ensureFree('phone', $payload['phone']);
-        // Mot de passe déjà haché à l'ouverture du défi : le cast `hashed` le garde tel quel.
-        $user = new User(collect($payload)->except('password')->all());
-        $user->forceFill([
-            'password' => $payload['password'],
-            'email_verified_at' => $payload['email'] !== null ? now() : null,
-            'phone_verified_at' => $payload['phone'] !== null ? now() : null,
-        ])->save();
-        $this->codeService->close($verified->challenge);
+
+        $user = Challenges::persist($payload['phone'] !== null ? 'phone' : 'email', function () use ($payload, $verified): User {
+            Challenges::ensureFree('name', $payload['name']);
+            Challenges::ensureFree('email', $payload['email']);
+            Challenges::ensureFree('phone', $payload['phone']);
+            if ($payload['phone'] !== null) {
+                // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
+                PhoneOwnership::release($payload['phone']);
+            }
+            // Mot de passe déjà haché à l'ouverture du défi : le cast `hashed` le garde tel quel.
+            $user = new User(collect($payload)->except('password')->all());
+            $user->forceFill([
+                'password' => $payload['password'],
+                'email_verified_at' => $payload['email'] !== null ? now() : null,
+                'phone_verified_at' => $payload['phone'] !== null ? now() : null,
+            ])->save();
+            $this->codeService->close($verified->challenge);
+
+            return $user;
+        });
 
         return ['user' => $user, 'token' => Challenges::token($user, $deviceName)];
     }

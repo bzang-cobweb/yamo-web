@@ -2,8 +2,12 @@
 
 namespace Modules\Auth\Services;
 
+use Closure;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Ce que l'app reçoit d'un défi en cours : son identifiant et le prochain code à
@@ -36,7 +40,8 @@ final class Challenges
     /**
      * Entre l'envoi et la validation du code, un autre compte a pu prendre la valeur :
      * on refuse proprement plutôt que de buter sur l'index unique. Un compte
-     * supprimé, en attente de purge, garde ses valeurs : il compte aussi.
+     * supprimé, en attente de purge, garde ses valeurs : il compte aussi. Un numéro
+     * tenu par un compte inactif est libre (`PhoneOwnership`).
      *
      * @throws ValidationException valeur déjà prise (erreur sur `code`)
      */
@@ -46,11 +51,35 @@ final class Challenges
             return;
         }
 
-        $taken = User::withTrashed()->where($column, $value)
-            ->when($ignoreUserId !== null, fn ($query) => $query->whereKeyNot($ignoreUserId))
-            ->exists();
+        $taken = $column === 'phone'
+            ? PhoneOwnership::isTaken($value, $ignoreUserId)
+            : User::withTrashed()->where($column, $value)
+                ->when($ignoreUserId !== null, fn ($query) => $query->whereKeyNot($ignoreUserId))
+                ->exists();
 
         if ($taken) {
+            throw ValidationException::withMessages(['code' => __('validation.unique', ['attribute' => __('auth::user.'.$column)])]);
+        }
+    }
+
+    /**
+     * Fin d'un défi qui enregistre un identifiant : tout ou rien. `ensureFree` refuse
+     * proprement le cas courant ; si deux demandes valident la même valeur au même
+     * instant, la seconde bute sur l'index unique et reçoit le même refus, sans rien
+     * laisser à moitié fait (numéro retiré de l'ancien compte sans être attribué…).
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $complete
+     * @return T
+     *
+     * @throws ValidationException valeur prise entre-temps (erreur sur `code`)
+     */
+    public static function persist(string $column, Closure $complete): mixed
+    {
+        try {
+            return DB::transaction($complete);
+        } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['code' => __('validation.unique', ['attribute' => __('auth::user.'.$column)])]);
         }
     }

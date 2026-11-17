@@ -28,6 +28,9 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::post('password/forgot', [PasswordResetController::class, 'forgot'])
         ->middleware('throttle:auth-login')
         ->name('password.forgot');
+    Route::post('account/restore', [AccountController::class, 'restore'])
+        ->middleware('throttle:auth-codes')
+        ->name('account.restore');
     Route::post('password/reset', [PasswordResetController::class, 'reset'])
         ->middleware('throttle:auth-codes')
         ->name('password.reset');

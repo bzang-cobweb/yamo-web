@@ -5,8 +5,8 @@ namespace Modules\Auth\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Téléphone qu'aucun autre compte n'a : le numéro saisi est mis en E.164 avec le
@@ -41,12 +41,8 @@ final class UniquePhone implements DataAwareRule, ValidationRule
             return;
         }
 
-        // Un compte supprimé, en attente de purge, garde son numéro.
-        $taken = User::withTrashed()->where('phone', $phone)
-            ->when($this->ignoreUserId !== null, fn ($query) => $query->whereKeyNot($this->ignoreUserId))
-            ->exists();
-
-        if ($taken) {
+        // Un compte en attente de suppression garde son numéro ; un compte inactif le cède.
+        if (PhoneOwnership::isTaken($phone, $this->ignoreUserId)) {
             $fail('validation.unique')->translate();
         }
     }

@@ -29,9 +29,12 @@ final class EmailChangeService
     public function complete(VerificationCode $verified): User
     {
         $user = $verified->user;
-        Challenges::ensureFree('email', $verified->destination, $user->getKey());
-        $user->forceFill(['email' => $verified->destination, 'email_verified_at' => now()])->save();
-        $this->codeService->close($verified->challenge);
+
+        Challenges::persist('email', function () use ($user, $verified): void {
+            Challenges::ensureFree('email', $verified->destination, $user->getKey());
+            $user->forceFill(['email' => $verified->destination, 'email_verified_at' => now()])->save();
+            $this->codeService->close($verified->challenge);
+        });
 
         return $user;
     }

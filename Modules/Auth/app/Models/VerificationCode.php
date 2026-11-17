@@ -37,10 +37,14 @@ class VerificationCode extends Model
         ];
     }
 
-    /** @return BelongsTo<User, $this> */
+    /**
+     * Le compte visé, même en attente de suppression (il peut se récupérer).
+     *
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     /** @param Builder<self> $query */

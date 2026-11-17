@@ -16,6 +16,73 @@
         }
     ],
     "paths": {
+        "/v1/auth/account/restore": {
+            "post": {
+                "operationId": "v1.auth.account.restore",
+                "summary": "R\u00e9cup\u00e9rer son compte en attente de suppression, depuis l'app : apr\u00e8s une\nconnexion dont le code a \u00e9t\u00e9 valid\u00e9 (r\u00e9ponse `{next: \"restore\"}`). Le compte\nest restaur\u00e9 et l'appareil connect\u00e9. Un d\u00e9fi inconnu, expir\u00e9 ou visant un\ncompte actif est refus\u00e9 (422, erreur sur `code`)",
+                "tags": [
+                    "Account"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RestoreAccountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "description": "Jeton Sanctum de l'appareil."
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "token"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/me": {
             "delete": {
                 "operationId": "v1.auth.me.destroy",
@@ -923,14 +990,7 @@
                                                     "type": "object",
                                                     "properties": {
                                                         "user": {
-                                                            "anyOf": [
-                                                                {
-                                                                    "$ref": "#/components/schemas/User"
-                                                                },
-                                                                {
-                                                                    "type": "null"
-                                                                }
-                                                            ]
+                                                            "$ref": "#/components/schemas/User"
                                                         },
                                                         "token": {
                                                             "type": "string"
@@ -939,6 +999,25 @@
                                                     "required": [
                                                         "user",
                                                         "token"
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "next": {
+                                                            "type": "string"
+                                                        },
+                                                        "challenge": {
+                                                            "type": "string"
+                                                        },
+                                                        "deletion_date": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "next",
+                                                        "challenge",
+                                                        "deletion_date"
                                                     ]
                                                 },
                                                 {
@@ -958,21 +1037,6 @@
                                                         "challenge",
                                                         "channel",
                                                         "destination"
-                                                    ]
-                                                },
-                                                {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "user": {
-                                                            "$ref": "#/components/schemas/User"
-                                                        },
-                                                        "token": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "required": [
-                                                        "user",
-                                                        "token"
                                                     ]
                                                 },
                                                 {
@@ -1022,14 +1086,7 @@
                                             "type": "object",
                                             "properties": {
                                                 "user": {
-                                                    "anyOf": [
-                                                        {
-                                                            "$ref": "#/components/schemas/User"
-                                                        },
-                                                        {
-                                                            "type": "null"
-                                                        }
-                                                    ]
+                                                    "$ref": "#/components/schemas/User"
                                                 },
                                                 "token": {
                                                     "type": "string"
@@ -1038,6 +1095,25 @@
                                             "required": [
                                                 "user",
                                                 "token"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "next": {
+                                                    "type": "string"
+                                                },
+                                                "challenge": {
+                                                    "type": "string"
+                                                },
+                                                "deletion_date": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "next",
+                                                "challenge",
+                                                "deletion_date"
                                             ]
                                         },
                                         {
@@ -1057,21 +1133,6 @@
                                                 "challenge",
                                                 "channel",
                                                 "destination"
-                                            ]
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "user": {
-                                                    "$ref": "#/components/schemas/User"
-                                                },
-                                                "token": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "user",
-                                                "token"
                                             ]
                                         },
                                         {
@@ -2479,6 +2540,27 @@
                     "challenge"
                 ],
                 "title": "ResetPasswordRequest"
+            },
+            "RestoreAccountRequest": {
+                "type": "object",
+                "description": "R\u00e9cup\u00e9rer son compte en attente de suppression : le d\u00e9fi de connexion dont le\ncode vient d'\u00eatre valid\u00e9, et le nom de l'appareil \u00e0 connecter.",
+                "properties": {
+                    "challenge": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "device_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    }
+                },
+                "required": [
+                    "challenge"
+                ],
+                "title": "RestoreAccountRequest"
             },
             "UpdateAvatarRequest": {
                 "type": "object",

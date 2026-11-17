@@ -28,7 +28,7 @@ final class LoginService
      */
     public function start(array $data): array
     {
-        ['channel' => $channel, 'destination' => $destination, 'field' => $field, 'user' => $user] = Identifiers::resolve($data);
+        ['channel' => $channel, 'destination' => $destination, 'field' => $field, 'user' => $user] = Identifiers::resolve($data, withTrashed: true);
 
         if ($user === null || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([$field => __('auth.failed')]);
@@ -40,13 +40,24 @@ final class LoginService
     }
 
     /**
-     * Code validé : jeton de l'appareil.
+     * Code validé : jeton de l'appareil. Un compte en attente de suppression n'est
+     * pas connecté : l'app propose de le récupérer (`POST /auth/account/restore`),
+     * le défi reste ouvert jusque-là.
      *
-     * @return array{user: User, token: string}
+     * @return array{user: User, token: string}|array{next: string, challenge: string, deletion_date: string}
      */
     public function complete(VerificationCode $verified, string $deviceName): array
     {
         $user = $verified->user;
+
+        if ($user->trashed()) {
+            return [
+                'next' => 'restore',
+                'challenge' => $verified->challenge,
+                'deletion_date' => AccountDeletionService::purgeDate($user)->toDateString(),
+            ];
+        }
+
         $this->codeService->close($verified->challenge);
 
         return ['user' => $user, 'token' => Challenges::token($user, $deviceName)];

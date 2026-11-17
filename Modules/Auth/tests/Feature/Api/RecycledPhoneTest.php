@@ -1,0 +1,174 @@
+<?php
+
+namespace Modules\Auth\Tests\Feature\Api;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Modules\Auth\Models\User;
+use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
+use Modules\Location\Models\Country;
+use Tests\TestCase;
+
+/**
+ * Numéro recyclé par un opérateur : son nouveau titulaire n'entre jamais dans
+ * l'ancien compte, et récupère l'usage de son numéro si l'ancien compte est
+ * inactif (décision 2026-11-20-restauration-numero-recycle).
+ */
+class RecycledPhoneTest extends TestCase
+{
+    use CapturesVerificationCodes;
+    use RefreshDatabase;
+
+    private Country $switzerland;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->captureVerificationCodes();
+        config(['auth.phone.inactive_days' => 180]);
+        $this->switzerland = Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
+    }
+
+    private function oldOwner(int $daysSinceLastSeen, array $attributes = []): User
+    {
+        return User::factory()->create([
+            'email' => 'ancien@example.com',
+            'phone' => '+41791234567',
+            'phone_country_id' => $this->switzerland->id,
+            'phone_verified_at' => now()->subYears(2),
+            'last_seen_at' => now()->subDays($daysSinceLastSeen),
+            'password' => 'secret-password',
+            ...$attributes,
+        ]);
+    }
+
+    private function forgotByPhone()
+    {
+        return $this->postJson('/api/v1/auth/password/forgot', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH']);
+    }
+
+    private function registerWithThePhone()
+    {
+        return $this->postJson('/api/v1/auth/register', [
+            'name' => 'nouveau', 'first_name' => 'Nouveau', 'last_name' => 'Titulaire', 'gender' => 'male',
+            'phone' => '079 123 45 67', 'phone_country' => 'CH',
+            'password' => 'Secret-password-1', 'password_confirmation' => 'Secret-password-1',
+        ]);
+    }
+
+    public function test_an_inactive_account_cannot_reset_its_password_by_sms(): void
+    {
+        $this->oldOwner(daysSinceLastSeen: 200);
+
+        // Même réponse qu'un compte inconnu, et aucun SMS ne part.
+        $this->forgotByPhone()->assertAccepted()->assertJsonPath('channel', 'sms');
+        $this->assertSame([], $this->sms->messages);
+
+        // L'e-mail, lui, reste un moyen de récupérer le compte.
+        $this->postJson('/api/v1/auth/password/forgot', ['channel' => 'email', 'email' => 'ancien@example.com'])->assertAccepted();
+        $this->assertNotEmpty($this->emailCode('ancien@example.com'));
+    }
+
+    public function test_an_active_account_still_resets_by_sms(): void
+    {
+        $this->oldOwner(daysSinceLastSeen: 10);
+
+        $this->forgotByPhone()->assertAccepted();
+        $this->assertNotEmpty($this->smsCode('+41791234567'));
+    }
+
+    public function test_an_account_never_seen_counts_from_its_creation(): void
+    {
+        $this->travelTo(now()->subDays(200), fn () => $this->oldOwner(daysSinceLastSeen: 0, attributes: ['last_seen_at' => null]));
+
+        $this->forgotByPhone()->assertAccepted();
+        $this->assertSame([], $this->sms->messages);
+    }
+
+    public function test_the_delay_comes_from_the_config(): void
+    {
+        config(['auth.phone.inactive_days' => 30]);
+        $this->oldOwner(daysSinceLastSeen: 40);
+
+        $this->forgotByPhone()->assertAccepted();
+        $this->assertSame([], $this->sms->messages);
+    }
+
+    public function test_the_new_owner_signs_up_and_the_number_leaves_the_inactive_account(): void
+    {
+        $old = $this->oldOwner(daysSinceLastSeen: 200);
+
+        $challenge = $this->registerWithThePhone()->assertAccepted()->json('challenge');
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567'), 'device_name' => 'iPhone'])
+            ->assertCreated()
+            ->assertJsonPath('data.phone', '+41791234567');
+
+        $old->refresh();
+        $this->assertNull($old->phone);
+        $this->assertNull($old->phone_verified_at);
+        $this->assertSame('ancien@example.com', $old->email);
+    }
+
+    public function test_an_active_holder_keeps_the_number(): void
+    {
+        $this->oldOwner(daysSinceLastSeen: 10);
+
+        $this->registerWithThePhone()->assertUnprocessable()->assertJsonValidationErrors('phone');
+    }
+
+    public function test_an_account_awaiting_deletion_keeps_the_number_until_the_purge(): void
+    {
+        $this->oldOwner(daysSinceLastSeen: 200)->delete();
+
+        $this->registerWithThePhone()->assertUnprocessable()->assertJsonValidationErrors('phone');
+    }
+
+    public function test_adding_the_number_to_an_account_releases_it_too(): void
+    {
+        $old = $this->oldOwner(daysSinceLastSeen: 200);
+        $newcomer = User::factory()->create(['phone' => null]);
+
+        $challenge = $this->withToken($newcomer->createToken('t')->plainTextToken)
+            ->postJson('/api/v1/auth/me/phone', ['phone' => '079 123 45 67', 'phone_country' => 'CH'])
+            ->assertAccepted()->json('challenge');
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567')])->assertOk();
+
+        $this->assertSame('+41791234567', $newcomer->refresh()->phone);
+        $this->assertNull($old->refresh()->phone);
+    }
+
+    public function test_two_new_owners_at_once_end_in_a_clean_refusal_and_nothing_half_done(): void
+    {
+        $old = $this->oldOwner(daysSinceLastSeen: 200);
+        $challenge = $this->registerWithThePhone()->assertAccepted()->json('challenge');
+        $code = $this->smsCode('+41791234567');
+
+        // Course : au moment précis de l'enregistrement, une autre demande a pris le numéro.
+        User::creating(function (User $user): void {
+            if ($user->name === 'nouveau') {
+                DB::table('users')->insert([
+                    'name' => 'concurrent', 'first_name' => 'C', 'last_name' => 'C', 'locale' => 'fr', 'password' => 'x',
+                    'phone' => '+41791234567', 'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        });
+
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $code, 'device_name' => 'iPhone'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+
+        // Tout ou rien : ni nouveau compte, ni numéro retiré de l'ancien.
+        $this->assertFalse(User::query()->where('name', 'nouveau')->exists());
+        $this->assertSame('+41791234567', $old->refresh()->phone);
+    }
+
+    public function test_the_new_owner_cannot_sign_in_to_the_old_account(): void
+    {
+        // Le code SMS ne suffit pas : la connexion exige le mot de passe de l'ancien titulaire.
+        $this->oldOwner(daysSinceLastSeen: 200);
+
+        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'not-the-password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('phone');
+        $this->assertSame([], $this->sms->messages);
+    }
+}

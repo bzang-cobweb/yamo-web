@@ -20,6 +20,13 @@ return [
         'phone' => (bool) filter_var(env('AUTH_CHANNEL_PHONE', true), FILTER_VALIDATE_BOOL),
     ],
 
+    // Numéros recyclés : au-delà de ce délai sans activité, un compte ne
+    // réinitialise plus son mot de passe par SMS, et son numéro revient au
+    // nouveau titulaire qui le prouve.
+    'phone' => [
+        'inactive_days' => (int) env('AUTH_PHONE_INACTIVE_DAYS', 180),
+    ],
+
     // Suppression de son compte : récupérable pendant ce délai, purgée ensuite.
     'account_deletion' => [
         // Jours pendant lesquels un administrateur peut restaurer le compte.

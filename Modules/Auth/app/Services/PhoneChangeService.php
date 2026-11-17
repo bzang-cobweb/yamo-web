@@ -7,6 +7,7 @@ use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Ajouter ou changer son téléphone : un code part par SMS au nouveau numéro, qui
@@ -38,13 +39,18 @@ final class PhoneChangeService
     public function complete(VerificationCode $verified): User
     {
         $user = $verified->user;
-        Challenges::ensureFree('phone', $verified->destination, $user->getKey());
-        $user->forceFill([
-            'phone' => $verified->destination,
-            'phone_country_id' => ((array) $verified->payload)['phone_country_id'] ?? null,
-            'phone_verified_at' => now(),
-        ])->save();
-        $this->codeService->close($verified->challenge);
+
+        Challenges::persist('phone', function () use ($user, $verified): void {
+            Challenges::ensureFree('phone', $verified->destination, $user->getKey());
+            // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
+            PhoneOwnership::release($verified->destination, $user->getKey());
+            $user->forceFill([
+                'phone' => $verified->destination,
+                'phone_country_id' => ((array) $verified->payload)['phone_country_id'] ?? null,
+                'phone_verified_at' => now(),
+            ])->save();
+            $this->codeService->close($verified->challenge);
+        });
 
         return $user->unsetRelation('phoneCountry');
     }

@@ -4,9 +4,11 @@ namespace Modules\Auth\Services;
 
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\Identifiers;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Mot de passe oublié : identifiant → code → nouveau mot de passe. La réponse ne
@@ -18,15 +20,22 @@ final class PasswordResetService
     public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
-     * Envoie le code si un compte correspond. Sinon, même réponse, sans rien envoyer :
-     * un défi factice qu'aucun code ne validera.
+     * Envoie le code si un compte correspond, même en attente de suppression. Sinon,
+     * ou par SMS pour un compte inactif (numéro peut-être recyclé), même réponse sans
+     * rien envoyer : un défi factice qu'aucun code ne validera.
      *
      * @param  array{email?: string|null, phone?: string|null, phone_country?: string|null}  $data
      * @return array{challenge: string, channel: string, destination: string}
      */
     public function start(array $data): array
     {
-        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data);
+        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data, withTrashed: true);
+
+        // Numéro recyclé : un compte inactif ne se réinitialise plus par SMS, le nouveau
+        // titulaire du numéro recevrait le code. Même réponse qu'un compte inconnu.
+        if ($user !== null && $channel === VerificationChannel::SMS && PhoneOwnership::isInactive($user)) {
+            $user = null;
+        }
 
         if ($user === null) {
             return [

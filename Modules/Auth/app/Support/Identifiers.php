@@ -19,10 +19,13 @@ final class Identifiers
      * vérifié.
      *
      * @param  array{email?: string|null, phone?: string|null, phone_country?: string|null}  $data  champs validés du formulaire
+     * @param  bool  $withTrashed  retrouver aussi un compte en attente de suppression
      * @return array{channel: VerificationChannel, destination: string, field: string, user: User|null}
      */
-    public static function resolve(array $data): array
+    public static function resolve(array $data, bool $withTrashed = false): array
     {
+        $users = fn () => $withTrashed ? User::withTrashed() : User::query();
+
         $email = trim((string) ($data['email'] ?? ''));
 
         if ($email !== '') {
@@ -30,7 +33,7 @@ final class Identifiers
                 'channel' => VerificationChannel::EMAIL,
                 'destination' => $email,
                 'field' => 'email',
-                'user' => User::query()->where('email', $email)->first(),
+                'user' => $users()->where('email', $email)->first(),
             ];
         }
 
@@ -41,7 +44,7 @@ final class Identifiers
             'channel' => VerificationChannel::SMS,
             'destination' => $phone ?? $number,
             'field' => 'phone',
-            'user' => $phone === null ? null : User::query()->where('phone', $phone)->whereNotNull('phone_verified_at')->first(),
+            'user' => $phone === null ? null : $users()->where('phone', $phone)->whereNotNull('phone_verified_at')->first(),
         ];
     }
 

@@ -5,9 +5,11 @@ namespace Modules\Auth\Tests\Feature\Api;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Auth\Database\Seeders\AuthDatabaseSeeder;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Modules\Location\Models\Country;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
@@ -19,12 +21,14 @@ use Tests\TestCase;
  */
 class AccountDeletionApiTest extends TestCase
 {
+    use CapturesVerificationCodes;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(AuthDatabaseSeeder::class);
+        $this->captureVerificationCodes();
     }
 
     private function user(array $attributes = []): User
@@ -60,8 +64,66 @@ class AccountDeletionApiTest extends TestCase
 
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
+        // Se reconnecter ne rouvre pas la session : l'app propose de récupérer le compte.
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
+            ->assertAccepted()->json('challenge');
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])
+            ->assertOk()->assertJsonPath('next', 'restore')->assertJsonMissingPath('token');
+        $this->assertSoftDeleted($user);
+    }
+
+    public function test_the_owner_recovers_the_account_after_signing_in(): void
+    {
+        config(['auth.account_deletion.grace_days' => 30]);
+        $user = $this->user();
+        $this->travelTo(now()->subDays(10), fn () => $user->delete());
+
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])
+            ->assertOk()
+            ->assertJsonPath('next', 'restore')
+            ->assertJsonPath('challenge', $challenge)
+            ->assertJsonPath('deletion_date', now()->addDays(20)->toDateString());
+
+        $token = $this->postJson('/api/v1/auth/account/restore', ['challenge' => $challenge, 'device_name' => 'iPhone'])
+            ->assertOk()
+            ->assertJsonPath('data.email', 'jeanne@example.com')
+            ->json('token');
+
+        $this->assertNotSoftDeleted($user);
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/v1/auth/me')->assertOk();
+
+        // Le défi est fermé : il ne resservira pas.
+        $this->postJson('/api/v1/auth/account/restore', ['challenge' => $challenge])->assertUnprocessable()->assertJsonValidationErrors('code');
+    }
+
+    public function test_restore_needs_a_validated_login_code_on_a_deleted_account(): void
+    {
+        $user = $this->user();
+        $user->delete();
+
+        // Code non validé.
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $this->postJson('/api/v1/auth/account/restore', ['challenge' => $challenge])->assertUnprocessable()->assertJsonValidationErrors('code');
+
+        // Défi inconnu.
+        $this->postJson('/api/v1/auth/account/restore', ['challenge' => (string) Str::uuid()])->assertUnprocessable();
+
+        // Code validé trop tard.
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])->assertOk();
+        $this->travel(config('auth.verification_codes.minutes') + 1)->minutes();
+        $this->postJson('/api/v1/auth/account/restore', ['challenge' => $challenge])->assertUnprocessable();
+        $this->assertSoftDeleted($user);
+    }
+
+    public function test_a_purged_account_cannot_be_recovered(): void
+    {
+        $user = $this->user();
+        $user->forceDelete();
+
         $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
-            ->assertUnprocessable();
+            ->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
     public function test_a_wrong_password_is_refused_and_the_account_stays(): void
