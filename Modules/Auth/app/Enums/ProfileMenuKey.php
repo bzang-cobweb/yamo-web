@@ -2,15 +2,21 @@
 
 namespace Modules\Auth\Enums;
 
+use Modules\Auth\Forms\EmailChangeForm;
+use Modules\Auth\Forms\PasswordForm;
+use Modules\Auth\Forms\PersonalInfoForm;
+use Modules\Auth\Forms\PhoneChangeForm;
+use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
+use Modules\Form\Support\Form;
 
 /**
- * Les liens possibles du menu du profil : chacun ouvre l'écran de l'app désigné
- * par `path`, que l'app suit sans le connaître d'avance ; ajouter un lien vers un
- * écran existant ne demande donc pas de nouvelle version de l'app. L'ordre du
- * menu est fixé par `ProfileMenuService`
- * (décision 2026-11-17-regions-alphabetiques-menu-en-code).
+ * Les liens possibles du menu du profil : chacun ouvre un formulaire, que l'app
+ * affiche et envoie selon sa définition (`Form::submission()`), sans le connaître
+ * d'avance. Ajouter un lien = un cas ici, son formulaire et sa route d'API, sans
+ * nouvelle version de l'app (décision 2026-11-17-formulaires-profil-generiques).
+ * L'ordre du menu est fixé par `ProfileMenuService`.
  */
 enum ProfileMenuKey: string
 {
@@ -21,11 +27,27 @@ enum ProfileMenuKey: string
     case PREFERENCES = 'preferences';
 
     /**
-     * Route de l'écran dans l'app (Expo Router).
+     * Formulaire ouvert par le lien.
+     *
+     * @return class-string<Form>
      */
-    public function path(): string
+    public function formClass(): string
     {
-        return '/profile/'.$this->value;
+        return match ($this) {
+            self::PERSONAL => PersonalInfoForm::class,
+            self::EMAIL => EmailChangeForm::class,
+            self::PHONE => PhoneChangeForm::class,
+            self::PASSWORD => PasswordForm::class,
+            self::PREFERENCES => PreferencesForm::class,
+        };
+    }
+
+    /**
+     * Nom du formulaire dans l'API (`auth.profile.personal`), que l'app ouvre.
+     */
+    public function form(): string
+    {
+        return $this->formClass()::name();
     }
 
     /**

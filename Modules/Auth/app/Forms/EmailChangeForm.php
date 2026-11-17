@@ -5,8 +5,10 @@ namespace Modules\Auth\Forms;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Submission;
 
 /**
  * Ajouter ou changer son adresse e-mail : l'actuelle en lecture seule (s'il y en
@@ -33,6 +35,15 @@ class EmailChangeForm extends Form
     public function title(): string
     {
         return __($this->user instanceof User && $this->user->email !== null ? 'auth::form.email.change' : 'auth::form.email.add');
+    }
+
+    /**
+     * L'app envoie le formulaire à `api.v1.auth.me.email.store`
+     * (décision 2026-11-17-formulaires-profil-generiques).
+     */
+    public function submission(): Submission
+    {
+        return Submission::toRoute('api.v1.auth.me.email.store', SuccessAction::PROFILE, __('auth::mobile.profile.emailSaved'));
     }
 
     public function submitLabel(): string

@@ -6,8 +6,10 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Submission;
 
 /**
  * Ajouter ou changer son numéro : l'actuel (indicatif et numéro) en lecture seule
@@ -44,6 +46,15 @@ class PhoneChangeForm extends Form
     public function title(): string
     {
         return __($this->user instanceof User && $this->user->phone !== null ? 'auth::form.phone.change' : 'auth::form.phone.add');
+    }
+
+    /**
+     * L'app envoie le formulaire à `api.v1.auth.me.phone.store`
+     * (décision 2026-11-17-formulaires-profil-generiques).
+     */
+    public function submission(): Submission
+    {
+        return Submission::toRoute('api.v1.auth.me.phone.store', SuccessAction::PROFILE, __('auth::mobile.profile.phoneSaved'));
     }
 
     public function submitLabel(): string

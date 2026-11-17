@@ -6,8 +6,10 @@ use Collator;
 use Illuminate\Support\Facades\App;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Submission;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 
@@ -105,6 +107,15 @@ class PersonalInfoForm extends Form
     public function title(): string
     {
         return __('auth::form.personal.title');
+    }
+
+    /**
+     * L'app envoie le formulaire à `api.v1.auth.me.personal-info.update`
+     * (décision 2026-11-17-formulaires-profil-generiques).
+     */
+    public function submission(): Submission
+    {
+        return Submission::toRoute('api.v1.auth.me.personal-info.update', SuccessAction::PROFILE, __('auth::mobile.profile.saved'));
     }
 
     public function submitLabel(): string

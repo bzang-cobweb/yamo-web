@@ -32,7 +32,7 @@ class ProfileMenuApiTest extends TestCase
         $this->getJson('/api/v1/auth/me/menu')->assertUnauthorized();
     }
 
-    public function test_lists_the_five_screens_in_the_service_order(): void
+    public function test_lists_the_five_forms_in_the_service_order(): void
     {
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
@@ -42,8 +42,8 @@ class ProfileMenuApiTest extends TestCase
             array_column($menu, 'label'),
         );
         $this->assertSame(
-            ['/profile/personal', '/profile/email', '/profile/phone', '/profile/password', '/profile/preferences'],
-            array_column($menu, 'path'),
+            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.preferences'],
+            array_column($menu, 'form'),
         );
     }
 

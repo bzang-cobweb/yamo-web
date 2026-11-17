@@ -2,8 +2,10 @@
 
 namespace Modules\Auth\Forms;
 
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Submission;
 
 /**
  * Supprimer son compte, depuis le profil de l'app mobile
@@ -35,6 +37,15 @@ class DeleteAccountForm extends Form
     public function subtitle(): string
     {
         return __('auth::form.delete_account.warning', ['days' => config('auth.account_deletion.grace_days')]);
+    }
+
+    /**
+     * L'app envoie le formulaire à `api.v1.auth.me.destroy`
+     * (décision 2026-11-17-formulaires-profil-generiques).
+     */
+    public function submission(): Submission
+    {
+        return Submission::toRoute('api.v1.auth.me.destroy', SuccessAction::SIGN_OUT, __('auth::mobile.auth.accountDeleted'), destructive: true);
     }
 
     public function submitLabel(): string

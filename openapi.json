@@ -892,7 +892,7 @@
         "/v1/auth/me/menu": {
             "get": {
                 "operationId": "v1.auth.me.menu",
-                "summary": "Liens du menu du profil, dans l'ordre, chacun avec sa cl\u00e9, son libell\u00e9 dans\nla langue du compte et la route de l'\u00e9cran qu'il ouvre dans l'app",
+                "summary": "Liens du menu du profil, dans l'ordre, chacun avec sa cl\u00e9, son libell\u00e9 dans\nla langue du compte et le nom du formulaire qu'il ouvre dans l'app",
                 "tags": [
                     "ProfileMenu"
                 ],
@@ -922,14 +922,14 @@
                                                     "label": {
                                                         "type": "string"
                                                     },
-                                                    "path": {
+                                                    "form": {
                                                         "type": "string"
                                                     }
                                                 },
                                                 "required": [
                                                     "key",
                                                     "label",
-                                                    "path"
+                                                    "form"
                                                 ]
                                             }
                                         }
@@ -1660,6 +1660,7 @@
                     },
                     "submit": {
                         "type": "object",
+                        "description": "Libell\u00e9 du bouton ; pour un formulaire que l'app envoie sans le conna\u00eetre, aussi `method`, `endpoint` (relatif \u00e0 l'API), `destructive` et `success`.",
                         "properties": {
                             "label": {
                                 "type": "string"

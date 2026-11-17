@@ -3,8 +3,10 @@
 namespace Modules\Auth\Forms;
 
 use Illuminate\Validation\Rules\Password;
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Submission;
 
 /**
  * Changer son mot de passe, depuis le profil de l'app mobile
@@ -39,6 +41,15 @@ class PasswordForm extends Form
     public function title(): string
     {
         return __('auth::form.password.title');
+    }
+
+    /**
+     * L'app envoie le formulaire à `api.v1.auth.me.password.update`
+     * (décision 2026-11-17-formulaires-profil-generiques).
+     */
+    public function submission(): Submission
+    {
+        return Submission::toRoute('api.v1.auth.me.password.update', SuccessAction::PROFILE, __('auth::mobile.profile.passwordSaved'));
     }
 
     public function submitLabel(): string

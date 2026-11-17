@@ -44,6 +44,15 @@ abstract class Form
     abstract public function submitLabel(): string;
 
     /**
+     * Envoi décrit à l'app (point d'API, méthode, suite au succès) ; aucun par
+     * défaut : l'app sait déjà envoyer le formulaire (connexion, inscription…).
+     */
+    public function submission(): ?Submission
+    {
+        return null;
+    }
+
+    /**
      * Titre affiché au-dessus du formulaire, traduit ; aucun par défaut.
      */
     public function title(): ?string
