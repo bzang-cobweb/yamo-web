@@ -41,7 +41,8 @@ final class UniquePhone implements DataAwareRule, ValidationRule
             return;
         }
 
-        $taken = User::query()->where('phone', $phone)
+        // Un compte supprimé, en attente de purge, garde son numéro.
+        $taken = User::withTrashed()->where('phone', $phone)
             ->when($this->ignoreUserId !== null, fn ($query) => $query->whereKeyNot($this->ignoreUserId))
             ->exists();
 

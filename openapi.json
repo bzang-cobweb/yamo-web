@@ -16,6 +16,72 @@
         }
     ],
     "paths": {
+        "/v1/auth/me": {
+            "delete": {
+                "operationId": "v1.auth.me.destroy",
+                "summary": "Supprimer son compte, apr\u00e8s confirmation par le mot de passe. Le compte\nest d\u00e9sactiv\u00e9 et tous ses appareils d\u00e9connect\u00e9s ; il est purg\u00e9 apr\u00e8s le\nd\u00e9lai r\u00e9gl\u00e9 (`AUTH_ACCOUNT_DELETION_GRACE_DAYS`). Le dernier super\nadministrateur est refus\u00e9 (422)",
+                "tags": [
+                    "Account"
+                ],
+                "parameters": [
+                    {
+                        "name": "current_password",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "get": {
+                "operationId": "v1.auth.me",
+                "summary": "Utilisateur connect\u00e9",
+                "tags": [
+                    "Profile"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/app": {
             "get": {
                 "operationId": "v1.app.show",
@@ -671,41 +737,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/v1/auth/me": {
-            "get": {
-                "operationId": "v1.auth.me",
-                "summary": "Utilisateur connect\u00e9",
-                "tags": [
-                    "Profile"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`UserResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/UserResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -2387,6 +2418,13 @@
                             "null"
                         ],
                         "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
                     }
                 },
                 "required": [
@@ -2407,7 +2445,8 @@
                     "email_verified_at",
                     "created_at",
                     "updated_at",
-                    "last_seen_at"
+                    "last_seen_at",
+                    "deleted_at"
                 ],
                 "title": "User"
             },

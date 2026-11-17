@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -36,11 +37,12 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, InteractsWithMedia, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, InteractsWithMedia, Notifiable, SoftDeletes;
 
     /**
-     * Un compte supprimé emporte ses jetons d'API : Sanctum ne les supprime pas
-     * lui-même (relation polymorphe, sans clé étrangère).
+     * Un compte supprimé, même de façon récupérable, emporte ses jetons d'API :
+     * Sanctum ne les supprime pas lui-même (relation polymorphe, sans clé
+     * étrangère). Sa photo, elle, ne part qu'avec la purge définitive.
      */
     protected static function booted(): void
     {

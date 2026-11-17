@@ -194,7 +194,7 @@ class UserResourceTest extends AuthFilamentTestCase
             ->assertActionHidden(TestAction::make('delete')->table($admin))
             ->callAction(TestAction::make('delete')->table($other));
 
-        $this->assertModelMissing($other);
+        $this->assertSoftDeleted($other);
         $this->assertModelExists($admin);
     }
 
@@ -227,7 +227,7 @@ class UserResourceTest extends AuthFilamentTestCase
             ->callAction(TestAction::make('delete')->table()->bulk());
 
         $this->assertModelExists($admin);
-        $this->assertModelMissing($other);
+        $this->assertSoftDeleted($other);
     }
 
     public function test_gender_is_required_and_birth_date_bounded_in_the_back_office(): void
@@ -274,5 +274,31 @@ class UserResourceTest extends AuthFilamentTestCase
         Livewire::test(ListUsers::class)
             ->assertTableColumnStateSet('is_online', true, $online)
             ->assertTableColumnStateSet('is_online', false, $offline);
+    }
+
+    public function test_restores_an_account_deleted_by_its_owner(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::DELETE_USERS);
+        $deleted = User::factory()->create();
+        $deleted->delete();
+
+        Livewire::test(ListUsers::class)
+            ->assertCanNotSeeTableRecords([$deleted])
+            ->filterTable('trashed', true)
+            ->assertCanSeeTableRecords([$deleted])
+            ->callAction(TestAction::make('restore')->table($deleted));
+
+        $this->assertNotSoftDeleted($deleted);
+    }
+
+    public function test_restore_is_hidden_without_delete_permission(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS);
+        $deleted = User::factory()->create();
+        $deleted->delete();
+
+        Livewire::test(ListUsers::class)
+            ->filterTable('trashed', true)
+            ->assertActionHidden(TestAction::make('restore')->table($deleted));
     }
 }

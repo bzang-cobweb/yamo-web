@@ -35,7 +35,8 @@ final class Challenges
 
     /**
      * Entre l'envoi et la validation du code, un autre compte a pu prendre la valeur :
-     * on refuse proprement plutôt que de buter sur l'index unique.
+     * on refuse proprement plutôt que de buter sur l'index unique. Un compte
+     * supprimé, en attente de purge, garde ses valeurs : il compte aussi.
      *
      * @throws ValidationException valeur déjà prise (erreur sur `code`)
      */
@@ -45,7 +46,7 @@ final class Challenges
             return;
         }
 
-        $taken = User::query()->where($column, $value)
+        $taken = User::withTrashed()->where($column, $value)
             ->when($ignoreUserId !== null, fn ($query) => $query->whereKeyNot($ignoreUserId))
             ->exists();
 

@@ -15,8 +15,9 @@ class UserPolicy
 
     public function before(User $user, string $ability, mixed ...$arguments): ?bool
     {
-        // Personne, pas même le super administrateur, ne supprime son propre compte.
-        if ($ability === 'delete' && ($arguments[0] ?? null) instanceof User && $arguments[0]->is($user)) {
+        // Dans le back-office, personne, pas même le super administrateur, ne
+        // supprime son propre compte : depuis l'app, c'est `deleteMe`.
+        if (in_array($ability, ['delete', 'forceDelete'], true) && ($arguments[0] ?? null) instanceof User && $arguments[0]->is($user)) {
             return false;
         }
 
@@ -89,8 +90,44 @@ class UserPolicy
             return $user->hasPermissionTo(PermissionEnum::DELETE_USERS) && ! $model->is($user);
         }
 
-        // Site et API : pas de suppression de compte pour l'instant.
+        // Site et API : on ne supprime que son propre compte (`deleteMe`).
         return false;
+    }
+
+    /**
+     * Supprimer son propre compte depuis l'app (`DELETE /api/v1/auth/me`) :
+     * tout compte connecté. Le dernier super administrateur est refusé par le
+     * service, avec un message qui l'explique.
+     */
+    public function deleteMe(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Restaurer un compte supprimé, pendant le délai avant sa purge.
+     */
+    public function restore(User $user, User $model): bool
+    {
+        return Filament::isServing() && $user->hasPermissionTo(PermissionEnum::DELETE_USERS);
+    }
+
+    /**
+     * Purger un compte supprimé sans attendre la fin du délai.
+     */
+    public function forceDelete(User $user, User $model): bool
+    {
+        return Filament::isServing() && $user->hasPermissionTo(PermissionEnum::DELETE_USERS) && ! $model->is($user);
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return $this->deleteAny($user);
+    }
+
+    public function forceDeleteAny(User $user): bool
+    {
+        return $this->deleteAny($user);
     }
 
     public function deleteAny(User $user): bool

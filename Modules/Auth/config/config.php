@@ -13,4 +13,10 @@ return [
         // Délai minimal entre deux envois, en secondes.
         'resend_seconds' => (int) env('AUTH_CODE_RESEND_SECONDS', 60),
     ],
+
+    // Suppression de son compte : récupérable pendant ce délai, purgée ensuite.
+    'account_deletion' => [
+        // Jours pendant lesquels un administrateur peut restaurer le compte.
+        'grace_days' => (int) env('AUTH_ACCOUNT_DELETION_GRACE_DAYS', 30),
+    ],
 ];

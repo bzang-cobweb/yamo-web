@@ -52,4 +52,11 @@ return [
         'title' => 'Preferences',
         'locale_help' => 'Language of the app and of e-mails.',
     ],
+    'delete_account' => [
+        'title' => 'Delete my account',
+        'warning' => 'Your account will be deactivated and your devices signed out. It will be permanently deleted, with your data and photo, in :days days; until then, contact us to recover it. Confirm with your password.',
+        'submit' => 'Delete my account',
+        'last_super_admin' => 'You are the last super administrator: appoint another one before deleting your account.',
+        'purged' => ':count account(s) purged.',
+    ],
 ];

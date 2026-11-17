@@ -363,6 +363,17 @@ class VerificationCodesApiTest extends TestCase
         $this->assertFalse(User::query()->where('name', 'marie')->exists());
     }
 
+    public function test_a_value_held_by_a_deleted_account_awaiting_purge_is_refused_cleanly(): void
+    {
+        // Pris puis supprimé pendant que le code attendait : la valeur reste réservée
+        // jusqu'à la purge, et l'index unique n'est jamais atteint.
+        $register = $this->register(['email' => 'held@example.com'])->json('challenge');
+        User::factory()->create(['email' => 'held@example.com'])->delete();
+
+        $this->verify($register, $this->emailCode('held@example.com'))->assertUnprocessable()->assertJsonValidationErrors(['code']);
+        $this->assertFalse(User::query()->where('name', 'marie')->exists());
+    }
+
     public function test_an_email_taken_by_someone_else_is_refused(): void
     {
         $user = $this->jeanne();

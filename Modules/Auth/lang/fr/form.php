@@ -52,4 +52,11 @@ return [
         'title' => 'Préférences',
         'locale_help' => "Langue de l'application et des e-mails.",
     ],
+    'delete_account' => [
+        'title' => 'Supprimer mon compte',
+        'warning' => "Votre compte sera désactivé et vos appareils déconnectés. Il sera supprimé définitivement, avec vos données et votre photo, dans :days jours ; d'ici là, contactez-nous pour le récupérer. Confirmez avec votre mot de passe.",
+        'submit' => 'Supprimer mon compte',
+        'last_super_admin' => 'Vous êtes le dernier super administrateur : nommez-en un autre avant de supprimer votre compte.',
+        'purged' => ':count compte(s) purgé(s).',
+    ],
 ];

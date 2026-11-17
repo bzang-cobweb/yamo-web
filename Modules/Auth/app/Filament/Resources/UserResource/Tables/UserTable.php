@@ -7,6 +7,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Modules\Auth\Filament\Resources\UserResource;
 use Modules\Auth\Models\User;
@@ -59,6 +60,12 @@ abstract class UserTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                // Compte supprimé par son titulaire, restaurable jusqu'à sa purge.
+                TextColumn::make('deleted_at')
+                    ->label(__('auth::user.deleted_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('roles')
@@ -69,6 +76,7 @@ abstract class UserTable
                 SelectFilter::make('locale')
                     ->label(__('auth::user.locale'))
                     ->options(Locales::options()),
+                TrashedFilter::make()->label(__('auth::user.deleted_filter')),
             ])
             ->recordActions(UserResource::getActions())
             ->toolbarActions(UserResource::getBulkActions());

@@ -16,6 +16,8 @@ return [
         'female' => 'Female',
     ],
     'description' => 'Description',
+    'deleted_at' => 'Deleted on',
+    'deleted_filter' => 'Deleted accounts',
     'birth_date' => 'Date of birth',
     'country' => 'Country',
     'region' => 'Region',

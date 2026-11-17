@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Auth\Http\Controllers\Api\AccountController;
 use Modules\Auth\Http\Controllers\Api\EmailChangeController;
 use Modules\Auth\Http\Controllers\Api\LoginController;
 use Modules\Auth\Http\Controllers\Api\LogoutController;
@@ -40,6 +41,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::get('me', [ProfileController::class, 'show'])->can('me', User::class)->name('me');
+        Route::delete('me', [AccountController::class, 'destroy'])->can('deleteMe', User::class)->name('me.destroy');
         Route::patch('me/personal-info', [PersonalInfoController::class, 'update'])->can('updateMe', User::class)->name('me.personal-info.update');
         Route::put('me/password', [PasswordController::class, 'update'])->can('updateMe', User::class)->name('me.password.update');
         Route::patch('me/preferences', [PreferencesController::class, 'update'])->can('updateMe', User::class)->name('me.preferences.update');

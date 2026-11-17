@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Modules\Auth\Console\CreateUserCommand;
+use Modules\Auth\Console\PurgeDeletedAccountsCommand;
 use Modules\Auth\Forms\CodeForm;
+use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Forms\ForgotPasswordForm;
 use Modules\Auth\Forms\LoginForm;
@@ -52,6 +54,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(LoginForm::class);
         $registry->register(PersonalInfoForm::class);
         $registry->register(PasswordForm::class);
+        $registry->register(DeleteAccountForm::class);
         $registry->register(PreferencesForm::class);
         $registry->register(RegisterForm::class);
         $registry->register(CodeForm::class);
@@ -86,6 +89,7 @@ class AuthServiceProvider extends ModuleServiceProvider
      */
     protected array $commands = [
         CreateUserCommand::class,
+        PurgeDeletedAccountsCommand::class,
     ];
 
     /**
@@ -100,11 +104,12 @@ class AuthServiceProvider extends ModuleServiceProvider
 
     /**
      * Define module schedules.
-     *
-     * @param  $schedule
      */
-    // protected function configureSchedules(Schedule $schedule): void
-    // {
-    //     $schedule->command('inspire')->hourly();
-    // }
+    /**
+     * Purge quotidienne des comptes supprimés dont le délai de restauration est passé.
+     */
+    protected function configureSchedules(Schedule $schedule): void
+    {
+        $schedule->command(PurgeDeletedAccountsCommand::class)->daily();
+    }
 }

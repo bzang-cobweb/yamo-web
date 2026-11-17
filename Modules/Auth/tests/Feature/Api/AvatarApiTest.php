@@ -139,12 +139,17 @@ class AvatarApiTest extends TestCase
         $this->deleteJson('/api/v1/auth/me/avatar')->assertUnauthorized();
     }
 
-    public function test_deleting_an_account_deletes_its_photo(): void
+    public function test_the_photo_stays_until_the_account_is_purged(): void
     {
         $user = User::factory()->create();
         $this->upload($user, UploadedFile::fake()->image('a.jpg', 400, 400))->assertOk();
 
+        // Suppression récupérable : la photo reste, pour une restauration.
         $user->fresh()->delete();
+        $this->assertSame(1, Media::count());
+
+        // Purge définitive : la photo part avec le compte.
+        $user->fresh()->forceDelete();
 
         $this->assertSame(0, Media::count());
         $this->assertSame([], Storage::disk('public')->allFiles());

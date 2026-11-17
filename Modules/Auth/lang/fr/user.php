@@ -16,6 +16,8 @@ return [
         'female' => 'Femme',
     ],
     'description' => 'Description',
+    'deleted_at' => 'Supprimé le',
+    'deleted_filter' => 'Comptes supprimés',
     'birth_date' => 'Date de naissance',
     'country' => 'Pays',
     'region' => 'Région',

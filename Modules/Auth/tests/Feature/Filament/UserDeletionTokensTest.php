@@ -50,7 +50,7 @@ class UserDeletionTokensTest extends AuthFilamentTestCase
         Livewire::test(EditUser::class, ['record' => $user->getKey()])
             ->callAction(TestAction::make('delete'));
 
-        $this->assertModelMissing($user);
+        $this->assertSoftDeleted($user);
         $this->assertSame(0, $this->tokensOf($user));
     }
 

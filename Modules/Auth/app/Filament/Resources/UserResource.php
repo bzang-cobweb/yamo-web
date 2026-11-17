@@ -2,6 +2,9 @@
 
 namespace Modules\Auth\Filament\Resources;
 
+use Filament\Actions\Action;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -22,6 +25,21 @@ class UserResource extends AbstractAuthResource
     protected static ?int $navigationSort = 10;
 
     protected static ?string $recordTitleAttribute = 'last_name';
+
+    /**
+     * Actions communes, plus la restauration et la purge d'un compte supprimé
+     * par son titulaire (décision 2026-11-20-suppression-de-son-compte).
+     *
+     * @return array<int, Action>
+     */
+    public static function getActions(): array
+    {
+        return [
+            ...parent::getActions(),
+            RestoreAction::make(),
+            ForceDeleteAction::make(),
+        ];
+    }
 
     public static function form(Schema $schema): Schema
     {
