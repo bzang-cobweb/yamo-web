@@ -40,3 +40,39 @@ Un opérateur réattribue un jour un numéro abandonné. Le nouveau titulaire du
 - Le cas de l'inscription avec un numéro recyclé suit la réponse à la question 3.
 - Le délai d'inactivité est réglable dans la configuration et le `.env`, comme le délai de suppression.
 - Tests web et mobile verts, OpenAPI régénéré, aucune dépendance ajoutée.
+
+## Ce que j'ai décidé seul
+
+- **Délai d'inactivité** : 180 jours par défaut (`AUTH_PHONE_INACTIVE_DAYS`). Les opérateurs réattribuent un numéro après quelques mois sans usage ; 180 jours laissent de la marge. L'activité est `last_seen_at`, mis à jour à chaque appel connecté, ou la date de création pour un compte jamais vu.
+- **Mot de passe oublié par SMS refusé** : la réponse reste neutre, comme pour un compte inconnu. L'utilisateur ne sait pas pourquoi aucun SMS n'arrive ; c'est le prix de ne pas révéler l'existence du compte.
+- **Mot de passe oublié sur un compte en attente de suppression** : il fonctionne. Le titulaire se connecte ensuite et voit la proposition de récupérer son compte.
+- **« Annuler » sur l'écran de récupération** : retour à l'écran d'accueil. Le compte reste en attente de suppression.
+- **Course entre deux demandes** : la fin des défis qui enregistrent un identifiant (inscription, changement d'e-mail, changement de numéro) passe par `Challenges::persist`, une transaction qui transforme une collision en refus propre (422). Ce correctif fait suite au NO-GO du premier qa-check.
+- **Numéro libéré** : le compte inactif perd son numéro sans être prévenu. Lui envoyer un e-mail, s'il en a un, serait une amélioration.
+
+## Ce qui a été fait
+
+- API :
+  - connexion d'un compte en attente de suppression : `{next: "restore", challenge, deletion_date}` ;
+  - `POST /api/v1/auth/account/restore` (`AccountController::restore`, `AccountDeletionService::restore`) ;
+  - `PhoneOwnership` (inactivité, numéro tenu, libération), utilisé par `UniquePhone`, `ensureFree`, l'inscription et le changement de numéro ;
+  - mot de passe oublié par SMS neutralisé pour un compte inactif ;
+  - `Challenges::persist` ;
+  - config `auth.phone.inactive_days` et `.env` ;
+  - OpenAPI régénéré.
+- App : résultat `restore` du code, `AccountRestoreService`, écran `RestoreAccountPrompt` sur la connexion (date, « Récupérer mon compte », « Annuler »).
+- Tests :
+  - web : 244 (5 de récupération, 10 sur les numéros recyclés, dont la course) ;
+  - app : 102 (`RestoreAccountPrompt`, 4).
+- qa-check : NO-GO au premier passage (la course), puis GO.
+
+## Ce que je n'ai pas vérifié
+
+- La récupération à l'écran : le simulateur est connecté au compte de l'humain, que je n'ai pas déconnecté. Elle est couverte par les tests de l'API (connexion, code, récupération, `/me`) et de l'app.
+- Une vraie course entre deux processus : elle n'est que simulée dans un test.
+- L'envoi réel d'un SMS (aucun fournisseur).
+
+## Ce qui reste en suspens
+
+- Prévenir par e-mail l'ancien titulaire, quand son numéro est retiré de son compte.
+- Le message de collision de `persist` désigne la colonne principale (téléphone ou e-mail), même si la collision vient du pseudonyme. C'est rare, et le refus reste propre.
