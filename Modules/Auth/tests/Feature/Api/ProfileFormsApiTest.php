@@ -178,16 +178,21 @@ class ProfileFormsApiTest extends TestCase
             ->assertJsonPath('data.region.id', $geneva->getKey());
     }
 
-    public function test_regions_are_offered_in_the_back_office_order(): void
+    public function test_regions_are_offered_alphabetically_whatever_their_position(): void
     {
         $switzerland = Country::factory()->create(['code' => 'CH']);
         $zurich = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Zurich', 'en' => 'Zurich'], 'position' => 1]);
-        $argovie = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Argovie', 'en' => 'Aargau'], 'position' => 2]);
+        $berne = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Berne', 'en' => 'Bern'], 'position' => 2]);
+        $bale = Region::factory()->for($switzerland)->create(['name' => ['fr' => 'Bâle-Ville', 'en' => 'Basel-Stadt'], 'position' => 3]);
 
         $form = $this->asUser($this->user())->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
         $region = collect($form->json('data.fields'))->firstWhere('name', 'region_id');
 
-        $this->assertSame([(string) $zurich->getKey(), (string) $argovie->getKey()], array_column($region['options'], 'value'));
+        $this->assertSame(
+            [(string) $bale->getKey(), (string) $berne->getKey(), (string) $zurich->getKey()],
+            array_column($region['options'], 'value'),
+        );
+        $this->assertSame([$zurich->getKey(), $berne->getKey(), $bale->getKey()], $switzerland->regions()->pluck('id')->all());
     }
 
     public function test_an_inactive_country_is_not_offered_nor_accepted(): void
