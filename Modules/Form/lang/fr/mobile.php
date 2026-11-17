@@ -17,4 +17,8 @@ return [
         'previous' => 'Précédent',
         'stepOf' => 'Étape :current sur :total',
     ],
+    'list' => [
+        'loading' => 'Chargement de la liste…',
+        'cancel' => 'Annuler',
+    ],
 ];
