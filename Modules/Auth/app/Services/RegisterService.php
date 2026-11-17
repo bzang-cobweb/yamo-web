@@ -19,7 +19,7 @@ final class RegisterService
     public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
-     * @param  array{name: string, first_name: string, last_name: string, gender: string, description?: string|null, email?: string|null, phone?: string|null, phone_country?: string|null, password: string}  $data
+     * @param  array{name: string, first_name: string, last_name: string, gender: string, birth_date?: string|null, description?: string|null, email?: string|null, phone?: string|null, phone_country?: string|null, password: string}  $data
      * @return array{challenge: string, channel: string, destination: string}
      */
     public function start(array $data): array
@@ -37,6 +37,7 @@ final class RegisterService
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'gender' => $data['gender'],
+                'birth_date' => filled($data['birth_date'] ?? null) ? $data['birth_date'] : null,
                 'description' => filled($data['description'] ?? null) ? $data['description'] : null,
                 'email' => $email,
                 'phone' => $phone,

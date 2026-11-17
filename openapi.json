@@ -1569,6 +1569,13 @@
                             "female"
                         ]
                     },
+                    "birth_date": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date"
+                    },
                     "description": {
                         "type": [
                             "string",

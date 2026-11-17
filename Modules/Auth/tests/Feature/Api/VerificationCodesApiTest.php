@@ -217,8 +217,20 @@ class VerificationCodesApiTest extends TestCase
         $this->assertNotNull($user->email_verified_at);
         $this->assertSame('female', $user->gender->value);
         $this->assertNull($user->description);
+        $this->assertNull($user->birth_date);
         $this->assertNull($user->phone);
         $this->assertTrue(Hash::check('Secret-password-1', $user->password));
+    }
+
+    public function test_register_saves_the_optional_birth_date_within_bounds(): void
+    {
+        $this->register(['birth_date' => '1899-12-31'])->assertUnprocessable()->assertJsonValidationErrors('birth_date');
+        $this->register(['birth_date' => now()->addDay()->format('Y-m-d')])->assertUnprocessable()->assertJsonValidationErrors('birth_date');
+
+        $challenge = $this->register(['birth_date' => '1990-04-12'])->assertAccepted()->json('challenge');
+        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
+            ->assertCreated()
+            ->assertJsonPath('data.birth_date', '1990-04-12');
     }
 
     public function test_register_saves_the_optional_description_and_limits_it(): void
@@ -390,8 +402,8 @@ class VerificationCodesApiTest extends TestCase
     public function test_register_and_code_forms_are_public(): void
     {
         $this->getJson('/api/v1/forms/auth.register')->assertOk()
-            ->assertJsonPath('data.fields.6.name', 'phone')
-            ->assertJsonPath('data.fields.6.type', 'phone');
+            ->assertJsonPath('data.fields.7.name', 'phone')
+            ->assertJsonPath('data.fields.7.type', 'phone');
         $this->getJson('/api/v1/forms/auth.code')->assertOk()
             ->assertJsonPath('data.fields.0.type', 'code');
     }
