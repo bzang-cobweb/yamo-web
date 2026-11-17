@@ -48,7 +48,7 @@ Un opérateur réattribue un jour un numéro abandonné. Le nouveau titulaire du
 - **Mot de passe oublié sur un compte en attente de suppression** : il fonctionne. Le titulaire se connecte ensuite et voit la proposition de récupérer son compte.
 - **« Annuler » sur l'écran de récupération** : retour à l'écran d'accueil. Le compte reste en attente de suppression.
 - **Course entre deux demandes** : la fin des défis qui enregistrent un identifiant (inscription, changement d'e-mail, changement de numéro) passe par `Challenges::persist`, une transaction qui transforme une collision en refus propre (422). Ce correctif fait suite au NO-GO du premier qa-check.
-- **Numéro libéré** : le compte inactif perd son numéro sans être prévenu. Lui envoyer un e-mail, s'il en a un, serait une amélioration.
+- **Numéro libéré** : le compte inactif perd son numéro ; son titulaire en est prévenu par e-mail, s'il en a un (ajouté à la demande de l'humain après la clôture : `PhoneReleasedMail`, dans la langue du compte, numéro masqué, envoyé seulement une fois l'attribution enregistrée).
 
 ## Ce qui a été fait
 
@@ -74,5 +74,4 @@ Un opérateur réattribue un jour un numéro abandonné. Le nouveau titulaire du
 
 ## Ce qui reste en suspens
 
-- Prévenir par e-mail l'ancien titulaire, quand son numéro est retiré de son compte.
 - Le message de collision de `persist` désigne la colonne principale (téléphone ou e-mail), même si la collision vient du pseudonyme. C'est rare, et le refus reste propre.

@@ -4,6 +4,8 @@ namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Modules\Auth\Mail\PhoneReleasedMail;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Modules\Location\Models\Country;
@@ -38,6 +40,7 @@ class RecycledPhoneTest extends TestCase
             'phone_verified_at' => now()->subYears(2),
             'last_seen_at' => now()->subDays($daysSinceLastSeen),
             'password' => 'secret-password',
+            'locale' => 'en',
             ...$attributes,
         ]);
     }
@@ -107,6 +110,23 @@ class RecycledPhoneTest extends TestCase
         $this->assertNull($old->phone);
         $this->assertNull($old->phone_verified_at);
         $this->assertSame('ancien@example.com', $old->email);
+
+        // L'ancien titulaire en est prévenu, dans la langue de son compte, numéro masqué.
+        Mail::assertSent(PhoneReleasedMail::class, fn (PhoneReleasedMail $mail): bool => $mail->hasTo('ancien@example.com')
+            && $mail->maskedPhone === '+41 ••• 67'
+            && $mail->locale === 'en');
+        $rendered = (new PhoneReleasedMail('+41 ••• 67'))->locale('fr')->render();
+        $this->assertStringContainsString('Le numéro +41 ••• 67 a été retiré de votre compte yamo.', $rendered);
+    }
+
+    public function test_an_old_account_without_email_is_not_notified(): void
+    {
+        $this->oldOwner(daysSinceLastSeen: 200, attributes: ['email' => null]);
+
+        $challenge = $this->registerWithThePhone()->json('challenge');
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567'), 'device_name' => 'iPhone'])->assertCreated();
+
+        Mail::assertNotSent(PhoneReleasedMail::class);
     }
 
     public function test_an_active_holder_keeps_the_number(): void
@@ -157,9 +177,10 @@ class RecycledPhoneTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('code');
 
-        // Tout ou rien : ni nouveau compte, ni numéro retiré de l'ancien.
+        // Tout ou rien : ni nouveau compte, ni numéro retiré de l'ancien, ni e-mail.
         $this->assertFalse(User::query()->where('name', 'nouveau')->exists());
         $this->assertSame('+41791234567', $old->refresh()->phone);
+        Mail::assertNotSent(PhoneReleasedMail::class);
     }
 
     public function test_the_new_owner_cannot_sign_in_to_the_old_account(): void

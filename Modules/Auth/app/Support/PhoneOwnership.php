@@ -3,14 +3,20 @@
 namespace Modules\Auth\Support;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Modules\Auth\Enums\VerificationChannel;
+use Modules\Auth\Mail\PhoneReleasedMail;
 use Modules\Auth\Models\User;
+use Modules\Auth\Services\VerificationCodeService;
 
 /**
  * À qui appartient un numéro, face aux numéros recyclés par les opérateurs
  * (décision 2026-11-20-restauration-numero-recycle) :
  * - un compte inactif depuis plus de `config('auth.phone.inactive_days')` jours
  *   ne peut plus réinitialiser son mot de passe par SMS ;
- * - son numéro revient au nouveau titulaire qui le prouve par un code SMS ;
+ * - son numéro revient au nouveau titulaire qui le prouve par un code SMS, et
+ *   l'ancien titulaire en est prévenu par e-mail ;
  * - un compte en attente de suppression garde son numéro jusqu'à la purge.
  */
 final class PhoneOwnership
@@ -47,7 +53,23 @@ final class PhoneOwnership
 
         if ($holder !== null && ! $holder->trashed() && self::isInactive($holder)) {
             $holder->forceFill(['phone' => null, 'phone_country_id' => null, 'phone_verified_at' => null])->saveQuietly();
+            self::notify($holder, $phone);
         }
+    }
+
+    /**
+     * Prévient l'ancien titulaire par e-mail, s'il en a un, dans sa langue. Seulement
+     * une fois l'attribution du numéro enregistrée : rien ne part si elle échoue.
+     */
+    private static function notify(User $holder, string $phone): void
+    {
+        if ($holder->email === null) {
+            return;
+        }
+
+        $masked = VerificationCodeService::maskDestination(VerificationChannel::SMS, $phone);
+
+        DB::afterCommit(fn () => Mail::to($holder)->send(new PhoneReleasedMail($masked)));
     }
 
     private static function holder(string $phone, ?int $ignoreUserId): ?User
