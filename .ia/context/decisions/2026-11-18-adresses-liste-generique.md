@@ -1,0 +1,30 @@
+# `2026-11-18` — Adresses partagées par pays, rattachées par pivot ; liste générique décrite par le serveur
+
+- **Type** : décision
+- **Question posée** : contrat `specs/2026-11-17-adresses-liste-generique.md`, avec quatre questions ouvertes : latitude et longitude, pays, emplacement du retrait, nombre d'adresses.
+- **Réponse** : retour du 2026-11-18, puis « validé ».
+  - Une adresse appartient à un pays et n'existe qu'une fois : pas de doublon.
+  - Elle se gère dans le back-office depuis la fiche du pays (relation manager).
+  - L'utilisateur est relié à ses adresses par le pivot `address_user`, qui a son propre relation manager sur la fiche de l'utilisateur.
+  - À la création : si l'adresse existe déjà, on ne crée que le pivot ; sinon on la crée, puis le pivot.
+  - À l'édition : même règle pour la nouvelle adresse, et le pivot est déplacé vers elle.
+  - Questions ouvertes : les défauts s'appliquent.
+    - Latitude et longitude sont saisies à la main et facultatives.
+    - Le retrait se fait par un bouton sur l'item.
+    - Le nombre d'adresses n'est pas limité.
+    - Le pays devient obligatoire.
+- **Motif** :
+  - ne pas dupliquer une même adresse entre comptes ;
+  - pouvoir ajouter une liste du profil sans nouvelle version de l'app, une fois les listes génériques livrées.
+- **Portée** :
+  - module Location (adresses, back-office) ;
+  - module Auth (pivot, menu, fiche utilisateur) ;
+  - module Form (`Listing`, `record`, suite `back`) ;
+  - app mobile (profil).
+- **Corollaires** :
+  - une adresse partagée n'est jamais modifiée par un utilisateur : changer son adresse déplace son pivot ;
+  - retirer une adresse ne supprime que le pivot ; une adresse sans utilisateur reste dans son pays ;
+  - deux adresses sont la même si pays, rue, NPA et ville sont identiques, sans tenir compte de la casse ni des espaces ;
+  - latitude et longitude ne départagent pas deux adresses : celles de l'adresse existante sont gardées ;
+  - les listes du profil demandent une version de l'app, une seule fois ; une liste nouvelle ne peut utiliser que les suites connues de l'app.
+- **Tranché par** : humain
