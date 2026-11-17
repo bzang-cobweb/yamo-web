@@ -37,3 +37,29 @@ Demande du 2026-11-17.
 
 1. **Libellés modifiables dans le back-office ?** Défaut : non, ils restent dans les traductions du serveur, parce que les liens e-mail et téléphone ont deux libellés selon l'état du compte.
 2. **Liens vers une page web** (CGU, aide) ? Défaut : non dans ce chantier ; le modèle pourra en accueillir plus tard.
+
+## Ce que j'ai décidé seul
+
+- **Permissions** : réordonner les régions demande la permission de les modifier (`reorder` dans `RegionPolicy`) ; le menu du profil demande celle des réglages (`settings.update`).
+- **Ni création ni suppression des liens, même pour le super administrateur** : sa règle générale (« tous les droits ») est levée pour ces deux actions, après la remarque de la vérification.
+- **Libellés de l'API** : repris des traductions déjà servies à l'app (`auth::mobile.profile.*`), sans nouvelle source. Les noms des écrans du back-office ont leur propre fichier (`profile_menu.php`).
+- **Rechargement du menu** à chaque retour sur le Profil, et quand la langue, l'e-mail ou le numéro du compte change.
+- **Migration des régions** : ordre alphabétique français pour les régions existantes ; une région créée sans position va à la fin de son pays.
+
+## Ce qui a été fait
+
+- Web `3f69ae8` : colonne `position` des régions, glisser-déposer dans l'onglet Régions d'un pays, `Country::regions()` et le champ Région triés par position.
+- Web `a374eb0` : table `profile_menu_links` (5 écrans), page Paramètres › Menu du profil (ordre, activation), `GET /api/v1/auth/me/menu` via `ProfileMenuService`, OpenAPI régénéré.
+- Mobile `ce4e2b6` : le Profil affiche le menu servi par l'API ; une clé inconnue est ignorée.
+- Vérifié dans le simulateur : le menu suit un changement en base (Préférences en tête, mot de passe masqué), puis l'état d'origine a été remis ; un lien ouvre son écran.
+- Tests : web 259, mobile 106 ; tsc, lint et Pint propres. Vérification indépendante : GO (`.ia/runs/2026-11-17-tri-regions-menu-profil/01-qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Le glisser-déposer à l'écran dans le back-office : le navigateur intégré refuse le certificat DDEV ; seul l'appel de réordonnancement est testé.
+- La migration des régions sur une base avec beaucoup de régions réelles (les 26 cantons n'ont pas été comparés un à un).
+
+## Ce qui reste en suspens
+
+- Dans le simulateur, le titre de l'écran Préférences s'affiche « Préférencess », alors que l'API et la traduction disent « Préférences ». Problème de rendu antérieur à ce chantier, non analysé.
+- Liens vers une page web et libellés modifiables dans le back-office : écartés de ce chantier, possibles plus tard.
