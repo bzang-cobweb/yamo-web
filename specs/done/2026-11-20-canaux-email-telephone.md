@@ -38,3 +38,41 @@ L'application décide quels canaux de compte elle utilise : **l'e-mail**, **le t
 - Il est impossible de désactiver les deux canaux.
 - Un compte existant qui n'a que le canal désactivé se connecte toujours.
 - Tests web et mobile verts. OpenAPI régénéré. Aucune dépendance ajoutée.
+
+## Ce que j'ai décidé seul
+
+- **Comptes existants** : défaut appliqué faute de réponse. Ils se connectent toujours avec l'identifiant du canal désactivé, et reçoivent leurs codes de connexion et de mot de passe oublié sur ce canal. Rien n'est bloqué.
+- **Libellé de l'identifiant** : avec un seul canal, il reprend le libellé existant du champ, « Adresse e-mail » ou « Téléphone ».
+- **Table des utilisateurs du back-office** :
+  - la colonne e-mail suit le canal e-mail ;
+  - une colonne téléphone (format international) s'ajoute quand le canal est actif. Elle est masquée par défaut si l'e-mail est aussi actif ; avec le téléphone seul, elle est visible.
+- **Recherche globale** : elle suit les canaux (e-mail et/ou téléphone).
+- **Deux canaux désactivés** : `AuthChannels::enabled()` lève une `LogicException` explicite au premier usage (API, formulaires, back-office), pas au démarrage de Laravel.
+- **Domicile** : les règles « quel canal est actif » et « quel libellé pour l'identifiant » vivent dans `Modules/Auth/app/Support/AuthChannels.php`.
+- **Field::help** accepte `null` (module Form), pour qu'un champ n'affiche pas d'aide selon le réglage.
+
+## Ce qui a été fait
+
+- Config `auth.channels.email|phone`, et `AUTH_CHANNEL_EMAIL` / `AUTH_CHANNEL_PHONE` dans `.env.example` et `.env`.
+- Formulaires de l'API :
+  - inscription : champs, obligation, aide et étape « Vous joindre » ;
+  - connexion et mot de passe oublié : libellé, aide, sous-titre ;
+  - changement d'e-mail ou de téléphone : 403 si le canal est inactif.
+- Back-office : fiche utilisateur (champ masqué, l'autre obligatoire), table et recherche globale.
+- Commande `auth:create-user`.
+- `GET /api/v1/app` expose `channels`, et `openapi.json` est régénéré.
+- App : le profil masque la ligne et le lien du canal inactif.
+- Tests : web 225 (dont `AuthChannelsTest`, 9 tests), mobile 95.
+- qa-check : NO-GO au premier passage (recherche globale), puis GO.
+- Simulateur, avec le téléphone désactivé : la connexion ne demande qu'une adresse e-mail, sans aide sur le téléphone. Le `.env` a été remis à `true` ensuite.
+
+## Ce que je n'ai pas vérifié
+
+- L'inscription à l'écran avec un seul canal : couverte par les tests de l'API, puisque l'app affiche le formulaire tel qu'il est servi.
+- Le back-office à l'écran : le navigateur intégré refuse le certificat DDEV.
+- L'envoi réel d'un SMS (aucun fournisseur, `LogSmsSender`).
+
+## Ce qui reste en suspens
+
+- **Clavier de l'identifiant** : avec l'e-mail seul, le champ de connexion reste de type texte, donc sans clavier e-mail. Le passer en type e-mail serait une petite amélioration.
+- **Cache de configuration** : en production, changer `AUTH_CHANNEL_*` demande `php artisan config:cache`, ou un redéploiement.
