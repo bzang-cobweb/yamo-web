@@ -30,7 +30,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id', 'email', 'phone', 'phone_country_id', 'locale', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id', 'description', 'email', 'phone', 'phone_country_id', 'locale', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 #[UseFactory(UserFactory::class)]
 class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocalePreference, HasMedia, HasName

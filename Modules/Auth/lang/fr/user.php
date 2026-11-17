@@ -15,6 +15,7 @@ return [
         'male' => 'Homme',
         'female' => 'Femme',
     ],
+    'description' => 'Description',
     'birth_date' => 'Date de naissance',
     'country' => 'Pays',
     'region' => 'Région',

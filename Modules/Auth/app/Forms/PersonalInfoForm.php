@@ -14,7 +14,7 @@ use Modules\Location\Models\Region;
 /**
  * Informations personnelles, depuis le profil de l'app mobile
  * (`PATCH /api/v1/auth/me/personal-info`) : prénom, nom, genre (obligatoire),
- * date de naissance, pays et région du pays (facultatifs).
+ * date de naissance, pays et région du pays, description (facultatifs).
  */
 class PersonalInfoForm extends Form
 {
@@ -61,6 +61,9 @@ class PersonalInfoForm extends Form
                 ->dependsOn('country_id')
                 ->options(self::regionOptions())
                 ->default($user?->region_id === null ? null : (string) $user->region_id),
+            Field::textarea('description')
+                ->label(__('auth::user.description'))
+                ->default($user?->description),
         ];
     }
 

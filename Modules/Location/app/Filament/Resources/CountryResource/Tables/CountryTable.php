@@ -37,8 +37,7 @@ abstract class CountryTable
                 TextColumn::make('regions_count')
                     ->label(__('location::country.regions_count'))
                     ->counts('regions')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
                 ToggleColumn::make('active')
                     ->label(__('location::country.active'))
                     ->disabled(fn (Country $record): bool => ! (auth()->user()?->can('update', $record) ?? false))

@@ -94,3 +94,53 @@ description dans la langue de la requête (repli sur la langue par défaut).
 ## Dépendances
 
 Aucune nouvelle dépendance (media library et translatable déjà présents).
+
+## Ce que j'ai décidé seul
+
+- **Réglages dans `app/`** (hors module) : modèle `Setting` (une ligne, table `settings`),
+  ressource Filament `SettingResource` à une seule page (`/admin/application`) qui
+  édite cette ligne, policy `SettingPolicy`, permission `settings.update` déclarée dans
+  `PermissionEnum`. La page réutilise `EditRecord` + le sélecteur de langue existant.
+- **Logo** : PNG, JPEG, WebP ou SVG, 2 Mo max, servi tel quel (pas de conversion).
+- **Accueil de l'app** : logo/nom et description au centre de l'espace libre, boutons
+  en bas. La connexion reçoit à son tour un en-tête « Se connecter » (titre du
+  formulaire masqué) pour revenir à l'accueil.
+- **Liens connexion ⇄ inscription** : `replace` au lieu de `push`/`back`, pour que le
+  retour ramène toujours à l'accueil.
+- **Accueil premier écran** : ancre de la pile racine (`unstable_settings.anchor`).
+- **Page web `/`** : feuille de style intégrée, sans Vite ; la page « welcome » de
+  Laravel et `ExampleTest` sont supprimés (remplacés par `ApplicationTest`).
+- **Colonne Régions** des pays : elle existait, masquée par défaut ; elle est rendue
+  visible.
+- **Fabrique utilisateur** : description `null` (une valeur aléatoire rendait les
+  tests de JSON exact instables).
+
+## Ce qui a été fait
+
+- Web : textarea `maxLength` (1 000 par défaut, règle `max`, `max_length` dans l'API) ;
+  `users.description` (migration, formulaire, service, `UserResource`, fiche
+  back-office) ; colonne Régions visible ; réglages + `GET /api/v1/app` + page `/`.
+  188 tests, Pint propre, OpenAPI régénéré.
+- App : connexion en haut avec en-tête ; compteur et limite du textarea ; type
+  `User.description` ; fonctionnalité `welcome` (service, hook, écran, route) ;
+  82 tests, tsc et eslint propres.
+- Simulateur (compte jetable, supprimé ensuite) : accueil au lancement (nom +
+  description), aller-retour connexion/inscription ⇄ accueil, connexion par code,
+  compteur 19 / 1000 et description enregistrée, lancement connecté sur les onglets,
+  déconnexion vers l'accueil.
+- QA indépendante : GO (`.ia/runs/2026-11-19-accueil-description-regions/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Le rendu de la page Filament « Application » dans un navigateur (couverte par les
+  tests Livewire seulement) et l'affichage d'un vrai logo dans l'app et sur `/`.
+- Le contrat OpenAPI ne décrit pas les attributs des champs de formulaire (items
+  `{}`) : `max_length` n'y apparaît pas, pas plus que les autres attributs — limite
+  antérieure à ce chantier.
+- La régénération d'OpenAPI après coup : le `.env` local a été modifié en cours de
+  chantier (`APP_NAME` avec une espace, sans guillemets) et Laravel ne le lit plus.
+
+## Ce qui reste en suspens
+
+- `.env` : mettre la valeur d'`APP_NAME` entre guillemets (à faire par l'humain).
+- Typage des champs de formulaire dans OpenAPI (si souhaité).

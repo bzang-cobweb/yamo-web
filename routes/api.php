@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ApplicationController;
 use App\Http\Controllers\Api\LocaleController;
 use App\Http\Controllers\Api\MessageController;
 use Illuminate\Support\Facades\Route;
@@ -10,5 +11,6 @@ use Illuminate\Support\Facades\Route;
 // Chaque route qui agit sur un modèle porte la garde `can:` de sa policy
 // (bza-laravel:create-policy).
 
+Route::get('v1/app', [ApplicationController::class, 'show'])->name('api.v1.app.show');
 Route::get('v1/locales', [LocaleController::class, 'index'])->name('api.v1.locales.index');
 Route::get('v1/messages', [MessageController::class, 'index'])->name('api.v1.messages.index');

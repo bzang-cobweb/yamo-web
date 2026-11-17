@@ -36,7 +36,7 @@ class ProfileFormsApiTest extends TestCase
         $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
             ->assertOk()
             ->assertJsonPath('data.title', 'Informations personnelles')
-            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id'])
+            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id', 'description'])
             ->assertJsonPath('data.fields.0.default', 'Jeanne')
             ->assertJsonPath('data.fields.1.default', 'Dupont')
             // Genre : liste déroulante, obligatoire, options de GenderEnum traduites.
@@ -72,6 +72,29 @@ class ProfileFormsApiTest extends TestCase
         $user->refresh();
         $this->assertSame(['Élodie', 'Ängel', 'jeanne@example.com', 'fr'], [$user->first_name, $user->last_name, $user->email, $user->locale]);
         $this->assertSame('1990-04-12', $user->birth_date->format('Y-m-d'));
+    }
+
+    public function test_personal_info_saves_clears_and_limits_the_description(): void
+    {
+        $user = $this->user(['gender' => 'female']);
+        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female'];
+
+        $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
+            ->assertJsonPath('data.fields.6.type', 'textarea')
+            ->assertJsonPath('data.fields.6.required', false)
+            ->assertJsonPath('data.fields.6.max_length', 1000);
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'description' => "Ligne 1\nLigne 2"])
+            ->assertOk()
+            ->assertJsonPath('data.description', "Ligne 1\nLigne 2");
+        $this->asUser($user)->getJson('/api/v1/auth/me')->assertJsonPath('data.description', "Ligne 1\nLigne 2");
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'description' => str_repeat('a', 1001)])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('description');
+
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'description' => ''])->assertOk();
+        $this->assertNull($user->refresh()->description);
     }
 
     public function test_personal_info_refuses_an_empty_name_with_a_translated_message(): void

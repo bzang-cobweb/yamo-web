@@ -33,11 +33,11 @@ class FormsAndLocalesApiTest extends TestCase
             'fields' => [
                 [
                     'name' => 'identifier', 'type' => 'text', 'label' => 'E-mail ou téléphone', 'placeholder' => null,
-                    'help' => 'Un téléphone se saisit au format international, par exemple +41 79 123 45 67.', 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
+                    'help' => 'Un téléphone se saisit au format international, par exemple +41 79 123 45 67.', 'required' => true, 'readonly' => false, 'depends_on' => null, 'max_length' => null, 'default' => null, 'options' => [],
                 ],
                 [
                     'name' => 'password', 'type' => 'password', 'label' => 'Mot de passe', 'placeholder' => null,
-                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'default' => null, 'options' => [],
+                    'help' => null, 'required' => true, 'readonly' => false, 'depends_on' => null, 'max_length' => null, 'default' => null, 'options' => [],
                 ],
             ],
             'steps' => [],

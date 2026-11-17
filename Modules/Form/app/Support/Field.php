@@ -28,6 +28,11 @@ final class Field
 
     private mixed $default = null;
 
+    /** Texte sur plusieurs lignes : nombre maximal de caractères. */
+    public const TEXTAREA_MAX_LENGTH = 1000;
+
+    private ?int $maxLength = null;
+
     /**
      * valeur => libellé, ou valeur => [libellé, indication, parent], dans l'ordre
      * d'affichage. L'indication complète le libellé (ex. l'indicatif d'un pays) ;
@@ -75,9 +80,13 @@ final class Field
         return new self($name, FieldType::NUMBER);
     }
 
+    /**
+     * Texte sur plusieurs lignes, limité à `TEXTAREA_MAX_LENGTH` caractères sauf
+     * `maxLength()` contraire.
+     */
     public static function textarea(string $name): self
     {
-        return new self($name, FieldType::TEXTAREA);
+        return (new self($name, FieldType::TEXTAREA))->maxLength(self::TEXTAREA_MAX_LENGTH);
     }
 
     public static function select(string $name): self
@@ -174,6 +183,22 @@ final class Field
         return $this;
     }
 
+    /**
+     * Nombre maximal de caractères : validé par le serveur, envoyé à l'app (qui
+     * bloque la saisie au-delà et affiche un compteur).
+     */
+    public function maxLength(?int $maxLength): self
+    {
+        $this->maxLength = $maxLength;
+
+        return $this;
+    }
+
+    public function getMaxLength(): ?int
+    {
+        return $this->maxLength;
+    }
+
     public function isReadonly(): bool
     {
         return $this->readonly;
@@ -248,7 +273,9 @@ final class Field
             ];
         }
 
-        return [$this->name => [...$presence, ...$this->type->rules($values), ...$this->rules]];
+        $length = $this->maxLength === null ? [] : ['max:'.$this->maxLength];
+
+        return [$this->name => [...$presence, ...$this->type->rules($values), ...$length, ...$this->rules]];
     }
 
     public function getLabel(): ?string
@@ -259,7 +286,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, depends_on: string|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, depends_on: string|null, max_length: int|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -272,6 +299,7 @@ final class Field
             'required' => $this->required,
             'readonly' => $this->readonly,
             'depends_on' => $this->dependsOn,
+            'max_length' => $this->maxLength,
             'default' => $this->default,
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [

@@ -21,6 +21,7 @@ class RouteGuardTest extends TestCase
         'api/v1/auth/codes/verify' => 'publique : validation de code, limitée par throttle:auth-codes ; un défi de changement exige son compte (service)',
         'api/v1/auth/codes/resend' => 'publique : renvoi de code, limité par throttle:auth-codes ; un défi de changement exige son compte (service)',
         'api/v1/auth/logout' => 'agit sur le jeton de la requête, pas sur un modèle : gardée par auth:sanctum',
+        'api/v1/app' => "publique : nom, logo et description de l'application (page d'accueil)",
         'api/v1/locales' => 'publique : langues disponibles, aucune donnée de compte',
         'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
     ];

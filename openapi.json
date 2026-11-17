@@ -16,6 +16,36 @@
         }
     ],
     "paths": {
+        "/v1/app": {
+            "get": {
+                "operationId": "v1.app.show",
+                "summary": "Nom, logo et description de l'application, dans la langue du compte\nconnect\u00e9, sinon celle de `Accept-Language`",
+                "tags": [
+                    "Application"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ApplicationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApplicationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/me/email": {
             "post": {
                 "operationId": "v1.auth.me.email.store",
@@ -1119,6 +1149,35 @@
             }
         },
         "schemas": {
+            "ApplicationResource": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Nom de l'application (`APP_NAME`)."
+                    },
+                    "logo_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Adresse du logo, ou `null` : afficher le nom \u00e0 la place."
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Description dans la langue de la requ\u00eate, ou `null`."
+                    }
+                },
+                "required": [
+                    "name",
+                    "logo_url",
+                    "description"
+                ],
+                "title": "ApplicationResource"
+            },
             "EmailChangeRequest": {
                 "type": "object",
                 "description": "Ajouter ou changer son e-mail : r\u00e8gles du formulaire `auth.profile.email`, et une\nadresse que personne d'autre n'a.",
@@ -2184,6 +2243,13 @@
                             "26",
                             null
                         ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
                     }
                 },
                 "required": [
@@ -2254,6 +2320,12 @@
                             "null"
                         ]
                     },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "email": {
                         "type": [
                             "string",
@@ -2320,6 +2392,7 @@
                     "birth_date",
                     "country_id",
                     "region_id",
+                    "description",
                     "email",
                     "phone",
                     "phone_country_id",
@@ -2410,6 +2483,12 @@
                             "name"
                         ]
                     },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "email": {
                         "type": [
                             "string",
@@ -2460,6 +2539,7 @@
                     "birth_date",
                     "country",
                     "region",
+                    "description",
                     "email",
                     "phone",
                     "phone_country",

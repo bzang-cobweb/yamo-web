@@ -41,5 +41,8 @@ return [
             'update' => 'Modifier les régions',
             'delete' => 'Supprimer des régions',
         ],
+        'settings' => [
+            'update' => 'Modifier les réglages de l\'application',
+        ],
     ],
 ];

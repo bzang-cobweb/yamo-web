@@ -6,6 +6,7 @@ use App\Support\Locales;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Resources\Pages\CreateRecord;
@@ -21,6 +22,7 @@ use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
 use Propaganistas\LaravelPhone\Rules\Phone;
 
@@ -82,6 +84,11 @@ abstract class UserForm
                         ->map(fn (array $region): string => $region['label'])
                         ->all())
                     ->disabled(fn (Get $get): bool => blank($get('country_id'))),
+                Textarea::make('description')
+                    ->label(__('auth::user.description'))
+                    ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                    ->rows(4)
+                    ->columnSpanFull(),
                 // Un compte a un e-mail et/ou un téléphone, jamais aucun des deux.
                 TextInput::make('email')
                     ->label(__('auth::user.email'))

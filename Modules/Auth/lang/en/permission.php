@@ -41,5 +41,8 @@ return [
             'update' => 'Edit regions',
             'delete' => 'Delete regions',
         ],
+        'settings' => [
+            'update' => 'Edit the application settings',
+        ],
     ],
 ];

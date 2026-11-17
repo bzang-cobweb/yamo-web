@@ -121,6 +121,7 @@ class FieldTest extends TestCase
             'required' => true,
             'readonly' => false,
             'depends_on' => null,
+            'max_length' => null,
             'default' => null,
             'options' => [
                 ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],
@@ -185,5 +186,23 @@ class FieldTest extends TestCase
         $this->assertNotContains('otp', $this->errors([...$this->valid(), 'otp' => '012345']));
         $this->assertContains('otp', $this->errors([...$this->valid(), 'otp' => '12345']));
         $this->assertContains('otp', $this->errors([...$this->valid(), 'otp' => '12a456']));
+    }
+
+    public function test_a_textarea_is_limited_to_1000_characters_by_default(): void
+    {
+        $bio = Field::textarea('bio');
+
+        $this->assertSame(1000, $bio->toArray()['max_length']);
+        $this->assertNotContains('bio', $this->errors([...$this->valid(), 'bio' => str_repeat('a', 1000)]));
+        $this->assertContains('bio', $this->errors([...$this->valid(), 'bio' => str_repeat('a', 1001)]));
+    }
+
+    public function test_a_textarea_limit_can_be_changed_per_field(): void
+    {
+        $field = Field::textarea('note')->maxLength(5);
+
+        $this->assertSame(5, $field->toArray()['max_length']);
+        $this->assertTrue(Validator::make(['note' => 'abcde'], $field->validationRules())->passes());
+        $this->assertFalse(Validator::make(['note' => 'abcdef'], $field->validationRules())->passes());
     }
 }

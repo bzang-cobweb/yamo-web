@@ -12,7 +12,7 @@ use Modules\Auth\Models\User;
 class UserResource extends JsonResource
 {
     /**
-     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, email: string|null, phone: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
+     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, description: string|null, email: string|null, phone: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'birth_date' => $this->birthDate(),
             'country' => $this->countryData(),
             'region' => $this->regionData(),
+            'description' => $this->resource->description,
             'email' => $this->email,
             /** E.164 (`+41791234567`), ou `null`. */
             'phone' => $this->phone,

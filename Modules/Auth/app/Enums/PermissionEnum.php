@@ -32,6 +32,8 @@ enum PermissionEnum: string
     case UPDATE_REGIONS = 'regions.update';
     case DELETE_REGIONS = 'regions.delete';
 
+    case UPDATE_SETTINGS = 'settings.update';
+
     public function label(): string
     {
         return __('auth::permission.names.'.$this->value);

@@ -76,6 +76,7 @@ class AuthApiTest extends TestCase
                 'birth_date' => '1990-04-12',
                 'country' => null,
                 'region' => null,
+                'description' => null,
                 'email' => 'jeanne@example.com',
                 'phone' => null,
                 'phone_country' => null,

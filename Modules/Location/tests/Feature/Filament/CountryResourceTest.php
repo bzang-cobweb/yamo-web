@@ -9,6 +9,7 @@ use Modules\Location\Filament\Resources\CountryResource\Pages\CreateCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\EditCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\ListCountries;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 
 class CountryResourceTest extends AuthFilamentTestCase
 {
@@ -117,5 +118,18 @@ class CountryResourceTest extends AuthFilamentTestCase
         $country = Country::factory()->create();
 
         Livewire::test(EditCountry::class, ['record' => $country->getKey()])->assertForbidden();
+    }
+
+    public function test_list_shows_the_number_of_regions_of_each_country(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES);
+        $country = Country::factory()->create();
+        Region::factory()->count(3)->create(['country_id' => $country->getKey()]);
+        $empty = Country::factory()->create();
+
+        Livewire::test(ListCountries::class)
+            ->assertTableColumnVisible('regions_count')
+            ->assertTableColumnStateSet('regions_count', 3, $country)
+            ->assertTableColumnStateSet('regions_count', 0, $empty);
     }
 }
