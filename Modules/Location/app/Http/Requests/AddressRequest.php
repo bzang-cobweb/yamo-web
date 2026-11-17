@@ -6,9 +6,9 @@ use Modules\Form\Http\Requests\FormBackedRequest;
 use Modules\Location\Forms\AddressForm;
 
 /**
- * Ajout ou changement d'une adresse du compte, validé par le formulaire
- * `location.address` : une seule source de règles. La route porte la garde de
- * `AddressPolicy`.
+ * Ajout ou changement d'une adresse du compte (destinataire et adresse), validé
+ * par le formulaire `location.address` : une seule source de règles. La route
+ * porte la garde de `UserAddressPolicy`.
  */
 class AddressRequest extends FormBackedRequest
 {

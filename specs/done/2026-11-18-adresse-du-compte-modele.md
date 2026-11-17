@@ -108,3 +108,70 @@ Validé le 2026-11-18 (« ok validé »), avec l'ajout des suggestions ; les dé
 ## Dépendances
 
 Aucune.
+
+## Ce que j'ai décidé seul
+
+- **Migration plutôt que nouvelle table** : `address_user` est renommée `user_addresses`, ses lignes sont gardées et leur destinataire est repris du compte. Un index simple sur `address_id` remplace l'unicité, que MariaDB exige pour la clé étrangère.
+- **Colonnes en base** : `gender` est facultatif, car un compte peut ne pas avoir de genre au moment de la reprise. `first_name` et `last_name` sont vides par défaut. Les formulaires exigent les trois.
+- **Relation** : `User::addresses()` renvoie désormais les `UserAddress`, et `Address::users()` disparaît au profit de `Address::userAddresses()`.
+- **Permissions** :
+  - dans le back-office, ajouter une adresse à un utilisateur demande `addresses.create`, la modifier ou la retirer `addresses.update` ;
+  - côté API, `AddressPolicy` ne permet que la lecture des suggestions, et les adresses du compte passent par `UserAddressPolicy`.
+- **Suggestions du back-office** :
+  - le champ rue propose une liste du navigateur (`datalist`), mise à jour pendant la saisie ;
+  - une suggestion a pour libellé « Rue — NPA Ville » ;
+  - choisir ce libellé remplit pays, rue, NPA, ville, latitude et longitude ;
+  - sans pays choisi, la recherche porte sur tous les pays.
+- **Suggestions de l'API** :
+  - 30 recherches par minute au plus ;
+  - la recherche porte sur une partie de la rue, sans tenir compte de la casse ;
+  - les caractères `%` et `_` sont cherchés tels quels.
+- **Suggestions de l'app** :
+  - le champ texte à suggestions est générique : le serveur peut l'utiliser pour d'autres champs ;
+  - la suggestion choisie remplit tous les champs modifiables qu'elle nomme, et ignore ceux en lecture seule, verrouillés, cachés ou inconnus ;
+  - une erreur (réseau, limite de débit) n'affiche simplement rien.
+- **Point d'API contrôlé** : `isApiPath` est partagé dans l'app, entre les envois et les suggestions.
+- **Liste « Mes adresses »** : le titre est le destinataire, le sous-titre « rue, NPA ville, pays ».
+
+## Ce qui a été fait
+
+- **Contrat et décision** (web `e380e08`). Le contrat a été validé avec l'ajout des suggestions, et la portée des suggestions dans l'app a été tranchée par l'humain : « All, with limits ».
+- **Web** (`106ddb1`, puis ce commit) :
+  - migration ; modèle et factory `UserAddress` ; `UserAddressPolicy` ;
+  - `AddressService` réécrit : ajouter, modifier, retirer, suggérer ;
+  - colonne « Comptes » retirée de la fiche du pays ;
+  - onglet « Adresses » de la fiche utilisateur sur `UserAddress`, avec le destinataire et la rue à suggestions ;
+  - `GET /v1/addresses/suggestions` ;
+  - `Field::suggestions()` ;
+  - formulaire `location.address` avec le destinataire ;
+  - liste « Mes adresses » ;
+  - `openapi.json` régénéré.
+- **Mobile** (`ba61562`, puis ce commit) : types `FieldSuggestions`, `SuggestionList`, câblage dans `TextField`, `FormField` et `DynamicForm`, `fetchSuggestions`, `isApiPath`, tests, README.
+- **Résultats** :
+  - web : 308 tests et Pint propres ;
+  - mobile : 150 tests, tsc et lint propres ;
+  - QA indépendante : GO, avec 3 mineurs (`.ia/runs/2026-11-18-adresse-du-compte-modele/01-qa-check.md`), dont deux docblocks corrigés ici.
+- **Migration jouée sur MariaDB**, puis vérifiée avec une ligne temporaire :
+  - retour arrière, insertion d'un pivot, migration ;
+  - le destinataire a bien été repris du compte ;
+  - la ligne a été supprimée ensuite.
+- **Essai sur le site local** (dans le conteneur DDEV), avec un compte jetable `@example.test` supprimé ensuite avec ses données :
+  - le formulaire vide est prérempli avec le destinataire du compte et annonce les suggestions ;
+  - la recherche est refusée à 2 caractères (422), et à 3 caractères elle trouve l'adresse ;
+  - la même adresse avec un second destinataire est reprise, sans doublon ;
+  - changer l'adresse laisse l'autre entrée sur l'adresse d'origine ;
+  - après retrait, le formulaire de l'entrée répond 404.
+
+## Ce que je n'ai pas vérifié
+
+- **L'écran de l'app** (liste de suggestions, remplissage) dans le simulateur : vérifié seulement par jest.
+- **Les suggestions du back-office dans un navigateur** : le test Livewire vérifie le remplissage, mais pas l'affichage de la liste du navigateur ni son comportement selon les navigateurs (Safari affiche les `datalist` différemment).
+- **Aucun test automatique** pour la migration (reprise du destinataire) ni pour l'absence de la colonne « Comptes ». La migration a été vérifiée à la main sur MariaDB.
+- **Une entrée d'adresse du super-admin** (« Obam jacky ») a été créée sur la base locale à 23:49 UTC, après mon nettoyage. Elle ne vient pas de mes scripts : je l'ai laissée.
+
+## Ce qui reste en suspens
+
+- **Il faut une nouvelle version de l'app** pour le champ à suggestions : les versions installées affichent la rue sans suggestions, en saisie libre.
+- **Risque assumé** : un compte connecté peut découvrir quelles adresses existent dans un pays (rue, NPA, ville), dans la limite de 3 caractères, 5 résultats et 30 recherches par minute.
+- **Les permissions `addresses.*`** ne sont toujours données à aucun rôle.
+- **Rien n'est poussé.**

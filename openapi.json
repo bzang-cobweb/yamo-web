@@ -1593,7 +1593,7 @@
         "schemas": {
             "AddressRequest": {
                 "type": "object",
-                "description": "Ajout ou changement d'une adresse du compte, valid\u00e9 par le formulaire\n`location.address` : une seule source de r\u00e8gles. La route porte la garde de\n`AddressPolicy`.",
+                "description": "Ajout ou changement d'une adresse du compte (destinataire et adresse), valid\u00e9\npar le formulaire `location.address` : une seule source de r\u00e8gles. La route\nporte la garde de `UserAddressPolicy`.",
                 "properties": {
                     "gender": {
                         "type": "string",
