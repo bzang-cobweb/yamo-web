@@ -11,7 +11,7 @@ use Nwidart\Modules\Facades\Module;
  *
  * Chaque module déclare les siens dans `Modules/<Module>/lang/<langue>/mobile.php`,
  * l'application les textes communs dans `lang/<langue>/mobile.php`. Les tableaux
- * sont aplatis par clé (`home.greeting`) ; les variables suivent la convention
+ * sont aplatis par clé (`form.stepOf`) ; les variables suivent la convention
  * Laravel (`:name`) et sont remplacées par l'app.
  */
 final class MobileMessages

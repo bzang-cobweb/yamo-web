@@ -20,9 +20,6 @@ return [
         'previousStep' => 'Étape précédente',
         'signIn' => 'Se connecter',
     ],
-    'home' => [
-        'greeting' => 'Bonjour :name',
-    ],
     'profile' => [
         'personalInfo' => 'Informations personnelles',
         'password' => 'Changer le mot de passe',

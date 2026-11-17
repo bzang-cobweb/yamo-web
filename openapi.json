@@ -361,7 +361,7 @@
                                                 },
                                                 "messages": {
                                                     "type": "object",
-                                                    "description": "Textes par cl\u00e9 (`home.greeting`).",
+                                                    "description": "Textes par cl\u00e9 (`form.stepOf`).",
                                                     "additionalProperties": {
                                                         "type": "string"
                                                     }

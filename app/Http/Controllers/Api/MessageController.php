@@ -25,7 +25,7 @@ class MessageController
             'data' => [
                 /** Langue des textes renvoyés. */
                 'locale' => $locale,
-                /** Textes par clé (`home.greeting`). */
+                /** Textes par clé (`form.stepOf`). */
                 'messages' => MobileMessages::for($locale),
             ],
         ]);

@@ -39,6 +39,16 @@ class ApplicationTest extends AuthFilamentTestCase
         $this->assertStringContainsString('/app/logo/', (string) $this->getJson('/api/v1/app')->json('data.logo_url'));
     }
 
+    public function test_the_logo_url_uses_the_host_the_app_called(): void
+    {
+        Storage::fake('public');
+        Setting::current()->addMedia(UploadedFile::fake()->image('logo.png'))->toMediaCollection(Setting::LOGO);
+
+        $url = (string) $this->getJson('http://api.local.test/api/v1/app')->json('data.logo_url');
+
+        $this->assertStringStartsWith('http://api.local.test/', $url);
+    }
+
     public function test_home_page_shows_the_name_and_the_description(): void
     {
         Setting::current()->update(['description' => ['fr' => 'Une app pour se retrouver', 'en' => 'An app to meet']]);

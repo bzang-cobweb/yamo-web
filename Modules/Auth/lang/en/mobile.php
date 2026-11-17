@@ -20,9 +20,6 @@ return [
         'previousStep' => 'Previous step',
         'signIn' => 'Sign in',
     ],
-    'home' => [
-        'greeting' => 'Hello :name',
-    ],
     'profile' => [
         'personalInfo' => 'Personal information',
         'password' => 'Change password',

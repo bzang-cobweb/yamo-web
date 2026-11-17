@@ -24,13 +24,14 @@ class MessagesApiTest extends TestCase
         $fr = $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/messages')->assertOk();
 
         $fr->assertJsonPath('data.locale', 'fr');
-        $this->assertSame('Bonjour :name', $fr->json('data.messages')['home.greeting']);
+        $this->assertSame('Accueil', $fr->json('data.messages')['tabs.home']);
+        $this->assertArrayNotHasKey('home.greeting', $fr->json('data.messages'));
         $this->assertSame('Chargement du formulaire…', $fr->json('data.messages')['form.loading']);
         $this->assertSame('Une erreur est survenue. Réessayez.', $fr->json('data.messages')['error.unknown']);
 
         $en = $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/messages')->assertOk();
         $en->assertJsonPath('data.locale', 'en');
-        $this->assertSame('Hello :name', $en->json('data.messages')['home.greeting']);
+        $this->assertSame('Home', $en->json('data.messages')['tabs.home']);
     }
 
     public function test_a_signed_in_user_gets_the_messages_of_their_account_language(): void
@@ -66,7 +67,7 @@ class MessagesApiTest extends TestCase
         $this->assertContains('form::mobile', MobileMessages::sources());
 
         $messages = MobileMessages::for('fr');
-        foreach (['home.greeting', 'avatar.choose', 'form.retry', 'error.unknown'] as $key) {
+        foreach (['tabs.home', 'avatar.choose', 'form.retry', 'error.unknown'] as $key) {
             $this->assertArrayHasKey($key, $messages);
         }
     }

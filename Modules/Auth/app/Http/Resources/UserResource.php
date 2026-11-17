@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Http\Resources;
 
+use App\Http\Resources\Concerns\ServesMediaOnRequestHost;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Auth\Models\User;
@@ -11,6 +12,8 @@ use Modules\Auth\Models\User;
  */
 class UserResource extends JsonResource
 {
+    use ServesMediaOnRequestHost;
+
     /**
      * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, description: string|null, email: string|null, phone: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
      */
@@ -36,7 +39,7 @@ class UserResource extends JsonResource
             'last_seen_at' => $this->lastSeenAt(),
             'is_online' => $this->resource->is_online,
             'locale' => $this->locale,
-            'avatar_url' => $this->avatarUrlFor($request),
+            'avatar_url' => $this->onRequestHost($this->resource->avatarUrl(), $request),
         ];
     }
 
@@ -77,16 +80,5 @@ class UserResource extends JsonResource
     private function birthDate(): ?string
     {
         return $this->resource->birth_date?->format('Y-m-d');
-    }
-
-    /**
-     * Vignette de la photo, sur l'hôte de la requête : l'app joint l'API par
-     * l'adresse qu'elle connaît (en local, HTTP), quel que soit `APP_URL`.
-     */
-    private function avatarUrlFor(Request $request): ?string
-    {
-        $url = $this->resource->avatarUrl();
-
-        return $url === null ? null : $request->getSchemeAndHttpHost().parse_url($url, PHP_URL_PATH);
     }
 }
