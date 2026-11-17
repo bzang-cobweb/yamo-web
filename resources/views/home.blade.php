@@ -11,18 +11,18 @@
             <meta name="description" content="{{ $description }}">
         @endif
         <style>
-            :root { color-scheme: light dark; --text: #1b1b18; --muted: #5f5f5a; --bg: #fdfdfc; }
-            @media (prefers-color-scheme: dark) { :root { --text: #ededec; --muted: #a1a09a; --bg: #0a0a0a; } }
+            :root { color-scheme: light dark; --text: #1b1b18; --muted: #5f5f5a; --bg: #fdfdfc; --primary: {{ \App\Support\Brand::PRIMARY }}; }
+            @media (prefers-color-scheme: dark) { :root { --text: #ededec; --muted: #a1a09a; --bg: #0a0a0a; --primary: {{ \App\Support\Brand::PRIMARY_ON_DARK }}; } }
             * { box-sizing: border-box; }
             body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; }
             main { width: 100%; max-width: 36rem; padding: 2rem 1rem; text-align: center; }
             .home__name { margin: 0; line-height: 0; }
             .home__logo { display: block; width: 12rem; height: auto; margin: 0 auto; }
-            .home__locale { position: relative; display: inline-flex; align-items: center; margin: 0 0 2rem; color: var(--muted); }
+            .home__locale { position: relative; display: inline-flex; align-items: center; margin: 0 0 2rem; color: var(--primary); }
             .home__locale svg { position: absolute; pointer-events: none; }
             .home__locale-globe { left: .75rem; }
             .home__locale-chevron { right: .75rem; }
-            .home__locale select { appearance: none; -webkit-appearance: none; margin: 0; padding: .375rem 2.25rem; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: var(--text); font: inherit; font-size: .875rem; cursor: pointer; }
+            .home__locale select { appearance: none; -webkit-appearance: none; margin: 0; padding: .375rem 2.25rem; border: 1px solid var(--primary); border-radius: 999px; background: transparent; color: var(--text); font: inherit; font-size: .875rem; cursor: pointer; }
             .home__locale button { margin-left: .5rem; font: inherit; font-size: .875rem; }
             .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
             .home__description { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.125rem; line-height: 1.6; white-space: pre-line; }
