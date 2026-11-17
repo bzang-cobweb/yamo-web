@@ -137,10 +137,11 @@ Aucune nouvelle dépendance (media library et translatable déjà présents).
 - Le contrat OpenAPI ne décrit pas les attributs des champs de formulaire (items
   `{}`) : `max_length` n'y apparaît pas, pas plus que les autres attributs — limite
   antérieure à ce chantier.
-- La régénération d'OpenAPI après coup : le `.env` local a été modifié en cours de
-  chantier (`APP_NAME` avec une espace, sans guillemets) et Laravel ne le lit plus.
+- Incident en fin de chantier : `APP_NAME` du `.env` local, changé en cours de route
+  avec une espace et sans guillemets, rendait toute l'API en 500 (« les formulaires ne
+  se chargent plus »). Valeur remise entre guillemets par l'outil env (même valeur) ;
+  API de nouveau en 200, OpenAPI régénéré sans écart, 188 tests au vert.
 
 ## Ce qui reste en suspens
 
-- `.env` : mettre la valeur d'`APP_NAME` entre guillemets (à faire par l'humain).
 - Typage des champs de formulaire dans OpenAPI (si souhaité).
