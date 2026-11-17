@@ -4,15 +4,18 @@ namespace Modules\Location\Tests\Feature;
 
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\UserAddress;
 use Modules\Location\Services\AddressService;
 use Tests\TestCase;
 
 /**
- * Une adresse n'existe qu'une fois par pays ; un compte y est rattaché par le
- * pivot (décision 2026-11-18-adresses-liste-generique).
+ * Une adresse n'existe qu'une fois par pays ; un compte la vise par une
+ * `UserAddress`, avec son destinataire (décisions
+ * 2026-11-18-adresses-liste-generique et 2026-11-18-adresse-du-compte-modele).
  */
 class AddressServiceTest extends TestCase
 {
@@ -29,6 +32,9 @@ class AddressServiceTest extends TestCase
     private function input(Country $country, array $overrides = []): array
     {
         return [
+            'gender' => 'female',
+            'first_name' => 'Jeanne',
+            'last_name' => 'Dupont',
             'country_id' => $country->getKey(),
             'street' => 'Rue du Lac 4',
             'zip' => '1200',
@@ -39,36 +45,47 @@ class AddressServiceTest extends TestCase
         ];
     }
 
-    public function test_attaching_a_new_address_creates_it_then_the_pivot(): void
+    public function test_adding_a_new_address_creates_it_then_the_user_address(): void
+    {
+        $user = User::factory()->create();
+
+        $entry = $this->service()->attach($user, $this->input(Country::factory()->create()));
+
+        $this->assertSame(1, Address::query()->count());
+        $this->assertSame('Rue du Lac 4', $entry->address->street);
+        $this->assertSame('46.2043907', $entry->address->latitude);
+        $this->assertSame(GenderEnum::FEMALE, $entry->gender);
+        $this->assertSame('Jeanne Dupont', $entry->recipient());
+        $this->assertTrue($user->addresses()->sole()->is($entry));
+    }
+
+    public function test_adding_an_existing_address_reuses_it(): void
+    {
+        $country = Country::factory()->create();
+        $existing = $this->service()->attach(User::factory()->create(), $this->input($country))->address;
+
+        // Casse et espaces différents : c'est la même adresse.
+        $entry = $this->service()->attach(User::factory()->create(), $this->input($country, [
+            'street' => '  rue du LAC   4 ', 'city' => 'GENÈVE', 'latitude' => '10', 'longitude' => '10',
+        ]));
+
+        $this->assertTrue($entry->address->is($existing));
+        $this->assertSame(1, Address::query()->count());
+        $this->assertSame(2, $existing->userAddresses()->count());
+        // L'adresse existante garde ses coordonnées.
+        $this->assertSame('46.2043907', $existing->fresh()->latitude);
+    }
+
+    public function test_the_same_address_twice_with_two_recipients(): void
     {
         $user = User::factory()->create();
         $country = Country::factory()->create();
 
-        $address = $this->service()->attach($user, $this->input($country));
+        $this->service()->attach($user, $this->input($country));
+        $this->service()->attach($user, $this->input($country, ['first_name' => 'Paul']));
 
         $this->assertSame(1, Address::query()->count());
-        $this->assertSame('Rue du Lac 4', $address->street);
-        $this->assertSame('46.2043907', $address->latitude);
-        $this->assertTrue($user->addresses()->sole()->is($address));
-    }
-
-    public function test_attaching_an_existing_address_only_creates_the_pivot(): void
-    {
-        $country = Country::factory()->create();
-        $first = User::factory()->create();
-        $second = User::factory()->create();
-        $existing = $this->service()->attach($first, $this->input($country));
-
-        // Casse et espaces différents : c'est la même adresse.
-        $address = $this->service()->attach($second, $this->input($country, [
-            'street' => '  rue du LAC   4 ', 'city' => 'GENÈVE', 'latitude' => '10', 'longitude' => '10',
-        ]));
-
-        $this->assertTrue($address->is($existing));
-        $this->assertSame(1, Address::query()->count());
-        $this->assertSame(2, $existing->users()->count());
-        // L'adresse existante garde ses coordonnées.
-        $this->assertSame('46.2043907', $address->fresh()->latitude);
+        $this->assertSame(['Jeanne', 'Paul'], $user->addresses()->pluck('first_name')->all());
     }
 
     public function test_the_same_street_in_another_country_is_another_address(): void
@@ -79,59 +96,79 @@ class AddressServiceTest extends TestCase
         $this->service()->attach($user, $this->input(Country::factory()->create()));
 
         $this->assertSame(2, Address::query()->count());
-        $this->assertSame(2, $user->addresses()->count());
     }
 
-    public function test_attaching_twice_keeps_a_single_pivot(): void
+    public function test_changing_only_the_recipient_keeps_the_address(): void
     {
-        $user = User::factory()->create();
         $country = Country::factory()->create();
+        $entry = $this->service()->attach(User::factory()->create(), $this->input($country));
+        $address = $entry->address;
 
-        $this->service()->attach($user, $this->input($country));
-        $this->service()->attach($user, $this->input($country));
+        $updated = $this->service()->update($entry, $this->input($country, ['first_name' => 'Jeanne-Marie', 'gender' => 'male']));
 
-        $this->assertSame(1, $user->addresses()->count());
+        $this->assertTrue($updated->address->is($address));
+        $this->assertSame('Jeanne-Marie', $updated->first_name);
+        $this->assertSame(GenderEnum::MALE, $updated->gender);
+        $this->assertSame(1, Address::query()->count());
     }
 
-    public function test_replacing_moves_the_pivot_without_touching_the_shared_address(): void
+    public function test_changing_the_address_leaves_the_shared_one_intact(): void
     {
         $country = Country::factory()->create();
-        $user = User::factory()->create();
-        $partner = User::factory()->create();
-        $old = $this->service()->attach($user, $this->input($country));
-        $this->service()->attach($partner, $this->input($country));
+        $entry = $this->service()->attach(User::factory()->create(), $this->input($country));
+        $partner = $this->service()->attach(User::factory()->create(), $this->input($country));
+        $shared = $entry->address;
 
-        $new = $this->service()->replace($user, $old, $this->input($country, ['street' => 'Rue du Rhône 10']));
+        $updated = $this->service()->update($entry, $this->input($country, ['street' => 'Rue du Rhône 10']));
 
-        $this->assertFalse($new->is($old));
-        $this->assertSame('Rue du Lac 4', $old->fresh()->street);
-        $this->assertTrue($user->addresses()->sole()->is($new));
-        $this->assertTrue($partner->addresses()->sole()->is($old));
+        $this->assertSame('Rue du Rhône 10', $updated->address->street);
+        $this->assertSame('Rue du Lac 4', $shared->fresh()->street);
+        $this->assertTrue($partner->fresh()->address->is($shared));
     }
 
-    public function test_replacing_with_an_existing_address_reuses_it(): void
+    public function test_changing_to_an_existing_address_reuses_it(): void
     {
         $country = Country::factory()->create();
-        $user = User::factory()->create();
         $existing = Address::factory()->for($country)->create(['street' => 'Rue du Rhône 10', 'zip' => '1204', 'city' => 'Genève']);
-        $old = $this->service()->attach($user, $this->input($country));
+        $entry = $this->service()->attach(User::factory()->create(), $this->input($country));
 
-        $new = $this->service()->replace($user, $old, $this->input($country, ['street' => 'rue du rhône 10', 'zip' => '1204']));
+        $updated = $this->service()->update($entry, $this->input($country, ['street' => 'rue du rhône 10', 'zip' => '1204']));
 
-        $this->assertTrue($new->is($existing));
+        $this->assertTrue($updated->address->is($existing));
         $this->assertSame(2, Address::query()->count());
-        $this->assertTrue($user->addresses()->sole()->is($existing));
     }
 
-    public function test_detaching_keeps_the_address_in_its_country(): void
+    public function test_removing_keeps_the_address_in_its_country(): void
     {
-        $user = User::factory()->create();
-        $address = $this->service()->attach($user, $this->input(Country::factory()->create()));
+        $entry = $this->service()->attach(User::factory()->create(), $this->input(Country::factory()->create()));
 
-        $this->service()->detach($user, $address);
+        $this->service()->detach($entry);
 
-        $this->assertSame(0, $user->addresses()->count());
-        $this->assertTrue($address->exists && $address->fresh() !== null);
+        $this->assertSame(0, UserAddress::query()->count());
+        $this->assertNotNull($entry->address->fresh());
+    }
+
+    public function test_suggestions_match_part_of_the_street_in_the_country(): void
+    {
+        $switzerland = Country::factory()->create();
+        Address::factory()->for($switzerland)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
+        Address::factory()->for($switzerland)->create(['street' => 'Quai du Lac 1', 'zip' => '1201', 'city' => 'Genève']);
+        Address::factory()->for($switzerland)->create(['street' => 'Rue du Rhône 10']);
+        Address::factory()->create(['street' => 'Rue du Lac 4']);
+
+        $labels = $this->service()->suggest('DU LAC', $switzerland->getKey(), 5)->map->suggestionLabel()->all();
+
+        $this->assertSame(['Quai du Lac 1 — 1201 Genève', 'Rue du Lac 4 — 1200 Genève'], $labels);
+        $this->assertCount(2, $this->service()->suggest('rue du lac', null, 5));
+        $this->assertCount(1, $this->service()->suggest('du lac', $switzerland->getKey(), 1));
+        $this->assertSame('Rue du Lac 4', $this->service()->fromSuggestionLabel('Rue du Lac 4 — 1200 Genève', $switzerland->getKey())?->street);
+    }
+
+    public function test_a_like_wildcard_is_searched_literally(): void
+    {
+        Address::factory()->create(['street' => 'Rue du Lac 4']);
+
+        $this->assertCount(0, $this->service()->suggest('%%%', null, 5));
     }
 
     public function test_the_database_refuses_a_duplicate(): void
@@ -144,13 +181,14 @@ class AddressServiceTest extends TestCase
         Address::factory()->for($country)->create(['street' => 'RUE DU LAC 4', 'zip' => '1200', 'city' => 'genève']);
     }
 
-    public function test_deleting_the_country_or_purging_the_account_removes_the_rows(): void
+    public function test_purging_the_account_or_deleting_the_country_removes_the_rows(): void
     {
         $user = User::factory()->create();
-        $address = $this->service()->attach($user, $this->input(Country::factory()->create()));
+        $entry = $this->service()->attach($user, $this->input(Country::factory()->create()));
+        $address = $entry->address;
 
         $user->forceDelete();
-        $this->assertSame(0, $address->users()->count());
+        $this->assertNull($entry->fresh());
 
         $address->country->delete();
         $this->assertNull($address->fresh());

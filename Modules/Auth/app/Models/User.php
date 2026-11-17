@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,9 +24,9 @@ use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Services\AvatarService;
-use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
+use Modules\Location\Models\UserAddress;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -90,14 +90,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
-     * Ses adresses, partagées avec d'autres comptes le cas échéant, dans l'ordre
-     * de rattachement (décision 2026-11-18-adresses-liste-generique).
+     * Ses adresses, chacune avec son destinataire, dans l'ordre de création ;
+     * l'adresse elle-même peut être partagée avec d'autres comptes (décision
+     * 2026-11-18-adresse-du-compte-modele).
      *
-     * @return BelongsToMany<Address, $this>
+     * @return HasMany<UserAddress, $this>
      */
-    public function addresses(): BelongsToMany
+    public function addresses(): HasMany
     {
-        return $this->belongsToMany(Address::class)->withTimestamps()->orderByPivot('id');
+        return $this->hasMany(UserAddress::class)->orderBy('id');
     }
 
     /**

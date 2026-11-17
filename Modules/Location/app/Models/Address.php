@@ -8,15 +8,14 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Modules\Auth\Models\User;
 use Modules\Location\Database\Factories\AddressFactory;
 
 /**
  * Une adresse d'un pays, qui n'existe qu'une fois et que plusieurs comptes
- * peuvent partager (pivot `address_user`, décision
- * 2026-11-18-adresses-liste-generique). Deux adresses sont la même si pays,
+ * peuvent viser (`UserAddress`, décisions 2026-11-18-adresses-liste-generique
+ * et 2026-11-18-adresse-du-compte-modele). Deux adresses sont la même si pays,
  * rue, NPA et ville sont identiques, sans tenir compte de la casse ni des
  * espaces : c'est ce que dit l'empreinte `fingerprint`, calculée à chaque
  * enregistrement. Les espaces en trop sont retirés.
@@ -78,13 +77,22 @@ class Address extends Model
     }
 
     /**
-     * Les comptes rattachés à cette adresse.
+     * Les entrées des comptes qui visent cette adresse.
      *
-     * @return BelongsToMany<User, $this>
+     * @return HasMany<UserAddress, $this>
      */
-    public function users(): BelongsToMany
+    public function userAddresses(): HasMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        return $this->hasMany(UserAddress::class);
+    }
+
+    /**
+     * « Rue du Lac 4 — 1200 Genève » : libellé d'une suggestion, qui distingue deux
+     * adresses de même rue.
+     */
+    public function suggestionLabel(): string
+    {
+        return $this->street.' — '.trim($this->zip.' '.$this->city);
     }
 
     /**

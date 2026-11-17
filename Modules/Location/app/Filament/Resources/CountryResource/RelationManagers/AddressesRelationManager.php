@@ -60,10 +60,6 @@ class AddressesRelationManager extends RelationManager
                 TextColumn::make('longitude')
                     ->label(__('location::address.longitude'))
                     ->toggleable(),
-                TextColumn::make('users_count')
-                    ->label(__('location::address.users_count'))
-                    ->counts('users')
-                    ->sortable(),
             ])
             ->headerActions([
                 CreateAction::make(),

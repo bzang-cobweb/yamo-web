@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Support;
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Rules\OptionBelongsToParent;
@@ -40,6 +41,14 @@ final class Field
     public const TEXTAREA_MAX_LENGTH = 1000;
 
     private ?int $maxLength = null;
+
+    /**
+     * Suggestions de saisie servies par l'API (décision
+     * 2026-11-18-adresse-du-compte-modele).
+     *
+     * @var array{endpoint: string, params: list<string>, min_length: int}|null
+     */
+    private ?array $suggestions = null;
 
     /**
      * valeur => libellé, ou valeur => [libellé, indication, parent], dans l'ordre
@@ -238,6 +247,22 @@ final class Field
     }
 
     /**
+     * Pendant la saisie, l'app propose des valeurs servies par la route d'API
+     * nommée `$routeName` (`GET`, `?q=` et la valeur des champs `$params`), à
+     * partir de `$minLength` caractères. Chaque suggestion a un `label` et les
+     * `values` des champs qu'elle remplit une fois choisie.
+     *
+     * @param  list<string>  $params
+     */
+    public function suggestions(string $routeName, array $params = [], int $minLength = 3): self
+    {
+        $path = ltrim(route($routeName, [], false), '/');
+        $this->suggestions = ['endpoint' => '/'.Str::after($path, 'api/'), 'params' => $params, 'min_length' => $minLength];
+
+        return $this;
+    }
+
+    /**
      * Nombre maximal de caractères : validé par le serveur, envoyé à l'app (qui
      * bloque la saisie au-delà et affiche un compteur).
      */
@@ -355,7 +380,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, suggestions: array{endpoint: string, params: list<string>, min_length: int}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -373,6 +398,8 @@ final class Field
             /** Afficher seulement quand le champ `field` vaut `value`. */
             'visible_when' => $this->visibleWhen,
             'max_length' => $this->maxLength,
+            /** Suggestions pendant la saisie : point d'API (`GET`, `?q=`), champs passés en paramètre, longueur minimale. */
+            'suggestions' => $this->suggestions,
             'default' => $this->initialValue(),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [

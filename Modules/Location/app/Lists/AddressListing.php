@@ -8,12 +8,13 @@ use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
 use Modules\Location\Forms\AddressForm;
-use Modules\Location\Models\Address;
+use Modules\Location\Models\UserAddress;
 
 /**
- * « Mes adresses », ouverte depuis le menu du profil : les adresses du compte,
- * chacune modifiable dans `location.address` et retirable (décision
- * 2026-11-18-adresses-liste-generique).
+ * « Mes adresses », ouverte depuis le menu du profil : les adresses du compte
+ * (« Jeanne Dupont », « Rue du Lac 4, 1200 Genève, Suisse »), chacune modifiable
+ * dans `location.address` et retirable (décisions
+ * 2026-11-18-adresses-liste-generique et 2026-11-18-adresse-du-compte-modele).
  */
 class AddressListing extends Listing
 {
@@ -45,8 +46,12 @@ class AddressListing extends Listing
             return [];
         }
 
-        return $user->addresses()->with('country')->get()
-            ->map(fn (Address $address): ListItem => ListItem::make($address->getKey(), $address->title(), $address->subtitle())
+        return $user->addresses()->with('address.country')->get()
+            ->map(fn (UserAddress $userAddress): ListItem => ListItem::make(
+                $userAddress->getKey(),
+                $userAddress->recipient(),
+                $userAddress->address->street.', '.$userAddress->address->subtitle(),
+            )
                 ->edit(AddressForm::name())
                 ->delete(
                     __('location::address.detach'),
@@ -56,7 +61,7 @@ class AddressListing extends Listing
                         SuccessAction::BACK,
                         __('location::address.list.detached'),
                         destructive: true,
-                        parameters: ['address' => $address->getKey()],
+                        parameters: ['userAddress' => $userAddress->getKey()],
                     ),
                 ))
             ->values()

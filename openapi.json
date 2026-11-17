@@ -152,7 +152,7 @@
         "/v1/auth/me/addresses": {
             "post": {
                 "operationId": "v1.auth.me.addresses.store",
-                "summary": "Ajouter une adresse : l'adresse identique existante est reprise, sinon\nelle est cr\u00e9\u00e9e, puis rattach\u00e9e au compte",
+                "summary": "Ajouter une adresse avec son destinataire : l'adresse identique existante\nest reprise, sinon elle est cr\u00e9\u00e9e",
                 "tags": [
                     "Address"
                 ],
@@ -182,19 +182,19 @@
                 }
             }
         },
-        "/v1/auth/me/addresses/{address}": {
+        "/v1/auth/me/addresses/{userAddress}": {
             "patch": {
                 "operationId": "v1.auth.me.addresses.update",
-                "summary": "Changer une de ses adresses : la nouvelle saisie est reprise ou cr\u00e9\u00e9e, et\nremplace l'ancienne pour ce compte seul. L'ancienne n'est pas modifi\u00e9e",
+                "summary": "Modifier une de ses adresses : le destinataire change sur place ; l'adresse\nsaisie est reprise ou cr\u00e9\u00e9e. L'adresse pr\u00e9c\u00e9dente n'est pas modifi\u00e9e",
                 "tags": [
                     "Address"
                 ],
                 "parameters": [
                     {
-                        "name": "address",
+                        "name": "userAddress",
                         "in": "path",
                         "required": true,
-                        "description": "The address ID",
+                        "description": "The user address ID",
                         "schema": {
                             "type": "integer"
                         }
@@ -230,16 +230,16 @@
             },
             "delete": {
                 "operationId": "v1.auth.me.addresses.destroy",
-                "summary": "Retirer une de ses adresses ; elle reste dans son pays",
+                "summary": "Retirer une de ses adresses ; l'adresse reste dans son pays",
                 "tags": [
                     "Address"
                 ],
                 "parameters": [
                     {
-                        "name": "address",
+                        "name": "userAddress",
                         "in": "path",
                         "required": true,
-                        "description": "The address ID",
+                        "description": "The user address ID",
                         "schema": {
                             "type": "integer"
                         }
@@ -251,6 +251,122 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/addresses/suggestions": {
+            "get": {
+                "operationId": "v1.addresses.suggestions",
+                "summary": "Adresses existantes dont la rue contient `q`, dans le pays `country_id`\ns'il est donn\u00e9 : au plus 5, avec pays, rue, NPA et ville, sans coordonn\u00e9es\nni destinataire. Choisir une suggestion remplit ces champs",
+                "tags": [
+                    "AddressSuggestion"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "description": "D\u00e9but ou partie de la rue. @example rue du lac",
+                        "schema": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "description": "Pays choisi dans le formulaire. @example 75",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "values": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "country_id": {
+                                                                "type": "string"
+                                                            },
+                                                            "street": {
+                                                                "type": "string"
+                                                            },
+                                                            "zip": {
+                                                                "type": "string"
+                                                            },
+                                                            "city": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "country_id",
+                                                            "street",
+                                                            "zip",
+                                                            "city"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "label",
+                                                    "values"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
@@ -1479,6 +1595,21 @@
                 "type": "object",
                 "description": "Ajout ou changement d'une adresse du compte, valid\u00e9 par le formulaire\n`location.address` : une seule source de r\u00e8gles. La route porte la garde de\n`AddressPolicy`.",
                 "properties": {
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female"
+                        ]
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
                     "country_id": {
                         "type": "string",
                         "enum": [
@@ -1759,6 +1890,9 @@
                     }
                 },
                 "required": [
+                    "gender",
+                    "first_name",
+                    "last_name",
                     "country_id",
                     "street",
                     "zip",

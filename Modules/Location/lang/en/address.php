@@ -10,8 +10,9 @@ return [
     'city' => 'City',
     'latitude' => 'Latitude',
     'longitude' => 'Longitude',
-    'users_count' => 'Accounts',
     'duplicate' => 'This address already exists in this country.',
+    'recipient' => 'Recipient',
+    'suggestion_help' => 'Type the street to find an existing address.',
     'detach' => 'Remove',
     'form' => [
         'create_title' => 'Add an address',
