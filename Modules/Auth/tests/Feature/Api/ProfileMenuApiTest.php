@@ -41,6 +41,10 @@ class ProfileMenuApiTest extends TestCase
             ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences'],
             array_column($menu, 'label'),
         );
+        $this->assertSame(
+            ['/profile/personal', '/profile/email', '/profile/phone', '/profile/password', '/profile/preferences'],
+            array_column($menu, 'path'),
+        );
     }
 
     public function test_a_disabled_channel_removes_its_link(): void

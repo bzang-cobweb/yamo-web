@@ -12,10 +12,10 @@ use Modules\Auth\Services\ProfileMenuService;
 class ProfileMenuController
 {
     /**
-     * Liens du menu du profil, dans l'ordre, chacun avec la clé de l'écran qu'il
-     * ouvre et son libellé dans la langue du compte.
+     * Liens du menu du profil, dans l'ordre, chacun avec sa clé, son libellé dans
+     * la langue du compte et la route de l'écran qu'il ouvre dans l'app.
      *
-     * @response array{data: list<array{key: 'personal'|'email'|'phone'|'password'|'preferences', label: string}>}
+     * @response array{data: list<array{key: 'personal'|'email'|'phone'|'password'|'preferences', label: string, path: string}>}
      */
     public function index(Request $request, ProfileMenuService $service): array
     {

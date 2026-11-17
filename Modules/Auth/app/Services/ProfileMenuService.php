@@ -9,7 +9,8 @@ use Modules\Auth\Models\User;
 /**
  * Menu du profil d'un utilisateur, défini ici et non dans le back-office
  * (décision 2026-11-17-regions-alphabetiques-menu-en-code) : les liens de `MENU`,
- * dans cet ordre, sans ceux d'un canal désactivé, chacun avec son libellé traduit.
+ * dans cet ordre, sans ceux d'un canal désactivé, chacun avec son libellé traduit
+ * et la route de l'écran qu'il ouvre (`path`), que l'app suit telle quelle.
  */
 class ProfileMenuService
 {
@@ -27,7 +28,7 @@ class ProfileMenuService
     ];
 
     /**
-     * @return Collection<int, array{key: string, label: string}>
+     * @return Collection<int, array{key: string, label: string, path: string}>
      */
     public function for(User $user): Collection
     {
@@ -36,6 +37,7 @@ class ProfileMenuService
             ->map(fn (ProfileMenuKey $key): array => [
                 'key' => $key->value,
                 'label' => $key->labelFor($user),
+                'path' => $key->path(),
             ])
             ->values();
     }

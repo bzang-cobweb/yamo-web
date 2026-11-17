@@ -892,7 +892,7 @@
         "/v1/auth/me/menu": {
             "get": {
                 "operationId": "v1.auth.me.menu",
-                "summary": "Liens du menu du profil, dans l'ordre, chacun avec la cl\u00e9 de l'\u00e9cran qu'il\nouvre et son libell\u00e9 dans la langue du compte",
+                "summary": "Liens du menu du profil, dans l'ordre, chacun avec sa cl\u00e9, son libell\u00e9 dans\nla langue du compte et la route de l'\u00e9cran qu'il ouvre dans l'app",
                 "tags": [
                     "ProfileMenu"
                 ],
@@ -921,11 +921,15 @@
                                                     },
                                                     "label": {
                                                         "type": "string"
+                                                    },
+                                                    "path": {
+                                                        "type": "string"
                                                     }
                                                 },
                                                 "required": [
                                                     "key",
-                                                    "label"
+                                                    "label",
+                                                    "path"
                                                 ]
                                             }
                                         }
