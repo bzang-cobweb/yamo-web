@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-suppression-de-son-compte.md
+
 # `2026-11-15` — Personne ne supprime son propre compte
 
 - **Type** : conséquence de conception
