@@ -49,3 +49,29 @@ Aujourd'hui, l'app a un écran par formulaire du profil : informations personnel
 
 1. **Suppression du compte** : elle passe aussi par l'écran générique, avec un lien rouge fixe en bas du profil. Défaut : oui. Autre option : la mettre dans le menu servi par l'API.
 2. **Messages de confirmation** : le texte vient du serveur (`success.message`) au lieu des clés `notice` de l'app. Défaut : oui.
+
+## Ce que j'ai décidé seul
+
+- **Méthode et chemin lus sur la route nommée** (`Submission::toRoute()`) : le formulaire nomme sa route d'API, le serveur en déduit `method` et `endpoint`. Une seule source, pas de chemin recopié.
+- **Messages de confirmation** : les clés existantes de `auth::mobile` (`profile.saved`, `profile.emailSaved`…, `auth.accountDeleted`) sont réutilisées côté serveur.
+- **Confirmation gardée en mémoire, pas dans l'URL** : le profil ne lit plus de paramètre `notice`. Un lien venu d'ailleurs ne peut pas y faire écrire un texte.
+- **Bouton rouge** : `DynamicForm` le lit dans `submit.destructive` ; la prop `destructive` de `FormLoader`/`DynamicForm` disparaît.
+- **Contrôle de l'endpoint côté app** : `/v1` suivi de segments `[A-Za-z0-9_-]` seulement (ni `..`, ni `?`, ni adresse absolue), méthodes `POST`/`PATCH`/`PUT`/`DELETE`, suites `profile`/`sign-out`. Sinon : erreur, rien n'est envoyé.
+- **Critère « un test ajoute un cas d'énumération »** : un cas d'enum PHP ne s'ajoute pas dans un test. Le test web déclare un formulaire et une route nouveaux (`test.nickname`) et vérifie qu'ils sont servis et envoyables ; un autre vérifie que chaque cas de `ProfileMenuKey` ouvre un formulaire envoyé à une route existante.
+
+## Ce qui a été fait
+
+- **Web** : `Modules/Form` — `SuccessAction`, `Submission`, `Form::submission()`, `submit` enrichi dans `FormResource`. Les six formulaires du profil décrivent leur envoi. `ProfileMenuKey::form()` remplace `path()` ; le menu sert `form`. Tests : `ProfileFormSubmissionApiTest` (nouveau), `ProfileMenuApiTest`. OpenAPI régénéré. 263 tests verts, Pint propre.
+- **Mobile** : route unique `src/app/(tabs)/profile/[form].tsx`, `ProfileFormScreen` générique, `ProfileFormService`, `utils/profile-notice.ts`. Supprimés : six écrans, six routes, six services, `DeleteAccountScreen.test`. `ChallengeFlow.start` peut rendre `null` (fini sans code). README à jour. 119 tests verts, tsc et lint propres.
+- **Simulateur iOS** : menu, formulaire e-mail ouvert par `/profile/[form]` avec le titre de l'API dans l'en-tête, erreur 422 sous le champ après un envoi vide, formulaire de suppression avec bouton rouge. Rien n'a été enregistré sur le compte.
+- QA indépendante : GO, 0 bloquant (`.ia/runs/2026-11-17-formulaires-profil-generiques/01-qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Un envoi réussi dans le simulateur (le compte de démonstration est le vrai compte super-admin) : enregistrement, code e-mail/téléphone, bascule de langue, suppression — couverts par les tests seulement.
+- Le message après changement de langue : il est traduit dans la langue de la requête, donc l'ancienne langue, alors que l'app passe dans la nouvelle.
+- Aucun test mobile ne vérifie la couleur du bouton rouge.
+
+## Ce qui reste en suspens
+
+- Rien d'ouvert sur le contrat. Le titre « Préférencess » vu plus tôt dans le simulateur n'est pas examiné.
