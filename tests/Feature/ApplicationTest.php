@@ -48,21 +48,28 @@ class ApplicationTest extends AuthFilamentTestCase
         Livewire::test(EditSettings::class)->assertFormFieldDoesNotExist('logo');
     }
 
-    public function test_home_page_offers_every_language_and_marks_the_current_one(): void
+    public function test_home_page_offers_every_language_in_a_dropdown_above_the_logo(): void
     {
         $this->withHeader('Accept-Language', 'fr')->get('/')
             ->assertOk()
-            ->assertSee(route('locale.switch', 'en'), false)
-            ->assertSee('English')
-            ->assertSee('lang="fr" aria-current="true">Français', false)
-            ->assertSee('lang="en" aria-current="false">English', false);
+            ->assertSee('action="'.route('locale.switch').'"', false)
+            ->assertSee('<option value="fr" lang="fr" selected>Français</option>', false)
+            ->assertSee('<option value="en" lang="en" >English</option>', false)
+            ->assertSeeInOrder(['<select', 'home__logo'], false);
+    }
+
+    public function test_home_page_has_no_language_dropdown_with_a_single_language(): void
+    {
+        config(['app.supported_locales' => ['fr']]);
+
+        $this->get('/')->assertOk()->assertDontSee('<select', false);
     }
 
     public function test_the_chosen_language_is_kept_for_the_home_page(): void
     {
         Setting::current()->update(['description' => ['fr' => 'Bienvenue', 'en' => 'Welcome']]);
 
-        $this->get('/locale/en')->assertRedirect(route('home'))->assertSessionHas('locale', 'en');
+        $this->get('/locale?locale=en')->assertRedirect(route('home'))->assertSessionHas('locale', 'en');
 
         $this->get('/')->assertSee('Welcome')->assertDontSee('Bienvenue')->assertSee('<html lang="en">', false);
     }
@@ -76,7 +83,8 @@ class ApplicationTest extends AuthFilamentTestCase
 
     public function test_an_unknown_language_is_refused(): void
     {
-        $this->get('/locale/xx')->assertNotFound();
+        $this->get('/locale?locale=xx')->assertNotFound();
+        $this->get('/locale')->assertNotFound();
     }
 
     public function test_settings_page_is_forbidden_without_permission(): void

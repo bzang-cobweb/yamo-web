@@ -8,7 +8,8 @@ use Propaganistas\LaravelPhone\PhoneNumber;
 
 /**
  * Numéros de téléphone : un seul domicile pour leur forme enregistrée (E.164,
- * `+41791234567`) et leur affichage national. Le pays donne l'indicatif.
+ * `+41791234567`) et leurs affichages, national et international. Le pays donne
+ * l'indicatif.
  */
 final class PhoneNumbers
 {
@@ -26,6 +27,14 @@ final class PhoneNumbers
     public static function national(string $e164): string
     {
         return (new PhoneNumber($e164))->formatNational();
+    }
+
+    /**
+     * E.164 → numéro international affiché (« +41 79 123 45 67 »).
+     */
+    public static function international(string $e164): string
+    {
+        return (new PhoneNumber($e164))->formatInternational();
     }
 
     /**

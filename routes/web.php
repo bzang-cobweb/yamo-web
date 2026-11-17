@@ -20,9 +20,13 @@ Route::middleware(SetSessionLocale::class)->group(function (): void {
 
     // Choix de la langue par le visiteur, gardé en session (décision
     // 2026-11-20-contrat-accueil-nom-langue).
-    Route::get('/locale/{locale}', function (Request $request, string $locale) {
+    // Formulaire de la liste déroulante : `GET /locale?locale=en`, sans JavaScript.
+    Route::get('/locale', function (Request $request) {
+        $locale = $request->query('locale');
+        abort_unless(is_string($locale) && in_array($locale, Locales::values(), true), 404);
+
         $request->session()->put(SetSessionLocale::SESSION_KEY, $locale);
 
         return redirect()->route('home');
-    })->whereIn('locale', Locales::values())->name('locale.switch');
+    })->name('locale.switch');
 });

@@ -2508,6 +2508,13 @@
                         ],
                         "description": "E.164 (`+41791234567`), ou `null`."
                     },
+                    "phone_international": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Num\u00e9ro au format international lisible (`+41 79 123 45 67`), pour l'affichage."
+                    },
                     "phone_country": {
                         "type": [
                             "string",
@@ -2548,6 +2555,7 @@
                     "description",
                     "email",
                     "phone",
+                    "phone_international",
                     "phone_country",
                     "last_seen_at",
                     "is_online",

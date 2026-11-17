@@ -6,6 +6,7 @@ use App\Http\Resources\Concerns\ServesMediaOnRequestHost;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 
 /**
  * @mixin User
@@ -15,7 +16,7 @@ class UserResource extends JsonResource
     use ServesMediaOnRequestHost;
 
     /**
-     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, description: string|null, email: string|null, phone: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
+     * @return array{id: int, name: string, first_name: string, last_name: string, full_name: string, initials: string, gender: string|null, birth_date: string|null, country: array{code: string, name: string, dial_code: string}|null, region: array{id: int, name: string}|null, description: string|null, email: string|null, phone: string|null, phone_international: string|null, phone_country: string|null, last_seen_at: string|null, is_online: bool, locale: string, avatar_url: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -34,6 +35,8 @@ class UserResource extends JsonResource
             'email' => $this->email,
             /** E.164 (`+41791234567`), ou `null`. */
             'phone' => $this->phone,
+            /** Numéro au format international lisible (`+41 79 123 45 67`), pour l'affichage. */
+            'phone_international' => $this->phoneInternational(),
             /** Code ISO du pays de l'indicatif du téléphone. */
             'phone_country' => $this->phoneCountryCode(),
             'last_seen_at' => $this->lastSeenAt(),
@@ -61,6 +64,11 @@ class UserResource extends JsonResource
         $region = $this->resource->region;
 
         return $region === null ? null : ['id' => $region->getKey(), 'name' => (string) $region->name];
+    }
+
+    private function phoneInternational(): ?string
+    {
+        return $this->resource->phone === null ? null : PhoneNumbers::international($this->resource->phone);
     }
 
     private function phoneCountryCode(): ?string

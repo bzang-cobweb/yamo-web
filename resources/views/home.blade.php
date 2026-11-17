@@ -18,27 +18,32 @@
             main { width: 100%; max-width: 36rem; padding: 2rem 1rem; text-align: center; }
             .home__name { margin: 0; line-height: 0; }
             .home__logo { display: block; width: 12rem; height: auto; margin: 0 auto; }
-            .home__locales { position: absolute; top: 1rem; right: 1rem; display: flex; gap: .5rem; margin: 0; padding: 0; list-style: none; }
-            .home__locale { display: block; padding: .25rem .75rem; border: 1px solid transparent; border-radius: 999px; color: var(--muted); font-size: .875rem; text-decoration: none; }
-            .home__locale:hover { color: var(--text); }
-            .home__locale--current { border-color: currentColor; color: var(--text); font-weight: 600; }
+            .home__locale { position: relative; display: inline-flex; align-items: center; margin: 0 0 2rem; color: var(--muted); }
+            .home__locale svg { position: absolute; pointer-events: none; }
+            .home__locale-globe { left: .75rem; }
+            .home__locale-chevron { right: .75rem; }
+            .home__locale select { appearance: none; -webkit-appearance: none; margin: 0; padding: .375rem 2.25rem; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: var(--text); font: inherit; font-size: .875rem; cursor: pointer; }
+            .home__locale button { margin-left: .5rem; font: inherit; font-size: .875rem; }
+            .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
             .home__description { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.125rem; line-height: 1.6; white-space: pre-line; }
         </style>
     </head>
     <body>
-        @if (count($locales) > 1)
-            <nav aria-label="{{ __('home.locales') }}">
-                <ul class="home__locales">
-                    @foreach ($locales as $code => $label)
-                        @php($current = $code === app()->getLocale())
-                        <li>
-                            <a @class(['home__locale', 'home__locale--current' => $current]) href="{{ route('locale.switch', $code) }}" hreflang="{{ $code }}" lang="{{ $code }}" aria-current="{{ $current ? 'true' : 'false' }}">{{ $label }}</a>
-                        </li>
-                    @endforeach
-                </ul>
-            </nav>
-        @endif
         <main class="home">
+            {{-- Choix de la langue, au-dessus du logo ; masqué s'il n'y a qu'une langue. --}}
+            @if (count($locales) > 1)
+                <form class="home__locale" method="get" action="{{ route('locale.switch') }}">
+                    <label class="visually-hidden" for="locale">{{ __('home.locales') }}</label>
+                    <svg class="home__locale-globe" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+                    <select id="locale" name="locale" onchange="this.form.submit()">
+                        @foreach ($locales as $code => $label)
+                            <option value="{{ $code }}" lang="{{ $code }}" @selected($code === app()->getLocale())>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <svg class="home__locale-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    <noscript><button type="submit">OK</button></noscript>
+                </form>
+            @endif
             <h1 class="home__name">
                 <picture>
                     <source srcset="{{ asset('images/logo/yamo-logo-vertical-inverse.svg') }}" media="(prefers-color-scheme: dark)">

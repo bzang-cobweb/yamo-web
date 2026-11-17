@@ -387,6 +387,7 @@ class VerificationCodesApiTest extends TestCase
         $this->withToken($token)->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567')])
             ->assertOk()
             ->assertJsonPath('data.phone', '+41791234567')
+            ->assertJsonPath('data.phone_international', '+41 79 123 45 67')
             ->assertJsonPath('data.phone_country', 'CH');
 
         $user->refresh();
