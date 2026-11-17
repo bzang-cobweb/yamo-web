@@ -202,3 +202,82 @@ En français et en anglais : le menu, le titre de la liste, les libellés des ch
 ## Dépendances
 
 Aucune.
+
+## Ce que j'ai décidé seul
+
+- **Empreinte pour l'unicité.**
+  - Une colonne cachée `fingerprint` (sha1 de la rue, du NPA et de la ville, en minuscules et sans espaces en trop) porte l'index unique `(country_id, fingerprint)`, à la place d'un index sur les quatre colonnes.
+  - Motif : l'unicité ignore la casse quelle que soit la base, sqlite des tests compris, et tient même en cas d'envois simultanés.
+- **Coordonnées d'une adresse existante.**
+  - Quand la saisie correspond à une adresse existante, celle-ci garde sa latitude et sa longitude, et celles de la saisie sont ignorées.
+  - Motif : un compte ne modifie jamais une adresse partagée. C'est inscrit dans les corollaires de la décision.
+- **Changer pour la même adresse ne fait rien.**
+  - Si la nouvelle saisie retombe sur l'adresse actuelle, rien ne change, même si la latitude ou la longitude diffèrent.
+  - Conséquence : depuis l'app, un compte ne peut pas corriger les coordonnées d'une adresse existante. Il faut passer par le back-office, dans la fiche du pays.
+- **Une adresse retirée reste en base**, même quand plus aucun compte n'y est rattaché. Elle se supprime depuis la fiche du pays.
+- **Permissions.**
+  - « Retirer » une adresse d'un utilisateur dans le back-office demande `addresses.update` (policy `detach`).
+  - La suppression d'une adresse demande `addresses.delete` et n'existe que dans la fiche du pays.
+  - Via l'API, `delete` est toujours refusé : un compte retire, il ne supprime pas.
+- **404 par la policy** : `Response::denyAsNotFound()` pour l'adresse d'un autre compte, sur les routes et sur `?record=`.
+- **Les réponses de l'API sont vides (204).** L'app recharge la liste. Renvoyer `data` aurait été pris pour un compte utilisateur par `ProfileFormService`.
+- **Une seule source pour la liste des pays.** `Country::options()` remplace la liste de `PersonalInfoForm`, qui la reprend, et sert aussi le formulaire d'adresse et le back-office.
+- **Libellé « Retirer »** plutôt que « Supprimer », puisque l'adresse reste en base.
+- **Retrait d'un item dans l'app.**
+  - Après confirmation, la liste affiche le message et se recharge sans changer d'écran : la suite `back` n'a de sens que pour un formulaire.
+  - Un retrait que l'app ne sait pas exécuter n'affiche pas de bouton.
+- **Nouveaux textes de l'app** `list.loading` et `list.cancel`, dans le module Form.
+- **Pas d'audit par sous-agent** avant l'implémentation. Le code touché (formulaires génériques, menu) venait du chantier précédent, clos la veille dans cette même session.
+
+## Ce qui a été fait
+
+- **Contrat et décision** (web `0858422`), après le retour du 2026-11-18 : adresses par pays, pivot, règles de création et d'édition.
+- **Web** (`609090b`, `e00452a`) :
+  - migration `addresses` et `address_user` ;
+  - modèle `Address` et ses relations ;
+  - `AddressService` : rattacher, changer, retirer ;
+  - règle `UniqueAddress` ;
+  - `AddressPolicy` et permissions `addresses.*` ;
+  - relation managers sur la fiche du pays et sur celle de l'utilisateur ;
+  - module Form : `Listing`, `ListItem`, `ListingRegistry`, `GET /v1/lists/{list}`, `?record=` (`Form::forRecord`), suite `back`, `Submission::toRoute(…, parameters:)` ;
+  - formulaire `location.address`, liste `location.addresses`, routes `/v1/auth/me/addresses` ;
+  - lien de menu `addresses` (`list`) ;
+  - textes en français et en anglais ;
+  - `openapi.json` régénéré.
+- **Mobile** (`d44ebb2`) :
+  - `ProfileListScreen` et la route `/profile/lists/[list]` ;
+  - feature `list` (types, service, hook) ;
+  - `record` dans `ProfileFormScreen`, `ChallengeFlow`, `FormLoader`, `useFormDefinition` et `FormService` ;
+  - suite `back` (`backWithNotice`) ;
+  - liens `list` du menu ;
+  - README ;
+  - tests.
+- **Résultats** :
+  - web : 300 tests et Pint propres ;
+  - mobile : 136 tests, tsc et lint propres ;
+  - migration jouée et permissions synchronisées en local ;
+  - QA indépendante : GO (`.ia/runs/2026-11-17-adresses-liste-generique/01-qa-check.md`).
+- **Essai sur le site local** (dans le conteneur DDEV), avec un compte jetable `@example.test` supprimé ensuite avec ses données :
+  - le menu sert le lien `list` ;
+  - liste vide, puis ajout ;
+  - un second ajout de la même adresse (casse et espaces différents) ne crée rien ;
+  - une saisie invalide renvoie 422 sur la rue et la latitude ;
+  - le formulaire est prérempli et envoyé en `PATCH` ;
+  - la modification crée une nouvelle adresse ;
+  - le retrait fonctionne ;
+  - une adresse qui n'est plus au compte répond 404 au formulaire, à la modification et au retrait.
+
+## Ce que je n'ai pas vérifié
+
+- **L'écran dans le simulateur.** L'app était déconnectée et je n'ai saisi aucun mot de passe : l'écran de liste n'est vérifié que par jest.
+- **Le rendu visuel** des deux relation managers Filament, vus seulement par les tests Livewire.
+- **L'unicité sur MariaDB.** Elle repose sur l'empreinte, donc indépendante de la collation, mais elle n'est testée qu'en sqlite.
+- **Une version installée de l'app** recevant le lien `list` : en théorie elle l'ignore (filtre sur `form`), mais ce n'est pas essayé.
+- **Les textes anglais**, qui n'ont pas été relus par un humain.
+
+## Ce qui reste en suspens
+
+- **Les permissions `addresses.*` ne sont données à aucun rôle.** Seul le super-admin y a accès tant qu'un administrateur ne les attribue pas.
+- **Latitude et longitude** ne se remplissent qu'à la main. La position de l'appareil ou un service de géocodage demanderait une dépendance, donc ton accord.
+- **Corriger les coordonnées** d'une adresse partagée ne se fait que dans le back-office.
+- **Rien n'est poussé.**
