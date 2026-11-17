@@ -30,11 +30,11 @@ class RegisterStepsApiTest extends TestCase
     {
         $response = $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register')->assertOk();
 
-        $this->assertSame(['name', 'first_name', 'last_name', 'gender', 'email', 'phone', 'password', 'password_confirmation'], array_column($response->json('data.fields'), 'name'));
+        $this->assertSame(['name', 'first_name', 'last_name', 'gender', 'description', 'email', 'phone', 'password', 'password_confirmation'], array_column($response->json('data.fields'), 'name'));
         $response->assertJsonPath('data.fields.3.type', 'select')
             ->assertJsonPath('data.fields.3.required', true)
             ->assertJsonPath('data.steps', [
-                ['title' => 'Vous', 'fields' => ['name', 'first_name', 'last_name', 'gender']],
+                ['title' => 'Vous', 'fields' => ['name', 'first_name', 'last_name', 'gender', 'description']],
                 ['title' => 'Vous joindre', 'fields' => ['email', 'phone']],
                 ['title' => 'Mot de passe', 'fields' => ['password', 'password_confirmation']],
             ]);

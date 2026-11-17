@@ -1569,6 +1569,13 @@
                             "female"
                         ]
                     },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
                     "email": {
                         "type": [
                             "string",

@@ -216,8 +216,23 @@ class VerificationCodesApiTest extends TestCase
         $response->assertJsonPath('data.id', $user->id)->assertJsonPath('data.email', 'marie@example.com')->assertJsonStructure(['token']);
         $this->assertNotNull($user->email_verified_at);
         $this->assertSame('female', $user->gender->value);
+        $this->assertNull($user->description);
         $this->assertNull($user->phone);
         $this->assertTrue(Hash::check('Secret-password-1', $user->password));
+    }
+
+    public function test_register_saves_the_optional_description_and_limits_it(): void
+    {
+        $this->register(['description' => str_repeat('a', 1001)])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('description');
+
+        $challenge = $this->register(['description' => 'Physicienne'])->assertAccepted()->json('challenge');
+        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
+            ->assertCreated()
+            ->assertJsonPath('data.description', 'Physicienne');
+
+        $this->assertSame('Physicienne', User::query()->where('name', 'marie')->value('description'));
     }
 
     public function test_register_with_phone_only_sends_an_sms(): void
@@ -375,8 +390,8 @@ class VerificationCodesApiTest extends TestCase
     public function test_register_and_code_forms_are_public(): void
     {
         $this->getJson('/api/v1/forms/auth.register')->assertOk()
-            ->assertJsonPath('data.fields.5.name', 'phone')
-            ->assertJsonPath('data.fields.5.type', 'phone');
+            ->assertJsonPath('data.fields.6.name', 'phone')
+            ->assertJsonPath('data.fields.6.type', 'phone');
         $this->getJson('/api/v1/forms/auth.code')->assertOk()
             ->assertJsonPath('data.fields.0.type', 'code');
     }

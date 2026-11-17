@@ -15,7 +15,7 @@ use Modules\Form\Support\Step;
 
 /**
  * Créer un compte depuis l'app, en trois étapes : qui (pseudonyme, prénom, nom,
- * genre), comment joindre (e-mail et/ou téléphone), mot de passe. Chaque étape est
+ * genre, description facultative), comment joindre (e-mail et/ou téléphone), mot de passe. Chaque étape est
  * validée avant la suivante, l'unicité comprise ; l'envoi final valide tout. Un code
  * part vers chaque identifiant, et le compte n'existe qu'une fois tous validés.
  */
@@ -40,6 +40,7 @@ class RegisterForm extends Form
                 ->label(__('auth::user.gender'))
                 ->options(GenderEnum::options())
                 ->required(),
+            Field::textarea('description')->label(__('auth::user.description')),
             Field::email('email')
                 ->label(__('auth::user.email'))
                 ->help(__('auth::form.register.contact_help'))
@@ -60,7 +61,7 @@ class RegisterForm extends Form
     public function steps(): array
     {
         return [
-            Step::make(__('auth::form.register.steps.identity'), ['name', 'first_name', 'last_name', 'gender']),
+            Step::make(__('auth::form.register.steps.identity'), ['name', 'first_name', 'last_name', 'gender', 'description']),
             Step::make(__('auth::form.register.steps.contact'), ['email', 'phone']),
             Step::make(__('auth::form.register.steps.password'), ['password', 'password_confirmation']),
         ];
