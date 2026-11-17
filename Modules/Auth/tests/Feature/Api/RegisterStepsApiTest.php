@@ -34,9 +34,9 @@ class RegisterStepsApiTest extends TestCase
         $response->assertJsonPath('data.fields.3.type', 'select')
             ->assertJsonPath('data.fields.3.required', true)
             ->assertJsonPath('data.steps', [
-                ['title' => 'Vous', 'fields' => ['name', 'first_name', 'last_name', 'gender', 'birth_date', 'description']],
-                ['title' => 'Vous joindre', 'fields' => ['email', 'phone']],
-                ['title' => 'Mot de passe', 'fields' => ['password', 'password_confirmation']],
+                ['title' => 'Vous', 'subtitle' => null, 'fields' => ['name', 'first_name', 'last_name', 'gender', 'birth_date', 'description']],
+                ['title' => 'Vous joindre', 'subtitle' => __('auth::form.register.contact_help', [], 'fr'), 'fields' => ['email', 'phone']],
+                ['title' => 'Mot de passe', 'subtitle' => null, 'fields' => ['password', 'password_confirmation']],
             ]);
     }
 

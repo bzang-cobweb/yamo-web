@@ -62,7 +62,9 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertArrayHasKey('email', $register);
         $this->assertArrayHasKey('phone', $register);
         $this->assertFalse($register['email']['required']);
-        $this->assertSame(__('auth::form.register.contact_help', [], 'fr'), $register['email']['help']);
+        // L'aide « l'un ou l'autre » est le sous-titre de l'étape, plus celle du champ e-mail.
+        $this->assertNull($register['email']['help']);
+        $this->assertSame(__('auth::form.register.contact_help', [], 'fr'), $this->form('auth.register')['steps'][1]['subtitle']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
         // Sélecteur « E-mail | Téléphone », puis le champ choisi.
@@ -84,6 +86,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertTrue($register['email']['required']);
         $this->assertNull($register['email']['help']);
         $this->assertSame(['email'], $form['steps'][1]['fields']);
+        $this->assertNull($form['steps'][1]['subtitle']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
         $this->assertSame(['email', 'password'], array_keys($login));

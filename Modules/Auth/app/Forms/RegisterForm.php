@@ -71,7 +71,6 @@ class RegisterForm extends Form
         if (AuthChannels::email()) {
             $fields[] = Field::email('email')
                 ->label(__('auth::user.email'))
-                ->help($both ? __('auth::form.register.contact_help') : null)
                 ->required(! $both)
                 ->rules([...($both ? ['required_without:phone'] : []), 'max:255', Rule::unique(User::class, 'email')]);
         }
@@ -91,7 +90,9 @@ class RegisterForm extends Form
     {
         return [
             Step::make(__('auth::form.register.steps.identity'), ['name', 'first_name', 'last_name', 'gender', 'birth_date', 'description']),
-            Step::make(__('auth::form.register.steps.contact'), array_keys(array_filter(AuthChannels::enabled()))),
+            // L'un ou l'autre (ou les deux) : expliqué sous le titre de l'étape.
+            Step::make(__('auth::form.register.steps.contact'), array_keys(array_filter(AuthChannels::enabled())))
+                ->subtitle(AuthChannels::both() ? __('auth::form.register.contact_help') : null),
             Step::make(__('auth::form.register.steps.password'), ['password', 'password_confirmation']),
         ];
     }
