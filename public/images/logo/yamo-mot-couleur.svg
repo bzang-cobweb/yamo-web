@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 60" width="840" height="240" role="img" aria-label="YaMo">
+  <g fill="none" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#FF5A7A"><path d="M4.5 4.5 L22 32 L39.5 4.5 M22 32 V55.5"/><circle cx="70" cy="40" r="15.5"/><path d="M85.5 24.5 V55.5"/></g>
+    <g stroke="#7B5CFA"><path d="M108.5 55.5 V4.5 L131 38 L153.5 4.5 V55.5"/><circle cx="186" cy="40" r="15.5"/></g>
+  </g>
+</svg>

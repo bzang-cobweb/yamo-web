@@ -7,7 +7,6 @@ use App\Filament\NavigationGroup;
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -16,7 +15,7 @@ use Modules\Form\Support\Field;
 
 /**
  * Réglages de l'application : une seule page, qui modifie l'unique ligne des
- * réglages (logo, description traduite).
+ * réglages (description traduite).
  */
 class SettingResource extends AbstractResource
 {
@@ -35,12 +34,6 @@ class SettingResource extends AbstractResource
             ->components([
                 Section::make(__('settings.sections.general'))
                     ->schema([
-                        SpatieMediaLibraryFileUpload::make('logo')
-                            ->label(__('settings.logo'))
-                            ->helperText(__('settings.help.logo'))
-                            ->collection(Setting::LOGO)
-                            ->image()
-                            ->maxSize(2048),
                         // Traduite : un onglet par langue.
                         TranslatableTabs::make(fn (string $locale): array => [
                             Textarea::make("description.{$locale}")

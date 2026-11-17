@@ -19,7 +19,7 @@
         "/v1/app": {
             "get": {
                 "operationId": "v1.app.show",
-                "summary": "Nom, logo et description de l'application, dans la langue du compte\nconnect\u00e9, sinon celle de `Accept-Language`",
+                "summary": "Nom et description de l'application, dans la langue du compte\nconnect\u00e9, sinon celle de `Accept-Language`",
                 "tags": [
                     "Application"
                 ],
@@ -1156,13 +1156,6 @@
                         "type": "string",
                         "description": "Nom de l'application (`APP_NAME`)."
                     },
-                    "logo_url": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Adresse du logo, ou `null` : afficher le nom \u00e0 la place."
-                    },
                     "description": {
                         "type": [
                             "string",
@@ -1173,7 +1166,6 @@
                 },
                 "required": [
                     "name",
-                    "logo_url",
                     "description"
                 ],
                 "title": "ApplicationResource"

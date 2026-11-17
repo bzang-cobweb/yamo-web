@@ -4,21 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * Réglages de l'application, édités dans le back-office (page Application) et
- * servis par `GET /api/v1/app` : logo (média) et description traduite. Une seule
- * ligne, obtenue par `Setting::current()`.
+ * servis par `GET /api/v1/app` : description traduite. Une seule ligne, obtenue
+ * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
+ * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
 #[Fillable(['description'])]
-class Setting extends Model implements HasMedia
+class Setting extends Model
 {
-    use HasTranslations, InteractsWithMedia;
-
-    public const LOGO = 'logo';
+    use HasTranslations;
 
     /** @var list<string> */
     public array $translatable = ['description'];
@@ -33,27 +30,6 @@ class Setting extends Model implements HasMedia
         $setting->wasRecentlyCreated = false;
 
         return $setting;
-    }
-
-    /**
-     * Logo : un seul fichier, une nouvelle image remplace l'ancienne.
-     */
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection(self::LOGO)
-            ->singleFile()
-            ->acceptsMimeTypes(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])
-            ->useDisk('public');
-    }
-
-    /**
-     * Adresse du logo, ou `null` sans logo.
-     */
-    public function logoUrl(): ?string
-    {
-        $url = $this->getFirstMediaUrl(self::LOGO);
-
-        return $url === '' ? null : $url;
     }
 
     /**

@@ -4,8 +4,6 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Models\Setting;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
@@ -16,11 +14,11 @@ use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
  */
 class ApplicationTest extends AuthFilamentTestCase
 {
-    public function test_api_returns_the_name_and_no_logo_nor_description_by_default(): void
+    public function test_api_returns_the_name_and_no_description_by_default(): void
     {
         $this->getJson('/api/v1/app')
             ->assertOk()
-            ->assertExactJson(['data' => ['name' => config('app.name'), 'logo_url' => null, 'description' => null]]);
+            ->assertExactJson(['data' => ['name' => config('app.name'), 'description' => null]]);
     }
 
     public function test_api_returns_the_description_in_the_requested_language(): void
@@ -31,32 +29,23 @@ class ApplicationTest extends AuthFilamentTestCase
         $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/app')->assertJsonPath('data.description', 'Welcome');
     }
 
-    public function test_api_returns_the_logo_url_once_uploaded(): void
-    {
-        Storage::fake('public');
-        Setting::current()->addMedia(UploadedFile::fake()->image('logo.png'))->toMediaCollection(Setting::LOGO);
-
-        $this->assertStringContainsString('/app/logo/', (string) $this->getJson('/api/v1/app')->json('data.logo_url'));
-    }
-
-    public function test_the_logo_url_uses_the_host_the_app_called(): void
-    {
-        Storage::fake('public');
-        Setting::current()->addMedia(UploadedFile::fake()->image('logo.png'))->toMediaCollection(Setting::LOGO);
-
-        $url = (string) $this->getJson('http://api.local.test/api/v1/app')->json('data.logo_url');
-
-        $this->assertStringStartsWith('http://api.local.test/', $url);
-    }
-
-    public function test_home_page_shows_the_name_and_the_description(): void
+    public function test_home_page_shows_the_logo_files_and_the_description(): void
     {
         Setting::current()->update(['description' => ['fr' => 'Une app pour se retrouver', 'en' => 'An app to meet']]);
 
         $this->get('/')
             ->assertOk()
-            ->assertSee(config('app.name'))
+            ->assertSee('images/logo/yamo-logo-vertical-couleur.svg')
+            ->assertSee('images/logo/yamo-logo-vertical-inverse.svg')
+            ->assertSee('alt="'.e(config('app.name')).'"', false)
             ->assertSee('Une app pour se retrouver');
+    }
+
+    public function test_settings_page_has_no_logo_field(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::UPDATE_SETTINGS);
+
+        Livewire::test(EditSettings::class)->assertFormFieldDoesNotExist('logo');
     }
 
     public function test_settings_page_is_forbidden_without_permission(): void

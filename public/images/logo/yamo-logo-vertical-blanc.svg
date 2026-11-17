@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 132" width="672" height="528" role="img" aria-label="YaMo">
+  <g transform="translate(38 0)"><defs><mask id="yamo-blanc-v" maskUnits="userSpaceOnUse" x="0" y="0" width="92" height="60">
+    <rect width="92" height="60" fill="#FFFFFF"/>
+    <circle cx="62" cy="30" r="26" fill="#000000" clip-path="url(#yamo-blanc-v-c)"/>
+  </mask><clipPath id="yamo-blanc-v-c"><circle cx="30" cy="30" r="26"/></clipPath></defs>
+  <g mask="url(#yamo-blanc-v)" fill="#FFFFFF"><circle cx="30" cy="30" r="30"/><circle cx="62" cy="30" r="30"/></g></g>
+  <g transform="translate(0 84) scale(0.8)"><g fill="none" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#FFFFFF"><path d="M4.5 4.5 L22 32 L39.5 4.5 M22 32 V55.5"/><circle cx="70" cy="40" r="15.5"/><path d="M85.5 24.5 V55.5"/></g>
+    <g stroke="#FFFFFF"><path d="M108.5 55.5 V4.5 L131 38 L153.5 4.5 V55.5"/><circle cx="186" cy="40" r="15.5"/></g>
+  </g></g>
+</svg>

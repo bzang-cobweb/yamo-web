@@ -11,7 +11,7 @@ use App\Models\Setting;
 class ApplicationController
 {
     /**
-     * Nom, logo et description de l'application, dans la langue du compte
+     * Nom et description de l'application, dans la langue du compte
      * connecté, sinon celle de `Accept-Language`.
      *
      * @unauthenticated

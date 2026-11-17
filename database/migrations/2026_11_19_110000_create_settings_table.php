@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Réglages de l'application, sur une seule ligne : description traduite (JSON
- * fr/en). Le logo est un média attaché à cette ligne ; le nom reste `APP_NAME`.
+ * fr/en). Le nom reste `APP_NAME`.
  */
 return new class extends Migration
 {
