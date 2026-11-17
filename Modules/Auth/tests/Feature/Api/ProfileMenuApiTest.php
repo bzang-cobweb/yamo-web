@@ -3,14 +3,12 @@
 namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Auth\Enums\ProfileMenuKey;
-use Modules\Auth\Models\ProfileMenuLink;
 use Modules\Auth\Models\User;
 use Tests\TestCase;
 
 /**
- * Menu du profil (`GET /api/v1/auth/me/menu`) : liens actifs du back-office, dans
- * leur ordre, filtrés par canal, libellés selon le compte.
+ * Menu du profil (`GET /api/v1/auth/me/menu`) : liens définis dans
+ * `ProfileMenuService`, dans leur ordre, filtrés par canal, libellés selon le compte.
  */
 class ProfileMenuApiTest extends TestCase
 {
@@ -34,7 +32,7 @@ class ProfileMenuApiTest extends TestCase
         $this->getJson('/api/v1/auth/me/menu')->assertUnauthorized();
     }
 
-    public function test_lists_the_five_screens_in_their_initial_order(): void
+    public function test_lists_the_five_screens_in_the_service_order(): void
     {
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
@@ -43,14 +41,6 @@ class ProfileMenuApiTest extends TestCase
             ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences'],
             array_column($menu, 'label'),
         );
-    }
-
-    public function test_follows_the_back_office_order_and_hides_inactive_links(): void
-    {
-        ProfileMenuLink::query()->where('key', ProfileMenuKey::PREFERENCES)->update(['position' => 0]);
-        ProfileMenuLink::query()->where('key', ProfileMenuKey::PASSWORD)->update(['active' => false]);
-
-        $this->assertSame(['preferences', 'personal', 'email', 'phone'], array_column($this->menu($this->user()), 'key'));
     }
 
     public function test_a_disabled_channel_removes_its_link(): void

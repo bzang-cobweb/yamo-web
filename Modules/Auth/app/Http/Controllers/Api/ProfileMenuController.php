@@ -7,7 +7,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Services\ProfileMenuService;
 
 /**
- * Menu du profil de l'utilisateur connecté, réglé dans le back-office.
+ * Menu du profil de l'utilisateur connecté, défini par `ProfileMenuService`.
  */
 class ProfileMenuController
 {

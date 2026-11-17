@@ -7,8 +7,8 @@ use Modules\Auth\Support\AuthChannels;
 
 /**
  * Les liens possibles du menu du profil : chacun ouvre un écran de l'app, qui le
- * reconnaît à sa valeur (décision 2026-11-17-tri-regions-menu-profil). Un nouvel
- * écran s'ajoute ici et par une migration qui crée sa ligne.
+ * reconnaît à sa valeur. L'ordre du menu est fixé par `ProfileMenuService`
+ * (décision 2026-11-17-regions-alphabetiques-menu-en-code).
  */
 enum ProfileMenuKey: string
 {
@@ -42,13 +42,5 @@ enum ProfileMenuKey: string
             self::PASSWORD => 'password',
             self::PREFERENCES => 'preferences',
         });
-    }
-
-    /**
-     * Nom de l'écran dans le back-office.
-     */
-    public function label(): string
-    {
-        return __('auth::profile_menu.keys.'.$this->value);
     }
 }

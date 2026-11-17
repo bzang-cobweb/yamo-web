@@ -22,11 +22,9 @@ use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Forms\RegisterForm;
 use Modules\Auth\Forms\ResetPasswordForm;
 use Modules\Auth\Models\Permission;
-use Modules\Auth\Models\ProfileMenuLink;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Policies\PermissionPolicy;
-use Modules\Auth\Policies\ProfileMenuLinkPolicy;
 use Modules\Auth\Policies\RolePolicy;
 use Modules\Auth\Policies\UserPolicy;
 use Modules\Auth\Sms\LogSmsSender;
@@ -50,7 +48,6 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
-        Gate::policy(ProfileMenuLink::class, ProfileMenuLinkPolicy::class);
 
         // Formulaires servis à l'app mobile (module Form).
         $registry = $this->app->make(FormRegistry::class);
