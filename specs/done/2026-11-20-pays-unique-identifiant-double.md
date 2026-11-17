@@ -40,3 +40,45 @@ Aujourd'hui, avec les deux canaux, c'est un texte unique, « E-mail ou télépho
 - Avec plusieurs pays actifs, rien ne change.
 - Avec les deux canaux, la connexion et le mot de passe oublié montrent le sélecteur « E-mail | Téléphone » et le seul champ choisi. Avec un seul canal, la présentation reste la même : champ e-mail, ou pays et numéro.
 - Tests web et mobile verts, OpenAPI régénéré, aucune dépendance ajoutée.
+
+## Ce que j'ai décidé seul
+
+- **Verrouillé, pas en lecture seule** : `locked` est un nouvel indicateur, distinct de `readonly`. Un champ en lecture seule n'est ni envoyé ni validé ; un champ verrouillé l'est. Pour un téléphone, seul le pays est verrouillé, et le numéro reste à saisir.
+- **Seuls les listes et les téléphones** se verrouillent, et jamais une liste dépendante (région) : ses options suivent le pays choisi.
+- **Le champ du sélecteur s'appelle `channel`**, avec les valeurs `email` et `phone`, et « E-mail » par défaut. Son libellé reste « E-mail ou téléphone ».
+- **L'API change de contrat** : `identifier` est remplacé par `email`, ou par `phone` et `phone_country`, dans les trois modes. Les tests existants sont adaptés. La limite de débit de connexion utilise ces champs.
+- **Back-office** : le pays du téléphone verrouillé n'est enregistré que si un numéro est saisi.
+- **Texte d'aide supprimé** : l'aide sur le format international (`identifier_help`) ne sert plus à rien, puisque le numéro se saisit au format national avec son pays.
+
+## Ce qui a été fait
+
+- Module Form :
+  - type `segmented` ;
+  - `visibleWhen()`, qui met `exclude_unless` dans les règles et `visible_when` dans le JSON ;
+  - `isLocked()`, avec `locked` et un `default` sur l'option unique ;
+  - `help()` accepte `null`.
+- Auth :
+  - `HasIdentifierField::identifierFields()` (sélecteur et champs) ;
+  - `Identifiers::resolve(array)` ;
+  - connexion et mot de passe oublié ;
+  - textes `channel_email` et `channel_phone`.
+- Back-office : `SingleCountry::lock()` (module Location) sur le pays et le pays du téléphone de la fiche utilisateur.
+- App :
+  - `SegmentedField` ;
+  - `visible_when`, pour afficher un champ et ne pas l'envoyer quand il est masqué ;
+  - `locked` sur une liste ou sur le pays d'un téléphone.
+- Tests :
+  - web : 231 (nouveaux tests du module Form, du pays unique, du back-office et de la connexion par numéro) ;
+  - app : 98, dont `FieldConditions` (3).
+- OpenAPI régénéré.
+- qa-check : GO.
+- Simulateur, les deux canaux actifs : le sélecteur « E-mail | Téléphone » affiche le champ e-mail, puis le pays et le numéro.
+
+## Ce que je n'ai pas vérifié
+
+- Le verrouillage du pays unique à l'écran, dans l'app et dans le back-office. La base de développement a plusieurs pays actifs, et je ne l'ai pas modifiée. Le comportement est couvert par les tests seulement.
+- Le back-office dans le navigateur, qui refuse le certificat DDEV.
+
+## Ce qui reste en suspens
+
+- Rien pour ce contrat.
