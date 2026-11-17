@@ -5,7 +5,6 @@ namespace Modules\Location\Filament\Resources;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use Modules\Location\Filament\Resources\CountryResource\Pages\CreateCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\EditCountry;
 use Modules\Location\Filament\Resources\CountryResource\Pages\ListCountries;
@@ -16,8 +15,6 @@ use Modules\Location\Models\Country;
 
 class CountryResource extends AbstractLocationResource
 {
-    use Translatable;
-
     protected static ?string $model = Country::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedGlobeEuropeAfrica;

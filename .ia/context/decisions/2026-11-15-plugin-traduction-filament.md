@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-traduction-par-champ-filament.md
+
 # `2026-11-15` — Plugin Filament de traduction : lara-zeus/spatie-translatable
 
 - **Type** : décision

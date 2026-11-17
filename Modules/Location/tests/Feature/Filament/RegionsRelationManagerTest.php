@@ -53,12 +53,13 @@ class RegionsRelationManagerTest extends AuthFilamentTestCase
         $switzerland = Country::factory()->create();
 
         $this->manager($switzerland)
-            ->callAction(TestAction::make('create')->table(), ['name' => 'Genève', 'active' => true])
+            ->callAction(TestAction::make('create')->table(), ['name' => ['fr' => 'Genève', 'en' => 'Geneva'], 'active' => true])
             ->assertHasNoFormErrors();
 
         $region = Region::query()->sole();
         $this->assertTrue($region->country->is($switzerland));
         $this->assertSame('Genève', $region->getTranslation('name', 'fr'));
+        $this->assertSame('Geneva', $region->getTranslation('name', 'en'));
     }
 
     public function test_create_is_hidden_without_create_permission(): void
@@ -74,7 +75,7 @@ class RegionsRelationManagerTest extends AuthFilamentTestCase
         $region = Region::factory()->create(['name' => ['fr' => 'Genève', 'en' => 'Geneva']]);
 
         $this->manager($region->country)
-            ->callAction(TestAction::make('edit')->table($region), ['name' => 'République et canton de Genève'])
+            ->callAction(TestAction::make('edit')->table($region), ['name.fr' => 'République et canton de Genève'])
             ->assertHasNoFormErrors();
 
         $region->refresh();

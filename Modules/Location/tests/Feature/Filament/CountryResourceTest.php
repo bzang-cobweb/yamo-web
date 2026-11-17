@@ -65,9 +65,7 @@ class CountryResourceTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES, PermissionEnum::CREATE_COUNTRIES);
 
         Livewire::test(CreateCountry::class)
-            ->fillForm(['code' => 'qx', 'name' => 'Pays test', 'native_name' => 'Testland', 'dial_code' => '+999', 'active' => true])
-            ->set('activeLocale', 'en')
-            ->fillForm(['name' => 'Test country'])
+            ->fillForm(['code' => 'qx', 'name' => ['fr' => 'Pays test', 'en' => 'Test country'], 'native_name' => 'Testland', 'dial_code' => '+999', 'active' => true])
             ->call('create')
             ->assertHasNoFormErrors();
 
@@ -75,6 +73,17 @@ class CountryResourceTest extends AuthFilamentTestCase
         $this->assertSame('Pays test', $country->getTranslation('name', 'fr'));
         $this->assertSame('Test country', $country->getTranslation('name', 'en'));
         $this->assertSame('+999', $country->dial_code);
+    }
+
+    public function test_every_translation_of_the_name_is_required(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES, PermissionEnum::CREATE_COUNTRIES);
+
+        Livewire::test(CreateCountry::class)
+            ->fillForm(['code' => 'qx', 'name' => ['fr' => 'Pays test', 'en' => ''], 'native_name' => 'Testland', 'dial_code' => '+999'])
+            ->call('create')
+            ->assertHasFormErrors(['name.en' => 'required'])
+            ->assertHasNoFormErrors(['name.fr']);
     }
 
     public function test_create_is_forbidden_without_create_permission(): void
@@ -90,8 +99,8 @@ class CountryResourceTest extends AuthFilamentTestCase
         $country = Country::factory()->create(['name' => ['fr' => 'Suisse', 'en' => 'Switzerland']]);
 
         Livewire::test(EditCountry::class, ['record' => $country->getKey()])
-            ->assertSchemaStateSet(['name' => 'Suisse'])
-            ->fillForm(['dial_code' => '+41', 'name' => 'Confédération suisse'])
+            ->assertSchemaStateSet(['name.fr' => 'Suisse', 'name.en' => 'Switzerland'])
+            ->fillForm(['dial_code' => '+41', 'name.fr' => 'Confédération suisse'])
             ->call('save')
             ->assertHasNoFormErrors();
 

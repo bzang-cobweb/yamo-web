@@ -12,8 +12,6 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
-use LaraZeus\SpatieTranslatable\Resources\RelationManagers\Concerns\Translatable;
 use Modules\Location\Filament\Resources\CountryResource\Schemas\RegionForm;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
@@ -25,8 +23,6 @@ use Modules\Location\Models\Region;
  */
 class RegionsRelationManager extends RelationManager
 {
-    use Translatable;
-
     protected static string $relationship = 'regions';
 
     public function form(Schema $schema): Schema
@@ -42,7 +38,7 @@ class RegionsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('name')
                     ->label(__('location::region.name'))
-                    ->state(fn (Region $record): string => (string) $record->getTranslation('name', $this->activeLocale ?? app()->getLocale()))
+                    ->state(fn (Region $record): string => (string) $record->getTranslation('name', app()->getLocale()))
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query
                         ->where('name', 'like', "%{$search}%")),
                 ToggleColumn::make('active')
@@ -55,7 +51,6 @@ class RegionsRelationManager extends RelationManager
                     ->label(__('location::region.active')),
             ])
             ->headerActions([
-                LocaleSwitcher::make(),
                 CreateAction::make(),
             ])
             ->recordActions(AbstractResource::getActions())

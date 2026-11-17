@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Filament\Resources\CountryResource\Schemas;
 
+use App\Filament\Schemas\TranslatableTabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -16,11 +17,13 @@ abstract class RegionForm
         return $schema
             ->columns(2)
             ->components([
-                // Traduit : le sélecteur de langue de l'onglet choisit fr ou en.
-                TextInput::make('name')
-                    ->label(__('location::region.name'))
-                    ->required()
-                    ->maxLength(255),
+                // Traduit : un onglet par langue, chaque traduction obligatoire.
+                TranslatableTabs::make(fn (string $locale): array => [
+                    TextInput::make("name.{$locale}")
+                        ->label(__('location::region.name'))
+                        ->required()
+                        ->maxLength(255),
+                ], 'name'),
                 Toggle::make('active')
                     ->label(__('location::region.active'))
                     ->default(true),

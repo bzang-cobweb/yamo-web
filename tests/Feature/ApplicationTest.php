@@ -62,11 +62,8 @@ class ApplicationTest extends AuthFilamentTestCase
 
         Livewire::test(EditSettings::class)
             ->assertOk()
-            ->fillForm(['description' => 'Bienvenue'])
-            ->call('save')
-            ->assertHasNoFormErrors()
-            ->set('activeLocale', 'en')
-            ->fillForm(['description' => 'Welcome'])
+            ->assertSee(['Français', 'English'])
+            ->fillForm(['description' => ['fr' => 'Bienvenue', 'en' => 'Welcome']])
             ->call('save')
             ->assertHasNoFormErrors();
 

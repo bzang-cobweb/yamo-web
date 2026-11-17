@@ -4,13 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\AbstractResource;
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
+use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 use Modules\Form\Support\Field;
 
 /**
@@ -19,8 +19,6 @@ use Modules\Form\Support\Field;
  */
 class SettingResource extends AbstractResource
 {
-    use Translatable;
-
     protected static ?string $model = Setting::class;
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
@@ -42,12 +40,14 @@ class SettingResource extends AbstractResource
                             ->collection(Setting::LOGO)
                             ->image()
                             ->maxSize(2048),
-                        // Traduite : le sélecteur de langue de la page choisit fr ou en.
-                        Textarea::make('description')
-                            ->label(__('settings.description'))
-                            ->helperText(__('settings.help.description'))
-                            ->maxLength(Field::TEXTAREA_MAX_LENGTH)
-                            ->rows(5),
+                        // Traduite : un onglet par langue.
+                        TranslatableTabs::make(fn (string $locale): array => [
+                            Textarea::make("description.{$locale}")
+                                ->label(__('settings.description'))
+                                ->helperText(__('settings.help.description'))
+                                ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                                ->rows(5),
+                        ], 'description'),
                     ]),
             ]);
     }

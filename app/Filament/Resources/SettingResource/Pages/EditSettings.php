@@ -5,8 +5,6 @@ namespace App\Filament\Resources\SettingResource\Pages;
 use App\Filament\Resources\SettingResource;
 use App\Models\Setting;
 use Filament\Resources\Pages\EditRecord;
-use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
-use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
 
 /**
  * Page « Application » : modifie l'unique ligne des réglages, sans identifiant
@@ -14,8 +12,6 @@ use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable
  */
 class EditSettings extends EditRecord
 {
-    use Translatable;
-
     protected static string $resource = SettingResource::class;
 
     public function mount(int|string|null $record = null): void
@@ -31,13 +27,6 @@ class EditSettings extends EditRecord
     public function getBreadcrumbs(): array
     {
         return [];
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            LocaleSwitcher::make(),
-        ];
     }
 
     protected function getRedirectUrl(): ?string

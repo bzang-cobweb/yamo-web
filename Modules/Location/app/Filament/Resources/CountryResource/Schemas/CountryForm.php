@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Filament\Resources\CountryResource\Schemas;
 
+use App\Filament\Schemas\TranslatableTabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -31,11 +32,13 @@ abstract class CountryForm
                     ->regex('/^[A-Za-z]{2}$/')
                     ->unique(ignoreRecord: true)
                     ->dehydrateStateUsing(fn (?string $state): ?string => $state === null ? null : strtoupper($state)),
-                // Traduit : le sélecteur de langue de la page choisit fr ou en.
-                TextInput::make('name')
-                    ->label(__('location::country.name'))
-                    ->required()
-                    ->maxLength(255),
+                // Traduit : un onglet par langue, chaque traduction obligatoire.
+                TranslatableTabs::make(fn (string $locale): array => [
+                    TextInput::make("name.{$locale}")
+                        ->label(__('location::country.name'))
+                        ->required()
+                        ->maxLength(255),
+                ], 'name'),
                 TextInput::make('native_name')
                     ->label(__('location::country.native_name'))
                     ->helperText(__('location::country.help.native_name'))
