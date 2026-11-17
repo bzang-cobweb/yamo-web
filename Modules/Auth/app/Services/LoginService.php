@@ -21,14 +21,14 @@ final class LoginService
     /**
      * Vérifie les identifiants et envoie le code.
      *
-     * @param  array{identifier: string, password: string}  $data
+     * @param  array{identifier: string, identifier_country?: string|null, password: string}  $data
      * @return array{challenge: string, channel: string, destination: string}
      *
      * @throws ValidationException identifiants refusés, sans dire lequel est faux
      */
     public function start(array $data): array
     {
-        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data['identifier']);
+        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data['identifier'], $data['identifier_country'] ?? null);
 
         if ($user === null || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['identifier' => __('auth.failed')]);

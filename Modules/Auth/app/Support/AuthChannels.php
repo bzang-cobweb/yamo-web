@@ -46,25 +46,4 @@ final class AuthChannels
 
         return $channels;
     }
-
-    /**
-     * Libellé de l'identifiant de connexion : « E-mail ou téléphone », « E-mail »
-     * ou « Téléphone ».
-     */
-    public static function identifierLabel(): string
-    {
-        return match (true) {
-            self::both() => __('auth::user.identifier'),
-            self::email() => __('auth::user.email'),
-            default => __('auth::user.phone'),
-        };
-    }
-
-    /**
-     * Aide de l'identifiant : le format international d'un téléphone, s'il est accepté.
-     */
-    public static function identifierHelp(): ?string
-    {
-        return self::phone() ? __('auth::form.login.identifier_help') : null;
-    }
 }

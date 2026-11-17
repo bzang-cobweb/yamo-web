@@ -83,8 +83,10 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertSame(['email'], $form['steps'][1]['fields']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
+        $this->assertSame('email', $login['identifier']['type']);
         $this->assertSame(__('auth::user.email', [], 'fr'), $login['identifier']['label']);
         $this->assertNull($login['identifier']['help']);
+        $this->assertSame('email', $this->fieldsOf($this->form('auth.password.forgot'))['identifier']['type']);
         $this->assertStringNotContainsString('téléphone', $this->form('auth.password.forgot')['subtitle']);
 
         // Un téléphone ne s'inscrit pas : l'e-mail est obligatoire, le numéro ignoré.
@@ -102,12 +104,44 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertArrayNotHasKey('email', $register);
         $this->assertTrue($register['phone']['required']);
 
+        // Le pays et le numéro, sur une ligne (champ téléphone), sans aide sur le format.
         $login = $this->fieldsOf($this->form('auth.login'));
+        $this->assertSame('phone', $login['identifier']['type']);
         $this->assertSame(__('auth::user.phone', [], 'fr'), $login['identifier']['label']);
-        $this->assertNotNull($login['identifier']['help']);
+        $this->assertNull($login['identifier']['help']);
+        $this->assertContains('CH', array_column($login['identifier']['options'], 'value'));
+        $this->assertSame('phone', $this->fieldsOf($this->form('auth.password.forgot'))['identifier']['type']);
 
         $this->register(['email' => 'marie@example.com'])
             ->assertUnprocessable()->assertJsonValidationErrors('phone')->assertJsonMissingValidationErrors('email');
+    }
+
+    public function test_phone_only_signs_in_with_the_country_and_the_national_number(): void
+    {
+        $this->channels(email: false, phone: true);
+        User::factory()->create([
+            'email' => null, 'phone' => '+41791234567', 'phone_verified_at' => now(),
+            'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',
+        ]);
+
+        $this->postJson('/api/v1/auth/login', ['identifier' => '079 123 45 67', 'identifier_country' => 'CH', 'password' => 'secret-password'])
+            ->assertAccepted()
+            ->assertJsonPath('channel', 'sms');
+        $this->postJson('/api/v1/auth/password/forgot', ['identifier' => '079 123 45 67', 'identifier_country' => 'CH'])
+            ->assertAccepted()
+            ->assertJsonPath('channel', 'sms');
+
+        // Sans pays, le champ téléphone est incomplet.
+        $this->postJson('/api/v1/auth/login', ['identifier' => '079 123 45 67', 'password' => 'secret-password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('identifier_country');
+    }
+
+    public function test_email_only_refuses_an_identifier_that_is_not_an_email(): void
+    {
+        $this->channels(email: true, phone: false);
+
+        $this->postJson('/api/v1/auth/login', ['identifier' => '+41 79 123 45 67', 'password' => 'secret-password'])
+            ->assertUnprocessable()->assertJsonValidationErrors('identifier');
     }
 
     public function test_a_disabled_channel_cannot_be_added_or_changed(): void
@@ -125,9 +159,11 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->withToken($token)->postJson('/api/v1/auth/me/email', ['email' => 'new@example.com'])->assertForbidden();
     }
 
-    public function test_an_existing_account_on_a_disabled_channel_still_signs_in(): void
+    public function test_an_existing_account_keeps_its_data_when_a_channel_is_disabled(): void
     {
-        $this->channels(email: true, phone: false);
+        // Le compte n'est ni bloqué ni modifié : réactiver le canal suffit à ce qu'il
+        // se connecte de nouveau avec son numéro.
+        $this->channels(email: true, phone: true);
         User::factory()->create([
             'email' => null, 'phone' => '+41791234567', 'phone_verified_at' => now(),
             'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',

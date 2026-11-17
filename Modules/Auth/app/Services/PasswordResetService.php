@@ -21,12 +21,12 @@ final class PasswordResetService
      * Envoie le code si un compte correspond. Sinon, même réponse, sans rien envoyer :
      * un défi factice qu'aucun code ne validera.
      *
-     * @param  array{identifier: string}  $data
+     * @param  array{identifier: string, identifier_country?: string|null}  $data
      * @return array{challenge: string, channel: string, destination: string}
      */
     public function start(array $data): array
     {
-        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data['identifier']);
+        ['channel' => $channel, 'destination' => $destination, 'user' => $user] = Identifiers::resolve($data['identifier'], $data['identifier_country'] ?? null);
 
         if ($user === null) {
             return [

@@ -3,7 +3,7 @@
 namespace Modules\Auth\Forms;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Modules\Auth\Support\AuthChannels;
+use Modules\Auth\Forms\Concerns\HasIdentifierField;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 
@@ -14,6 +14,8 @@ use Modules\Form\Support\Form;
  */
 class LoginForm extends Form
 {
+    use HasIdentifierField;
+
     public static function name(): string
     {
         return 'auth.login';
@@ -22,11 +24,7 @@ class LoginForm extends Form
     public function fields(): array
     {
         return [
-            Field::text('identifier')
-                ->label(AuthChannels::identifierLabel())
-                ->help(AuthChannels::identifierHelp())
-                ->required()
-                ->rules(['max:255']),
+            $this->identifierField(),
             Field::password('password')
                 ->label(__('auth::user.password'))
                 ->required()

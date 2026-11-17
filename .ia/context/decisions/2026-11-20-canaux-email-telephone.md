@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-identifiant-selon-canal.md
+
 # `2026-11-20` — Canaux de compte e-mail et téléphone réglés par la configuration
 
 - **Type** : décision
