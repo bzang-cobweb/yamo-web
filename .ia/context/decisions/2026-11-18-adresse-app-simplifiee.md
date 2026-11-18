@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-18-bouton-ajout-fixe.md (point 3).
+
+
 # `2026-11-18` — Adresse dans l'app : sans coordonnées ni suggestions ; bouton d'ajout en haut à droite
 
 - **Type** : décision
