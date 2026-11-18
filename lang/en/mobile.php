@@ -10,4 +10,13 @@ return [
     'error' => [
         'unknown' => 'Something went wrong. Please try again.',
     ],
+    // Écran d'entrée : pays et langue (décision 2026-11-18-ecran-entree-toujours).
+    'entry' => [
+        'title' => 'Welcome',
+        'subtitle' => 'Choose your country and language.',
+        'country' => 'Country',
+        'language' => 'Language',
+        'enter' => 'Enter',
+        'changeCountry' => 'Change country',
+    ],
 ];
