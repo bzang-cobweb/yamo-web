@@ -84,3 +84,45 @@ La liste est découpée en deux couches.
 - Recherche ou filtre dans la liste.
 - Un nombre total d'items affiché.
 - Donner d'autres permissions au rôle `admin`.
+
+## Ce que j'ai décidé seul
+
+- **Seulement les permissions `addresses.*` pour le rôle `admin`.** Le rôle n'a pas `admin.access`, ni le droit de voir les utilisateurs ou les pays. Tel quel, un compte au seul rôle `admin` n'entre pas dans le back-office. Il faut lui ajouter ces droits dans le back-office ; rejouer le seeder ne les retire pas.
+- **Pas de libellé traduit pour le rôle** : le back-office affiche le nom brut des rôles, `super_admin` compris.
+- **Le composant expose `onLoadMore`**, et non `onEndReached` comme l'écrivait le contrat. La fonction rend une promesse, et c'est cette promesse qui garantit une seule demande à la fois.
+- **`ProfileScreenShell` gagne `scrolls={false}`.** Une `FlatList` ne peut pas vivre dans un `ScrollView`. Les autres écrans gardent le `ScrollView` par défaut.
+- **Rechargement « depuis le début » sans écran de chargement.** Le cache est ramené à la première page, puis rechargé. Cela fait une seule requête, et les items restent affichés pendant l'attente.
+- **Pas de rechargement au premier affichage.** La requête initiale suffit ; on recharge aux retours sur l'écran. C'est un écart signalé par le QA, corrigé.
+- **`ListItem` porte le retrait en trois propriétés typées** au lieu d'un tableau, pour que Scramble décrive les items dans `openapi.json`. Avant, ils y apparaissaient comme `{}`.
+- **Un curseur valide qui pointe vers l'arrière sert la page précédente.** C'est le comportement natif de Laravel. Le cas ne fuit rien et ne lève aucune erreur.
+
+## Ce qui a été fait
+
+- **Web**, commits `8ad02b7` et `a203c61` :
+  - `RoleEnum::ADMIN` et `basePermissions()`, ajoutés par le seeder avec `givePermissionTo`, qui ne retire rien ;
+  - `Listing::query()`, `item()`, `perPage()` (20) et `page()` en curseur ; un curseur illisible ou incohérent sert la première page ;
+  - `next_cursor` dans la réponse ; `?cursor=` documenté dans OpenAPI ;
+  - `AddressListing` porté sur ce modèle ;
+  - tests : `RoleSeederTest`, pagination, retrait entre deux pages, curseurs invalides, 45 adresses.
+- **Mobile**, commits `6b8f01d` et `828fbde` :
+  - `List` générique dans `src/shared/components/List.tsx`, avec ses tests sur données locales ;
+  - `useListDefinition` en `useInfiniteQuery` avec `reload()` ;
+  - `ListService.get(name, cursor)` ;
+  - `ProfileListScreen` sur `List`, avec « tirer pour recharger » ;
+  - README.
+- **Contrôles :**
+  - web : 314 tests, Pint propre, `openapi.json` à jour ;
+  - mobile : 161 tests, `tsc` et lint propres ;
+  - base locale : seeder rejoué, le rôle `admin` a ses 4 permissions.
+- **QA** (`bza-dev:qa-check`) : verdict GO, détail dans `.ia/runs/2026-11-18-liste-infinie-role-admin/qa-check.md`.
+
+## Ce que je n'ai pas vérifié
+
+- **Le défilement réel sur simulateur ou appareil** : seuil de `onEndReached`, indicateur de pied de liste, « tirer pour recharger ». L'app y est déconnectée, et le critère 5 repose sur les tests jest.
+- **Le back-office ouvert dans un navigateur avec un compte `admin`** : la vérification passe par les policies, en test.
+- **La charge et les plans de requête MariaDB** sur de longues listes.
+
+## Ce qui reste en suspens
+
+- **Faut-il donner au rôle `admin` l'accès au back-office** (`admin.access`) et la consultation des utilisateurs, pour qu'il atteigne les adresses ? Hors périmètre ici ; à trancher.
+- **Rien n'est poussé.**
