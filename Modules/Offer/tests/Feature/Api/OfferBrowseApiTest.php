@@ -60,6 +60,18 @@ class OfferBrowseApiTest extends TestCase
         $this->assertSame([(string) $older->getKey()], array_column($this->browse('?search=akwa')->json('data.items'), 'id'));
     }
 
+    public function test_pages_of_20_without_any_private_field(): void
+    {
+        Offer::factory()->count(26)->create(['status' => 'published']);
+
+        $first = $this->browse()->assertOk()->json('data');
+        $second = $this->browse('?cursor='.urlencode($first['next_cursor']))->assertOk()->json('data');
+
+        $this->assertSame([20, 6], [count($first['items']), count($second['items'])]);
+        $this->assertNull($second['next_cursor']);
+        $this->assertSame(['id', 'title', 'subtitle', 'edit', 'delete'], array_keys($first['items'][0]));
+    }
+
     public function test_a_member_sees_the_same_list(): void
     {
         Offer::factory()->create(['status' => 'published']);

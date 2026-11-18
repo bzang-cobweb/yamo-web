@@ -64,3 +64,38 @@ La barre remplace l'actuelle (logo et drapeau). Elle n'apparaît pas sur l'écra
 
 - La fiche d'une offre, les filtres et la carte : chantiers suivants.
 - Le contact entre locataire et propriétaire.
+
+## Ce que j'ai décidé seul
+
+- **La route `/welcome` est gardée,** pour ne pas toucher à la navigation. Elle montre désormais l'accueil d'un visiteur (`GuestHomeScreen`). L'onglet Accueil d'un membre montre la même vitrine (`BrowseScreen`).
+- **Les boutons d'un visiteur sont côte à côte,** fixés en bas.
+- **Le drapeau ouvre directement la liste des pays,** avec recherche. L'écran d'entrée n'est plus rouvert après le premier choix, et l'ancien `CountryFlag` a été retiré.
+- **Pour un membre, la langue de la barre change celle de son compte** (`ProfileService.updateLocale`, `PATCH /v1/auth/me/preferences`). Une erreur de réseau laisse la langue inchangée, sans message.
+- **La vitrine affiche les offres les plus récentes d'abord** (`id` décroissant), par pages de 20.
+- **Le point 1 de la demande (membre et 20 offres)** est un `DemoSeeder` lancé à la main, jamais en production. Le compte est documenté dans le fichier.
+
+## Ce qui a été fait
+
+- **Web**
+  - `2693a9f` : `DemoSeeder` et ses tests, joué en local : `demo-membre@example.test`, 20 offres, dont 16 publiées ;
+  - `6e2569b` : liste publique `offer.browse` et ses tests ;
+  - dernier commit : test de pagination et absence de champs privés.
+- **Mobile**
+  - `93ac7a1` : `AppTopBar` (logo, `LocaleSwitcher`, `CountrySwitcher`), `BrowseScreen`, `GuestHomeScreen`, langue du compte depuis la barre ;
+  - retrait de `WelcomeScreen`, `HomeScreen` et `CountryFlag`.
+- **Contrôles**
+  - web : 385 tests passent, Pint est propre, `openapi.json` est à jour ;
+  - mobile : 183 tests passent, `tsc` et le lint sont propres.
+- **Simulateur** : l'accueil d'un visiteur montre la barre, la recherche, les logements du Cameroun en FCFA avec leur ville, et les deux boutons.
+- **QA** (`bza-dev:qa-check`) : GO, aucun écart bloquant ni majeur (`.ia/runs/2026-11-18-accueil-offres-du-pays/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **L'accueil d'un membre connecté dans le simulateur**, ni le changement de langue de son compte depuis la barre.
+- **Le drapeau dans le simulateur** : il est masqué par le bouton de développement d'Expo, qui n'existe pas dans une version publiée.
+
+## Ce qui reste en suspens
+
+- **Chantier suivant** : la fiche d'une offre (toucher une offre ne fait rien), puis les filtres et la carte.
+- **La barre est rendue à deux endroits** (accueil d'un visiteur, en-tête des onglets d'un membre). C'est le même composant, mais deux points de montage.
+- **Rien n'est poussé.**
