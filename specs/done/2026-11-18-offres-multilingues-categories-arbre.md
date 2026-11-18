@@ -59,3 +59,46 @@ Les langues sont celles de l'application (`config('app.supported_locales')`, auj
 - La traduction automatique.
 - Saisir plusieurs langues depuis l'app (un champ par langue). C'est possible plus tard si tu le souhaites, mais je le déconseille pour une app grand public.
 - La navigation des offres par catégorie dans l'app, qui relève de la consultation publique, chantier à venir.
+
+## Ce que j'ai décidé seul
+
+- **Le repli des traductions vaut pour toute l'application.** Il est réglé dans `AppServiceProvider` : langue par défaut, puis n'importe quelle langue. Les pays, régions et catégories passent eux aussi de `en` à `fr` (la langue par défaut), puis à une autre langue.
+- **La recherche par titre** vise chaque langue (`title->fr`, `title->en`) par le chemin JSON, de façon portable entre MariaDB et SQLite. Le nom d'une langue n'est donc pas trouvé.
+- **Les attributs traduisibles** sont limités au texte court et au texte long. Ailleurs, une `LogicException` est levée.
+- **Un texte vidé dans une langue retire cette langue.** Les autres langues restent.
+- **Arbre :**
+  - suppression d'un parent refusée en base (`restrictOnDelete`), dans le modèle (événements `saving` et `deleting`) et dans le back-office (notification, action unitaire et groupée) ;
+  - une nouvelle catégorie se place à la fin de ses sœurs ;
+  - le fil d'Ariane et le titre de la fiche montrent le chemin.
+- **Les chemins de catégorie de la table des offres sont préchargés sur trois niveaux.** Au-delà, il reste une requête par niveau.
+
+## Ce qui a été fait
+
+- **Commits** :
+  - `7bf1847` : traductions ;
+  - `6db951d` : arbre ;
+  - un dernier commit : test de suppression groupée et clôture.
+- **Traductions** :
+  - `Field::translatable()` ;
+  - offres `HasTranslations` (titre, description) ;
+  - migration de conversion, aller et retour ;
+  - saisie dans la langue du compte ;
+  - onglets par langue dans le back-office.
+- **Arbre** :
+  - `parent_id` et la migration associée ;
+  - modèle : chemins, `options()` dans l'ordre de l'arbre, interdiction des boucles ;
+  - back-office : racines triables et onglet « Sous-catégories » triable ;
+  - seeder récursif, rejouable.
+- **Contrôles** : 358 tests web passent, Pint est propre et `openapi.json` est inchangé. Les tests mobiles passent sans modification.
+- **QA** (`bza-dev:qa-check`) : GO, rejoué sur MariaDB (`.ia/runs/2026-11-18-offres-multilingues-categories-arbre/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- La migration de conversion aller-retour sur MariaDB. Elle n'a été rejouée que sur SQLite, dans les tests.
+- Le glisser-déposer et les onglets dans un navigateur.
+- Les arbres de grande taille.
+
+## Ce qui reste en suspens
+
+- **La recherche est sensible aux accents** : « etudiant » ne trouve pas « étudiant ». C'était déjà le cas avant ce chantier.
+- **Rien n'est poussé.**

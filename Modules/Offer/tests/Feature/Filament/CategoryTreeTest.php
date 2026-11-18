@@ -105,6 +105,12 @@ class CategoryTreeTest extends AuthFilamentTestCase
             ->assertNotified(__('offer::offer.category_resource.has_children'));
         $this->assertNotNull(OfferCategory::query()->where('slug', 'appartement')->first());
 
+        // Suppression groupée : refusée aussi dès qu'une catégorie cochée a des enfants.
+        Livewire::test(ListOfferCategories::class)
+            ->callTableBulkAction('delete', [$this->category('bureau'), $this->category('logement')])
+            ->assertNotified(__('offer::offer.category_resource.has_children'));
+        $this->assertSame(5, OfferCategory::query()->count());
+
         Livewire::test(EditOfferCategory::class, ['record' => $this->category('studio')->getKey()])->callAction('delete');
         $this->assertNull(OfferCategory::query()->where('slug', 'studio')->first());
     }
