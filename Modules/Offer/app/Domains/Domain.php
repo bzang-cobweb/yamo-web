@@ -52,7 +52,7 @@ abstract class Domain
     }
 
     /**
-     * Attributs propres au domaine, rangés dans la colonne `attributes` : leur
+     * Attributs propres au domaine, rangés dans la colonne JSON `details` : leur
      * schéma sert au formulaire de l'app, à la validation et au back-office.
      *
      * @return list<Field>
