@@ -107,7 +107,7 @@ class AddressApiTest extends TestCase
         // Latitude, longitude et suggestions de rue sont réservées au back-office.
         $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city'], array_keys($fields));
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
-        $this->assertNull($fields['street']['suggestions']);
+        $this->assertArrayNotHasKey('suggestions', $fields['street']);
     }
 
     public function test_the_form_for_one_of_its_addresses_is_prefilled_and_sent_to_its_route(): void
