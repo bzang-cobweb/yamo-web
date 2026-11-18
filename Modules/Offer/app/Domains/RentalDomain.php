@@ -7,7 +7,7 @@ use Modules\Offer\Models\Offer;
 
 /**
  * Location de logements, meublés ou non (décision 2026-11-18-offres-et-domaines) :
- * le prix est le loyer, par nuit pour un meublé, par mois sinon (décision
+ * le prix est le loyer, par jour pour un meublé, par mois sinon (décision
  * 2026-11-18-prix-par-nuit-ou-mois) ; l'adresse est obligatoire.
  */
 class RentalDomain extends Domain
@@ -63,11 +63,12 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Meublé : à la nuit ; sinon au mois (décision 2026-11-18-prix-par-nuit-ou-mois).
+     * Meublé : au jour ; sinon au mois (décisions 2026-11-18-prix-par-nuit-ou-mois
+     * et 2026-11-18-prix-meuble-par-jour).
      */
     public function priceUnit(Offer $offer): ?string
     {
-        return __('offer::rental.price_units.'.($offer->detail('furnished') ? 'night' : 'month'));
+        return __('offer::rental.price_units.'.($offer->detail('furnished') ? 'day' : 'month'));
     }
 
     public function attributes(): array

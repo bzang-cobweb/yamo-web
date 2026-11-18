@@ -79,11 +79,11 @@ class OfferBrowseApiTest extends TestCase
         // Sans adresse : le type seul.
         $this->assertSame('Chambre meublée', $fr[(string) $room->getKey()]);
 
-        // Le prix suit le type de location : meublé à la nuit, sinon au mois.
+        // Le prix suit le type de location : meublé au jour, sinon au mois.
         $house->update(['price' => '45000', 'currency' => 'XAF']);
         $studio->update(['price' => '80000', 'currency' => 'XAF']);
         $subtitles = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($this->browse()->json('data.items'), 'subtitle', 'id'));
-        $this->assertSame('45 000 FCFA / nuit', $subtitles[(string) $house->getKey()]);
+        $this->assertSame('45 000 FCFA / jour', $subtitles[(string) $house->getKey()]);
         $this->assertSame('80 000 FCFA / mois', $subtitles[(string) $studio->getKey()]);
 
         $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');

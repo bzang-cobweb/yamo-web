@@ -21,9 +21,9 @@ return [
         'studio' => 'Studio meublé',
         'room' => 'Chambre meublée',
     ],
-    // Unité du loyer : par nuit pour un meublé, par mois sinon.
+    // Unité du loyer : par jour pour un meublé, par mois sinon.
     'price_units' => [
-        'night' => 'nuit',
+        'day' => 'jour',
         'month' => 'mois',
     ],
     'title_in_city' => ':type - :city',

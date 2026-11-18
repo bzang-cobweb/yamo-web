@@ -84,7 +84,7 @@ class OfferListing extends Listing
     public function item(Model $record): ListItem
     {
         /** @var Offer $record */
-        // « 60 000 FCFA / nuit » : le prix et son unité, selon le domaine.
+        // « 60 000 FCFA / jour » : le prix et son unité, selon le domaine.
         $price = app(DomainRegistry::class)->require()->formattedPrice($record, app()->getLocale());
 
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();

@@ -32,7 +32,7 @@ class OfferDetailResource extends JsonResource
         return [
             'id' => (string) $offer->getKey(),
             'title' => (string) $offer->getTranslation('title', $locale),
-            /** Prix formaté avec son unité (« 60 000 FCFA / nuit ») et son libellé (« Loyer ») ; `null` sans prix. */
+            /** Prix formaté avec son unité (« 60 000 FCFA / jour ») et son libellé (« Loyer ») ; `null` sans prix. */
             'price' => $offer->price === null ? null : [
                 'label' => (string) $domain->priceLabel(),
                 'value' => (string) $domain->formattedPrice($offer, $locale),

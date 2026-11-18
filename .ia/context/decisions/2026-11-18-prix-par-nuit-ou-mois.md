@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-18-prix-meuble-par-jour.md (unité d'un meublé : jour).
+
+
 # `2026-11-18` — Logement : prix par nuit si meublé, sinon par mois
 
 - **Type** : décision

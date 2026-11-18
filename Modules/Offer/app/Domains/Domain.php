@@ -81,8 +81,8 @@ abstract class Domain
     }
 
     /**
-     * Unité du prix d'une offre (« nuit », « mois »), affichée après le prix :
-     * « 60 000 FCFA / nuit » (décision 2026-11-18-prix-par-nuit-ou-mois) ;
+     * Unité du prix d'une offre (« jour », « mois »), affichée après le prix :
+     * « 60 000 FCFA / jour » (décision 2026-11-18-prix-par-nuit-ou-mois) ;
      * `null` : aucune.
      */
     public function priceUnit(Offer $offer): ?string
