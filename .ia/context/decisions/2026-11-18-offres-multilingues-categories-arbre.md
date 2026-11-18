@@ -1,0 +1,21 @@
+# `2026-11-18` — Offres multilingues ; catégories en arbre, triables
+
+- **Type** : décision
+- **Question posée** : valider le contrat `specs/2026-11-18-offres-multilingues-categories-arbre.md`, avec ses choix recommandés.
+- **Réponse** : « Approved ».
+- **Ce qui est retenu** :
+  - **Traductions**
+    - le titre et la description d'une offre sont traduisibles ;
+    - un `Field` peut être marqué traduisible (texte court ou long). Sa valeur est alors rangée par langue dans `details` ;
+    - dans l'app, on saisit dans la langue du compte, sans effacer les autres langues ;
+    - à la lecture : langue du compte, puis langue par défaut, puis n'importe quelle langue ;
+    - dans le back-office, un onglet par langue ; seule la langue par défaut est obligatoire.
+  - **Catégories**
+    - les catégories forment un arbre (`parent_id`), sans boucle, et `position` les ordonne entre sœurs ;
+    - une catégorie qui a des enfants ne se supprime pas ;
+    - dans le back-office : racines triables, onglet « Sous-catégories » triable ;
+    - les choix de catégorie affichent le chemin.
+- **Motif** : un projet multilingue dès l'initialisation, et des catégories qui épousent n'importe quel domaine.
+- **Portée** : module Offer ; `Field` (module Form) ; repli des traductions pour toute l'application.
+- **Corollaires** : la saisie de plusieurs langues depuis l'app reste possible plus tard, et déconseillée.
+- **Tranché par** : humain
