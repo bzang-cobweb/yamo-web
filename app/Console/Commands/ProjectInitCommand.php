@@ -149,6 +149,9 @@ class ProjectInitCommand extends Command
         if (trim($settings['name']) === '') {
             $errors[] = 'Le nom de l\'application est vide.';
         }
+        if (str_contains($settings['name'], '$') && (str_contains($settings['name'], "'") || str_contains($settings['name'], "\n"))) {
+            $errors[] = 'Nom de l\'application refusé : un « $ » ne peut pas côtoyer une apostrophe ou un retour à la ligne.';
+        }
         if (! in_array($settings['locale'], Locales::values(), true)) {
             $errors[] = "Langue inconnue : « {$settings['locale']} ». Possibles : ".implode(', ', Locales::values()).'.';
         }

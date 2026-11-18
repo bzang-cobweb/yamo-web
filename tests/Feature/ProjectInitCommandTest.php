@@ -111,6 +111,7 @@ class ProjectInitCommandTest extends TestCase
         $this->init(['--locale' => 'xx'])->expectsOutputToContain('Langue inconnue')->assertFailed();
         $this->init(['--country' => ['ZZ']])->expectsOutputToContain('Pays inconnu')->assertFailed();
         $this->init(['--channels' => 'fax'])->assertFailed();
+        $this->init(['--name' => "L'\$ami"])->expectsOutputToContain('refusé')->assertFailed();
 
         $this->assertSame(self::ENV, $this->env());
         $this->assertSame(0, Country::query()->count());

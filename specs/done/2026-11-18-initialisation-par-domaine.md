@@ -74,3 +74,46 @@ Il est rangé dans `.ia/skills/projet-domaine/SKILL.md`, dans le dépôt web.
 - Les domaines boutique et rencontre. Chacun aura son chantier.
 - Le paramétrage de l'app mobile : nom, icône, couleurs.
 - Les secrets, l'envoi d'e-mails et le fournisseur SMS. Le résumé les signale.
+
+## Ce que j'ai décidé seul
+
+- **L'écriture du `.env` passe par `App\Support\EnvFile`**, qui refuse toute clé hors des cinq prévues et ne réécrit les autres lignes que telles quelles. Les fins de ligne (CRLF ou LF) sont conservées, et une ligne `export CLÉ=` est reconnue.
+- **Une valeur qui contient `$` est écrite entre apostrophes** : Dotenv ne peut alors y remplacer aucune variable. Le défaut avait été trouvé par la QA : `${APP_KEY}` recopiait un secret. Un `$` avec une apostrophe ou un retour à la ligne est refusé, avec un message.
+- **Pays :** codes vérifiés contre la liste de libphonenumber, avant même que la table soit remplie. Les pays non listés sont désactivés.
+- **Changement de domaine :** il exige `--force` dès que des offres existent, corbeille comprise.
+- **`Domain::modules()`** déclare les modules requis par un domaine. Il est vide pour `rental`.
+- **`--list`** affiche les domaines connus. `DomainRegistry` gagne `keys()` et `make()`.
+- **Le skill ne passe jamais `--admin-email`** : le mot de passe ne peut être saisi que par l'humain, qui lance lui-même `auth:create-user --super-admin`.
+
+## Ce qui a été fait
+
+- Commits :
+  - `919e009` : commande, `EnvFile`, tests, skill `.ia/skills/projet-domaine/SKILL.md` ;
+  - `5ab03de` : correctif du `$`, CRLF et `export` ;
+  - dernier commit : refus propre d'un nom avec `$` et une apostrophe, et clôture.
+- Tests de la commande (9), sur un `.env` de test qui contient de faux secrets :
+  - projet opérationnel ;
+  - relance sans aucun changement ;
+  - erreur avant toute écriture ;
+  - production ;
+  - changement de domaine ;
+  - écrivain du `.env`.
+- Contrôles : 367 tests web passent, Pint est propre et `openapi.json` est inchangé.
+- QA (`bza-dev:qa-check`) :
+  - premier verdict : GO, avec un écart majeur sur le `$` ;
+  - correctif ;
+  - revérification : GO (`.ia/runs/2026-11-18-initialisation-par-domaine/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **La commande n'a pas été lancée sur la base locale ni sur ton vrai `.env`.** Elle aurait modifié ton nom d'application et désactivé tous les pays sauf ceux listés.
+- **`--admin-email` jusqu'au bout**, parce que `auth:create-user` demande un mot de passe.
+- **L'activation réelle d'un module**, parce qu'aucun domaine n'en requiert encore.
+- **La production réelle.**
+
+## Ce qui reste en suspens
+
+- **À chaque lancement, `db:seed` complet est rejoué.** Le seeder Auth retire les permissions qui ne sont plus déclarées, et `CountrySeeder` réécrit les noms des pays.
+- **Un changement de domaine garde les catégories de l'ancien domaine.**
+- **Domaines suivants :** boutique et rencontre, chacun dans son chantier.
+- **Rien n'est poussé.**
