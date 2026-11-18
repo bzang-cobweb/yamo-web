@@ -1,0 +1,22 @@
+# `2026-11-18` — Accueil : barre du haut (logo, langue, pays) et offres publiées du pays
+
+- **Type** : décision
+- **Question posée** :
+  - qu'y a-t-il sous la barre ?
+  - la barre est-elle la même une fois connecté ?
+  - puis valider le contrat `specs/2026-11-18-accueil-offres-du-pays.md`.
+- **Réponse** :
+  - « Offers of the country » ;
+  - « Yes, same bar everywhere » ;
+  - « Approved ».
+- **Ce qui est retenu** :
+  - **la barre du haut** est la même partout : logo à gauche, puis sélecteur de langue et drapeau. Le sélecteur change la langue de l'appareil pour un visiteur, celle du compte pour un membre ; le drapeau ouvre la liste des pays avec recherche ;
+  - **l'accueil** montre la liste publique `offer.browse` : offres publiées du pays courant, accessibles sans connexion ;
+  - **pour un visiteur**, les boutons « Se connecter » et « Créer un compte » sont fixés en bas ;
+  - **l'écran de bienvenue** disparaît.
+- **Motif** : on entre dans l'espace d'un pays, et on y voit tout de suite ce qu'il propose.
+- **Portée** : module Offer (liste publique), app mobile (barre, accueil).
+- **Corollaires** :
+  - la fiche d'une offre, les filtres et la carte viendront plus tard ;
+  - `offer.browse` est la première liste servie à un visiteur.
+- **Tranché par** : humain
