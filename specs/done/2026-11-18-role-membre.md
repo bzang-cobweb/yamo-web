@@ -24,3 +24,25 @@ Demande du 2026-11-18 :
 
 - Des permissions pour `member` (elles viendront avec les offres).
 - Des écrans ou un comportement de l'app qui dépendraient du rôle.
+
+## Ce que j'ai décidé seul
+
+- **Le rôle est créé s'il manque** au moment de l'inscription (`Role::findOrCreate`, guard `web`). Ainsi, l'inscription ne dépend pas d'un seeder rejoué. La guard est fixée parce qu'une requête d'API aurait sinon pris `sanctum`.
+- **Une table de suivi `member_role_backfill`** note les comptes servis par la migration, pour que son retour en arrière ne retire le rôle qu'à eux. Elle reste en base tant que la migration est appliquée.
+
+## Ce qui a été fait
+
+- Commit `4c82387` :
+  - `RoleEnum::MEMBER`, attribué dans `RegisterService::complete()` ;
+  - la migration `2026_11_22_120000_give_member_role_to_accounts_without_role` ;
+  - les tests : inscription par e-mail et par les deux canaux, `CreateUserCommand` sans rôle, migration aller-retour, seeder.
+- En base locale, la migration est jouée. Aucun compte ne l'a reçue : les deux comptes existants sont super administrateurs.
+- QA (`bza-dev:qa-check`) : GO (`.ia/runs/2026-11-18-role-membre/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- L'inscription par téléphone seul, en test dédié. Elle passe par le même `complete()`.
+
+## Ce qui reste en suspens
+
+- Rien n'est poussé.

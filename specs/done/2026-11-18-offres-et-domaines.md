@@ -110,3 +110,50 @@ Un seul code. Le domaine du projet (location, boutique, rencontre…) est un **p
 - La consultation publique des offres dans l'app : liste de toutes les offres, fiche détaillée, recherche par critères.
 - L'ajout de photos depuis l'app : il faudrait un type de champ « fichier » dans les formulaires génériques.
 - Les colonnes indexées sur les attributs pour la recherche.
+
+## Ce que j'ai décidé seul
+
+- **La colonne JSON s'appelle `details`**, et non `attributes`. Ce nom est une propriété interne des modèles Eloquent, et une colonne homonyme y serait fragile. Dans le code, la notion reste celle d'« attributs du domaine ».
+- **Sans domaine, les routes existent mais répondent 404.** C'est le middleware `RequireOfferDomain` qui s'en charge, plutôt qu'un enregistrement conditionnel. Le domaine est ainsi lu à chaque requête, et les tests peuvent en changer.
+- **Formulaire et liste indisponibles :** `Form::isAvailable()` et `Listing::isAvailable()` sont génériques dans le module Form. Un formulaire ou une liste indisponible répond comme un inconnu (404).
+- **Menu du profil :** Auth expose `ProfileMenuLinks`, où les autres modules inscrivent leurs liens. Auth ne dépend pas d'Offer.
+- **`FieldComponent`, dans le module Form,** convertit un `Field` en champ Filament : libellé, aide, options, obligation, mêmes règles que l'API.
+- **Les droits du rôle `member`** se règlent par `Domain::membersCreateOffers()`, un booléen. Il est vérifié par `OfferPolicy::create`, en plus du rôle. Il n'y a pas de liste de permissions par domaine.
+- **Les attributs numériques sont enregistrés comme nombres** (64, 3.5), depuis l'API comme depuis le back-office.
+- **Capacités du domaine :** `hasPrice`, `requiresPrice`, `hasAddress`, `requiresAddress`, `onePerAccount`, `currency()` (CHF par défaut), `addLabel()` et `priceLabel()`.
+- **L'adresse d'une offre se choisit parmi les adresses du compte** (`address_id` d'une adresse partagée). Dans le back-office, toute adresse est proposée.
+- **Le statut se règle depuis l'app** (brouillon, publiée, archivée). Publier fixe `published_at`, une seule fois.
+- **Catégories :** gérées sous `offers.update`. Une offre est restaurable dans le back-office ; la suppression définitive n'est pas proposée.
+- **`phpunit.xml` force `OFFER_DOMAIN` vide.** Les tests ne dépendent pas du `.env` local, où j'ai mis `rental`. `.env.example` déclare `OFFER_DOMAIN=`.
+
+## Ce qui a été fait
+
+- **Commits :**
+  - `8a6fb33` (Form) ;
+  - `8cc61e8` (Auth : `ProfileMenuLinks`, `offers.*`, droits de l'admin) ;
+  - `3ad6adf` (module Offer) ;
+  - `c1c553d` (docblock).
+- **Module Offer :**
+  - données : migration, modèles `Offer` (photos via medialibrary, suppression douce) et `OfferCategory`, factories ;
+  - domaines : `Domain`, `DomainRegistry` et `RentalDomain` ;
+  - accès et règles : policies, `OfferService`, formulaire `offer.offer`, liste `offer.mine` avec recherche, routes `v1/offers` ;
+  - back-office : `OfferResource` (filtres, corbeille, attributs, photos) et `OfferCategoryResource` ;
+  - données de départ et textes : seeder des catégories du domaine, textes en fr et en.
+- **Tests (21)** : API, domaine de test `test.shop` et domaine « un par compte », domaine inconnu, nom en conflit, absence de domaine, back-office.
+- **Base locale :** migration jouée, catégories du domaine `rental` créées.
+- **QA** (`bza-dev:qa-check`) : GO, failles d'autorisation cherchées sans résultat (`.ia/runs/2026-11-18-offres-et-domaines/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Le back-office dans un navigateur et l'envoi réel de photos.
+- L'app sur un appareil, avec « Mes logements ». Elle n'a pas changé, et ses tests passent.
+
+## Ce qui reste en suspens
+
+- **Chantiers suivants :**
+  - la commande `project:init` et le skill d'initialisation ;
+  - les domaines boutique et rencontre ;
+  - la consultation publique des offres dans l'app ;
+  - un champ « fichier » générique, pour les photos depuis l'app ;
+  - des colonnes indexées pour la recherche par attributs.
+- **Rien n'est poussé.**
