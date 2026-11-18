@@ -68,8 +68,9 @@ final class ListItem
     }
 
     /**
-     * Une phrase mise en avant (le dernier avis d'une offre), sur sa ligne et en
-     * gras ; tronquée à `$limit` caractères.
+     * Une phrase mise en avant (pour une offre : détails et prix, décision
+     * 2026-11-19-item-titre-saisi-details), sur sa ligne et en gras ; tronquée à
+     * `$limit` caractères.
      */
     public function highlight(?string $text, int $limit = 140): self
     {

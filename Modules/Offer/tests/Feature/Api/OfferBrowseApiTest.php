@@ -53,9 +53,10 @@ class OfferBrowseApiTest extends TestCase
         $this->assertSame([(string) $newer->getKey(), (string) $older->getKey()], array_column($data['items'], 'id'));
         $item = $data['items'][1];
         $this->assertSame('Studio à Akwa', $item['title']);
-        // Sans attributs de logement : le titre saisi ; le prix en sous-titre.
+        // Sans attributs de logement : le titre saisi, pas répété en sous-titre ; le prix en gras.
         // Rental sans « meublé » : au mois.
-        $this->assertSame('25 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['subtitle']));
+        $this->assertNull($item['subtitle']);
+        $this->assertSame('25 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['highlight']));
         $this->assertNull($item['edit']);
         $this->assertNull($item['delete']);
 
@@ -82,10 +83,13 @@ class OfferBrowseApiTest extends TestCase
         // Le prix suit le type de location : meublé au jour, sinon au mois.
         $house->update(['price' => '45000', 'currency' => 'XAF']);
         $studio->update(['price' => '80000', 'currency' => 'XAF']);
-        $subtitles = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($this->browse()->json('data.items'), 'subtitle', 'id'));
+        $items = $this->browse()->json('data.items');
+        $highlights = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($items, 'highlight', 'id'));
         // Plus d'une chambre : leur nombre avant le prix ; une seule ou aucune : rien.
-        $this->assertSame('3 chambres · 45 000 FCFA / jour', $subtitles[(string) $house->getKey()]);
-        $this->assertSame('80 000 FCFA / mois', $subtitles[(string) $studio->getKey()]);
+        $this->assertSame('3 chambres · 45 000 FCFA / jour', $highlights[(string) $house->getKey()]);
+        $this->assertSame('80 000 FCFA / mois', $highlights[(string) $studio->getKey()]);
+        // Le titre saisi, en sous-titre (décision 2026-11-19-item-titre-saisi-details).
+        $this->assertSame($house->getTranslation('title', 'fr'), array_column($items, 'subtitle', 'id')[(string) $house->getKey()]);
 
         $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');
         $this->assertSame('House - furnished - Douala', $en[(string) $house->getKey()]);

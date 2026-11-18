@@ -75,8 +75,8 @@ class OfferReviewApiTest extends TestCase
 
         $item = $this->api(null, 'GET', '/api/v1/lists/offer.browse')->assertOk()->json('data.items.0');
         $this->assertSame(['average' => 4.5, 'count' => 2], $item['rating']);
-        // Le dernier commentaire, sur une ligne.
-        $this->assertSame('Propre et calme, je recommande.', $item['highlight']);
+        // Le commentaire reste sur la fiche, pas dans la liste (décision 2026-11-19-item-titre-saisi-details).
+        $this->assertStringNotContainsString('recommande', (string) $item['highlight']);
 
         $reviews = $this->api($awa, 'GET', "/api/v1/offers/{$offer->getKey()}")->assertOk()->json('data.reviews');
         $this->assertSame(4.5, $reviews['average']);
@@ -101,12 +101,11 @@ class OfferReviewApiTest extends TestCase
         $this->assertSame(1, OfferReview::query()->count());
         $this->assertSame(3, OfferReview::query()->value('rating'));
 
-        // Un avis modifié redevient le dernier commentaire mis en avant.
+        // Un avis modifié redevient le premier de la fiche.
         $this->travel(1)->minutes();
         $this->review($this->member('Paul'), $offer, 5, 'Parfait.')->assertNoContent();
         $this->travel(1)->minutes();
         $this->review($awa, $offer, 3, 'Bruyant le soir, mais bien situé.')->assertNoContent();
-        $this->assertSame('Bruyant le soir, mais bien situé.', $this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.items.0.highlight'));
         $this->assertSame(['Awa', 'Paul'], array_column($this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.reviews.latest'), 'author'));
         OfferReview::query()->whereNot('user_id', $awa->getKey())->delete();
 
@@ -170,10 +169,10 @@ class OfferReviewApiTest extends TestCase
         $this->assertNull($this->api($owner, 'GET', "/api/v1/offers/{$offer->getKey()}")->assertOk()->json('data.reviews'));
         $item = $this->api($owner, 'GET', '/api/v1/lists/offer.mine')->assertOk()->json('data.items.0');
         $this->assertNull($item['rating']);
-        $this->assertNull($item['highlight']);
+        $this->assertStringNotContainsString('Super', (string) $item['highlight']);
     }
 
-    public function test_an_offer_without_review_shows_neither_rating_nor_comment_and_the_detail_lists_5_at_most(): void
+    public function test_an_offer_without_review_shows_no_rating_and_the_detail_lists_5_at_most(): void
     {
         $quiet = Offer::factory()->create(['status' => 'published']);
         $busy = Offer::factory()->create(['status' => 'published']);
@@ -181,7 +180,6 @@ class OfferReviewApiTest extends TestCase
 
         $items = array_column($this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.items'), null, 'id');
         $this->assertNull($items[(string) $quiet->getKey()]['rating']);
-        $this->assertNull($items[(string) $quiet->getKey()]['highlight']);
         $this->assertSame(7, $items[(string) $busy->getKey()]['rating']['count']);
 
         $reviews = $this->api(null, 'GET', "/api/v1/offers/{$busy->getKey()}")->json('data.reviews');
@@ -193,16 +191,5 @@ class OfferReviewApiTest extends TestCase
             $this->api(null, 'GET', "/api/v1/offers/{$quiet->getKey()}")->json('data.reviews'),
             ['average' => 1, 'count' => 1, 'latest' => 1],
         ));
-    }
-
-    public function test_a_long_comment_is_cut_in_the_list(): void
-    {
-        $offer = Offer::factory()->create(['status' => 'published']);
-        OfferReview::factory()->for($offer)->create(['comment' => str_repeat('Très bien. ', 30)]);
-
-        $highlight = (string) $this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.items.0.highlight');
-
-        $this->assertLessThanOrEqual(141, mb_strlen($highlight));
-        $this->assertStringEndsWith('…', $highlight);
     }
 }

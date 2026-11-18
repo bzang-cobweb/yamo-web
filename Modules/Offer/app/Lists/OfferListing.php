@@ -93,14 +93,15 @@ class OfferListing extends Listing
 
         // Le titre construit par le domaine (« Studio - meublé - Douala »), sinon le titre saisi.
         $domain = app(DomainRegistry::class)->require();
-        $title = $domain->itemTitle($record) ?? (string) $record->getTranslation('title', $locale);
+        $typed = (string) $record->getTranslation('title', $locale);
+        $title = $domain->itemTitle($record) ?? $typed;
 
-        // « Publiée · 3 chambres · 80 000 FCFA / mois ».
-        return ListItem::make($record->getKey(), $title, implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
+        // En sous-titre, le titre saisi ; en gras, « Publiée · 3 chambres · 80 000 FCFA / mois »
+        // (décision 2026-11-19-item-titre-saisi-details). La note, tant qu'elle est publiée.
+        return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
-            // Les avis, tant qu'elle est publiée (décision 2026-11-19-contrat-avis-offres).
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
-            ->highlight($record->showsReviews() ? $record->latestReview?->comment : null)
+            ->highlight(implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
             ->delete(
                 __('offer::offer.list.remove'),

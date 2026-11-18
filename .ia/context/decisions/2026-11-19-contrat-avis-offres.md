@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-item-titre-saisi-details.md (pour le contenu de `highlight` des offres seulement)
+
 # `2026-11-19` — Contrat des avis sur les offres, validé
 
 - **Type** : décision

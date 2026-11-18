@@ -17,7 +17,8 @@ use Modules\Offer\Models\Offer;
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
  * 2026-11-18-accueil-offres-du-pays) : ouverte sans connexion, les plus récentes
- * d'abord ; titre construit par le domaine (« Studio - meublé - Douala ») et prix ;
+ * d'abord ; titre construit par le domaine (« Studio - meublé - Douala »), titre
+ * saisi en sous-titre, note, puis détails et prix en gras ;
  * recherche dans le titre saisi et la ville. Ni édition ni retrait.
  * Sans domaine choisi, elle n'existe pas.
  */
@@ -86,16 +87,15 @@ class OfferBrowseListing extends Listing
         // « 60 000 FCFA / jour » : le prix et son unité, selon le domaine.
         $price = $domain->formattedPrice($record, app()->getLocale());
 
-        // Le titre construit par le domaine (« Studio - meublé - Douala »), sinon le titre saisi.
-        return ListItem::make(
-            $record->getKey(),
-            $domain->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),
-            // « 3 chambres · 80 000 FCFA / mois » : les détails du domaine, puis le prix.
-            implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null,
-        )
+        $typed = (string) $record->getTranslation('title', app()->getLocale());
+        $title = $domain->itemTitle($record) ?? $typed;
+
+        // Titre construit par le domaine (« Studio - meublé - Douala »), sinon le titre saisi ;
+        // en sous-titre, le titre saisi ; en gras, les détails puis le prix
+        // (« 3 chambres · 80 000 FCFA / mois », décision 2026-11-19-item-titre-saisi-details).
+        return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
-            // La note moyenne, puis le dernier avis en gras sur sa ligne.
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)
-            ->highlight($record->latestReview?->comment);
+            ->highlight(implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null);
     }
 }

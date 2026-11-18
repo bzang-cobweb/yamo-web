@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
@@ -43,7 +42,6 @@ use Spatie\Translatable\HasTranslations;
  * @property-read Country|null $country
  * @property-read OfferCategory|null $category
  * @property-read Address|null $address
- * @property-read OfferReview|null $latestReview
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
@@ -141,23 +139,13 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Son dernier avis, donné ou modifié : le commentaire mis en avant dans les listes.
-     *
-     * @return HasOne<OfferReview, $this>
-     */
-    public function latestReview(): HasOne
-    {
-        return $this->hasOne(OfferReview::class)->latestOfMany('updated_at');
-    }
-
-    /**
-     * Moyenne et nombre d'avis, et le dernier avis, calculés dans la requête.
+     * Moyenne et nombre d'avis, calculés dans la requête.
      *
      * @param  Builder<Offer>  $query
      */
     public function scopeWithReviewSummary(Builder $query): void
     {
-        $query->withAvg('reviews', 'rating')->withCount('reviews')->with('latestReview');
+        $query->withAvg('reviews', 'rating')->withCount('reviews');
     }
 
     /**

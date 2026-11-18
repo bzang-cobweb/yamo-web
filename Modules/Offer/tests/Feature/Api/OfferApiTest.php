@@ -163,8 +163,9 @@ class OfferApiTest extends TestCase
         $this->assertCount(1, $data);
         $this->assertSame((string) $mine->getKey(), $data[0]['id']);
         $this->assertSame('Studio', $data[0]['title']);
-        $this->assertStringStartsWith('Publiée · ', $data[0]['subtitle']);
-        $this->assertStringContainsString('900', $data[0]['subtitle']);
+        // Statut, détails et prix en gras ; le titre saisi en sous-titre s'il diffère.
+        $this->assertStringStartsWith('Publiée · ', $data[0]['highlight']);
+        $this->assertStringContainsString('900', $data[0]['highlight']);
         $this->assertSame("/v1/offers/{$mine->getKey()}", $data[0]['delete']['endpoint']);
     }
 
