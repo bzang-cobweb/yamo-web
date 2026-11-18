@@ -4,8 +4,10 @@ namespace Modules\Auth\Services;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Hash;
+use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
+use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\PhoneNumbers;
@@ -79,6 +81,9 @@ final class RegisterService
                 'email_verified_at' => $payload['email'] !== null ? now() : null,
                 'phone_verified_at' => $payload['phone'] !== null ? now() : null,
             ])->save();
+            // Inscrit depuis l'app : membre (décision 2026-11-18-role-membre). Le rôle
+            // est créé s'il manque, pour ne pas dépendre d'un seeder rejoué.
+            $user->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
             $this->codeService->close($verified->challenge);
 
             return $user;

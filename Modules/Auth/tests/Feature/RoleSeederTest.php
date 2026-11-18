@@ -29,6 +29,7 @@ class RoleSeederTest extends TestCase
             Role::findByName(RoleEnum::ADMIN->value)->permissions->pluck('name')->all(),
         );
         $this->assertTrue(Role::findByName(RoleEnum::SUPER_ADMIN->value)->permissions->isEmpty());
+        $this->assertTrue(Role::findByName(RoleEnum::MEMBER->value)->permissions->isEmpty());
     }
 
     public function test_replaying_the_seeder_keeps_permissions_given_in_the_back_office(): void

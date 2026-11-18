@@ -222,6 +222,8 @@ class VerificationCodesApiTest extends TestCase
         $this->assertNull($user->birth_date);
         $this->assertNull($user->phone);
         $this->assertTrue(Hash::check('Secret-password-1', $user->password));
+        // Inscrit depuis l'app : membre, et rien d'autre (décision 2026-11-18-role-membre).
+        $this->assertSame(['member'], $user->getRoleNames()->all());
     }
 
     public function test_register_creates_the_account_in_the_language_chosen_in_the_app(): void
@@ -290,6 +292,7 @@ class VerificationCodesApiTest extends TestCase
         $user = User::query()->where('name', 'marie')->sole();
         $this->assertNotNull($user->email_verified_at);
         $this->assertNotNull($user->phone_verified_at);
+        $this->assertSame(['member'], $user->getRoleNames()->all());
     }
 
     public function test_register_needs_an_email_or_a_phone_and_refuses_taken_ones(): void

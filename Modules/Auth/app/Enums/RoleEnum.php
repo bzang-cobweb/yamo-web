@@ -7,6 +7,12 @@ enum RoleEnum: string
     /** Tous les droits : court-circuite les policies (HasBeforeAbility). */
     case SUPER_ADMIN = 'super_admin';
 
+    /**
+     * Compte inscrit depuis l'app (décision 2026-11-18-role-membre). Ses droits
+     * sur les offres viennent du profil de domaine.
+     */
+    case MEMBER = 'member';
+
     /** Gestion courante ; ses permissions de base sont données par le seeder. */
     case ADMIN = 'admin';
 
@@ -19,7 +25,7 @@ enum RoleEnum: string
     public function basePermissions(): array
     {
         return match ($this) {
-            self::SUPER_ADMIN => [],
+            self::SUPER_ADMIN, self::MEMBER => [],
             // Les adresses d'un utilisateur sont sur sa page d'édition (décision 2026-11-18-role-admin-acces-back-office).
             self::ADMIN => [
                 PermissionEnum::ACCESS_ADMIN,

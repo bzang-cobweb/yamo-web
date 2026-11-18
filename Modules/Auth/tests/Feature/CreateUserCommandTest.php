@@ -53,6 +53,7 @@ class CreateUserCommandTest extends TestCase
             '--locale' => 'fr',
         ])->assertSuccessful();
 
+        // Pas d'inscription par l'app : pas de rôle `member` (décision 2026-11-18-role-membre).
         $this->assertCount(0, User::firstWhere('email', 'jean@example.com')->roles);
     }
 
