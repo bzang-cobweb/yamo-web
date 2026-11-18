@@ -15,7 +15,7 @@ return [
         'title' => 'Bienvenue',
         'subtitle' => 'Choisissez votre pays et votre langue.',
         // Le pays où l'on utilise l'app (son espace), pas la nationalité.
-        'country' => "Dans quel pays utilisez-vous l'app ?",
+        'country' => 'Dans quel pays ?',
         'language' => 'Langue',
         'chooseCountry' => 'Choisir un pays',
         'enter' => 'Entrer',
