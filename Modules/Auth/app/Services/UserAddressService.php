@@ -24,7 +24,7 @@ class UserAddressService
     /** Champs du destinataire, propres au compte. */
     public const RECIPIENT_FIELDS = ['gender', 'first_name', 'last_name'];
 
-    public function __construct(private readonly AddressService $addresses) {}
+    public function __construct(private readonly AddressService $addressService) {}
 
     /**
      * Ajoute au compte l'adresse saisie, avec son destinataire.
@@ -34,7 +34,7 @@ class UserAddressService
     public function attach(User $user, array $data): UserAddress
     {
         return DB::transaction(function () use ($user, $data): UserAddress {
-            $address = $this->addresses->findOrCreate($data);
+            $address = $this->addressService->findOrCreate($data);
 
             return $user->addresses()->create([
                 'address_id' => $address->getKey(),
@@ -52,7 +52,7 @@ class UserAddressService
     {
         return DB::transaction(function () use ($userAddress, $data): UserAddress {
             $userAddress->fill([
-                'address_id' => $this->addresses->findOrCreate($data)->getKey(),
+                'address_id' => $this->addressService->findOrCreate($data)->getKey(),
                 ...$this->recipient($data),
             ])->save();
 
