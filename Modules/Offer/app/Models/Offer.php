@@ -5,9 +5,12 @@ namespace Modules\Offer\Models;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
@@ -40,6 +43,9 @@ use Spatie\Translatable\HasTranslations;
  * @property-read Country|null $country
  * @property-read OfferCategory|null $category
  * @property-read Address|null $address
+ * @property-read OfferReview|null $latestReview
+ * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
+ * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
 #[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at'])]
 #[UseFactory(OfferFactory::class)]
@@ -122,6 +128,44 @@ class Offer extends Model implements HasMedia
     public function address(): BelongsTo
     {
         return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Ses avis (décision 2026-11-19-contrat-avis-offres).
+     *
+     * @return HasMany<OfferReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(OfferReview::class);
+    }
+
+    /**
+     * Son dernier avis, donné ou modifié : le commentaire mis en avant dans les listes.
+     *
+     * @return HasOne<OfferReview, $this>
+     */
+    public function latestReview(): HasOne
+    {
+        return $this->hasOne(OfferReview::class)->latestOfMany('updated_at');
+    }
+
+    /**
+     * Moyenne et nombre d'avis, et le dernier avis, calculés dans la requête.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeWithReviewSummary(Builder $query): void
+    {
+        $query->withAvg('reviews', 'rating')->withCount('reviews')->with('latestReview');
+    }
+
+    /**
+     * Ses avis s'affichent-ils ? Seulement tant qu'elle est publiée.
+     */
+    public function showsReviews(): bool
+    {
+        return $this->status === OfferStatusEnum::PUBLISHED;
     }
 
     /**

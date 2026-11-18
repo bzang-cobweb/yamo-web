@@ -30,6 +30,8 @@ enum FieldType: string
     case CODE = 'code';
     /** Choix parmi quelques options, en boutons côte à côte (ex. « E-mail | Téléphone »). */
     case SEGMENTED = 'segmented';
+    /** Note en étoiles, entier de 1 à 5 (décision 2026-11-19-contrat-avis-offres). */
+    case RATING = 'rating';
 
     /**
      * Le champ propose une liste d'options.
@@ -57,6 +59,7 @@ enum FieldType: string
             self::DATE => ['date_format:Y-m-d'],
             self::PHONE => ['string', 'phone'],
             self::CODE => ['string', 'digits:6'],
+            self::RATING => ['integer', 'between:1,5'],
         };
     }
 }

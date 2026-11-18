@@ -9,12 +9,15 @@ use Modules\Form\Support\ListingRegistry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\OfferForm;
+use Modules\Offer\Forms\OfferReviewForm;
 use Modules\Offer\Lists\OfferBrowseListing;
 use Modules\Offer\Lists\OfferListing;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferReview;
 use Modules\Offer\Policies\OfferCategoryPolicy;
 use Modules\Offer\Policies\OfferPolicy;
+use Modules\Offer\Policies\OfferReviewPolicy;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 /**
@@ -60,9 +63,12 @@ class OfferServiceProvider extends ModuleServiceProvider
 
         Gate::policy(Offer::class, OfferPolicy::class);
         Gate::policy(OfferCategory::class, OfferCategoryPolicy::class);
+        Gate::policy(OfferReview::class, OfferReviewPolicy::class);
 
         // Formulaire et liste servis à l'app : indisponibles (404) sans domaine choisi.
         $this->app->make(FormRegistry::class)->register(OfferForm::class);
+        // Son avis sur une offre, ouvert depuis la fiche (décision 2026-11-19-contrat-avis-offres).
+        $this->app->make(FormRegistry::class)->register(OfferReviewForm::class);
         $this->app->make(ListingRegistry::class)->register(OfferListing::class);
         // La vitrine de l'accueil, ouverte sans connexion (décision 2026-11-18-accueil-offres-du-pays).
         $this->app->make(ListingRegistry::class)->register(OfferBrowseListing::class);

@@ -10,5 +10,11 @@ return [
         'photoPosition' => ':current / :total',
         'details' => 'Caractéristiques',
         'description' => 'Description',
+        // Avis (décision 2026-11-19-contrat-avis-offres).
+        'reviews' => 'Avis',
+        'noReviews' => 'Aucun avis pour le moment.',
+        'writeReview' => 'Donner mon avis',
+        'editReview' => 'Modifier mon avis',
+        'signInToReview' => 'Connectez-vous pour donner votre avis.',
     ],
 ];

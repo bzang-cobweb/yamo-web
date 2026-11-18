@@ -2,8 +2,11 @@
 
 namespace Modules\Form\Support;
 
+use Illuminate\Support\Str;
+
 /**
- * Un item d'une liste (`Listing`) : titre, sous-titre, photo, et ce que l'app peut en
+ * Un item d'une liste (`Listing`) : titre, sous-titre, photo, note et phrase mise
+ * en avant, et ce que l'app peut en
  * faire : l'ouvrir dans un formulaire lié à l'enregistrement (`edit`), le retirer
  * après confirmation (`delete`, envoi décrit comme celui d'un formulaire).
  */
@@ -14,6 +17,14 @@ final class ListItem
 
     /** Photo de l'item (URL absolue), affichée au-dessus du titre ; aucune par défaut. */
     private ?string $image = null;
+
+    /** Note moyenne et nombre de notes ; aucune par défaut. */
+    private ?float $ratingAverage = null;
+
+    private int $ratingCount = 0;
+
+    /** Phrase mise en avant, sur sa ligne et en gras ; aucune par défaut. */
+    private ?string $highlight = null;
 
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
@@ -45,6 +56,30 @@ final class ListItem
     }
 
     /**
+     * Note moyenne (1 à 5) et nombre de notes, affichées sous le sous-titre
+     * (décision 2026-11-19-contrat-avis-offres). Sans note (`$count` à 0), rien.
+     */
+    public function rating(float|string|null $average, int $count): self
+    {
+        $this->ratingCount = $average === null ? 0 : max(0, $count);
+        $this->ratingAverage = $this->ratingCount === 0 ? null : round((float) $average, 1);
+
+        return $this;
+    }
+
+    /**
+     * Une phrase mise en avant (le dernier avis d'une offre), sur sa ligne et en
+     * gras ; tronquée à `$limit` caractères.
+     */
+    public function highlight(?string $text, int $limit = 140): self
+    {
+        $text = $text === null ? '' : trim((string) preg_replace('/\s+/u', ' ', $text));
+        $this->highlight = $text === '' ? null : Str::limit($text, $limit, '…');
+
+        return $this;
+    }
+
+    /**
      * Toucher l'item ouvre le formulaire `$form` lié à cet enregistrement.
      */
     public function edit(string $form, string|int|null $record = null): self
@@ -67,7 +102,7 @@ final class ListItem
     }
 
     /**
-     * @return array{id: string, title: string, subtitle: string|null, image: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}
+     * @return array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}
      */
     public function toArray(): array
     {
@@ -76,6 +111,10 @@ final class ListItem
             'title' => $this->title,
             'subtitle' => $this->subtitle,
             'image' => $this->image,
+            /** Note moyenne (1 à 5, au dixième) et nombre de notes ; `null` sans note. */
+            'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
+            /** Phrase mise en avant, affichée en gras sur sa ligne ; `null` sans. */
+            'highlight' => $this->highlight,
             'edit' => $this->edit,
             'delete' => $this->deleteSubmission === null ? null : [
                 'label' => (string) $this->deleteLabel,

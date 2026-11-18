@@ -35,6 +35,9 @@ enum RoleEnum: string
                 PermissionEnum::CREATE_ADDRESSES,
                 PermissionEnum::UPDATE_ADDRESSES,
                 PermissionEnum::DELETE_ADDRESSES,
+                // Modération des avis (décision 2026-11-19-contrat-avis-offres).
+                PermissionEnum::VIEW_OFFER_REVIEWS,
+                PermissionEnum::DELETE_OFFER_REVIEWS,
                 // Offres et catégories (décision 2026-11-18-offres-et-domaines).
                 PermissionEnum::VIEW_OFFERS,
                 PermissionEnum::CREATE_OFFERS,

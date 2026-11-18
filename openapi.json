@@ -758,6 +758,85 @@
                 }
             }
         },
+        "/v1/offers/{offer}/review": {
+            "put": {
+                "operationId": "v1.offers.review.save",
+                "summary": "Donner son avis, ou remplacer celui qu'on a d\u00e9j\u00e0 donn\u00e9",
+                "tags": [
+                    "OfferReview"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OfferReviewRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.offers.review.destroy",
+                "summary": "Retirer son avis ; sans avis, rien \u00e0 faire (204 quand m\u00eame)",
+                "tags": [
+                    "OfferReview"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/auth/me/password": {
             "put": {
                 "operationId": "v1.auth.me.password.update",
@@ -2117,6 +2196,35 @@
                                         "null"
                                     ]
                                 },
+                                "rating": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "Note moyenne (1 \u00e0 5, au dixi\u00e8me) et nombre de notes ; `null` sans note.",
+                                    "properties": {
+                                        "average": {
+                                            "type": [
+                                                "number",
+                                                "null"
+                                            ]
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "average",
+                                        "count"
+                                    ]
+                                },
+                                "highlight": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Phrase mise en avant, affich\u00e9e en gras sur sa ligne ; `null` sans."
+                                },
                                 "edit": {
                                     "type": [
                                         "object",
@@ -2192,6 +2300,8 @@
                                 "title",
                                 "subtitle",
                                 "image",
+                                "rating",
+                                "highlight",
                                 "edit",
                                 "delete"
                             ]
@@ -2592,6 +2702,132 @@
                             "value",
                             "label"
                         ]
+                    },
+                    "reviews": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Les avis (d\u00e9cision 2026-11-19-contrat-avis-offres) : moyenne, nombre, 5 derniers, le sien, s'il peut en donner un, et le retrait du sien ; `null` pour une offre non publi\u00e9e.",
+                        "properties": {
+                            "average": {
+                                "type": [
+                                    "number",
+                                    "null"
+                                ]
+                            },
+                            "count": {
+                                "type": "integer"
+                            },
+                            "latest": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "string"
+                                        },
+                                        "rating": {
+                                            "type": "integer"
+                                        },
+                                        "comment": {
+                                            "type": "string"
+                                        },
+                                        "created_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "author",
+                                        "rating",
+                                        "comment",
+                                        "created_at"
+                                    ]
+                                }
+                            },
+                            "mine": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer"
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "rating",
+                                    "comment"
+                                ]
+                            },
+                            "can_review": {
+                                "type": "boolean"
+                            },
+                            "delete": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "confirm": {
+                                        "type": "string"
+                                    },
+                                    "method": {
+                                        "type": "string"
+                                    },
+                                    "endpoint": {
+                                        "type": "string"
+                                    },
+                                    "destructive": {
+                                        "type": "boolean"
+                                    },
+                                    "success": {
+                                        "type": "object",
+                                        "properties": {
+                                            "action": {
+                                                "type": "string"
+                                            },
+                                            "message": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "action",
+                                            "message"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "confirm",
+                                    "method",
+                                    "endpoint",
+                                    "destructive",
+                                    "success"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "average",
+                            "count",
+                            "latest",
+                            "mine",
+                            "can_review",
+                            "delete"
+                        ]
                     }
                 },
                 "required": [
@@ -2603,9 +2839,30 @@
                     "description",
                     "facts",
                     "published_at",
-                    "status"
+                    "status",
+                    "reviews"
                 ],
                 "title": "OfferDetailResource"
+            },
+            "OfferReviewRequest": {
+                "type": "object",
+                "description": "Son avis sur une offre, valid\u00e9 par le formulaire `offer.review` : note de 1 \u00e0 5\net commentaire, tous deux obligatoires.",
+                "properties": {
+                    "rating": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                    },
+                    "comment": {
+                        "type": "string",
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "rating",
+                    "comment"
+                ],
+                "title": "OfferReviewRequest"
             },
             "PhoneChangeRequest": {
                 "type": "object",

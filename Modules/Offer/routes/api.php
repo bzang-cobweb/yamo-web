@@ -6,6 +6,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Offer\Http\Controllers\Api\OfferController;
+use Modules\Offer\Http\Controllers\Api\OfferReviewController;
 use Modules\Offer\Http\Middleware\RequireOfferDomain;
 use Modules\Offer\Models\Offer;
 
@@ -17,4 +18,8 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     Route::post('/', [OfferController::class, 'store'])->can('create', Offer::class)->name('store');
     Route::patch('{offer}', [OfferController::class, 'update'])->can('update', 'offer')->name('update');
     Route::delete('{offer}', [OfferController::class, 'destroy'])->can('delete', 'offer')->name('destroy');
+
+    // Son avis sur une offre (décision 2026-11-19-contrat-avis-offres).
+    Route::put('{offer}/review', [OfferReviewController::class, 'save'])->can('review', 'offer')->name('review.save');
+    Route::delete('{offer}/review', [OfferReviewController::class, 'destroy'])->can('review', 'offer')->name('review.destroy');
 });

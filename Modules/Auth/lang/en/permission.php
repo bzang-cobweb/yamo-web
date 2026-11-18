@@ -53,6 +53,10 @@ return [
             'update' => 'Edit offers and categories',
             'delete' => 'Delete offers',
         ],
+        'offer_reviews' => [
+            'view' => 'View offer reviews',
+            'delete' => 'Delete offer reviews',
+        ],
         'settings' => [
             'update' => 'Edit the application settings',
         ],

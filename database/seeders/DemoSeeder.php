@@ -14,16 +14,19 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferReview;
 
 /**
  * Données de démonstration, en développement seulement : un membre camerounais
  * et 20 logements à son nom (domaine `rental`), chacun avec deux photos dessinées
- * (`DemoPhoto`). Rejouable : rien n'est recréé si le membre a déjà ses offres ;
+ * (`DemoPhoto`), et trois visiteurs qui laissent des avis (décision
+ * 2026-11-19-contrat-avis-offres). Rejouable : rien n'est recréé si le membre a déjà ses offres ;
  * seules les photos manquantes sont ajoutées. Jamais appelé par `DatabaseSeeder`.
  *
  *     ddev artisan db:seed --class='Database\Seeders\DemoSeeder'
  *
- * Compte de démonstration : demo-membre@example.test, mot de passe « password ».
+ * Compte de démonstration : demo-membre@example.test, mot de passe « password » ;
+ * visiteurs : demo-visiteur-1@example.test à -3, même mot de passe.
  */
 class DemoSeeder extends Seeder
 {
@@ -57,6 +60,41 @@ class DemoSeeder extends Seeder
         }
 
         $this->photos($member);
+        $this->reviews($member, $cameroon);
+    }
+
+    /**
+     * Trois visiteurs et leurs avis sur les logements publiés ; certains logements
+     * restent sans avis. Rejouable : un avis par visiteur et par logement.
+     */
+    private function reviews(User $member, Country $cameroon): void
+    {
+        $offers = Offer::query()->where('user_id', $member->getKey())->where('status', OfferStatusEnum::PUBLISHED)->orderBy('id')->get()->values();
+
+        foreach (self::REVIEWERS as $number => [$firstName, $lastName]) {
+            $reviewer = User::query()->firstOrNew(['email' => 'demo-visiteur-'.($number + 1).'@example.test']);
+            $reviewer->fill([
+                'name' => 'demo.visiteur'.($number + 1),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'gender' => GenderEnum::MALE,
+                'country_id' => $cameroon->getKey(),
+                'locale' => 'fr',
+            ]);
+            $reviewer->forceFill(['password' => self::PASSWORD, 'email_verified_at' => $reviewer->email_verified_at ?? now()])->save();
+            $reviewer->syncRoles([Role::findOrCreate(RoleEnum::MEMBER->value, 'web')]);
+
+            foreach (self::REVIEWS[$number] as [$offerIndex, $rating, $comment]) {
+                $offer = $offers->get($offerIndex);
+
+                if ($offer instanceof Offer) {
+                    OfferReview::query()->updateOrCreate(
+                        ['offer_id' => $offer->getKey(), 'user_id' => $reviewer->getKey()],
+                        ['rating' => $rating, 'comment' => $comment],
+                    );
+                }
+            }
+        }
     }
 
     /**
@@ -140,6 +178,42 @@ class DemoSeeder extends Seeder
 
         return $ids;
     }
+
+    /** @var list<array{string, string}> prénom, nom des visiteurs */
+    private const REVIEWERS = [
+        ['Jean', 'Mbarga'],
+        ['Paul', 'Etoa'],
+        ['Samuel', 'Fotso'],
+    ];
+
+    /**
+     * Avis de chaque visiteur : rang du logement publié, note, commentaire.
+     *
+     * @var list<list<array{int, int, string}>>
+     */
+    private const REVIEWS = [
+        [
+            [0, 5, 'Appartement très propre, propriétaire disponible. Je recommande.'],
+            [1, 4, 'Studio bien situé à Akwa, un peu bruyant le soir.'],
+            [2, 5, 'Grande maison, idéale pour une famille. Quartier calme.'],
+            [4, 4, 'Belle vue, appartement conforme aux photos.'],
+            [7, 3, 'Chambre correcte mais petite pour le prix.'],
+            [10, 5, 'Parfait pour un court séjour, tout est fourni.'],
+        ],
+        [
+            [0, 4, 'Bon rapport qualité-prix à Bonapriso.'],
+            [1, 3, 'Coupures d’eau fréquentes, sinon rien à dire.'],
+            [3, 4, 'Colocation sympathique, bonne ambiance.'],
+            [4, 5, 'Séjour excellent, je reviendrai.'],
+            [9, 4, 'Appartement meublé confortable, climatisation efficace.'],
+        ],
+        [
+            [0, 5, 'Accueil chaleureux et logement impeccable.'],
+            [2, 4, 'Jardin agréable, cuisine un peu ancienne.'],
+            [5, 4, 'Lumineux et pratique, proche des commerces.'],
+            [14, 5, 'Haut standing, vraiment au niveau.'],
+        ],
+    ];
 
     /** @var list<array{string, string, string}> rue, code, ville */
     private const ADDRESSES = [

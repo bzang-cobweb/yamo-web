@@ -39,6 +39,7 @@ class FieldTest extends TestCase
                     Field::date('birthday'),
                     Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41'], 'FR' => ['label' => 'France', 'hint' => '+33']]),
                     Field::code('otp'),
+                    Field::rating('stars'),
                     Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
                     Field::text('pager')->visibleWhen('contact', 'sms')->required(),
                     Field::text('locked')->readonly()->required(),
@@ -76,12 +77,23 @@ class FieldTest extends TestCase
         $this->assertEqualsCanonicalizing(array_column(FieldType::cases(), 'value'), array_values(array_unique($types)));
     }
 
+    public function test_a_rating_is_a_whole_number_from_1_to_5(): void
+    {
+        foreach ([0, 6, 2.5, 'beaucoup'] as $invalid) {
+            $this->assertContains('stars', $this->errors([...$this->valid(), 'stars' => $invalid]), (string) $invalid);
+        }
+        foreach ([1, 5, '3'] as $valid) {
+            $this->assertNotContains('stars', $this->errors([...$this->valid(), 'stars' => $valid]));
+        }
+        $this->assertSame('★★★★☆', Field::rating('stars')->displayValue(4, 'fr'));
+    }
+
     public function test_valid_data_passes(): void
     {
         $this->assertSame([], $this->errors($this->valid()));
         $this->assertSame([], $this->errors([
             ...$this->valid(), 'token' => 't', 'age' => '42', 'bio' => 'Bonjour', 'size' => 'm',
-            'tags' => ['a', 'b'], 'newsletter' => false,
+            'tags' => ['a', 'b'], 'newsletter' => false, 'stars' => 4,
         ]));
     }
 

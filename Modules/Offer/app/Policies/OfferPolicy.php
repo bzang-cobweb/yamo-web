@@ -21,7 +21,16 @@ use Modules\Offer\Models\Offer;
  */
 class OfferPolicy
 {
-    use HasBeforeAbility;
+    use HasBeforeAbility { before as superAdminBefore; }
+
+    /**
+     * Le super administrateur a tous les droits, sauf sur les avis : les règles
+     * d'un avis (offre publiée, pas la sienne) valent pour tout compte.
+     */
+    public function before(User $user, string $ability): ?bool
+    {
+        return $ability === 'review' ? null : $this->superAdminBefore($user, $ability);
+    }
 
     public function viewAny(User $user): bool
     {
@@ -55,6 +64,22 @@ class OfferPolicy
         return $offer->status === OfferStatusEnum::PUBLISHED && (int) $offer->country_id === (int) CurrentCountry::require()->getKey()
             ? Response::allow()
             : Response::denyAsNotFound();
+    }
+
+    /**
+     * Donner, modifier ou retirer son avis sur une offre (décision
+     * 2026-11-19-contrat-avis-offres) : une offre publiée du pays courant (sinon
+     * 404), qui n'est pas la sienne (403).
+     */
+    public function review(User $user, Offer $offer): Response
+    {
+        if ($offer->status !== OfferStatusEnum::PUBLISHED || (int) $offer->country_id !== (int) CurrentCountry::require()->getKey()) {
+            return Response::denyAsNotFound();
+        }
+
+        return (int) $offer->user_id === (int) $user->getKey()
+            ? Response::deny(__('offer::review.own_offer'))
+            : Response::allow();
     }
 
     public function create(User $user): bool

@@ -53,6 +53,10 @@ return [
             'update' => 'Modifier les offres et les catégories',
             'delete' => 'Supprimer des offres',
         ],
+        'offer_reviews' => [
+            'view' => 'Voir les avis sur les offres',
+            'delete' => 'Supprimer des avis sur les offres',
+        ],
         'settings' => [
             'update' => 'Modifier les réglages de l\'application',
         ],

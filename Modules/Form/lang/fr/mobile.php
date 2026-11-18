@@ -15,9 +15,13 @@ return [
         'retry' => 'Réessayer',
         'next' => 'Suivant',
         'previous' => 'Précédent',
+        // Champ note en étoiles, lu par l'accessibilité.
+        'ratingValue' => ':value sur 5',
         'stepOf' => 'Étape :current sur :total',
     ],
     'list' => [
+        // Note moyenne d'un item, lue par l'accessibilité (décision 2026-11-19-contrat-avis-offres).
+        'ratingSummary' => 'Note moyenne :average sur 5, :count avis',
         'loading' => 'Chargement de la liste…',
         'cancel' => 'Annuler',
         'noResults' => 'Aucun résultat.',

@@ -90,6 +90,8 @@ class UserAddressApiTest extends TestCase
             'title' => 'Jeanne Dupont',
             'subtitle' => 'Rue du Lac 4, 1200 Genève, Suisse',
             'image' => null,
+            'rating' => null,
+            'highlight' => null,
             'edit' => ['form' => 'auth.address', 'record' => (string) $mine->getKey()],
             'delete' => [
                 'label' => 'Retirer',

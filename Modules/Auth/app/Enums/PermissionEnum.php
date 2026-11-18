@@ -42,6 +42,9 @@ enum PermissionEnum: string
     case UPDATE_OFFERS = 'offers.update';
     case DELETE_OFFERS = 'offers.delete';
 
+    case VIEW_OFFER_REVIEWS = 'offer_reviews.view';
+    case DELETE_OFFER_REVIEWS = 'offer_reviews.delete';
+
     case UPDATE_SETTINGS = 'settings.update';
 
     public function label(): string

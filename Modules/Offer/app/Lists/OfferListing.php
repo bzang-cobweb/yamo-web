@@ -70,6 +70,8 @@ class OfferListing extends Listing
         // Les siennes, dans le pays courant (décision 2026-11-18-espace-pays).
         return Offer::query()
             ->with(['media', 'address'])
+            // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
+            ->withReviewSummary()
             ->where('user_id', $this->user?->getAuthIdentifier())
             ->where('country_id', CurrentCountry::require()->getKey())
             ->orderBy('id');
@@ -96,6 +98,9 @@ class OfferListing extends Listing
         // « Publiée · 3 chambres · 80 000 FCFA / mois ».
         return ListItem::make($record->getKey(), $title, implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
+            // Les avis, tant qu'elle est publiée (décision 2026-11-19-contrat-avis-offres).
+            ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
+            ->highlight($record->showsReviews() ? $record->latestReview?->comment : null)
             ->edit(OfferForm::name())
             ->delete(
                 __('offer::offer.list.remove'),

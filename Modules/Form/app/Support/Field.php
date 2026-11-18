@@ -163,6 +163,15 @@ final class Field
         return new self($name, FieldType::CODE);
     }
 
+    /**
+     * Note en étoiles, de 1 à 5 : cinq étoiles dans l'app, un choix de 1 à 5 dans
+     * le back-office (décision 2026-11-19-contrat-avis-offres).
+     */
+    public static function rating(string $name): self
+    {
+        return new self($name, FieldType::RATING);
+    }
+
     public static function switch(string $name): self
     {
         return new self($name, FieldType::SWITCH);
@@ -434,6 +443,7 @@ final class Field
             FieldType::SELECT, FieldType::RADIO, FieldType::SEGMENTED => $labels[(string) $value] ?? (string) $value,
             FieldType::CHECKBOX_GROUP => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
             FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
+            FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) $value))).str_repeat('☆', 5 - $stars) : (string) $value,
             FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,
             FieldType::DATE => Carbon::parse((string) $value)->locale($locale)->isoFormat('LL'),
             default => is_scalar($value) ? (string) $value : null,
