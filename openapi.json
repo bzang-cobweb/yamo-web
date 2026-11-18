@@ -624,30 +624,49 @@
                 "security": []
             }
         },
-        "/v1/offers": {
-            "post": {
-                "operationId": "v1.offers.store",
-                "summary": "Ajouter une offre : champs communs et attributs du domaine",
+        "/v1/offers/{offer}": {
+            "get": {
+                "operationId": "v1.offers.show",
+                "summary": "La fiche d'une offre, ouverte sans connexion : publi\u00e9e et du pays courant ;\nle propri\u00e9taire connect\u00e9 voit aussi la sienne en brouillon ou archiv\u00e9e.\nToute autre offre r\u00e9pond 404",
                 "tags": [
                     "Offer"
                 ],
-                "responses": {
-                    "204": {
-                        "description": "No content"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
                     }
-                }
-            }
-        },
-        "/v1/offers/{offer}": {
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`OfferDetailResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/OfferDetailResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                },
+                "security": []
+            },
             "patch": {
                 "operationId": "v1.offers.update",
                 "summary": "Modifier une de ses offres",
@@ -706,6 +725,29 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/offers": {
+            "post": {
+                "operationId": "v1.offers.store",
+                "summary": "Ajouter une offre : champs communs et attributs du domaine",
+                "tags": [
+                    "Offer"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
@@ -2453,6 +2495,120 @@
                     "password"
                 ],
                 "title": "LoginRequest"
+            },
+            "OfferDetailResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Prix format\u00e9 et son libell\u00e9 (\u00ab Loyer mensuel \u00bb) ; `null` sans prix.",
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "boolean"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "label",
+                            "value"
+                        ]
+                    },
+                    "location": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "La ville ; jamais la rue."
+                    },
+                    "photos": {
+                        "type": "array",
+                        "description": "Toutes les photos, dans l'ordre, sur l'h\u00f4te de la requ\u00eate.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "description": {},
+                    "facts": {
+                        "type": "array",
+                        "description": "Caract\u00e9ristiques lisibles : la cat\u00e9gorie, puis les attributs renseign\u00e9s du domaine.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "label",
+                                "value"
+                            ]
+                        }
+                    },
+                    "published_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Statut, servi au seul propri\u00e9taire.",
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "enum": [
+                                    "draft",
+                                    "published",
+                                    "archived"
+                                ]
+                            },
+                            "label": {
+                                "type": "string",
+                                "enum": [
+                                    "offer::offer.statuses.draft",
+                                    "offer::offer.statuses.published",
+                                    "offer::offer.statuses.archived"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "value",
+                            "label"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "title",
+                    "price",
+                    "location",
+                    "photos",
+                    "description",
+                    "facts",
+                    "published_at",
+                    "status"
+                ],
+                "title": "OfferDetailResource"
             },
             "PhoneChangeRequest": {
                 "type": "object",

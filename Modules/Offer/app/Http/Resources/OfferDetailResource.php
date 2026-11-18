@@ -35,17 +35,13 @@ class OfferDetailResource extends JsonResource
             'title' => (string) $offer->getTranslation('title', $locale),
             /** Prix formaté et son libellé (« Loyer mensuel ») ; `null` sans prix. */
             'price' => $offer->price === null ? null : [
-                'label' => $domain->priceLabel(),
+                'label' => (string) $domain->priceLabel(),
                 'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
             ],
             /** La ville ; jamais la rue. */
             'location' => $offer->address?->city,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
-            'photos' => $offer->getMedia(Offer::PHOTOS)
-                ->map(fn (Media $media): ?string => MediaUrl::onRequestHost($media->getUrl()))
-                ->filter()
-                ->values()
-                ->all(),
+            'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
             /** Caractéristiques lisibles : la catégorie, puis les attributs renseignés du domaine. */
             'facts' => $this->facts($offer, $domain, $locale),
@@ -53,6 +49,21 @@ class OfferDetailResource extends JsonResource
             /** Statut, servi au seul propriétaire. */
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function photos(Offer $offer): array
+    {
+        $urls = [];
+
+        foreach ($offer->getMedia(Offer::PHOTOS) as $media) {
+            /** @var Media $media */
+            $urls[] = (string) MediaUrl::onRequestHost($media->getUrl());
+        }
+
+        return $urls;
     }
 
     /**
