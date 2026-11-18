@@ -5,6 +5,7 @@ namespace Modules\Auth\Services;
 use Illuminate\Support\Collection;
 use Modules\Auth\Enums\ProfileMenuKey;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\ProfileMenuLinks;
 
 /**
  * Menu du profil d'un utilisateur, défini ici et non dans le back-office
@@ -44,6 +45,8 @@ class ProfileMenuService
                 'label' => $key->labelFor($user),
                 ...($key->form() !== null ? ['form' => $key->form()] : ['list' => $key->list()]),
             ])
+            // Puis les liens des autres modules (`ProfileMenuLinks`).
+            ->concat(app(ProfileMenuLinks::class)->for($user))
             ->values();
     }
 }

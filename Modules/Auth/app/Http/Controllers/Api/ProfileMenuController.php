@@ -16,7 +16,7 @@ class ProfileMenuController
      * la langue du compte, et le nom du formulaire (`form`) ou de la liste
      * (`list`) qu'il ouvre dans l'app.
      *
-     * @response array{data: list<array{key: 'personal'|'email'|'phone'|'password'|'preferences'|'addresses', label: string, form?: string, list?: string}>}
+     * @response array{data: list<array{key: 'personal'|'email'|'phone'|'password'|'preferences'|'addresses'|'offers', label: string, form?: string, list?: string}>}
      */
     public function index(Request $request, ProfileMenuService $service): array
     {

@@ -47,6 +47,12 @@ return [
             'update' => 'Modifier les adresses et les rattacher aux comptes',
             'delete' => 'Supprimer des adresses',
         ],
+        'offers' => [
+            'view' => 'Voir les offres',
+            'create' => 'Créer des offres',
+            'update' => 'Modifier les offres et les catégories',
+            'delete' => 'Supprimer des offres',
+        ],
         'settings' => [
             'update' => 'Modifier les réglages de l\'application',
         ],

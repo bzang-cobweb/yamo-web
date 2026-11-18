@@ -33,6 +33,7 @@ use Modules\Auth\Policies\UserAddressPolicy;
 use Modules\Auth\Policies\UserPolicy;
 use Modules\Auth\Sms\LogSmsSender;
 use Modules\Auth\Sms\SmsSender;
+use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
 use Nwidart\Modules\Support\ModuleServiceProvider;
@@ -45,6 +46,13 @@ class AuthServiceProvider extends ModuleServiceProvider
      * @var array<class-string, class-string>
      */
     public array $bindings = [SmsSender::class => LogSmsSender::class];
+
+    /**
+     * Liens du menu du profil inscrits par les autres modules.
+     *
+     * @var array<class-string, class-string>
+     */
+    public array $singletons = [ProfileMenuLinks::class => ProfileMenuLinks::class];
 
     public function boot(): void
     {

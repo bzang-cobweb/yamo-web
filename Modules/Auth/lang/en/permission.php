@@ -47,6 +47,12 @@ return [
             'update' => 'Edit addresses and link them to accounts',
             'delete' => 'Delete addresses',
         ],
+        'offers' => [
+            'view' => 'View offers',
+            'create' => 'Create offers',
+            'update' => 'Edit offers and categories',
+            'delete' => 'Delete offers',
+        ],
         'settings' => [
             'update' => 'Edit the application settings',
         ],

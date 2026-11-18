@@ -25,7 +25,7 @@ class RoleSeederTest extends TestCase
         $this->seed(AuthDatabaseSeeder::class);
 
         $this->assertEqualsCanonicalizing(
-            ['admin.access', 'users.view', 'users.update', 'addresses.view', 'addresses.create', 'addresses.update', 'addresses.delete'],
+            ['admin.access', 'users.view', 'users.update', 'addresses.view', 'addresses.create', 'addresses.update', 'addresses.delete', 'offers.view', 'offers.create', 'offers.update', 'offers.delete'],
             Role::findByName(RoleEnum::ADMIN->value)->permissions->pluck('name')->all(),
         );
         $this->assertTrue(Role::findByName(RoleEnum::SUPER_ADMIN->value)->permissions->isEmpty());
