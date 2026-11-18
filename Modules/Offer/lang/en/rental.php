@@ -15,7 +15,7 @@ return [
         'room' => 'Room',
     ],
     'furnished' => 'Furnished',
-    'surface' => 'Area (m²)',
+    'surface' => 'Area',
     'rooms' => 'Rooms',
     'rooms_help' => 'Half rooms are allowed (3.5).',
     'bedrooms' => 'Bedrooms',

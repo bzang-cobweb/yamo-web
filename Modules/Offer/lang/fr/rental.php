@@ -15,7 +15,7 @@ return [
         'room' => 'Chambre',
     ],
     'furnished' => 'Meublé',
-    'surface' => 'Surface (m²)',
+    'surface' => 'Surface',
     'rooms' => 'Pièces',
     'rooms_help' => 'Les demi-pièces sont admises (3,5).',
     'bedrooms' => 'Chambres',

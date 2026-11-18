@@ -2,6 +2,9 @@
 
 namespace Modules\Form\Support;
 
+use App\Support\Locales;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Number;
 use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
@@ -41,6 +44,9 @@ final class Field
     public const TEXTAREA_MAX_LENGTH = 1000;
 
     private ?int $maxLength = null;
+
+    /** Unité affichée après la valeur (« m² ») : formulaire et fiche (décision 2026-11-18-fiche-offre). */
+    private ?string $suffix = null;
 
     /** Texte rangé par langue (décision 2026-11-18-offres-multilingues-categories-arbre). */
     private bool $translatable = false;
@@ -376,6 +382,45 @@ final class Field
         return $this->translatable;
     }
 
+    /**
+     * Unité affichée après la valeur (« m² »).
+     */
+    public function suffix(?string $suffix): self
+    {
+        $this->suffix = $suffix;
+
+        return $this;
+    }
+
+    /**
+     * La valeur, lisible par une personne, dans la langue `$locale` (fiche d'une
+     * offre, décision 2026-11-18-fiche-offre) : le libellé d'un choix, « Oui » ou
+     * « Non », un nombre ou une date au format local, l'unité éventuelle ; un
+     * texte traduisible dans sa langue. `null` : rien à afficher.
+     */
+    public function displayValue(mixed $value, string $locale): ?string
+    {
+        if ($this->translatable && is_array($value)) {
+            $value = $value[$locale] ?? $value[Locales::default()] ?? (reset($value) ?: null);
+        }
+
+        if ($value === null || $value === '' || $value === []) {
+            return null;
+        }
+
+        $labels = $this->optionLabels();
+        $text = match ($this->type) {
+            FieldType::SELECT, FieldType::RADIO, FieldType::SEGMENTED => $labels[(string) $value] ?? (string) $value,
+            FieldType::CHECKBOX_GROUP => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
+            FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
+            FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,
+            FieldType::DATE => Carbon::parse((string) $value)->locale($locale)->isoFormat('LL'),
+            default => is_scalar($value) ? (string) $value : null,
+        };
+
+        return $text === null || $text === '' ? null : trim($text.' '.($this->suffix ?? ''));
+    }
+
     public function getHelp(): ?string
     {
         return $this->help;
@@ -401,7 +446,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, suffix: string|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -419,6 +464,8 @@ final class Field
             /** Afficher seulement quand le champ `field` vaut `value`. */
             'visible_when' => $this->visibleWhen,
             'max_length' => $this->maxLength,
+            /** Unité affichée après la valeur (« m² »). */
+            'suffix' => $this->suffix,
             'default' => $this->initialValue(),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [

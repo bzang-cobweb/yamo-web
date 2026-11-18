@@ -2,11 +2,14 @@
 
 namespace Modules\Offer\Http\Controllers\Api;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Http\Requests\OfferRequest;
+use Modules\Offer\Http\Resources\OfferDetailResource;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\OfferService;
 
@@ -18,6 +21,21 @@ use Modules\Offer\Services\OfferService;
  */
 class OfferController
 {
+    /**
+     * La fiche d'une offre, ouverte sans connexion : publiée et du pays courant ;
+     * le propriétaire connecté voit aussi la sienne en brouillon ou archivée.
+     * Toute autre offre répond 404.
+     *
+     * @unauthenticated
+     */
+    public function show(Request $request, Offer $offer): OfferDetailResource
+    {
+        // Compte facultatif (jeton Sanctum s'il y en a un) : la route n'exige pas de connexion.
+        Gate::forUser($request->user('sanctum'))->authorize('show', $offer);
+
+        return new OfferDetailResource($offer->load(['address', 'category.parent', 'media']));
+    }
+
     /**
      * Ajouter une offre : champs communs et attributs du domaine.
      */

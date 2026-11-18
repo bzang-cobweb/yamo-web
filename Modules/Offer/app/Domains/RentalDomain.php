@@ -53,6 +53,7 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.furnished')),
             Field::number('surface')
                 ->label(__('offer::rental.surface'))
+                ->suffix('m²')
                 ->required()
                 ->rules(['min:1', 'max:10000']),
             Field::number('rooms')

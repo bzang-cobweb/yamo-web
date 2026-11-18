@@ -10,6 +10,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -38,6 +39,22 @@ class OfferPolicy
         }
 
         return $this->owns($user, $offer);
+    }
+
+    /**
+     * La fiche d'une offre (décision 2026-11-18-fiche-offre), visiteur compris :
+     * publiée et du pays courant ; le propriétaire voit aussi la sienne en
+     * brouillon ou archivée. Sinon 404.
+     */
+    public function show(?User $user, Offer $offer): Response
+    {
+        if ($user !== null && (int) $offer->user_id === (int) $user->getKey()) {
+            return Response::allow();
+        }
+
+        return $offer->status === OfferStatusEnum::PUBLISHED && (int) $offer->country_id === (int) CurrentCountry::require()->getKey()
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 
     public function create(User $user): bool

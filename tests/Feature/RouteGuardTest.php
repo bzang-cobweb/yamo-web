@@ -25,6 +25,7 @@ class RouteGuardTest extends TestCase
         'api/v1/app' => "publique : nom et description de l'application (page d'accueil)",
         'api/v1/locales' => 'publique : langues disponibles, aucune donnée de compte',
         'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
+        'api/v1/offers/{offer}' => "publique : fiche d'une offre ; policy `show` appelée dans le contrôleur avec le compte facultatif (Sanctum)",
         'api/v1/countries' => "publique : pays actifs proposés à l'entrée de l'app, aucune donnée de compte",
     ];
 
