@@ -73,13 +73,13 @@ class OfferBrowseApiTest extends TestCase
         $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'furnished' => true]]);
 
         $fr = array_column($this->browse()->json('data.items'), 'title', 'id');
-        $this->assertSame('Maison meublée à Douala', $fr[(string) $house->getKey()]);
-        $this->assertSame('Studio à Douala', $fr[(string) $studio->getKey()]);
+        $this->assertSame('Maison meublée - Douala', $fr[(string) $house->getKey()]);
+        $this->assertSame('Studio - Douala', $fr[(string) $studio->getKey()]);
         // Sans adresse : le type seul.
         $this->assertSame('Chambre meublée', $fr[(string) $room->getKey()]);
 
         $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');
-        $this->assertSame('Furnished house in Douala', $en[(string) $house->getKey()]);
+        $this->assertSame('Furnished house - Douala', $en[(string) $house->getKey()]);
     }
 
     public function test_pages_of_20_without_any_private_field(): void

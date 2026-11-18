@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-18-titre-liste-tiret.md (tiret avant la ville).
+
+
 # `2026-11-18` — Logement : titre de liste construit (type, meublé, ville)
 
 - **Type** : décision

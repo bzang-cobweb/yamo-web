@@ -18,7 +18,7 @@ use Modules\Offer\Models\Offer;
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
  * 2026-11-18-accueil-offres-du-pays) : ouverte sans connexion, les plus récentes
- * d'abord ; titre construit par le domaine (« Studio meublé à Douala ») et prix ;
+ * d'abord ; titre construit par le domaine (« Studio meublé - Douala ») et prix ;
  * recherche dans le titre saisi et la ville. Ni édition ni retrait.
  * Sans domaine choisi, elle n'existe pas.
  */
@@ -83,7 +83,7 @@ class OfferBrowseListing extends Listing
         /** @var Offer $record */
         $price = $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale());
 
-        // Le titre construit par le domaine (« Studio meublé à Douala »), sinon le titre saisi.
+        // Le titre construit par le domaine (« Studio meublé - Douala »), sinon le titre saisi.
         return ListItem::make(
             $record->getKey(),
             app(DomainRegistry::class)->require()->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),

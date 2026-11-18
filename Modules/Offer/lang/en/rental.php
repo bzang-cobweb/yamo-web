@@ -21,7 +21,7 @@ return [
         'studio' => 'Furnished studio',
         'room' => 'Furnished room',
     ],
-    'title_in_city' => ':type in :city',
+    'title_in_city' => ':type - :city',
     'furnished' => 'Furnished',
     'surface' => 'Area',
     'rooms' => 'Rooms',

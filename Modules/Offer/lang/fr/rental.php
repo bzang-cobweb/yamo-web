@@ -21,7 +21,7 @@ return [
         'studio' => 'Studio meublé',
         'room' => 'Chambre meublée',
     ],
-    'title_in_city' => ':type à :city',
+    'title_in_city' => ':type - :city',
     'furnished' => 'Meublé',
     'surface' => 'Surface',
     'rooms' => 'Pièces',

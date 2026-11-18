@@ -44,7 +44,7 @@ class RentalDomain extends Domain
     }
 
     /**
-     * « Studio meublé à Douala » : le type, « meublé » accordé s'il l'est, la
+     * « Studio meublé - Douala » : le type, « meublé » accordé s'il l'est, la
      * ville s'il y en a une (décision 2026-11-18-titre-liste-logement).
      */
     public function itemTitle(Offer $offer): ?string

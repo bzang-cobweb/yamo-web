@@ -89,7 +89,7 @@ class OfferListing extends Listing
 
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
-        // Le titre construit par le domaine (« Studio meublé à Douala »), sinon le titre saisi.
+        // Le titre construit par le domaine (« Studio meublé - Douala »), sinon le titre saisi.
         $title = app(DomainRegistry::class)->require()->itemTitle($record) ?? (string) $record->getTranslation('title', $locale);
 
         return ListItem::make($record->getKey(), $title, implode(' · ', array_filter([$record->status->label(), $price])))
