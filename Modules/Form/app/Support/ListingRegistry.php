@@ -35,7 +35,8 @@ final class ListingRegistry
     {
         $class = $this->lists[$name] ?? null;
 
-        return $class === null ? null : new $class($user);
+        // Indisponible (ex. module sans domaine choisi) : comme inconnu.
+        return $class === null || ! $class::isAvailable() ? null : new $class($user);
     }
 
     /**

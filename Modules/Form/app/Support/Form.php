@@ -80,6 +80,15 @@ abstract class Form
     }
 
     /**
+     * Le formulaire est-il proposé ? Indisponible, il répond comme un formulaire
+     * inconnu (404). Disponible par défaut.
+     */
+    public static function isAvailable(): bool
+    {
+        return true;
+    }
+
+    /**
      * Qui peut demander la définition du formulaire. Par défaut : un compte
      * connecté. Un formulaire public (connexion) renvoie `true` pour un invité.
      */

@@ -352,6 +352,28 @@ final class Field
         return $this->label;
     }
 
+    public function getHelp(): ?string
+    {
+        return $this->help;
+    }
+
+    public function isRequired(): bool
+    {
+        return $this->required;
+    }
+
+    /**
+     * valeur => libellé, pour un back-office ou tout autre affichage hors de l'app.
+     *
+     * @return array<string, string>
+     */
+    public function optionLabels(): array
+    {
+        return collect($this->options)
+            ->mapWithKeys(fn (string|array $option, string|int $value): array => [(string) $value => is_array($option) ? $option['label'] : $option])
+            ->all();
+    }
+
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *

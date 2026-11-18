@@ -160,6 +160,15 @@ abstract class Listing
     }
 
     /**
+     * La liste est-elle proposée ? Indisponible, elle répond comme une liste
+     * inconnue (404). Disponible par défaut.
+     */
+    public static function isAvailable(): bool
+    {
+        return true;
+    }
+
+    /**
      * Qui peut demander la liste. Par défaut : un compte connecté.
      */
     public function canBeViewedBy(?Authenticatable $user): bool
