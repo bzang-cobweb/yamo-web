@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Models;
 
+use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,11 +16,13 @@ use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Une offre (décision 2026-11-18-offres-et-domaines) : ce qu'un compte propose,
  * quel que soit le domaine du projet. Les champs communs sont des colonnes ; les
- * attributs propres au domaine (`Domain::attributes()`) sont dans `details`.
+ * attributs propres au domaine (`Domain::attributes()`) sont dans `details` ; un
+ * attribut traduisible y est rangé par langue (`{"note": {"fr": …, "en": …}}`).
  *
  * @property int $user_id
  * @property int|null $category_id
@@ -40,7 +43,15 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Offer extends Model implements HasMedia
 {
     /** @use HasFactory<OfferFactory> */
-    use HasFactory, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+
+    /**
+     * Textes traduits (décision 2026-11-18-offres-multilingues-categories-arbre) :
+     * lus dans la langue courante, sinon la langue par défaut, sinon une autre.
+     *
+     * @var list<string>
+     */
+    public array $translatable = ['title', 'description'];
 
     public const PHOTOS = 'photos';
 
@@ -101,10 +112,25 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Valeur d'un attribut du domaine.
+     * Valeur brute d'un attribut du domaine (par langue s'il est traduisible).
      */
     public function detail(string $name): mixed
     {
         return ($this->details ?? [])[$name] ?? null;
+    }
+
+    /**
+     * Valeur d'un attribut du domaine dans une langue : la sienne, sinon la langue
+     * par défaut, sinon une autre. Un attribut non traduit est rendu tel quel.
+     */
+    public function detailIn(string $name, string $locale): mixed
+    {
+        $value = $this->detail($name);
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return $value[$locale] ?? $value[Locales::default()] ?? (reset($value) ?: null);
     }
 }

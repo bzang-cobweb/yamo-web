@@ -2,6 +2,8 @@
 
 namespace Modules\Offer\Filament\Resources\OfferResource\Tables;
 
+use App\Support\ContainsSearch;
+use App\Support\Locales;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
@@ -23,8 +25,9 @@ abstract class OfferTable
             ->columns([
                 TextColumn::make('title')
                     ->label(__('offer::offer.title_field'))
-                    ->searchable()
-                    ->sortable(),
+                    ->state(fn (Offer $record): string => (string) $record->getTranslation('title', app()->getLocale()))
+                    // Toutes langues confondues.
+                    ->searchable(query: fn ($query, string $search) => $query->where(fn ($query) => ContainsSearch::orWhere($query, array_map(fn (string $locale): string => "title->{$locale}", Locales::values()), $search))),
                 TextColumn::make('user.name')
                     ->label(__('offer::offer.owner'))
                     ->state(fn (Offer $record): string => (string) $record->user?->getFilamentName())

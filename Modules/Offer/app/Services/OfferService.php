@@ -19,21 +19,21 @@ class OfferService
     /**
      * @param  array<string, mixed>  $data  données validées
      */
-    public function create(User $user, Domain $domain, array $data): Offer
+    public function create(User $user, Domain $domain, array $data, ?string $locale = null): Offer
     {
         if ($domain->onePerAccount() && Offer::query()->where('user_id', $user->getKey())->exists()) {
             throw ValidationException::withMessages(['title' => __('offer::offer.one_per_account')]);
         }
 
-        return Offer::query()->create(['user_id' => $user->getKey(), ...$this->columns($domain, $data)]);
+        return Offer::query()->create(['user_id' => $user->getKey(), ...$this->columns($domain, $data, $locale ?? $user->preferredLocale())]);
     }
 
     /**
      * @param  array<string, mixed>  $data  données validées
      */
-    public function update(Offer $offer, Domain $domain, array $data): Offer
+    public function update(Offer $offer, Domain $domain, array $data, ?string $locale = null): Offer
     {
-        $offer->fill($this->columns($domain, $data, $offer))->save();
+        $offer->fill($this->columns($domain, $data, $locale ?? $offer->user->preferredLocale(), $offer))->save();
 
         return $offer->refresh();
     }
@@ -64,6 +64,19 @@ class OfferService
     }
 
     /**
+     * Les traductions d'un texte, celle de `$locale` remplacée ; un texte vide la retire.
+     *
+     * @param  array<string, mixed>  $translations
+     * @return array<string, string>
+     */
+    private function translations(array $translations, string $locale, mixed $value): array
+    {
+        $translations[$locale] = $value;
+
+        return array_filter($translations, fn (mixed $text): bool => filled($text));
+    }
+
+    /**
      * Un nombre saisi est gardé comme nombre (64, 3.5), pas comme texte.
      */
     private function value(Field $field, mixed $value): mixed
@@ -75,13 +88,14 @@ class OfferService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function columns(Domain $domain, array $data, ?Offer $offer = null): array
+    private function columns(Domain $domain, array $data, string $locale, ?Offer $offer = null): array
     {
         $price = $domain->hasPrice() ? ($data['price'] ?? null) : null;
 
         return [
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
+            // Textes saisis dans la langue `$locale` ; les autres langues sont gardées.
+            'title' => $this->translations($offer?->getTranslations('title') ?? [], $locale, $data['title']),
+            'description' => $this->translations($offer?->getTranslations('description') ?? [], $locale, $data['description'] ?? null),
             'category_id' => $data['category_id'] ?? null,
             'address_id' => $domain->hasAddress() ? ($data['address_id'] ?? null) : null,
             'status' => $data['status'],
@@ -90,7 +104,9 @@ class OfferService
             // Attributs d'un autre domaine gardés tels quels ; ceux du domaine actif remplacés.
             'details' => [
                 ...($offer?->details ?? []),
-                ...collect($domain->attributes())->mapWithKeys(fn (Field $field): array => [$field->name => $this->value($field, $data[$field->name] ?? null)])->all(),
+                ...collect($domain->attributes())->mapWithKeys(fn (Field $field): array => [$field->name => $field->isTranslatable()
+                    ? $this->translations((array) ($offer?->detail($field->name) ?? []), $locale, $data[$field->name] ?? null)
+                    : $this->value($field, $data[$field->name] ?? null)])->all(),
             ],
         ];
     }

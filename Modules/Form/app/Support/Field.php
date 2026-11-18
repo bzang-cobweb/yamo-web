@@ -3,6 +3,7 @@
 namespace Modules\Form\Support;
 
 use Illuminate\Validation\Rule;
+use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Rules\OptionBelongsToParent;
 
@@ -40,6 +41,9 @@ final class Field
     public const TEXTAREA_MAX_LENGTH = 1000;
 
     private ?int $maxLength = null;
+
+    /** Texte rangé par langue (décision 2026-11-18-offres-multilingues-categories-arbre). */
+    private bool $translatable = false;
 
     /**
      * valeur => libellé, ou valeur => [libellé, indication, parent], dans l'ordre
@@ -350,6 +354,26 @@ final class Field
     public function getLabel(): ?string
     {
         return $this->label;
+    }
+
+    /**
+     * Texte traduisible : rangé par langue, saisi dans la langue du compte dans
+     * l'app, par onglet de langue dans le back-office. Texte court ou long seulement.
+     */
+    public function translatable(bool $translatable = true): self
+    {
+        if ($translatable && ! in_array($this->type, [FieldType::TEXT, FieldType::TEXTAREA], true)) {
+            throw new LogicException("Champ « {$this->name} » : seul un texte peut être traduisible.");
+        }
+
+        $this->translatable = $translatable;
+
+        return $this;
+    }
+
+    public function isTranslatable(): bool
+    {
+        return $this->translatable;
     }
 
     public function getHelp(): ?string

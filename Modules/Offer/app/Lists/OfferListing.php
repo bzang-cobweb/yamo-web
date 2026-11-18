@@ -2,9 +2,11 @@
 
 namespace Modules\Offer\Lists;
 
+use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
+use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
@@ -69,7 +71,8 @@ class OfferListing extends Listing
 
     protected function search(Builder $query, string $term): void
     {
-        $this->orWhereContains($query, ['title'], $term);
+        // Le titre, toutes langues confondues.
+        $this->orWhereContains($query, array_map(fn (string $locale): string => "title->{$locale}", Locales::values()), $term);
     }
 
     public function item(Model $record): ListItem
@@ -77,7 +80,9 @@ class OfferListing extends Listing
         /** @var Offer $record */
         $price = $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale());
 
-        return ListItem::make($record->getKey(), $record->title, implode(' · ', array_filter([$record->status->label(), $price])))
+        $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
+
+        return ListItem::make($record->getKey(), $record->getTranslation('title', $locale), implode(' · ', array_filter([$record->status->label(), $price])))
             ->edit(OfferForm::name())
             ->delete(
                 __('offer::offer.list.remove'),

@@ -75,7 +75,8 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->fillForm([
                 'user_id' => $owner->getKey(),
                 'status' => 'published',
-                'title' => 'Maison avec jardin',
+                'title.fr' => 'Maison avec jardin',
+                'title.en' => 'House with a garden',
                 'price' => '2400',
                 'address_id' => $address->getKey(),
                 'category_id' => (string) OfferCategory::query()->where('slug', 'long-term')->value('id'),
@@ -89,6 +90,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $offer = Offer::query()->sole();
         $this->assertTrue($offer->user->is($owner));
         $this->assertSame('house', $offer->detail('property_type'));
+        $this->assertSame(['fr' => 'Maison avec jardin', 'en' => 'House with a garden'], $offer->getTranslations('title'));
         $this->assertSame(5.5, $offer->detail('rooms'));
         $this->assertSame('CHF', $offer->currency);
         $this->assertNotNull($offer->published_at);
@@ -102,7 +104,7 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->fillForm([
                 'user_id' => User::factory()->create()->getKey(),
                 'status' => 'draft',
-                'title' => 'X',
+                'title.fr' => 'X',
                 'price' => '1000',
                 'address_id' => Address::factory()->create()->getKey(),
                 'details.property_type' => 'castle',
@@ -113,13 +115,33 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasFormErrors(['details.property_type', 'details.surface']);
     }
 
+    public function test_only_the_default_language_title_is_required(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);
+
+        Livewire::test(CreateOffer::class)
+            ->fillForm([
+                'user_id' => User::factory()->create()->getKey(),
+                'status' => 'draft',
+                'title.en' => 'Only English',
+                'price' => '1000',
+                'address_id' => Address::factory()->create()->getKey(),
+                'details.property_type' => 'studio',
+                'details.surface' => '20',
+                'details.rooms' => '1',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['title.fr'])
+            ->assertHasNoFormErrors(['title.en']);
+    }
+
     public function test_editing_keeps_the_attributes(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
         $offer = Offer::factory()->create(['price' => '1000', 'currency' => 'CHF', 'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio', 'surface' => 30, 'rooms' => 1]]);
 
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
-            ->assertSchemaStateSet(['details.property_type' => 'studio'])
+            ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr')])
             ->fillForm(['details.surface' => '32'])
             ->call('save')
             ->assertHasNoFormErrors();

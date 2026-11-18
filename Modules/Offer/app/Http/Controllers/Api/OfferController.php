@@ -23,7 +23,7 @@ class OfferController
     {
         /** @var User $user */
         $user = $request->user();
-        $service->create($user, $domains->require(), $request->validated());
+        $service->create($user, $domains->require(), $request->validated(), $user->preferredLocale());
 
         return response()->noContent();
     }
@@ -33,7 +33,10 @@ class OfferController
      */
     public function update(OfferRequest $request, Offer $offer, OfferService $service, DomainRegistry $domains): Response
     {
-        $service->update($offer, $domains->require(), $request->validated());
+        /** @var User $user */
+        $user = $request->user();
+        // Saisie dans la langue du compte (décision 2026-11-18-offres-multilingues-categories-arbre).
+        $service->update($offer, $domains->require(), $request->validated(), $user->preferredLocale());
 
         return response()->noContent();
     }

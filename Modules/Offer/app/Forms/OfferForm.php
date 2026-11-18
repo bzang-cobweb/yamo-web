@@ -19,7 +19,8 @@ use Modules\Offer\Models\OfferCategory;
  * vide pour en ajouter une (`POST /api/v1/offers`), ou liée à l'une des siennes
  * (`?record=12`) pour la modifier (`PATCH /api/v1/offers/12`). Champs communs,
  * puis les attributs du domaine actif (décision 2026-11-18-offres-et-domaines).
- * Sans domaine choisi, le formulaire n'existe pas.
+ * Les textes se saisissent dans la langue du compte, préremplis dans cette langue
+ * ou, à défaut, une autre. Sans domaine choisi, le formulaire n'existe pas.
  */
 class OfferForm extends Form
 {
@@ -54,12 +55,12 @@ class OfferForm extends Form
         return array_values(array_filter([
             Field::text('title')
                 ->label(__('offer::offer.title_field'))
-                ->default($offer?->title)
+                ->default($offer?->getTranslation('title', $this->locale()))
                 ->required()
                 ->maxLength(255),
             Field::textarea('description')
                 ->label(__('offer::offer.description'))
-                ->default($offer?->description)
+                ->default($offer?->getTranslation('description', $this->locale()))
                 ->maxLength(Field::TEXTAREA_MAX_LENGTH),
             $categories === [] ? null : Field::select('category_id')
                 ->label(__('offer::offer.category'))
@@ -81,7 +82,7 @@ class OfferForm extends Form
                 ->options(OfferStatusEnum::options())
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
                 ->required(),
-            ...array_map(fn (Field $field): Field => $field->default($offer?->detail($field->name)), $domain->attributes()),
+            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->attributes()),
         ]));
     }
 
@@ -102,6 +103,14 @@ class OfferForm extends Form
     public function submitLabel(): string
     {
         return __('offer::offer.form.save');
+    }
+
+    /**
+     * Langue de saisie : celle du compte (décision 2026-11-18-offres-multilingues-categories-arbre).
+     */
+    private function locale(): string
+    {
+        return $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
     }
 
     public function domain(): Domain
