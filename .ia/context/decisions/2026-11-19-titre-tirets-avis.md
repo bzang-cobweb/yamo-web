@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-titre-separateur-point.md (pour le séparateur du titre seulement)
+
 # `2026-11-19` — Titre « type - meublé - ville », langue en bas de l'accueil visiteur
 
 - **Type** : décision
