@@ -75,3 +75,45 @@ Toucher une offre de l'accueil ouvre sa fiche, pour un visiteur comme pour un me
 6. Tests :
    - web : les tests passent, Pint est propre, `openapi.json` est à jour ;
    - mobile : les tests passent (fiche, carrousel, 404, ouverture depuis l'accueil), tsc et le lint sont propres.
+
+## Ce que j'ai décidé seul
+
+- **Visibilité :** la route n'exige pas de connexion. Le contrôleur vérifie l'accès (`Gate::forUser`, avec le jeton Sanctum s'il y en a un). Une exception est déclarée et motivée dans `RouteGuardTest`.
+- **Localisation :** seulement la ville. Le modèle n'a pas de quartier, donc le « quartier s'il est connu » du contrat n'est pas servi.
+- **Unité du champ :** l'unité (`suffix`) est servie aux formulaires comme à la fiche. Le libellé « Surface (m²) » devient « Surface » plus l'unité « m² ».
+  - La QA a relevé que l'app n'affichait pas cette unité dans le formulaire, qui la perdait donc. Le champ nombre l'affiche désormais après la saisie (`815a716`).
+- **Valeurs lisibles** (`Field::displayValue`) :
+  - libellé de l'option pour un choix ;
+  - « Oui » ou « Non » pour une case (`form::field.*`) ;
+  - nombre au format de la langue (`Number::format`) ;
+  - date longue en `isoFormat('LL')` ;
+  - texte traduisible dans la langue courante.
+- **Langue :** connecté, la fiche suit la langue du compte, comme tout le socle. Visiteur, celle d'`Accept-Language`.
+- **Carrousel :** sa position est bornée, sans quoi un défilement au-delà affichait « 26 / 2 » (trouvé par un test).
+- **Domaine de test :** un domaine boutique, déclaré dans le test, prouve que la fiche suit le domaine sans toucher au socle.
+
+## Ce qui a été fait
+
+- **Web :**
+  - `863715f` : `GET /v1/offers/{offer}`, policy `show`, `OfferDetailResource`, `Field::suffix` et `displayValue`, textes de l'app ;
+  - `c548e52` : `openapi.json` ;
+  - dernier commit : tests de visibilité et d'absence de fuite.
+- **Mobile :**
+  - `320c7e8` : `OfferDetailScreen`, `PhotoCarousel`, route `/offers/[id]`, ouverture depuis l'accueil ;
+  - `815a716` : unité du champ nombre.
+- **Contrôles :**
+  - web : 393 tests passent, Pint est propre, `openapi.json` est à jour ;
+  - mobile : 194 tests passent, tsc et le lint sont propres.
+- **Simulateur :** depuis l'accueil, la fiche du « Studio à Bonamoussadi » s'ouvre, avec deux photos (« 1 / 2 »), « 80 000 FCFA Loyer mensuel », Douala, et les caractéristiques lisibles (« 25 m² », « 9 décembre 2026 »).
+- **QA** (`bza-dev:qa-check`) : GO, un écart majeur (l'unité dans le formulaire), corrigé (`.ia/runs/2026-11-18-fiche-offre/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- **Le défilement réel du carrousel** et le retour vers l'accueil sur un appareil.
+- **Le hors-ligne réel** de la fiche.
+
+## Ce qui reste en suspens
+
+- **Offre d'un autre pays :** son propriétaire la voit sur sa fiche même hors du pays courant, alors que ses autres actions exigent le pays courant. Le contrat ne tranche pas ; à décider.
+- **Chantiers suivants :** contacter le propriétaire, les favoris, le partage, la carte, le zoom des photos.
+- **Rien n'est poussé.**

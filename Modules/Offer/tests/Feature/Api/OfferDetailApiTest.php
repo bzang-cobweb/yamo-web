@@ -124,6 +124,33 @@ class OfferDetailApiTest extends TestCase
             ->assertJsonPath('data.status', ['value' => 'draft', 'label' => 'Brouillon']);
     }
 
+    public function test_another_member_does_not_see_a_draft_and_the_owner_sees_an_archived_one(): void
+    {
+        $owner = User::factory()->create(['locale' => 'fr']);
+        $draft = $this->home(['status' => 'draft', 'user_id' => $owner->getKey()]);
+        $archived = $this->home(['status' => 'archived', 'user_id' => $owner->getKey()]);
+        $stranger = User::factory()->create();
+
+        $this->withToken($stranger->createToken('iPhone')->plainTextToken)->withHeader('X-Country', 'CM')
+            ->getJson("/api/v1/offers/{$draft->getKey()}")->assertNotFound();
+        app('auth')->forgetGuards();
+        $this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeader('X-Country', 'CM')
+            ->getJson("/api/v1/offers/{$archived->getKey()}")->assertOk()->assertJsonPath('data.status.value', 'archived');
+    }
+
+    public function test_no_private_data_leaks(): void
+    {
+        $owner = User::factory()->create(['email' => 'proprio@example.test']);
+        $offer = $this->home(['user_id' => $owner->getKey()]);
+        $offer->address->update(['latitude' => '4.0510564', 'longitude' => '9.7678687']);
+
+        $content = $this->show($offer)->assertOk()->getContent();
+
+        foreach (['proprio@example.test', '4.0510564', '9.7678687', 'Njo-Njo', 'user_id', 'latitude'] as $private) {
+            $this->assertStringNotContainsString($private, $content);
+        }
+    }
+
     public function test_another_domain_serves_its_own_facts_without_touching_the_core(): void
     {
         app(DomainRegistry::class)->register(DetailShopDomain::class);
