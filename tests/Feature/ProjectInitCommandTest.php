@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Support\EnvFile;
+use Dotenv\Dotenv;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\PendingCommand;
 use InvalidArgumentException;
@@ -137,6 +138,28 @@ class ProjectInitCommandTest extends TestCase
     public function test_the_list_shows_known_domains(): void
     {
         $this->artisan('project:init', ['--list' => true])->expectsOutputToContain('rental')->assertSuccessful();
+    }
+
+    public function test_the_env_writer_never_lets_a_value_read_another_variable(): void
+    {
+        $file = new EnvFile($this->directory.'/.env');
+        $file->set(['APP_NAME' => '${APP_KEY}x "quoted" #1']);
+
+        $values = Dotenv::createArrayBacked($this->directory)->load();
+        $this->assertSame('${APP_KEY}x "quoted" #1', $values['APP_NAME']);
+        $this->assertSame('base64:secret-key-not-to-touch', $values['APP_KEY']);
+
+        $file->set(['APP_NAME' => 'Chez "Léa" & co']);
+        $this->assertSame('Chez "Léa" & co', Dotenv::createArrayBacked($this->directory)->load()['APP_NAME']);
+    }
+
+    public function test_the_env_writer_keeps_line_endings_and_export_lines(): void
+    {
+        file_put_contents($this->directory.'/.env', "export APP_NAME=Old\r\nDB_PASSWORD=x\r\n");
+
+        (new EnvFile($this->directory.'/.env'))->set(['APP_NAME' => 'New', 'OFFER_DOMAIN' => 'rental']);
+
+        $this->assertSame("APP_NAME=New\r\nDB_PASSWORD=x\r\nOFFER_DOMAIN=rental\r\n", $this->env());
     }
 
     public function test_the_env_writer_refuses_any_other_key(): void

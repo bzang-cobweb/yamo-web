@@ -18,8 +18,11 @@ jamais dans `.env` lui-même.
   `sh "<plugin id>/scripts/env.sh" keys .env`, avec le chemin complet de l'outil
   `env` (skill `id:env` ou `bza:env`). Ne jamais ouvrir `.env`.
 - Domaines connus : `ddev artisan project:init --list`.
-- Offres existantes : si le projet en a déjà et que le domaine change, la commande
-  exige `--force`. Le signaler à l'humain avant.
+- Offres existantes : inutile de les compter. Si le domaine change alors que le
+  projet en a déjà, la commande s'arrête d'elle-même et demande `--force` ;
+  n'ajouter `--force` qu'avec l'accord explicite de l'humain.
+- Pays : ceux qui ne sont pas listés dans `--country` sont désactivés. Le dire à
+  l'humain si des comptes en utilisent déjà.
 
 ## 2. Demander, au format d'escalade
 
