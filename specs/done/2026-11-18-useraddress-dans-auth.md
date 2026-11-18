@@ -66,3 +66,32 @@ Aucun comportement ne change : mêmes routes, mêmes réponses, même base, mêm
 
 - Un changement de comportement, de table ou de route.
 - Déplacer `Address` ou les permissions `addresses.*`, déjà déclarées dans `Modules/Auth/app/Enums/PermissionEnum.php`.
+
+## Ce que j'ai décidé seul
+
+- **Les classes prennent le préfixe `User`** : `UserAddressController`, `UserAddressRequest`, `UserAddressForm`, `UserAddressListing`, `UserAddressService`. Le relation manager d'Auth garde son nom `AddressesRelationManager`.
+- **Les routes rejoignent le groupe `auth:sanctum` d'Auth** (`me/addresses`). Les URL et les noms `api.v1.auth.me.addresses.*` restent identiques. `Location/routes/api.php` reste en place, vide et commenté.
+- **Les champs du destinataire du back-office** deviennent une méthode privée du relation manager d'Auth, valeurs par défaut comprises. Le schéma Filament de Location ne garde que le pays et l'adresse.
+- **`AddressServiceTest` est scindé.** La part « adresse partagée » reste dans Location, réécrite sur `find()` et `findOrCreate()`. La part « compte » devient `UserAddressServiceTest` dans Auth. Le test de purge est réparti entre les deux.
+- **OpenAPI :** l'étiquette `Address` devient `UserAddress`, et le schéma `AddressRequest` devient `UserAddressRequest`. Aucun chemin ne change.
+- **Les commentaires de Location** qui citaient `UserAddress` renvoient maintenant à « le module Auth ».
+
+## Ce qui a été fait
+
+- **Web** (`29855cc`) : modèle, factory, policy, contrôleur, requête, formulaire, liste, routes et migration déplacés dans Auth. `UserAddressService` y est créé. Les textes passent dans `auth::address`. `Address::userAddresses()` est retirée. Les tests sont déplacés et scindés.
+- **Mobile** (`d115a9c`) : fixtures de test renommées en `auth.address` et `auth.addresses`. L'app elle-même ne change pas.
+- **Contrôles** :
+  - web : 321 tests passent ; les 2 échecs viennent du `perPage()` à 4 resté dans l'arbre de travail, non commité. Pint est propre et `openapi.json` à jour. `migrate:status` n'indique aucune migration en attente ;
+  - mobile : 171 tests passent, tsc et le lint sont propres.
+- **QA** (`bza-dev:qa-check`) : GO, aucun test perdu (`.ia/runs/2026-11-18-useraddress-dans-auth/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Les 2 tests de pagination avec la valeur commitée de `perPage()` (20) : l'arbre de travail contient 4, et je n'y ai pas touché.
+- Le back-office dans un navigateur, et l'app sur un appareil.
+- Un `migrate:fresh` sur la base locale.
+
+## Ce qui reste en suspens
+
+- La modification locale de `Listing.php` (`perPage()` à 4) est à retirer avant toute livraison.
+- Rien n'est poussé.
