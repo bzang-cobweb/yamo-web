@@ -8,6 +8,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -41,7 +42,10 @@ class OfferForm extends Form
      */
     public function forRecord(string $key): static
     {
-        $this->offer = Offer::query()->where('user_id', $this->user?->getAuthIdentifier())->whereKey($key)->first() ?? abort(404);
+        $this->offer = Offer::query()
+            ->where('user_id', $this->user?->getAuthIdentifier())
+            ->where('country_id', CurrentCountry::require()->getKey())
+            ->whereKey($key)->first() ?? abort(404);
 
         return $this;
     }
@@ -67,7 +71,7 @@ class OfferForm extends Form
                 ->options($categories)
                 ->default($offer?->category_id === null ? null : (string) $offer->category_id),
             ! $domain->hasPrice() ? null : Field::number('price')
-                ->label($domain->priceLabel().' ('.$domain->currency().')')
+                ->label($domain->priceLabel().' ('.CurrentCountry::require()->currency.')')
                 ->default($offer?->price)
                 ->required($domain->requiresPrice())
                 ->rules(['min:0', 'max:100000000']),
@@ -119,7 +123,7 @@ class OfferForm extends Form
     }
 
     /**
-     * Les adresses du compte, sans doublon : id de l'adresse => « Rue du Lac 4, 1200 Genève ».
+     * Les adresses du compte dans le pays courant, sans doublon : id de l'adresse => « Rue du Lac 4, 1200 Genève ».
      *
      * @return array<string, string>
      */
@@ -127,7 +131,9 @@ class OfferForm extends Form
     {
         $user = $this->user instanceof User ? $this->user : null;
 
-        return $user === null ? [] : $user->addresses()->with('address')->get()
+        return $user === null ? [] : $user->addresses()->with('address')
+            ->whereHas('address', fn ($query) => $query->where('country_id', CurrentCountry::require()->getKey()))
+            ->get()
             ->unique('address_id')
             ->mapWithKeys(fn (UserAddress $entry): array => [(string) $entry->address_id => $entry->address->street.', '.$entry->address->zip.' '.$entry->address->city])
             ->all();

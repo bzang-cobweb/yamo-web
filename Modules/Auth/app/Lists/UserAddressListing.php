@@ -12,6 +12,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * « Mes adresses », ouverte depuis le menu du profil : les adresses du compte
@@ -52,7 +53,9 @@ class UserAddressListing extends Listing
             return UserAddress::query()->whereRaw('1 = 0')->orderBy('id');
         }
 
-        return $this->user->addresses()->with('address.country');
+        // Celles du pays courant (décision 2026-11-18-espace-pays).
+        return $this->user->addresses()->with('address.country')
+            ->whereHas('address', fn (Builder $query) => $query->where('country_id', CurrentCountry::require()->getKey()));
     }
 
     public function searchPlaceholder(): string

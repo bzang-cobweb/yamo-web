@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
+use Modules\Location\Models\Country;
 use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Spatie\MediaLibrary\HasMedia;
@@ -25,6 +26,7 @@ use Spatie\Translatable\HasTranslations;
  * attribut traduisible y est rangé par langue (`{"note": {"fr": …, "en": …}}`).
  *
  * @property int $user_id
+ * @property int|null $country_id
  * @property int|null $category_id
  * @property int|null $address_id
  * @property string $title
@@ -35,10 +37,11 @@ use Spatie\Translatable\HasTranslations;
  * @property array<string, mixed>|null $details
  * @property Carbon|null $published_at
  * @property-read User $user
+ * @property-read Country|null $country
  * @property-read OfferCategory|null $category
  * @property-read Address|null $address
  */
-#[Fillable(['user_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -93,6 +96,16 @@ class Offer extends Model implements HasMedia
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Son pays, l'espace où elle se trouve (décision 2026-11-18-espace-pays).
+     *
+     * @return BelongsTo<Country, $this>
+     */
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class);
     }
 
     /**

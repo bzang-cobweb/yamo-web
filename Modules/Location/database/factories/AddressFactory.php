@@ -16,7 +16,8 @@ class AddressFactory extends Factory
     public function definition(): array
     {
         return [
-            'country_id' => Country::factory(),
+            // Le pays actif déjà présent (l'espace pays des tests), sinon un nouveau.
+            'country_id' => fn (): int => (int) (Country::query()->where('active', true)->value('id') ?? Country::factory()->create()->getKey()),
             'street' => fake()->unique()->streetAddress(),
             'zip' => fake()->postcode(),
             'city' => fake()->city(),

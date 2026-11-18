@@ -16,14 +16,16 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Un pays : `code` ISO-2, `name` traduit (fr, en), `native_name` dans la langue du
- * pays, `dial_code` avec son « + » (`+41`).
+ * pays, `dial_code` avec son « + » (`+41`), `currency` ISO 4217 (`XAF`), qui est
+ * celle des offres de ce pays (décision 2026-11-18-espace-pays).
  *
  * @property string $code
  * @property string $native_name
  * @property string $dial_code
+ * @property string|null $currency
  * @property bool $active
  */
-#[Fillable(['code', 'name', 'native_name', 'dial_code', 'active'])]
+#[Fillable(['code', 'name', 'native_name', 'dial_code', 'currency', 'active'])]
 #[UseFactory(CountryFactory::class)]
 class Country extends Model
 {
@@ -100,5 +102,13 @@ class Country extends Model
         }
 
         return $name.' ('.$this->native_name.')';
+    }
+
+    /**
+     * Drapeau en emoji, tiré du code (CM → 🇨🇲).
+     */
+    public function flag(): string
+    {
+        return implode('', array_map(fn (string $letter): string => mb_chr(0x1F1E6 + ord($letter) - ord('A')), str_split(strtoupper($this->code))));
     }
 }

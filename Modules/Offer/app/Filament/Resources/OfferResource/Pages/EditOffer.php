@@ -6,6 +6,7 @@ use App\Filament\Pages\Concerns\HasRecordTitleBreadcrumbs;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Resources\Pages\EditRecord;
+use Modules\Location\Models\Country;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Filament\Resources\OfferResource;
 use Modules\Offer\Services\OfferService;
@@ -31,7 +32,7 @@ class EditOffer extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $domain = app(DomainRegistry::class)->require();
-        $data['currency'] = filled($data['price'] ?? null) ? $domain->currency() : null;
+        $data['currency'] = filled($data['price'] ?? null) ? Country::query()->whereKey($data['country_id'] ?? null)->value('currency') : null;
         $data['details'] = app(OfferService::class)->typedDetails($domain, (array) ($data['details'] ?? []));
 
         return $data;

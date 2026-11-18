@@ -11,6 +11,8 @@ return [
     'title_field' => 'Titre',
     'description' => 'Description',
     'category' => 'Catégorie',
+    'country' => 'Pays',
+    'price_currency_help' => "Dans la devise du pays de l'offre.",
     'price' => 'Prix',
     'currency' => 'Devise',
     'address' => 'Adresse',

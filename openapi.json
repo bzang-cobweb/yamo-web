@@ -179,6 +179,39 @@
                 "security": []
             }
         },
+        "/v1/countries": {
+            "get": {
+                "operationId": "v1.countries.index",
+                "summary": "Les pays actifs, tri\u00e9s par nom dans la langue de la requ\u00eate. Un seul : l'app\ny entre sans demander",
+                "tags": [
+                    "Country"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `CountryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CountryResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/auth/me/email": {
             "post": {
                 "operationId": "v1.auth.me.email.store",
@@ -598,28 +631,18 @@
                 "tags": [
                     "Offer"
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OfferRequest"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "204": {
                         "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -642,16 +665,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OfferRequest"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "204": {
                         "description": "No content"
@@ -1202,16 +1215,6 @@
                 "tags": [
                     "UserAddress"
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UserAddressRequest"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "204": {
                         "description": "No content"
@@ -1246,16 +1249,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/UserAddressRequest"
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "204": {
                         "description": "No content"
@@ -1641,6 +1634,44 @@
                     "channels"
                 ],
                 "title": "ApplicationResource"
+            },
+            "CountryResource": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Nom dans la langue de la requ\u00eate."
+                    },
+                    "native_name": {
+                        "type": "string"
+                    },
+                    "flag": {
+                        "type": "string",
+                        "description": "Drapeau (emoji)."
+                    },
+                    "currency": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Devise (ISO 4217)."
+                    },
+                    "dial_code": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "name",
+                    "native_name",
+                    "flag",
+                    "currency",
+                    "dial_code"
+                ],
+                "title": "CountryResource"
             },
             "EmailChangeRequest": {
                 "type": "object",
@@ -2415,112 +2446,6 @@
                     "password"
                 ],
                 "title": "LoginRequest"
-            },
-            "OfferRequest": {
-                "type": "object",
-                "description": "Ajout ou changement d'une offre, valid\u00e9 par le formulaire `offer.offer` :\nchamps communs et attributs du domaine actif, une seule source de r\u00e8gles.",
-                "properties": {
-                    "title": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 1000
-                    },
-                    "category_id": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "enum": [
-                            "1",
-                            "2",
-                            "3",
-                            null
-                        ]
-                    },
-                    "price": {
-                        "type": "number",
-                        "minimum": 0,
-                        "maximum": 100000000
-                    },
-                    "address_id": {
-                        "type": "string",
-                        "enum": [
-                            ""
-                        ]
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "draft",
-                            "published",
-                            "archived"
-                        ]
-                    },
-                    "property_type": {
-                        "type": "string",
-                        "enum": [
-                            "apartment",
-                            "house",
-                            "studio",
-                            "room"
-                        ]
-                    },
-                    "furnished": {
-                        "type": [
-                            "boolean",
-                            "null"
-                        ]
-                    },
-                    "surface": {
-                        "type": "number",
-                        "minimum": 1,
-                        "maximum": 10000
-                    },
-                    "rooms": {
-                        "type": "number",
-                        "minimum": 1,
-                        "maximum": 50
-                    },
-                    "bedrooms": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "minimum": 0,
-                        "maximum": 50
-                    },
-                    "available_from": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date"
-                    },
-                    "charges": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
-                        "minimum": 0,
-                        "maximum": 100000
-                    }
-                },
-                "required": [
-                    "title",
-                    "price",
-                    "address_id",
-                    "status",
-                    "property_type",
-                    "surface",
-                    "rooms"
-                ],
-                "title": "OfferRequest"
             },
             "PhoneChangeRequest": {
                 "type": "object",
@@ -3699,299 +3624,6 @@
                     "deleted_at"
                 ],
                 "title": "User"
-            },
-            "UserAddressRequest": {
-                "type": "object",
-                "description": "Ajout ou changement d'une adresse du compte (destinataire et adresse), valid\u00e9\npar le formulaire `auth.address` : une seule source de r\u00e8gles. La route\nporte la garde de `UserAddressPolicy`.",
-                "properties": {
-                    "gender": {
-                        "type": "string",
-                        "enum": [
-                            "male",
-                            "female"
-                        ]
-                    },
-                    "first_name": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "last_name": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "country_id": {
-                        "type": "string",
-                        "enum": [
-                            "75",
-                            "29",
-                            "146",
-                            "82",
-                            "50",
-                            "158",
-                            "109",
-                            "3",
-                            "2",
-                            "229",
-                            "54",
-                            "156",
-                            "138",
-                            "60",
-                            "40",
-                            "242",
-                            "7",
-                            "235",
-                            "221",
-                            "5",
-                            "32",
-                            "173",
-                            "94",
-                            "6",
-                            "237",
-                            "157",
-                            "185",
-                            "167",
-                            "132",
-                            "55",
-                            "197",
-                            "151",
-                            "91",
-                            "122",
-                            "219",
-                            "102",
-                            "8",
-                            "103",
-                            "56",
-                            "71",
-                            "148",
-                            "57",
-                            "134",
-                            "107",
-                            "108",
-                            "216",
-                            "69",
-                            "178",
-                            "90",
-                            "165",
-                            "53",
-                            "193",
-                            "45",
-                            "118",
-                            "9",
-                            "28",
-                            "233",
-                            "187",
-                            "137",
-                            "34",
-                            "154",
-                            "133",
-                            "37",
-                            "1",
-                            "116",
-                            "203",
-                            "149",
-                            "33",
-                            "106",
-                            "85",
-                            "243",
-                            "98",
-                            "141",
-                            "30",
-                            "11",
-                            "140",
-                            "182",
-                            "12",
-                            "174",
-                            "42",
-                            "89",
-                            "105",
-                            "110",
-                            "186",
-                            "188",
-                            "181",
-                            "176",
-                            "35",
-                            "62",
-                            "112",
-                            "43",
-                            "196",
-                            "150",
-                            "15",
-                            "61",
-                            "206",
-                            "139",
-                            "172",
-                            "17",
-                            "215",
-                            "201",
-                            "21",
-                            "24",
-                            "25",
-                            "73",
-                            "63",
-                            "227",
-                            "78",
-                            "144",
-                            "145",
-                            "234",
-                            "36",
-                            "13",
-                            "68",
-                            "44",
-                            "225",
-                            "27",
-                            "119",
-                            "244",
-                            "209",
-                            "164",
-                            "228",
-                            "126",
-                            "220",
-                            "131",
-                            "153",
-                            "224",
-                            "96",
-                            "84",
-                            "171",
-                            "152",
-                            "143",
-                            "168",
-                            "125",
-                            "59",
-                            "130",
-                            "223",
-                            "88",
-                            "147",
-                            "80",
-                            "190",
-                            "95",
-                            "87",
-                            "127",
-                            "52",
-                            "214",
-                            "155",
-                            "159",
-                            "238",
-                            "163",
-                            "18",
-                            "123",
-                            "77",
-                            "129",
-                            "198",
-                            "239",
-                            "177",
-                            "92",
-                            "99",
-                            "207",
-                            "47",
-                            "210",
-                            "65",
-                            "231",
-                            "121",
-                            "245",
-                            "74",
-                            "204",
-                            "179",
-                            "199",
-                            "189",
-                            "31",
-                            "194",
-                            "51",
-                            "64",
-                            "49",
-                            "212",
-                            "19",
-                            "142",
-                            "236",
-                            "217",
-                            "218",
-                            "101",
-                            "10",
-                            "38",
-                            "41",
-                            "26",
-                            "115",
-                            "81",
-                            "183",
-                            "14",
-                            "160",
-                            "184",
-                            "20",
-                            "180",
-                            "23",
-                            "135",
-                            "16",
-                            "175",
-                            "208",
-                            "4",
-                            "104",
-                            "86",
-                            "162",
-                            "113",
-                            "97",
-                            "66",
-                            "170",
-                            "166",
-                            "117",
-                            "114",
-                            "79",
-                            "76",
-                            "46",
-                            "39",
-                            "191",
-                            "48",
-                            "226",
-                            "240",
-                            "222",
-                            "120",
-                            "100",
-                            "169",
-                            "111",
-                            "232",
-                            "67",
-                            "195",
-                            "93",
-                            "213",
-                            "200",
-                            "22",
-                            "136",
-                            "83",
-                            "241",
-                            "72",
-                            "211",
-                            "161",
-                            "192",
-                            "202",
-                            "58",
-                            "70",
-                            "205",
-                            "230",
-                            "124",
-                            "128"
-                        ]
-                    },
-                    "street": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "zip": {
-                        "type": "string",
-                        "maxLength": 20
-                    },
-                    "city": {
-                        "type": "string",
-                        "maxLength": 255
-                    }
-                },
-                "required": [
-                    "gender",
-                    "first_name",
-                    "last_name",
-                    "country_id",
-                    "street",
-                    "zip",
-                    "city"
-                ],
-                "title": "UserAddressRequest"
             },
             "UserResource": {
                 "type": "object",

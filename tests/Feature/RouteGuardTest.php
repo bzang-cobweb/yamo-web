@@ -25,6 +25,7 @@ class RouteGuardTest extends TestCase
         'api/v1/app' => "publique : nom et description de l'application (page d'accueil)",
         'api/v1/locales' => 'publique : langues disponibles, aucune donnée de compte',
         'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
+        'api/v1/countries' => "publique : pays actifs proposés à l'entrée de l'app, aucune donnée de compte",
     ];
 
     public function test_every_controller_route_is_guarded(): void

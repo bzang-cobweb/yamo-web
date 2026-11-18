@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-18-ecran-entree-toujours.md (affichage de l'écran d'entrée).
+
+
 # `2026-11-18` — Espace pays : choix du pays à l'entrée, devise par pays
 
 - **Type** : décision

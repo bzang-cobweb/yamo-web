@@ -14,7 +14,9 @@ use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
 use Modules\Form\Filament\FieldComponent;
 use Modules\Form\Support\Field;
+use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Address;
+use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -59,6 +61,12 @@ abstract class OfferForm
                             ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
                             ->searchable(['name', 'first_name', 'last_name', 'email'])
                             ->required(),
+                        // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
+                        SingleCountry::lock(Select::make('country_id')
+                            ->label(__('offer::offer.country'))
+                            ->options(fn (): array => Country::options())
+                            ->searchable()
+                            ->required()),
                         Select::make('status')
                             ->label(__('offer::offer.status'))
                             ->options(OfferStatusEnum::options())
@@ -79,7 +87,8 @@ abstract class OfferForm
                             ->label(__('offer::offer.category'))
                             ->options(fn (): array => OfferCategory::options()),
                         TextInput::make('price')
-                            ->label($domain->priceLabel().' ('.$domain->currency().')')
+                            ->label($domain->priceLabel())
+                            ->helperText(__('offer::offer.price_currency_help'))
                             ->numeric()
                             ->minValue(0)
                             ->required($domain->requiresPrice())

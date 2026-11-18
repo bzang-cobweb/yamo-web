@@ -113,12 +113,6 @@ abstract class Domain
         return true;
     }
 
-    /** Devise des prix (ISO 4217). */
-    public function currency(): string
-    {
-        return 'CHF';
-    }
-
     /**
      * Noms des attributs.
      *

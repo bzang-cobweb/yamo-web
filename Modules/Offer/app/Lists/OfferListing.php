@@ -11,6 +11,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Models\Offer;
@@ -49,7 +50,7 @@ class OfferListing extends Listing
 
         // Pas de création proposée à qui ne peut pas créer, ni au-delà d'une offre quand le domaine l'impose.
         if ($this->user === null || ! $this->user->can('create', Offer::class)
-            || ($domain->onePerAccount() && Offer::query()->where('user_id', $this->user->getAuthIdentifier())->exists())) {
+            || ($domain->onePerAccount() && Offer::query()->where('user_id', $this->user->getAuthIdentifier())->where('country_id', CurrentCountry::require()->getKey())->exists())) {
             return null;
         }
 
@@ -66,7 +67,11 @@ class OfferListing extends Listing
      */
     public function query(): Builder
     {
-        return Offer::query()->where('user_id', $this->user?->getAuthIdentifier())->orderBy('id');
+        // Les siennes, dans le pays courant (décision 2026-11-18-espace-pays).
+        return Offer::query()
+            ->where('user_id', $this->user?->getAuthIdentifier())
+            ->where('country_id', CurrentCountry::require()->getKey())
+            ->orderBy('id');
     }
 
     protected function search(Builder $query, string $term): void

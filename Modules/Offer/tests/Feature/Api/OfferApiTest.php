@@ -7,6 +7,7 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
@@ -26,6 +27,8 @@ class OfferApiTest extends TestCase
         parent::setUp();
 
         config(['offer.domain' => 'rental']);
+        // L'espace pays des tests : la Suisse, seul pays actif (décision 2026-11-18-espace-pays).
+        Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
         $this->seed(OfferDatabaseSeeder::class);
     }
 

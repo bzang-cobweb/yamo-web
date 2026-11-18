@@ -10,6 +10,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Ajouter ou changer son numéro : l'actuel (indicatif et numéro) en lecture seule
@@ -27,7 +28,8 @@ class PhoneChangeForm extends Form
     {
         $user = $this->user instanceof User ? $this->user : null;
         $options = PhoneNumbers::countryOptions();
-        $defaultCountry = $user?->phoneCountry?->code ?? $user?->country?->code;
+        // Le pays courant d'office (décision 2026-11-18-espace-pays).
+        $defaultCountry = CurrentCountry::get()?->code ?? $user?->phoneCountry?->code ?? $user?->country?->code;
 
         return array_values(array_filter([
             $user?->phone === null ? null : Field::phone('current_phone')

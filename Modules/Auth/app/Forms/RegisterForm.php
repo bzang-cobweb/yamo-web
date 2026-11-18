@@ -13,6 +13,7 @@ use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Step;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Créer un compte depuis l'app, en trois étapes : qui (pseudonyme, prénom, nom,
@@ -79,6 +80,8 @@ class RegisterForm extends Form
             $fields[] = Field::phone('phone')
                 ->label(__('auth::user.phone'))
                 ->options(PhoneNumbers::countryOptions())
+                // Le pays courant d'office (décision 2026-11-18-espace-pays).
+                ->default(['country' => CurrentCountry::get()?->code, 'number' => null])
                 ->required(! $both)
                 ->rules([...($both ? ['required_without:email'] : []), new UniquePhone]);
         }

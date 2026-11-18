@@ -77,7 +77,7 @@ class AddressServiceTest extends TestCase
         Address::factory()->for($switzerland)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
         Address::factory()->for($switzerland)->create(['street' => 'Quai du Lac 1', 'zip' => '1201', 'city' => 'Genève']);
         Address::factory()->for($switzerland)->create(['street' => 'Rue du Rhône 10']);
-        Address::factory()->create(['street' => 'Rue du Lac 4']);
+        Address::factory()->for(Country::factory())->create(['street' => 'Rue du Lac 4']);
 
         $labels = $this->service()->suggest('DU LAC', $switzerland->getKey(), 5)->map->suggestionLabel()->all();
 

@@ -11,6 +11,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Filament\Resources\OfferResource;
 use Modules\Offer\Models\Offer;
@@ -23,7 +24,7 @@ abstract class OfferTable
         return $table
             ->defaultSort('id', 'desc')
             // Propriétaire et chemin de la catégorie sans requête par ligne.
-            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'category.parent.parent']))
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'country', 'category.parent.parent']))
             ->columns([
                 TextColumn::make('title')
                     ->label(__('offer::offer.title_field'))
@@ -34,6 +35,10 @@ abstract class OfferTable
                     ->label(__('offer::offer.owner'))
                     ->state(fn (Offer $record): string => (string) $record->user?->getFilamentName())
                     ->searchable(['name', 'first_name', 'last_name']),
+                TextColumn::make('country.code')
+                    ->label(__('offer::offer.country'))
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label(__('offer::offer.status'))
                     ->badge()
@@ -60,6 +65,9 @@ abstract class OfferTable
                 SelectFilter::make('status')
                     ->label(__('offer::offer.status'))
                     ->options(OfferStatusEnum::options()),
+                SelectFilter::make('country_id')
+                    ->label(__('offer::offer.country'))
+                    ->options(fn (): array => Country::options()),
                 SelectFilter::make('category_id')
                     ->label(__('offer::offer.category'))
                     ->options(fn (): array => OfferCategory::options()),

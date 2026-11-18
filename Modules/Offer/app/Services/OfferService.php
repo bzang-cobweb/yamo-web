@@ -6,26 +6,32 @@ use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
+use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Models\Offer;
 
 /**
  * Créer, modifier, retirer une offre selon le domaine actif (décision
  * 2026-11-18-offres-et-domaines) : les champs communs vont dans leurs colonnes,
- * les attributs du domaine dans `details`. La devise est celle du domaine.
+ * les attributs du domaine dans `details`. Une offre créée l'est dans le pays
+ * courant, dont elle prend la devise (décision 2026-11-18-espace-pays).
  */
 class OfferService
 {
     /**
      * @param  array<string, mixed>  $data  données validées
      */
-    public function create(User $user, Domain $domain, array $data, ?string $locale = null): Offer
+    public function create(User $user, Domain $domain, Country $country, array $data, ?string $locale = null): Offer
     {
-        if ($domain->onePerAccount() && Offer::query()->where('user_id', $user->getKey())->exists()) {
+        if ($domain->onePerAccount() && Offer::query()->where('user_id', $user->getKey())->where('country_id', $country->getKey())->exists()) {
             throw ValidationException::withMessages(['title' => __('offer::offer.one_per_account')]);
         }
 
-        return Offer::query()->create(['user_id' => $user->getKey(), ...$this->columns($domain, $data, $locale ?? $user->preferredLocale())]);
+        return Offer::query()->create([
+            'user_id' => $user->getKey(),
+            'country_id' => $country->getKey(),
+            ...$this->columns($domain, $data, $country, $locale ?? $user->preferredLocale()),
+        ]);
     }
 
     /**
@@ -33,7 +39,7 @@ class OfferService
      */
     public function update(Offer $offer, Domain $domain, array $data, ?string $locale = null): Offer
     {
-        $offer->fill($this->columns($domain, $data, $locale ?? $offer->user->preferredLocale(), $offer))->save();
+        $offer->fill($this->columns($domain, $data, $offer->country, $locale ?? $offer->user->preferredLocale(), $offer))->save();
 
         return $offer->refresh();
     }
@@ -88,7 +94,7 @@ class OfferService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function columns(Domain $domain, array $data, string $locale, ?Offer $offer = null): array
+    private function columns(Domain $domain, array $data, ?Country $country, string $locale, ?Offer $offer = null): array
     {
         $price = $domain->hasPrice() ? ($data['price'] ?? null) : null;
 
@@ -100,7 +106,7 @@ class OfferService
             'address_id' => $domain->hasAddress() ? ($data['address_id'] ?? null) : null,
             'status' => $data['status'],
             'price' => $price,
-            'currency' => $price === null ? null : $domain->currency(),
+            'currency' => $price === null ? null : $country?->currency,
             // Attributs d'un autre domaine gardés tels quels ; ceux du domaine actif remplacés.
             'details' => [
                 ...($offer?->details ?? []),

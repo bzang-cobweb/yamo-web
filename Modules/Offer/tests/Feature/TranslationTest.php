@@ -13,6 +13,7 @@ use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
 use Modules\Form\Support\Field;
+use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\EditOffer;
@@ -33,6 +34,8 @@ class TranslationTest extends AuthFilamentTestCase
 
         app(DomainRegistry::class)->register(TestNotesDomain::class);
         config(['offer.domain' => 'test.notes']);
+        // L'espace pays des tests : la Suisse, seul pays actif (décision 2026-11-18-espace-pays).
+        Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
         // L'API par défaut ; le test du back-office le rallume.
         Filament::setServingStatus(false);
     }

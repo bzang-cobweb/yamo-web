@@ -5,6 +5,7 @@ namespace Modules\Auth\Forms\Concerns;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Identifiant du compte (connexion, mot de passe oublié), selon les canaux de
@@ -22,7 +23,9 @@ trait HasIdentifierField
     protected function identifierFields(): array
     {
         $email = Field::email('email')->label(__('auth::user.email'))->required()->rules(['max:255']);
-        $phone = Field::phone('phone')->label(__('auth::user.phone'))->options(PhoneNumbers::countryOptions())->required();
+        $phone = Field::phone('phone')->label(__('auth::user.phone'))->options(PhoneNumbers::countryOptions())->required()
+            // Le pays courant d'office (décision 2026-11-18-espace-pays).
+            ->default(['country' => CurrentCountry::get()?->code, 'number' => null]);
 
         if (! AuthChannels::both()) {
             return [AuthChannels::email() ? $email : $phone];

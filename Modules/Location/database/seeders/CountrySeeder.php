@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use libphonenumber\PhoneNumberUtil;
 use Locale;
 use Modules\Location\Models\Country;
+use Modules\Location\Support\Currencies;
 use ResourceBundle;
 
 /**
@@ -13,7 +14,7 @@ use ResourceBundle;
  * noms fr, en et natif tirés de l'extension intl (ICU).
  *
  * Rejouable : un pays existant voit ses noms mis à jour, mais garde son `active` et
- * son `dial_code`, modifiables dans le back-office.
+ * son `dial_code` et sa `currency`, modifiables dans le back-office.
  */
 class CountrySeeder extends Seeder
 {
@@ -53,6 +54,9 @@ class CountrySeeder extends Seeder
                 $country->dial_code = '+'.$phoneNumbers->getCountryCodeForRegion($code);
                 $country->active = true;
             }
+
+            // Devise d'après ICU, si elle n'a pas encore été posée (modifiable ensuite).
+            $country->currency ??= Currencies::forCountry($code);
 
             $country->save();
         }

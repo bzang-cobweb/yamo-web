@@ -34,6 +34,9 @@ abstract class CountryTable
                     ->label(__('location::country.dial_code'))
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('currency')
+                    ->label(__('location::country.currency'))
+                    ->sortable(),
                 TextColumn::make('regions_count')
                     ->label(__('location::country.regions_count'))
                     ->counts('regions')

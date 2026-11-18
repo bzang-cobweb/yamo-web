@@ -28,9 +28,18 @@ class UserAddressApiTest extends TestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr');
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // L'espace pays des tests : la Suisse, seul pays actif (décision 2026-11-18-espace-pays).
+        $this->switzerland();
+    }
+
     private function switzerland(): Country
     {
-        return Country::factory()->create(['code' => 'CH', 'name' => ['fr' => 'Suisse', 'en' => 'Switzerland'], 'native_name' => 'Schweiz']);
+        return Country::query()->where('code', 'CH')->first()
+            ?? Country::factory()->create(['code' => 'CH', 'name' => ['fr' => 'Suisse', 'en' => 'Switzerland'], 'native_name' => 'Schweiz', 'currency' => 'CHF']);
     }
 
     /**

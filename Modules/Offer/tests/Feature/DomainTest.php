@@ -9,6 +9,7 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
+use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
@@ -21,6 +22,14 @@ use Tests\TestCase;
 class DomainTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // L'espace pays des tests : un seul pays actif (décision 2026-11-18-espace-pays).
+        Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
+    }
 
     private function member(): User
     {

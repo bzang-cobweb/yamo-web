@@ -50,6 +50,12 @@ abstract class CountryForm
                     ->required()
                     ->regex('/^\+\d{1,4}$/')
                     ->maxLength(8),
+                TextInput::make('currency')
+                    ->label(__('location::country.currency'))
+                    ->helperText(__('location::country.help.currency'))
+                    ->length(3)
+                    ->regex('/^[A-Za-z]{3}$/')
+                    ->dehydrateStateUsing(fn (?string $state): ?string => $state === null ? null : strtoupper($state)),
                 Toggle::make('active')
                     ->label(__('location::country.active'))
                     ->default(true),

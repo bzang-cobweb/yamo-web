@@ -9,8 +9,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
-use Modules\Location\Filament\Forms\SingleCountry;
-use Modules\Location\Models\Country;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Une adresse du compte, depuis la liste « Mes adresses » de l'app : vide pour
@@ -33,13 +32,17 @@ class UserAddressForm extends Form
     }
 
     /**
-     * Seule une adresse du compte peut être ouverte ; une autre répond 404.
+     * Seule une adresse du compte dans le pays courant peut être ouverte ; une
+     * autre répond 404 (décision 2026-11-18-espace-pays).
      */
     public function forRecord(string $key): static
     {
         $user = $this->user instanceof User ? $this->user : null;
+        $country = CurrentCountry::require();
 
-        $this->userAddress = $user?->addresses()->with('address')->whereKey($key)->first() ?? abort(404);
+        $this->userAddress = $user?->addresses()->with('address')
+            ->whereHas('address', fn ($query) => $query->where('country_id', $country->getKey()))
+            ->whereKey($key)->first() ?? abort(404);
 
         return $this;
     }
@@ -49,6 +52,7 @@ class UserAddressForm extends Form
         $user = $this->user instanceof User ? $this->user : null;
         $recipient = $this->userAddress ?? $user;
         $address = $this->userAddress?->address;
+        $country = CurrentCountry::require();
 
         return [
             Field::select('gender')
@@ -66,10 +70,11 @@ class UserAddressForm extends Form
                 ->default($recipient?->last_name)
                 ->required()
                 ->maxLength(255),
+            // Le pays courant, seule option : verrouillé (décision 2026-11-18-espace-pays).
             Field::select('country_id')
                 ->label(__('location::address.country'))
-                ->options(Country::options())
-                ->default((string) ($address?->country_id ?? SingleCountry::soleActiveId() ?? '') ?: null)
+                ->options([(string) $country->getKey() => $country->label()])
+                ->default((string) $country->getKey())
                 ->required(),
             Field::text('street')
                 ->label(__('location::address.street'))

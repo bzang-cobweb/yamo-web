@@ -8,6 +8,7 @@ use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Adresses d'un compte (décision 2026-11-18-adresse-du-compte-modele).
@@ -73,8 +74,14 @@ class UserAddressPolicy
         return false;
     }
 
+    /**
+     * La sienne, et dans le pays courant (décision 2026-11-18-espace-pays) ; sinon 404.
+     */
     private function owns(User $user, UserAddress $userAddress): Response
     {
-        return (int) $userAddress->user_id === (int) $user->getKey() ? Response::allow() : Response::denyAsNotFound();
+        return (int) $userAddress->user_id === (int) $user->getKey()
+            && (int) $userAddress->address->country_id === (int) CurrentCountry::require()->getKey()
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 }

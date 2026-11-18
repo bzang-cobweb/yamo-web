@@ -39,7 +39,7 @@ class AddressesRelationManagerTest extends AuthFilamentTestCase
         $this->actingAsAddressManager();
         $switzerland = Country::factory()->create();
         $mine = Address::factory()->for($switzerland)->create();
-        $other = Address::factory()->create();
+        $other = Address::factory()->for(Country::factory())->create();
 
         $this->manager($switzerland)
             ->assertOk()
