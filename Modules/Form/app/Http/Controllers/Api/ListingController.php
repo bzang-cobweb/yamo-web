@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Http\Controllers\Api;
 
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Modules\Form\Http\Resources\ListingResource;
 use Modules\Form\Support\Listing;
 
@@ -12,9 +13,10 @@ class ListingController
 {
     /**
      * Une liste : titre, texte quand elle est vide, bouton de création, items
-     * (titre, sous-titre, formulaire d'édition, retrait). Liste inconnue : 404 ;
-     * demandée sans jeton : 401.
+     * (titre, sous-titre, formulaire d'édition, retrait), servis par pages.
+     * Liste inconnue : 404 ; demandée sans jeton : 401.
      */
+    #[QueryParameter('cursor', description: 'Curseur de la page voulue, tel que servi dans `next_cursor` ; absent ou invalide : première page.', type: 'string', required: false)]
     public function show(Listing $list): ListingResource
     {
         return new ListingResource($list);

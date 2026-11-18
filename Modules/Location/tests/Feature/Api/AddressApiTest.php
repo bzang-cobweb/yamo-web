@@ -12,7 +12,8 @@ use Tests\TestCase;
 /**
  * « Mes adresses » dans l'app : la liste, le formulaire (vide ou lié à une
  * `UserAddress`) et les envois qu'ils décrivent ; ni coordonnées ni suggestions,
- * réservées au back-office (décisions 2026-11-18-adresses-liste-generique,
+ * réservées au back-office ; la liste est servie par pages de 20 (décisions
+ * 2026-11-18-contrat-liste-infinie-role-admin, 2026-11-18-adresses-liste-generique,
  * 2026-11-18-adresse-du-compte-modele et 2026-11-18-adresse-app-simplifiee).
  */
 class AddressApiTest extends TestCase
@@ -60,6 +61,7 @@ class AddressApiTest extends TestCase
                 'title' => 'Mes adresses',
                 'empty' => "Aucune adresse pour l'instant.",
                 'create' => ['label' => 'Ajouter une adresse', 'form' => 'location.address'],
+                'next_cursor' => null,
                 'items' => [],
             ]]);
     }
@@ -87,6 +89,27 @@ class AddressApiTest extends TestCase
                 'success' => ['action' => 'back', 'message' => 'Adresse retirée.'],
             ],
         ]], $items);
+    }
+
+    public function test_45_addresses_are_served_20_at_a_time_each_once_in_order(): void
+    {
+        $user = User::factory()->create();
+        // Une même adresse peut figurer plusieurs fois sur un compte.
+        $address = Address::factory()->for($this->switzerland())->create();
+        $entries = UserAddress::factory()->count(45)->for($user)->for($address)->create();
+        $this->asUser($user);
+
+        $pages = [];
+        $cursor = null;
+
+        do {
+            $data = $this->getJson('/api/v1/lists/location.addresses'.($cursor === null ? '' : '?cursor='.urlencode($cursor)))->assertOk()->json('data');
+            $pages[] = array_column($data['items'], 'id');
+            $cursor = $data['next_cursor'];
+        } while ($cursor !== null && count($pages) < 10);
+
+        $this->assertSame([20, 20, 5], array_map('count', $pages));
+        $this->assertSame($entries->map(fn (UserAddress $entry): string => (string) $entry->getKey())->all(), array_merge(...$pages));
     }
 
     public function test_the_empty_form_starts_with_the_account_as_recipient_without_coordinates_or_suggestions(): void

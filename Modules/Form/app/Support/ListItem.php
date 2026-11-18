@@ -12,8 +12,12 @@ final class ListItem
     /** @var array{form: string, record: string}|null */
     private ?array $edit = null;
 
-    /** @var array{label: string, confirm: string, submission: Submission}|null */
-    private ?array $delete = null;
+    /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
+    private ?string $deleteLabel = null;
+
+    private ?string $deleteConfirm = null;
+
+    private ?Submission $deleteSubmission = null;
 
     private function __construct(
         public readonly string $id,
@@ -41,7 +45,9 @@ final class ListItem
      */
     public function delete(string $label, string $confirm, Submission $submission): self
     {
-        $this->delete = ['label' => $label, 'confirm' => $confirm, 'submission' => $submission];
+        $this->deleteLabel = $label;
+        $this->deleteConfirm = $confirm;
+        $this->deleteSubmission = $submission;
 
         return $this;
     }
@@ -56,10 +62,10 @@ final class ListItem
             'title' => $this->title,
             'subtitle' => $this->subtitle,
             'edit' => $this->edit,
-            'delete' => $this->delete === null ? null : [
-                'label' => $this->delete['label'],
-                'confirm' => $this->delete['confirm'],
-                ...$this->delete['submission']->toArray(),
+            'delete' => $this->deleteSubmission === null ? null : [
+                'label' => (string) $this->deleteLabel,
+                'confirm' => (string) $this->deleteConfirm,
+                ...$this->deleteSubmission->toArray(),
             ],
         ];
     }

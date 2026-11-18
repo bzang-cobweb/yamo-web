@@ -475,7 +475,7 @@
         "/v1/lists/{list}": {
             "get": {
                 "operationId": "v1.lists.show",
-                "summary": "Une liste : titre, texte quand elle est vide, bouton de cr\u00e9ation, items\n(titre, sous-titre, formulaire d'\u00e9dition, retrait). Liste inconnue : 404 ;\ndemand\u00e9e sans jeton : 401",
+                "summary": "Une liste : titre, texte quand elle est vide, bouton de cr\u00e9ation, items\n(titre, sous-titre, formulaire d'\u00e9dition, retrait), servis par pages.\nListe inconnue : 404 ; demand\u00e9e sans jeton : 401",
                 "tags": [
                     "Listing"
                 ],
@@ -485,6 +485,14 @@
                         "in": "path",
                         "required": true,
                         "description": "The list ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Curseur de la page voulue, tel que servi dans `next_cursor` ; absent ou invalide : premi\u00e8re page.",
                         "schema": {
                             "type": "string"
                         }
@@ -2173,10 +2181,109 @@
                         "type": "null",
                         "description": "Bouton de cr\u00e9ation : libell\u00e9 et formulaire ouvert ; absent pour une liste en lecture seule."
                     },
+                    "next_cursor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Curseur de la page suivante, \u00e0 renvoyer en `?cursor=` ; `null` : plus rien apr\u00e8s."
+                    },
                     "items": {
                         "type": "array",
-                        "description": "Items : `edit` ouvre le formulaire li\u00e9 \u00e0 l'enregistrement (`?record=`), `delete` d\u00e9crit le retrait.",
-                        "items": {}
+                        "description": "Items de la page : `edit` ouvre le formulaire li\u00e9 \u00e0 l'enregistrement (`?record=`), `delete` d\u00e9crit le retrait.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "subtitle": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "edit": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "form": {
+                                            "type": "string"
+                                        },
+                                        "record": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "form",
+                                        "record"
+                                    ]
+                                },
+                                "delete": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "confirm": {
+                                            "type": "string"
+                                        },
+                                        "method": {
+                                            "type": "string"
+                                        },
+                                        "endpoint": {
+                                            "type": "string"
+                                        },
+                                        "destructive": {
+                                            "type": "boolean"
+                                        },
+                                        "success": {
+                                            "type": "object",
+                                            "properties": {
+                                                "action": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "profile",
+                                                        "sign-out",
+                                                        "back"
+                                                    ]
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "action",
+                                                "message"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "confirm",
+                                        "method",
+                                        "endpoint",
+                                        "destructive",
+                                        "success"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "subtitle",
+                                "edit",
+                                "delete"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -2184,6 +2291,7 @@
                     "title",
                     "empty",
                     "create",
+                    "next_cursor",
                     "items"
                 ],
                 "title": "ListingResource"

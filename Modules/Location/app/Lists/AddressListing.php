@@ -2,6 +2,9 @@
 
 namespace Modules\Location\Lists;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
@@ -38,33 +41,39 @@ class AddressListing extends Listing
         return ['label' => __('location::address.list.create'), 'form' => AddressForm::name()];
     }
 
-    public function items(): array
+    /**
+     * Les adresses du compte, dans l'ordre de création ; aucune sans compte.
+     *
+     * @return HasMany<UserAddress, User>|Builder<UserAddress>
+     */
+    public function query(): HasMany|Builder
     {
-        $user = $this->user instanceof User ? $this->user : null;
-
-        if ($user === null) {
-            return [];
+        if (! $this->user instanceof User) {
+            return UserAddress::query()->whereRaw('1 = 0')->orderBy('id');
         }
 
-        return $user->addresses()->with('address.country')->get()
-            ->map(fn (UserAddress $userAddress): ListItem => ListItem::make(
-                $userAddress->getKey(),
-                $userAddress->recipient(),
-                $userAddress->address->street.', '.$userAddress->address->subtitle(),
-            )
-                ->edit(AddressForm::name())
-                ->delete(
-                    __('location::address.detach'),
-                    __('location::address.list.confirm'),
-                    Submission::toRoute(
-                        'api.v1.auth.me.addresses.destroy',
-                        SuccessAction::BACK,
-                        __('location::address.list.detached'),
-                        destructive: true,
-                        parameters: ['userAddress' => $userAddress->getKey()],
-                    ),
-                ))
-            ->values()
-            ->all();
+        return $this->user->addresses()->with('address.country');
+    }
+
+    public function item(Model $record): ListItem
+    {
+        /** @var UserAddress $record */
+        return ListItem::make(
+            $record->getKey(),
+            $record->recipient(),
+            $record->address->street.', '.$record->address->subtitle(),
+        )
+            ->edit(AddressForm::name())
+            ->delete(
+                __('location::address.detach'),
+                __('location::address.list.confirm'),
+                Submission::toRoute(
+                    'api.v1.auth.me.addresses.destroy',
+                    SuccessAction::BACK,
+                    __('location::address.list.detached'),
+                    destructive: true,
+                    parameters: ['userAddress' => $record->getKey()],
+                ),
+            );
     }
 }
