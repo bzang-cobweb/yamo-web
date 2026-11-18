@@ -138,6 +138,19 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors(['title.en']);
     }
 
+    public function test_offers_are_filtered_by_country(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS);
+        $switzerland = Offer::factory()->create();
+        $senegal = Offer::factory()->create(['country_id' => Country::factory()->create(['code' => 'SN'])->getKey()]);
+
+        Livewire::test(ListOffers::class)
+            ->assertCanSeeTableRecords([$switzerland, $senegal])
+            ->filterTable('country_id', $senegal->country_id)
+            ->assertCanSeeTableRecords([$senegal])
+            ->assertCanNotSeeTableRecords([$switzerland]);
+    }
+
     public function test_the_address_must_be_in_the_offer_country(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);

@@ -141,4 +141,21 @@ class CountryResourceTest extends AuthFilamentTestCase
             ->assertTableColumnStateSet('regions_count', 3, $country)
             ->assertTableColumnStateSet('regions_count', 0, $empty);
     }
+
+    public function test_the_currency_of_a_country_is_edited_in_capitals(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_COUNTRIES, PermissionEnum::UPDATE_COUNTRIES);
+        $country = Country::factory()->create(['currency' => 'XAF']);
+
+        Livewire::test(EditCountry::class, ['record' => $country->getKey()])
+            ->fillForm(['currency' => 'xof'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame('XOF', $country->fresh()->currency);
+
+        Livewire::test(EditCountry::class, ['record' => $country->getKey()])
+            ->fillForm(['currency' => 'xof2'])
+            ->call('save')
+            ->assertHasFormErrors(['currency']);
+    }
 }
