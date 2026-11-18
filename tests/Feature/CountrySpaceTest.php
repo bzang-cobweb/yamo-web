@@ -100,8 +100,9 @@ class CountrySpaceTest extends TestCase
         $this->assertTrue($offer->country->is($this->cameroon));
         $this->assertSame('XAF', $offer->currency);
         // Format français, sans décimales ; espaces insécables ramenés à des espaces.
-        $subtitle = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $this->in($user, 'CM')->getJson('/api/v1/lists/offer.mine')->json('data.items.0.subtitle'));
-        $this->assertSame('Publiée · 85 000 FCFA / mois', $subtitle);
+        // Statut et prix en gras (décision 2026-11-19-item-titre-saisi-details).
+        $highlight = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $this->in($user, 'CM')->getJson('/api/v1/lists/offer.mine')->json('data.items.0.highlight'));
+        $this->assertSame('Publiée · 85 000 FCFA / mois', $highlight);
 
         // Au Sénégal : un autre espace, sans cette offre, qui y répond 404.
         $this->assertSame([], $this->in($user, 'SN')->getJson('/api/v1/lists/offer.mine')->json('data.items'));

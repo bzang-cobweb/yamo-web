@@ -61,11 +61,14 @@ class OfferForm extends Form
                 ->label(__('offer::offer.title_field'))
                 ->default($offer?->getTranslation('title', $this->locale()))
                 ->required()
-                ->maxLength(255),
+                ->maxLength(255)
+                // Pas de coordonnées dans une annonce (décision 2026-11-19-contrat-annonces-sans-coordonnees).
+                ->withoutContactDetails(),
             Field::textarea('description')
                 ->label(__('offer::offer.description'))
                 ->default($offer?->getTranslation('description', $this->locale()))
-                ->maxLength(Field::TEXTAREA_MAX_LENGTH),
+                ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                ->withoutContactDetails(),
             $categories === [] ? null : Field::select('category_id')
                 ->label(__('offer::offer.category'))
                 ->options($categories)
@@ -85,7 +88,7 @@ class OfferForm extends Form
                 ->options(OfferStatusEnum::options())
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
                 ->required(),
-            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->attributes()),
+            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes()),
         ]));
     }
 

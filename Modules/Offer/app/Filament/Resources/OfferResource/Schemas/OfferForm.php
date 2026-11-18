@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
 use Modules\Form\Filament\FieldComponent;
+use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Address;
@@ -43,7 +44,7 @@ abstract class OfferForm
                 FieldComponent::make($field, "details.{$field->name}.{$locale}")
                     ->required($field->isRequired() && $locale === Locales::default()),
             ], "details-{$field->name}")->columnSpanFull()
-            : FieldComponent::make($field, 'details.'.$field->name), $domain->attributes());
+            : FieldComponent::make($field, 'details.'.$field->name), $domain->inputAttributes());
     }
 
     public static function configure(Schema $schema): Schema
@@ -80,10 +81,13 @@ abstract class OfferForm
                             TextInput::make("title.{$locale}")
                                 ->label(__('offer::offer.title_field'))
                                 ->required($locale === Locales::default())
-                                ->maxLength(255),
+                                ->maxLength(255)
+                                // Pas de coordonnées, dans chaque langue (décision 2026-11-19-contrat-annonces-sans-coordonnees).
+                                ->rule(new NoContactDetails),
                             Textarea::make("description.{$locale}")
                                 ->label(__('offer::offer.description'))
                                 ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                                ->rule(new NoContactDetails)
                                 ->rows(4),
                         ], 'texts')->columnSpanFull(),
                         Select::make('category_id')

@@ -3,6 +3,7 @@
 namespace Modules\Offer\Domains;
 
 use Illuminate\Support\Number;
+use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Offer\Models\Offer;
 
@@ -179,5 +180,19 @@ abstract class Domain
     final public function attributeNames(): array
     {
         return array_map(fn (Field $field): string => $field->name, $this->attributes());
+    }
+
+    /**
+     * Les attributs, tels qu'on les saisit : un texte libre y refuse les
+     * coordonnées (décision 2026-11-19-contrat-annonces-sans-coordonnees).
+     *
+     * @return list<Field>
+     */
+    final public function inputAttributes(): array
+    {
+        return array_map(
+            fn (Field $field): Field => in_array($field->type, [FieldType::TEXT, FieldType::TEXTAREA], true) ? $field->withoutContactDetails() : $field,
+            $this->attributes(),
+        );
     }
 }

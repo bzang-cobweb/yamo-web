@@ -8,6 +8,7 @@ use Illuminate\Support\Number;
 use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
+use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Rules\OptionBelongsToParent;
 
 /**
@@ -58,6 +59,9 @@ final class Field
 
     /** Texte rangé par langue (décision 2026-11-18-offres-multilingues-categories-arbre). */
     private bool $translatable = false;
+
+    /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
+    private bool $withoutContactDetails = false;
 
     /**
      * valeur => libellé, ou valeur => [libellé, indication, parent], dans l'ordre
@@ -308,6 +312,21 @@ final class Field
      *
      * @param  list<mixed>  $rules
      */
+    /**
+     * Texte publié : refusé s'il contient une coordonnée ou un indice de contact
+     * (décision 2026-11-19-contrat-annonces-sans-coordonnees). Texte court ou long seulement.
+     */
+    public function withoutContactDetails(bool $enabled = true): self
+    {
+        if ($enabled && ! in_array($this->type, [FieldType::TEXT, FieldType::TEXTAREA], true)) {
+            throw new LogicException("Champ « {$this->name} » : seul un texte se contrôle pour les coordonnées.");
+        }
+
+        $this->withoutContactDetails = $enabled;
+
+        return $this;
+    }
+
     public function rules(array $rules): self
     {
         $this->rules = $rules;
@@ -370,8 +389,9 @@ final class Field
         }
 
         $length = $this->maxLength === null ? [] : ['max:'.$this->maxLength];
+        $contact = $this->withoutContactDetails ? [new NoContactDetails] : [];
 
-        return [$this->name => [...$presence, ...$this->type->rules($values), ...$length, ...$this->rules]];
+        return [$this->name => [...$presence, ...$this->type->rules($values), ...$length, ...$contact, ...$this->rules]];
     }
 
     public function getLabel(): ?string

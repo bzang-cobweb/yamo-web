@@ -115,6 +115,30 @@ class TranslationTest extends AuthFilamentTestCase
         $this->assertSame(['fr' => 'Appartement', 'en' => 'Flat'], $offer->fresh()->getTranslations('title'));
     }
 
+    public function test_a_text_attribute_of_the_domain_refuses_contact_details(): void
+    {
+        // Décision 2026-11-19-contrat-annonces-sans-coordonnees : tout attribut texte, sans le déclarer.
+        $this->asUser($this->member('fr'))->postJson('/api/v1/offers', ['title' => 'Appartement', 'status' => 'draft', 'note' => 'Infos sur insta : @awa'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('note');
+        $this->assertSame(0, Offer::query()->count());
+    }
+
+    public function test_the_back_office_refuses_contact_details_in_every_language(): void
+    {
+        Filament::setServingStatus();
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
+        $offer = Offer::factory()->create(['title' => ['fr' => 'Appartement'], 'details' => ['note' => ['fr' => 'Calme']]]);
+
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->fillForm(['title.en' => 'Flat, call me', 'description.en' => 'See www.myflat.com', 'details.note.en' => '699 12 34 56'])
+            ->call('save')
+            ->assertHasFormErrors(['title.en', 'description.en', 'details.note.en'])
+            ->assertHasNoFormErrors(['title.fr']);
+
+        $this->assertSame(['fr' => 'Appartement'], $offer->fresh()->getTranslations('title'));
+    }
+
     public function test_only_texts_can_be_translatable(): void
     {
         $this->expectException(LogicException::class);
