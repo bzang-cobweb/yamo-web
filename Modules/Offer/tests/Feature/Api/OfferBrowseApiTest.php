@@ -69,7 +69,7 @@ class OfferBrowseApiTest extends TestCase
     public function test_a_home_is_titled_by_its_type_furnished_and_city(): void
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
-        $house = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'house', 'furnished' => true]]);
+        $house = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'house', 'furnished' => true, 'bedrooms' => 3]]);
         $studio = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'studio', 'furnished' => false]]);
         $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'furnished' => true]]);
 
@@ -83,7 +83,8 @@ class OfferBrowseApiTest extends TestCase
         $house->update(['price' => '45000', 'currency' => 'XAF']);
         $studio->update(['price' => '80000', 'currency' => 'XAF']);
         $subtitles = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($this->browse()->json('data.items'), 'subtitle', 'id'));
-        $this->assertSame('45 000 FCFA / jour', $subtitles[(string) $house->getKey()]);
+        // Plus d'une chambre : leur nombre avant le prix ; une seule ou aucune : rien.
+        $this->assertSame('3 chambres · 45 000 FCFA / jour', $subtitles[(string) $house->getKey()]);
         $this->assertSame('80 000 FCFA / mois', $subtitles[(string) $studio->getKey()]);
 
         $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');

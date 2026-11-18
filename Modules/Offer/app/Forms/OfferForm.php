@@ -70,8 +70,7 @@ class OfferForm extends Form
                 ->label(__('offer::offer.category'))
                 ->options($categories)
                 ->default($offer?->category_id === null ? null : (string) $offer->category_id),
-            ! $domain->hasPrice() ? null : Field::number('price')
-                ->label($domain->priceLabel().' ('.CurrentCountry::require()->currency.')')
+            ! $domain->hasPrice() ? null : $this->price($domain, (string) CurrentCountry::require()->currency)
                 ->default($offer?->price)
                 ->required($domain->requiresPrice())
                 ->rules(['min:0', 'max:100000000']),
@@ -88,6 +87,24 @@ class OfferForm extends Form
                 ->required(),
             ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->attributes()),
         ]));
+    }
+
+    /**
+     * Le prix, avec sa devise et son unité ; l'unité peut suivre un autre champ
+     * (« XAF / jour » si meublé, décision 2026-11-18-unite-prix-chambres).
+     */
+    private function price(Domain $domain, string $currency): Field
+    {
+        $field = Field::number('price')->label($domain->priceLabel());
+        $unit = $domain->priceUnitWhen();
+
+        if ($unit === null) {
+            return $field->suffix($currency);
+        }
+
+        return $field
+            ->suffix($currency.' / '.$unit['default'])
+            ->suffixWhen($unit['field'], array_map(fn (string $value): string => $currency.' / '.$value, $unit['units']));
     }
 
     public function title(): string

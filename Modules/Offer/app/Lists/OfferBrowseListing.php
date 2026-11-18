@@ -88,7 +88,8 @@ class OfferBrowseListing extends Listing
         return ListItem::make(
             $record->getKey(),
             $domain->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),
-            $price,
+            // « 3 chambres · 80 000 FCFA / mois » : les détails du domaine, puis le prix.
+            implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null,
         )->image(MediaUrl::onRequestHost($record->photoUrl()));
     }
 }

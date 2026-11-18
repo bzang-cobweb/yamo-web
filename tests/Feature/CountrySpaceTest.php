@@ -87,7 +87,8 @@ class CountrySpaceTest extends TestCase
         UserAddress::factory()->for($user)->for(Address::factory()->for($this->senegal))->create();
 
         $fields = array_column($this->in($user, 'CM')->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame('Loyer (XAF)', $fields['price']['label']);
+        $this->assertSame('Loyer', $fields['price']['label']);
+        $this->assertSame('XAF / mois', $fields['price']['suffix']);
         $this->assertSame([(string) $address], array_column($fields['address_id']['options'], 'value'));
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [

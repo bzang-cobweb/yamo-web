@@ -127,6 +127,7 @@ class FieldTest extends TestCase
             'visible_when' => null,
             'max_length' => null,
             'suffix' => null,
+            'suffix_when' => null,
             'default' => null,
             'options' => [
                 ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],

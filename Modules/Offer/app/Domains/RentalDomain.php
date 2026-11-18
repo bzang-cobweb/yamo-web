@@ -71,6 +71,28 @@ class RentalDomain extends Domain
         return __('offer::rental.price_units.'.($offer->detail('furnished') ? 'day' : 'month'));
     }
 
+    /**
+     * Pendant la saisie : « / jour » si « Meublé » est coché, « / mois » sinon.
+     */
+    public function priceUnitWhen(): ?array
+    {
+        return [
+            'field' => 'furnished',
+            'units' => ['true' => __('offer::rental.price_units.day'), 'false' => __('offer::rental.price_units.month')],
+            'default' => __('offer::rental.price_units.month'),
+        ];
+    }
+
+    /**
+     * Plus d'une chambre : leur nombre, avant le prix (« 3 chambres »).
+     */
+    public function itemDetails(Offer $offer): array
+    {
+        $bedrooms = (int) $offer->detail('bedrooms');
+
+        return $bedrooms > 1 ? [trans_choice('offer::rental.bedrooms_count', $bedrooms, ['count' => $bedrooms])] : [];
+    }
+
     public function attributes(): array
     {
         return [

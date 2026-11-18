@@ -48,6 +48,14 @@ final class Field
     /** Unité affichée après la valeur (« m² ») : formulaire et fiche (décision 2026-11-18-fiche-offre). */
     private ?string $suffix = null;
 
+    /**
+     * Unité qui suit la valeur d'un autre champ (décision 2026-11-18-unite-prix-chambres) :
+     * `{field: 'furnished', suffixes: {'true': 'XAF / jour', 'false': 'XAF / mois'}}`.
+     *
+     * @var array{field: string, suffixes: array<string, string>}|null
+     */
+    private ?array $suffixWhen = null;
+
     /** Texte rangé par langue (décision 2026-11-18-offres-multilingues-categories-arbre). */
     private bool $translatable = false;
 
@@ -393,6 +401,19 @@ final class Field
     }
 
     /**
+     * Unité qui dépend de la valeur du champ `$field` (« true », « false » pour une
+     * case) ; `suffix()` reste l'unité par défaut.
+     *
+     * @param  array<string, string>  $suffixes  valeur => unité
+     */
+    public function suffixWhen(string $field, array $suffixes): self
+    {
+        $this->suffixWhen = ['field' => $field, 'suffixes' => $suffixes];
+
+        return $this;
+    }
+
+    /**
      * La valeur, lisible par une personne, dans la langue `$locale` (fiche d'une
      * offre, décision 2026-11-18-fiche-offre) : le libellé d'un choix, « Oui » ou
      * « Non », un nombre ou une date au format local, l'unité éventuelle ; un
@@ -446,7 +467,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, suffix: string|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -466,6 +487,8 @@ final class Field
             'max_length' => $this->maxLength,
             /** Unité affichée après la valeur (« m² »). */
             'suffix' => $this->suffix,
+            /** Unité qui suit la valeur d'un autre champ (`suffixes` : valeur => unité) ; `suffix` à défaut. */
+            'suffix_when' => $this->suffixWhen,
             'default' => $this->initialValue(),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [

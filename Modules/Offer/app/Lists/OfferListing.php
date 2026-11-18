@@ -90,9 +90,11 @@ class OfferListing extends Listing
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
         // Le titre construit par le domaine (« Studio meublé - Douala »), sinon le titre saisi.
-        $title = app(DomainRegistry::class)->require()->itemTitle($record) ?? (string) $record->getTranslation('title', $locale);
+        $domain = app(DomainRegistry::class)->require();
+        $title = $domain->itemTitle($record) ?? (string) $record->getTranslation('title', $locale);
 
-        return ListItem::make($record->getKey(), $title, implode(' · ', array_filter([$record->status->label(), $price])))
+        // « Publiée · 3 chambres · 80 000 FCFA / mois ».
+        return ListItem::make($record->getKey(), $title, implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->edit(OfferForm::name())
             ->delete(

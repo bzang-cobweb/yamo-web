@@ -91,6 +91,28 @@ abstract class Domain
     }
 
     /**
+     * L'unité du prix pendant la saisie, quand elle dépend d'un autre champ :
+     * `{field, units: valeur => unité, default}` ; `null` : aucune.
+     *
+     * @return array{field: string, units: array<string, string>, default: string}|null
+     */
+    public function priceUnitWhen(): ?array
+    {
+        return null;
+    }
+
+    /**
+     * Détails d'une offre placés avant le prix dans le sous-titre des listes
+     * (« 3 chambres »), dans l'ordre (décision 2026-11-18-unite-prix-chambres).
+     *
+     * @return list<string>
+     */
+    public function itemDetails(Offer $offer): array
+    {
+        return [];
+    }
+
+    /**
      * Le prix formaté, suivi de son unité s'il y en a une ; `null` sans prix.
      */
     final public function formattedPrice(Offer $offer, string $locale): ?string

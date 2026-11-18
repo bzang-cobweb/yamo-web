@@ -26,6 +26,8 @@ return [
         'day' => 'jour',
         'month' => 'mois',
     ],
+    // Sous-titre des listes : le nombre de chambres, s'il y en a plus d'une.
+    'bedrooms_count' => ':count chambre|:count chambres',
     'title_in_city' => ':type - :city',
     'furnished' => 'Meublé',
     'surface' => 'Surface',
