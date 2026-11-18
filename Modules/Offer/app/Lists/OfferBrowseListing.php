@@ -18,7 +18,8 @@ use Modules\Offer\Models\Offer;
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
  * 2026-11-18-accueil-offres-du-pays) : ouverte sans connexion, les plus récentes
- * d'abord ; titre, prix et ville ; recherche dans le titre. Ni édition ni retrait.
+ * d'abord ; titre construit par le domaine (« Studio meublé à Douala ») et prix ;
+ * recherche dans le titre saisi et la ville. Ni édition ni retrait.
  * Sans domaine choisi, elle n'existe pas.
  */
 class OfferBrowseListing extends Listing
@@ -53,7 +54,7 @@ class OfferBrowseListing extends Listing
 
     public function searchPlaceholder(): string
     {
-        return __('offer::offer.list.search');
+        return __('offer::offer.browse.search');
     }
 
     /**
@@ -73,6 +74,8 @@ class OfferBrowseListing extends Listing
     protected function search(Builder $query, string $term): void
     {
         $this->orWhereContains($query, array_map(fn (string $locale): string => "title->{$locale}", Locales::values()), $term);
+        // La ville, affichée dans le titre de la liste.
+        $query->orWhereHas('address', fn (Builder $address) => $address->where(fn (Builder $columns) => $this->orWhereContains($columns, ['city'], $term)));
     }
 
     public function item(Model $record): ListItem
@@ -80,10 +83,11 @@ class OfferBrowseListing extends Listing
         /** @var Offer $record */
         $price = $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale());
 
+        // Le titre construit par le domaine (« Studio meublé à Douala »), sinon le titre saisi.
         return ListItem::make(
             $record->getKey(),
-            (string) $record->getTranslation('title', app()->getLocale()),
-            implode(' · ', array_filter([$price, $record->address?->city])) ?: null,
+            app(DomainRegistry::class)->require()->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),
+            $price,
         )->image(MediaUrl::onRequestHost($record->photoUrl()));
     }
 }

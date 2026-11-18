@@ -3,6 +3,7 @@
 namespace Modules\Offer\Domains;
 
 use Modules\Form\Support\Field;
+use Modules\Offer\Models\Offer;
 
 /**
  * Location de logements, meublés ou non (décision 2026-11-18-offres-et-domaines) :
@@ -40,6 +41,24 @@ class RentalDomain extends Domain
     public function priceLabel(): string
     {
         return __('offer::rental.price');
+    }
+
+    /**
+     * « Studio meublé à Douala » : le type, « meublé » accordé s'il l'est, la
+     * ville s'il y en a une (décision 2026-11-18-titre-liste-logement).
+     */
+    public function itemTitle(Offer $offer): ?string
+    {
+        $type = (string) $offer->detail('property_type');
+
+        if (! in_array($type, self::PROPERTY_TYPES, true)) {
+            return null;
+        }
+
+        $label = __('offer::rental.'.($offer->detail('furnished') ? 'furnished_types' : 'property_types').'.'.$type);
+        $city = $offer->address?->city;
+
+        return $city === null || $city === '' ? $label : __('offer::rental.title_in_city', ['type' => $label, 'city' => $city]);
     }
 
     public function attributes(): array

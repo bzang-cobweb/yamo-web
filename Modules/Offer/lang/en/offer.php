@@ -48,6 +48,7 @@ return [
         'saved' => 'Saved.',
     ],
     'browse' => [
+        'search' => 'Search by title or city…',
         'empty' => 'No offers published in this country yet.',
     ],
     'list' => [

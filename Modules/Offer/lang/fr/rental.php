@@ -14,6 +14,14 @@ return [
         'studio' => 'Studio',
         'room' => 'Chambre',
     ],
+    // Titre dans les listes : le type, « meublé » accordé, la ville.
+    'furnished_types' => [
+        'apartment' => 'Appartement meublé',
+        'house' => 'Maison meublée',
+        'studio' => 'Studio meublé',
+        'room' => 'Chambre meublée',
+    ],
+    'title_in_city' => ':type à :city',
     'furnished' => 'Meublé',
     'surface' => 'Surface',
     'rooms' => 'Pièces',

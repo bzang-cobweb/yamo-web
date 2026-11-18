@@ -3,6 +3,7 @@
 namespace Modules\Offer\Domains;
 
 use Modules\Form\Support\Field;
+use Modules\Offer\Models\Offer;
 
 /**
  * Un domaine du projet (location, boutique, rencontre…) : ce qui distingue ses
@@ -67,6 +68,15 @@ abstract class Domain
     public function categories(): array
     {
         return [];
+    }
+
+    /**
+     * Titre d'une offre dans les listes, construit par le domaine (décision
+     * 2026-11-18-titre-liste-logement) ; `null` : le titre saisi.
+     */
+    public function itemTitle(Offer $offer): ?string
+    {
+        return null;
     }
 
     /**

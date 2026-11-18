@@ -47,19 +47,39 @@ class OfferBrowseApiTest extends TestCase
         $data = $this->browse()->assertOk()
             ->assertJsonPath('data.title', 'Logements')
             ->assertJsonPath('data.create', null)
-            ->assertJsonPath('data.search', 'Rechercher par titre…')
+            ->assertJsonPath('data.search', 'Rechercher par titre ou ville…')
             ->json('data');
 
         $this->assertSame([(string) $newer->getKey(), (string) $older->getKey()], array_column($data['items'], 'id'));
         $item = $data['items'][1];
         $this->assertSame('Studio à Akwa', $item['title']);
-        $this->assertSame('25 000 FCFA · Douala', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['subtitle']));
+        // Sans attributs de logement : le titre saisi ; le prix en sous-titre.
+        $this->assertSame('25 000 FCFA', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['subtitle']));
         $this->assertNull($item['edit']);
         $this->assertNull($item['delete']);
 
         // En anglais, et par recherche dans toutes les langues.
         $this->assertSame('Studio in Akwa', $this->browse('', 'CM', 'en')->json('data.items.1.title'));
         $this->assertSame([(string) $older->getKey()], array_column($this->browse('?search=akwa')->json('data.items'), 'id'));
+        // La ville, affichée dans le titre des logements, se cherche aussi.
+        $this->assertSame([(string) $older->getKey()], array_column($this->browse('?search=douala')->json('data.items'), 'id'));
+    }
+
+    public function test_a_home_is_titled_by_its_type_furnished_and_city(): void
+    {
+        $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
+        $house = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'house', 'furnished' => true]]);
+        $studio = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'studio', 'furnished' => false]]);
+        $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'furnished' => true]]);
+
+        $fr = array_column($this->browse()->json('data.items'), 'title', 'id');
+        $this->assertSame('Maison meublée à Douala', $fr[(string) $house->getKey()]);
+        $this->assertSame('Studio à Douala', $fr[(string) $studio->getKey()]);
+        // Sans adresse : le type seul.
+        $this->assertSame('Chambre meublée', $fr[(string) $room->getKey()]);
+
+        $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');
+        $this->assertSame('Furnished house in Douala', $en[(string) $house->getKey()]);
     }
 
     public function test_pages_of_20_without_any_private_field(): void
