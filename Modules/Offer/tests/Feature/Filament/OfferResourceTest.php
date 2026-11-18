@@ -138,6 +138,27 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors(['title.en']);
     }
 
+    public function test_the_address_must_be_in_the_offer_country(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);
+        $elsewhere = Address::factory()->for(Country::factory()->create(['code' => 'SN']))->create();
+
+        Livewire::test(CreateOffer::class)
+            ->fillForm([
+                'user_id' => User::factory()->create()->getKey(),
+                'country_id' => Country::query()->where('code', 'CH')->value('id'),
+                'status' => 'draft',
+                'title.fr' => 'Studio',
+                'price' => '1000',
+                'address_id' => $elsewhere->getKey(),
+                'details.property_type' => 'studio',
+                'details.surface' => '20',
+                'details.rooms' => '1',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['address_id']);
+    }
+
     public function test_editing_keeps_the_attributes(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);

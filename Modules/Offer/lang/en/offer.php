@@ -16,6 +16,7 @@ return [
     'price' => 'Price',
     'currency' => 'Currency',
     'address' => 'Address',
+    'address_country' => "The address must be in the offer's country.",
     'address_help' => 'Chosen among your account addresses.',
     'status' => 'Status',
     'published_at' => 'Published on',

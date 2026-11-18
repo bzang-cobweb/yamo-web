@@ -4,12 +4,14 @@ namespace Modules\Offer\Filament\Resources\OfferResource\Schemas;
 
 use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
+use Closure;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
 use Modules\Form\Filament\FieldComponent;
@@ -64,6 +66,7 @@ abstract class OfferForm
                         // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
                         SingleCountry::lock(Select::make('country_id')
                             ->label(__('offer::offer.country'))
+                            ->live()
                             ->options(fn (): array => Country::options())
                             ->searchable()
                             ->required()),
@@ -95,7 +98,13 @@ abstract class OfferForm
                             ->visible($domain->hasPrice()),
                         Select::make('address_id')
                             ->label(__('offer::offer.address'))
-                            ->relationship('address', 'street')
+                            // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
+                            ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('country_id')), fn ($query) => $query->where('country_id', $get('country_id'))))
+                            ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                if (filled($value) && filled($get('country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('country_id')) {
+                                    $fail(__('offer::offer.address_country'));
+                                }
+                            })
                             ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
                             ->searchable(['street', 'zip', 'city'])
                             ->required($domain->requiresAddress())
