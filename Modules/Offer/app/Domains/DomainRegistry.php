@@ -28,6 +28,28 @@ final class DomainRegistry
         $this->domains[$domain::key()] = $domain;
     }
 
+    /**
+     * Clés des domaines connus.
+     *
+     * @return list<string>
+     */
+    public function keys(): array
+    {
+        return array_keys($this->domains);
+    }
+
+    /**
+     * Un domaine connu, par sa clé.
+     */
+    public function make(string $key): Domain
+    {
+        if (! $this->has($key)) {
+            throw new InvalidArgumentException("Domaine d'offres inconnu : « {$key} ».");
+        }
+
+        return new ($this->domains[$key]);
+    }
+
     public function has(string $key): bool
     {
         return isset($this->domains[$key]);

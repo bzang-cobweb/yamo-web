@@ -69,6 +69,16 @@ abstract class Domain
         return [];
     }
 
+    /**
+     * Modules optionnels requis (ex. `Booking`), activés par `project:init`.
+     *
+     * @return list<string>
+     */
+    public function modules(): array
+    {
+        return [];
+    }
+
     /** Le prix est-il demandé ? Obligatoire si `requiresPrice()`. */
     public function hasPrice(): bool
     {
