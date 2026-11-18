@@ -14,12 +14,12 @@ return [
         'studio' => 'Studio',
         'room' => 'Room',
     ],
-    // Titre dans les listes : le type, « meublé » accordé, la ville.
-    'furnished_types' => [
-        'apartment' => 'Furnished apartment',
-        'house' => 'Furnished house',
-        'studio' => 'Furnished studio',
-        'room' => 'Furnished room',
+    // Titre dans les listes : « meublé » accordé au type, entre le type et la ville.
+    'furnished_words' => [
+        'apartment' => 'furnished',
+        'house' => 'furnished',
+        'studio' => 'furnished',
+        'room' => 'furnished',
     ],
     // Unité du loyer : par jour pour un meublé, par mois sinon.
     'price_units' => [
@@ -28,7 +28,6 @@ return [
     ],
     // Sous-titre des listes : le nombre de chambres, s'il y en a plus d'une.
     'bedrooms_count' => ':count bedroom|:count bedrooms',
-    'title_in_city' => ':type - :city',
     'furnished' => 'Furnished',
     'surface' => 'Area',
     'rooms' => 'Rooms',

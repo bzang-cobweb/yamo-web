@@ -45,8 +45,9 @@ class RentalDomain extends Domain
     }
 
     /**
-     * « Studio meublé - Douala » : le type, « meublé » accordé s'il l'est, la
-     * ville s'il y en a une (décision 2026-11-18-titre-liste-logement).
+     * « Studio - meublé - Douala » : le type, « meublé » accordé s'il l'est, la
+     * ville s'il y en a une, séparés par un tiret (décisions
+     * 2026-11-18-titre-liste-logement et 2026-11-19-titre-tirets-avis).
      */
     public function itemTitle(Offer $offer): ?string
     {
@@ -56,10 +57,11 @@ class RentalDomain extends Domain
             return null;
         }
 
-        $label = __('offer::rental.'.($offer->detail('furnished') ? 'furnished_types' : 'property_types').'.'.$type);
-        $city = $offer->address?->city;
-
-        return $city === null || $city === '' ? $label : __('offer::rental.title_in_city', ['type' => $label, 'city' => $city]);
+        return implode(' - ', array_filter([
+            __('offer::rental.property_types.'.$type),
+            $offer->detail('furnished') ? __('offer::rental.furnished_words.'.$type) : null,
+            $offer->address?->city,
+        ]));
     }
 
     /**
