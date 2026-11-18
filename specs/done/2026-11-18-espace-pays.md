@@ -86,3 +86,51 @@ Le Cameroun est le premier pays : `project:init --country=CM`.
 - Le paiement, et un fournisseur SMS propre à chaque pays.
 - La consultation publique des offres par pays : chantier à venir, qui s'appuiera sur ce pays courant.
 - La conversion d'une devise à l'autre.
+
+## Ce que j'ai décidé seul
+
+- **Pays courant.** `CurrentCountry` (module Location) lit `X-Country` une fois par requête. Ce qui dépend du pays appelle `CurrentCountry::require()` ; à défaut, la réponse est 422 « Choisissez un pays ». La connexion, le profil et les textes ne sont pas touchés.
+- **Devise par pays.** Elle vient des données ICU : une migration et le seeder la remplissent, et le back-office la modifie. `Domain::currency()` est retiré.
+- **Drapeau.** L'emoji est calculé à partir du code ISO, sans aucune image.
+- **Formulaire d'adresse.** Le pays courant y est la seule option, donc le champ est verrouillé et une adresse d'un autre pays est refusée (422).
+- **Offres dans le back-office.**
+  - Le formulaire gagne un champ pays : verrouillé quand un seul pays est actif, sinon un changement filtre les adresses proposées.
+  - L'adresse doit se trouver dans le pays de l'offre. La QA avait trouvé une adresse sénégalaise acceptée sur une offre camerounaise.
+- **Un domaine à « un par compte »** compte désormais une offre par compte **et par pays**.
+- **Dans l'app :**
+  - un nouveau module `src/features/country` porte le fournisseur, l'écran d'entrée, le drapeau et les sélecteurs ;
+  - le drapeau s'affiche aussi sur l'accueil d'un invité, à côté de la langue ;
+  - entrer dans le même pays ne recharge rien ;
+  - la liste des pays garde la précédente pendant un changement de langue. La QA avait trouvé que la sélection se perdait.
+- **Tests.** Les factories d'adresse et d'offre prennent le pays actif déjà présent, et `phpunit` voit un seul pays par test.
+
+## Ce qui a été fait
+
+- **Web** :
+  - `83f0b10` : serveur ;
+  - `e1c00bd` et `cdc99af` : textes ;
+  - `8c160c6` : adresse dans le pays de l'offre ;
+  - `88a5b1a` : tests du back-office ;
+  - décisions : `801b885`, puis amendements `2026-11-18-ecran-entree-toujours` et `2026-11-18-ecran-entree-selecteurs`.
+- **Mobile** :
+  - `6ef888e` : espace pays ;
+  - `771f9a3` et `6b1d15d` : la langue garde le pays ;
+  - `600e4ac` : sélecteurs, description, écran affiché une fois.
+- **Contrôles** :
+  - web : 378 tests passent, Pint est propre, `openapi.json` est à jour ;
+  - mobile : 181 tests passent, `tsc` et le lint sont propres.
+- **QA** (`bza-dev:qa-check`) :
+  - premier verdict : NO-GO, un écart majeur (langue / pays) ;
+  - après correctif : GO (`.ia/runs/2026-11-18-espace-pays/qa-check.md`).
+  - La refonte de l'écran (`600e4ac`), demandée ensuite, a été vérifiée par les tests et dans le simulateur : sélecteur, recherche « came » → Cameroun, entrée, drapeau sur l'accueil, relance sans écran d'entrée. La QA ne l'a pas revue.
+
+## Ce que je n'ai pas vérifié
+
+- **Démontage de la navigation après connexion,** quand la langue du compte diffère de celle de l'appareil (signalé par la QA). Probablement réglé par le même correctif, mais non rejoué.
+- **Le mode hors ligne de l'écran d'entrée,** sur un appareil.
+- **L'app connectée** dans le simulateur (« Mes logements » par pays).
+
+## Ce qui reste en suspens
+
+- **En local, les 245 pays sont actifs.** Pour un espace « Cameroun » seul, il faut lancer `ddev artisan project:init --domain=rental --name=… --locale=fr --country=CM --channels=email,phone --no-interaction`. La commande modifie `.env` et désactive les autres pays : je ne l'ai pas lancée.
+- **Rien n'est poussé.**
