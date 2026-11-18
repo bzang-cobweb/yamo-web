@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-18-ecran-entree-selecteurs.md (conditions d'affichage et contenu de l'écran).
+
+
 # `2026-11-18` — L'écran d'entrée s'affiche toujours
 
 - **Type** : décision

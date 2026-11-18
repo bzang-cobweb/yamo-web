@@ -16,6 +16,7 @@ return [
         'subtitle' => 'Choisissez votre pays et votre langue.',
         'country' => 'Pays',
         'language' => 'Langue',
+        'chooseCountry' => 'Choisir un pays',
         'enter' => 'Entrer',
         'changeCountry' => 'Changer de pays',
     ],
