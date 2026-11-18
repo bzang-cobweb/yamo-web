@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Services;
 
+use App\Support\ContainsSearch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -105,7 +106,8 @@ class AddressService
     }
 
     /**
-     * Adresses existantes dont la rue contient `$search` (sans casse), dans le
+     * Adresses existantes dont la rue contient `$search` (sans casse, `%` et `_`
+     * cherchés tels quels : `ContainsSearch`), dans le
      * pays donné s'il l'est, par ordre de rue : les suggestions de la saisie.
      *
      * @return Collection<int, Address>
@@ -117,7 +119,7 @@ class AddressService
         return Address::query()
             ->with('country')
             ->when(filled($countryId), fn ($query) => $query->where('country_id', $countryId))
-            ->whereRaw('LOWER(street) LIKE ?', ['%'.addcslashes($search, '%_\\').'%'])
+            ->where(fn ($query) => ContainsSearch::orWhere($query, ['street'], $search))
             ->orderBy('street')
             ->orderBy('zip')
             ->limit($limit)

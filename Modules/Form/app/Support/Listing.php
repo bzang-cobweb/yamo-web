@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Support;
 
+use App\Support\ContainsSearch;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -117,12 +118,7 @@ abstract class Listing
      */
     final protected function orWhereContains(Builder $query, array $columns, string $term): void
     {
-        // `!` comme caractère d'échappement : compris pareil par MariaDB et SQLite.
-        $pattern = '%'.preg_replace('/[!%_]/', '!$0', Str::lower($term)).'%';
-
-        foreach ($columns as $column) {
-            $query->orWhereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap($column).") LIKE ? ESCAPE '!'", [$pattern]);
-        }
+        ContainsSearch::orWhere($query, $columns, $term);
     }
 
     /**

@@ -167,8 +167,14 @@ class AddressServiceTest extends TestCase
     public function test_a_like_wildcard_is_searched_literally(): void
     {
         Address::factory()->create(['street' => 'Rue du Lac 4']);
+        Address::factory()->create(['street' => 'Rue 100% Bio']);
+        Address::factory()->create(['street' => 'Chemin_des_Vignes']);
 
         $this->assertCount(0, $this->service()->suggest('%%%', null, 5));
+        $this->assertCount(0, $this->service()->suggest('du_lac', null, 5));
+        // Même règle que les listes de l'app (ContainsSearch) : les jokers sont des caractères.
+        $this->assertSame(['Rue 100% Bio'], $this->service()->suggest('100%', null, 5)->pluck('street')->all());
+        $this->assertSame(['Chemin_des_Vignes'], $this->service()->suggest('n_d', null, 5)->pluck('street')->all());
     }
 
     public function test_the_database_refuses_a_duplicate(): void
