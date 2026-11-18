@@ -475,7 +475,7 @@
         "/v1/lists/{list}": {
             "get": {
                 "operationId": "v1.lists.show",
-                "summary": "Une liste : titre, texte quand elle est vide, bouton de cr\u00e9ation, items\n(titre, sous-titre, formulaire d'\u00e9dition, retrait), servis par pages.\nListe inconnue : 404 ; demand\u00e9e sans jeton : 401",
+                "summary": "Une liste : titre, texte quand elle est vide, bouton de cr\u00e9ation, items\n(titre, sous-titre, formulaire d'\u00e9dition, retrait), servis par pages, restreints \u00e0 la recherche s'il y en a une.\nListe inconnue : 404 ; demand\u00e9e sans jeton : 401",
                 "tags": [
                     "Listing"
                 ],
@@ -493,6 +493,14 @@
                         "name": "cursor",
                         "in": "query",
                         "description": "Curseur de la page voulue, tel que servi dans `next_cursor` ; absent ou invalide : premi\u00e8re page.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Texte cherch\u00e9, pour une liste cherchable (`search` non nul) ; vide : toute la liste.",
                         "schema": {
                             "type": "string"
                         }
@@ -2181,6 +2189,10 @@
                         "type": "null",
                         "description": "Bouton de cr\u00e9ation : libell\u00e9 et formulaire ouvert ; absent pour une liste en lecture seule."
                     },
+                    "search": {
+                        "type": "null",
+                        "description": "Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignor\u00e9."
+                    },
                     "next_cursor": {
                         "type": [
                             "string",
@@ -2291,6 +2303,7 @@
                     "title",
                     "empty",
                     "create",
+                    "search",
                     "next_cursor",
                     "items"
                 ],

@@ -61,6 +61,7 @@ class AddressApiTest extends TestCase
                 'title' => 'Mes adresses',
                 'empty' => "Aucune adresse pour l'instant.",
                 'create' => ['label' => 'Ajouter une adresse', 'form' => 'location.address'],
+                'search' => 'Rechercher une adresse…',
                 'next_cursor' => null,
                 'items' => [],
             ]]);
@@ -110,6 +111,91 @@ class AddressApiTest extends TestCase
 
         $this->assertSame([20, 20, 5], array_map('count', $pages));
         $this->assertSame($entries->map(fn (UserAddress $entry): string => (string) $entry->getKey())->all(), array_merge(...$pages));
+    }
+
+    /**
+     * @return array<string, UserAddress>
+     */
+    private function variedAddresses(User $user): array
+    {
+        $country = $this->switzerland();
+        $geneva = Address::factory()->for($country)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
+        $lausanne = Address::factory()->for($country)->create(['street' => 'Avenue de la Gare 10', 'zip' => '1003', 'city' => 'Lausanne']);
+        $percent = Address::factory()->for($country)->create(['street' => 'Rue 100% Bio', 'zip' => '2000', 'city' => 'Neuchâtel']);
+
+        return [
+            'jeanne' => UserAddress::factory()->for($user)->for($geneva)->create(['first_name' => 'Jeanne', 'last_name' => 'Dupont']),
+            'paul' => UserAddress::factory()->for($user)->for($lausanne)->create(['first_name' => 'Paul', 'last_name' => 'Martin']),
+            'bio' => UserAddress::factory()->for($user)->for($percent)->create(['first_name' => 'Léa', 'last_name' => 'Roux']),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function searchIds(string $search): array
+    {
+        return array_column($this->getJson('/api/v1/lists/location.addresses?search='.urlencode($search))->assertOk()->json('data.items'), 'id');
+    }
+
+    public function test_searching_matches_recipient_street_zip_and_city_of_the_account_only(): void
+    {
+        $user = User::factory()->create();
+        $entries = $this->variedAddresses($user);
+        // Une adresse d'un autre compte, qui correspondrait.
+        UserAddress::factory()->for($entries['jeanne']->address)->create(['first_name' => 'Jeanne']);
+        $this->asUser($user);
+        $ids = fn (string ...$names): array => array_map(fn (string $name): string => (string) $entries[$name]->getKey(), $names);
+
+        $this->assertSame($ids('jeanne'), $this->searchIds('genè'));
+        $this->assertSame($ids('jeanne'), $this->searchIds('  GENÈVE '));
+        $this->assertSame($ids('jeanne'), $this->searchIds('1200'));
+        $this->assertSame($ids('paul'), $this->searchIds('paul'));
+        $this->assertSame($ids('paul'), $this->searchIds('MARTIN'));
+        $this->assertSame($ids('jeanne', 'bio'), $this->searchIds('rue'));
+        $this->assertSame([], $this->searchIds('Zurich'));
+    }
+
+    public function test_percent_and_underscore_are_plain_characters_and_an_empty_search_serves_all(): void
+    {
+        $user = User::factory()->create();
+        $entries = $this->variedAddresses($user);
+        $this->asUser($user);
+
+        $this->assertSame([(string) $entries['bio']->getKey()], $this->searchIds('100%'));
+        $this->assertSame([], $this->searchIds('%'.'%'.'_'));
+        $this->assertSame([], $this->searchIds('_'));
+        $this->assertCount(3, $this->searchIds(''));
+        $this->assertCount(3, $this->searchIds('   '));
+        $this->getJson('/api/v1/lists/location.addresses?search[]=x')->assertOk()->assertJsonCount(3, 'data.items');
+    }
+
+    public function test_cursors_follow_the_search_to_the_last_result(): void
+    {
+        $user = User::factory()->create();
+        $country = $this->switzerland();
+        $match = Address::factory()->for($country)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
+        $other = Address::factory()->for($country)->create(['street' => 'Avenue de la Gare 10', 'zip' => '1003', 'city' => 'Lausanne']);
+        $expected = [];
+        foreach (range(1, 50) as $i) {
+            // Destinataire fixé : un nom tiré au hasard (« Lacroix ») correspondrait aussi.
+            $entry = UserAddress::factory()->for($user)->for($i % 2 === 0 ? $match : $other)->create(['first_name' => 'Jo', 'last_name' => 'Doe']);
+            if ($i % 2 === 0) {
+                $expected[] = (string) $entry->getKey();
+            }
+        }
+        $this->asUser($user);
+
+        $pages = [];
+        $cursor = null;
+        do {
+            $data = $this->getJson('/api/v1/lists/location.addresses?search=lac'.($cursor === null ? '' : '&cursor='.urlencode($cursor)))->assertOk()->json('data');
+            $pages[] = array_column($data['items'], 'id');
+            $cursor = $data['next_cursor'];
+        } while ($cursor !== null && count($pages) < 10);
+
+        $this->assertSame([20, 5], array_map('count', $pages));
+        $this->assertSame($expected, array_merge(...$pages));
     }
 
     public function test_the_empty_form_starts_with_the_account_as_recipient_without_coordinates_or_suggestions(): void

@@ -20,5 +20,6 @@ return [
     'list' => [
         'loading' => 'Loading list…',
         'cancel' => 'Cancel',
+        'noResults' => 'No results.',
     ],
 ];

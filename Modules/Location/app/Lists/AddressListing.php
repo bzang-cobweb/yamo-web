@@ -55,6 +55,23 @@ class AddressListing extends Listing
         return $this->user->addresses()->with('address.country');
     }
 
+    public function searchPlaceholder(): string
+    {
+        return __('location::address.list.search');
+    }
+
+    /**
+     * Le destinataire (prénom, nom) ou l'adresse (rue, NPA, ville) contient le
+     * texte (décision 2026-11-18-recherche-dans-la-liste).
+     */
+    protected function search(Builder $query, string $term): void
+    {
+        $this->orWhereContains($query, ['first_name', 'last_name'], $term);
+        $query->orWhereHas('address', fn (Builder $address) => $address->where(
+            fn (Builder $columns) => $this->orWhereContains($columns, ['street', 'zip', 'city'], $term),
+        ));
+    }
+
     public function item(Model $record): ListItem
     {
         /** @var UserAddress $record */

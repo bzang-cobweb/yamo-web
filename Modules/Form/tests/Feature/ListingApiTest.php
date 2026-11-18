@@ -40,6 +40,7 @@ class ListingApiTest extends TestCase
                 'title' => 'Cartes',
                 'empty' => null,
                 'create' => null,
+                'search' => null,
                 'next_cursor' => null,
                 'items' => [[
                     'id' => (string) $user->getKey(),
@@ -108,6 +109,18 @@ class ListingApiTest extends TestCase
         }
 
         $this->getJson('/api/v1/lists/test.paged?cursor[]=x')->assertOk()->assertJsonPath('data.items.*.id', $firstIds);
+    }
+
+    public function test_a_list_without_search_ignores_it(): void
+    {
+        app(ListingRegistry::class)->register(PagedListing::class);
+        $users = User::factory()->count(2)->create();
+        $this->withToken($users->first()->createToken('iPhone')->plainTextToken);
+
+        $this->getJson('/api/v1/lists/test.paged?search=nothing-matches')
+            ->assertOk()
+            ->assertJsonPath('data.search', null)
+            ->assertJsonCount(2, 'data.items');
     }
 
     public function test_a_list_refused_to_the_account_is_forbidden(): void

@@ -20,5 +20,6 @@ return [
     'list' => [
         'loading' => 'Chargement de la liste…',
         'cancel' => 'Annuler',
+        'noResults' => 'Aucun résultat.',
     ],
 ];

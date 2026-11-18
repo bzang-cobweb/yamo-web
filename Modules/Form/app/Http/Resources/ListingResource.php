@@ -16,12 +16,13 @@ use Modules\Form\Support\Listing;
 class ListingResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
+     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, search: string|null, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
      */
     public function toArray(Request $request): array
     {
         $cursor = $request->query('cursor');
-        $page = $this->resource->page(is_string($cursor) ? $cursor : null);
+        $search = $request->query('search');
+        $page = $this->resource->page(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null);
 
         return [
             'name' => $this->resource->key(),
@@ -30,6 +31,8 @@ class ListingResource extends JsonResource
             'empty' => $this->resource->emptyText(),
             /** Bouton de création : libellé et formulaire ouvert ; absent pour une liste en lecture seule. */
             'create' => $this->resource->create(),
+            /** Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignoré. */
+            'search' => $this->resource->searchPlaceholder(),
             /** Curseur de la page suivante, à renvoyer en `?cursor=` ; `null` : plus rien après. */
             'next_cursor' => $page->nextCursor()?->encode(),
             /** Items de la page : `edit` ouvre le formulaire lié à l'enregistrement (`?record=`), `delete` décrit le retrait. */

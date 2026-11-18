@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\Cursor;
+use Illuminate\Support\Str;
 use TypeError;
 use UnexpectedValueException;
 
@@ -20,7 +21,9 @@ use UnexpectedValueException;
  * Les items sont servis par pages, repérées par un curseur (décision
  * 2026-11-18-contrat-liste-infinie-role-admin) : une liste déclare sa requête
  * (`query()`, dans un ordre stable) et la mise en forme d'un enregistrement
- * (`item()`) ; la pagination est faite ici.
+ * (`item()`) ; la pagination est faite ici. Une liste peut se rendre cherchable
+ * (décision 2026-11-18-recherche-dans-la-liste) : `searchPlaceholder()` et
+ * `search()`.
  *
  * `List` étant un mot réservé de PHP, la classe s'appelle `Listing`. Chaque liste
  * est déclarée dans le module qui la possède et inscrite au registre
@@ -76,16 +79,69 @@ abstract class Listing
      *
      * @return CursorPaginator<int, Model>
      */
-    final public function page(?string $cursor = null): CursorPaginator
+    final public function page(?string $cursor = null, ?string $search = null): CursorPaginator
     {
         // Nom de curseur absent de toute requête : seul `$cursor` compte.
         $name = 'listing_cursor';
 
         try {
-            return $this->query()->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
+            return $this->filtered($search)->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
         } catch (UnexpectedValueException|TypeError) {
-            return $this->query()->cursorPaginate($this->perPage(), ['*'], $name);
+            return $this->filtered($search)->cursorPaginate($this->perPage(), ['*'], $name);
         }
+    }
+
+    /**
+     * Texte d'aide du champ de recherche, traduit. Une liste qui en donne un est
+     * cherchable et doit définir `search()` ; aucun par défaut.
+     */
+    public function searchPlaceholder(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Restreint `$query` aux enregistrements qui correspondent à `$term` (déjà
+     * nettoyé, jamais vide). Sans effet par défaut.
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    protected function search(Builder $query, string $term): void {}
+
+    /**
+     * Ajoute à `$query`, en « ou », une condition par colonne : la colonne
+     * contient `$term`, sans casse, `%` et `_` cherchés tels quels.
+     *
+     * @param  Builder<covariant Model>  $query
+     * @param  list<string>  $columns
+     */
+    final protected function orWhereContains(Builder $query, array $columns, string $term): void
+    {
+        // `!` comme caractère d'échappement : compris pareil par MariaDB et SQLite.
+        $pattern = '%'.preg_replace('/[!%_]/', '!$0', Str::lower($term)).'%';
+
+        foreach ($columns as $column) {
+            $query->orWhereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap($column).") LIKE ? ESCAPE '!'", [$pattern]);
+        }
+    }
+
+    /**
+     * La requête de la liste, restreinte à la recherche si la liste est
+     * cherchable et que la recherche n'est pas vide.
+     *
+     * @return Builder<covariant Model>|Relation<covariant Model, covariant Model, mixed>
+     */
+    private function filtered(?string $search): Builder|Relation
+    {
+        $query = $this->query();
+        $term = Str::squish((string) $search);
+
+        if ($term !== '' && $this->searchPlaceholder() !== null) {
+            $builder = $query instanceof Relation ? $query->getQuery() : $query;
+            $builder->where(fn (Builder $group) => $this->search($group, $term));
+        }
+
+        return $query;
     }
 
     /**
