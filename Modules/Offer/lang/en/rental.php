@@ -1,0 +1,26 @@
+<?php
+
+// "Housing rental" domain (decision 2026-11-18-offres-et-domaines).
+
+return [
+    'singular' => 'Home',
+    'plural' => 'Homes',
+    'mine' => 'My homes',
+    'add' => 'Add a home',
+    'property_type' => 'Property type',
+    'property_types' => [
+        'apartment' => 'Apartment',
+        'house' => 'House',
+        'studio' => 'Studio',
+        'room' => 'Room',
+    ],
+    'furnished' => 'Furnished',
+    'surface' => 'Area (m²)',
+    'rooms' => 'Rooms',
+    'rooms_help' => 'Half rooms are allowed (3.5).',
+    'bedrooms' => 'Bedrooms',
+    'available_from' => 'Available from',
+    'charges' => 'Monthly charges',
+    'charges_help' => 'On top of the rent.',
+    'price' => 'Monthly rent',
+];

@@ -36,5 +36,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Sans domaine d'offres par défaut : chaque test choisit le sien (décision 2026-11-18-offres-et-domaines). -->
+        <env name="OFFER_DOMAIN" value=""/>
     </php>
 </phpunit>
