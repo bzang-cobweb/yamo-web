@@ -11,7 +11,9 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * Synchronise les permissions de PermissionEnum et les rôles de RoleEnum en base.
- * Rejouable : à lancer après chaque ajout de permission.
+ * Rejouable : à lancer après chaque ajout de permission. Chaque rôle reçoit ses
+ * permissions de base (`RoleEnum::basePermissions()`) sans perdre celles données
+ * dans le back-office.
  */
 class AuthDatabaseSeeder extends Seeder
 {
@@ -28,7 +30,8 @@ class AuthDatabaseSeeder extends Seeder
             ->delete();
 
         foreach (RoleEnum::cases() as $role) {
-            Role::findOrCreate($role->value);
+            // Ajout sans retrait : givePermissionTo ne détache rien.
+            Role::findOrCreate($role->value)->givePermissionTo($role->basePermissions());
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
