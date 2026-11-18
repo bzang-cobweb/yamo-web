@@ -3,6 +3,7 @@
 namespace Modules\Offer\Lists;
 
 use App\Support\Locales;
+use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Number;
@@ -89,7 +90,7 @@ class OfferListing extends Listing
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
         return ListItem::make($record->getKey(), $record->getTranslation('title', $locale), implode(' · ', array_filter([$record->status->label(), $price])))
-            ->image($record->photoUrl())
+            ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->edit(OfferForm::name())
             ->delete(
                 __('offer::offer.list.remove'),

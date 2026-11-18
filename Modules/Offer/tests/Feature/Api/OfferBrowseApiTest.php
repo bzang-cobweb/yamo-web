@@ -82,8 +82,10 @@ class OfferBrowseApiTest extends TestCase
         $with->addMedia(UploadedFile::fake()->image('cuisine.jpg', 800, 600))->toMediaCollection(Offer::PHOTOS);
         $without = Offer::factory()->create(['status' => 'published']);
 
-        $items = array_column($this->browse()->assertOk()->json('data.items'), 'image', 'id');
+        // L'app joint l'API par une autre adresse que APP_URL : la photo y est servie.
+        $items = array_column($this->withHeaders(['X-Country' => 'CM'])->getJson('http://192.168.1.10/api/v1/lists/offer.browse')->assertOk()->json('data.items'), 'image', 'id');
 
+        $this->assertStringStartsWith('http://192.168.1.10/storage/', (string) $items[(string) $with->getKey()]);
         $this->assertStringEndsWith('salon.jpg', (string) $items[(string) $with->getKey()]);
         $this->assertNull($items[(string) $without->getKey()]);
     }

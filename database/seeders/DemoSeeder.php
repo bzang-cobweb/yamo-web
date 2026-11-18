@@ -17,8 +17,9 @@ use Modules\Offer\Models\OfferCategory;
 
 /**
  * Données de démonstration, en développement seulement : un membre camerounais
- * et 20 logements à son nom (domaine `rental`). Rejouable : rien n'est recréé
- * si le membre a déjà ses offres. Jamais appelé par `DatabaseSeeder`.
+ * et 20 logements à son nom (domaine `rental`), chacun avec deux photos dessinées
+ * (`DemoPhoto`). Rejouable : rien n'est recréé si le membre a déjà ses offres ;
+ * seules les photos manquantes sont ajoutées. Jamais appelé par `DatabaseSeeder`.
  *
  *     ddev artisan db:seed --class='Database\Seeders\DemoSeeder'
  *
@@ -51,10 +52,18 @@ class DemoSeeder extends Seeder
         $member->forceFill(['password' => self::PASSWORD, 'email_verified_at' => $member->email_verified_at ?? now()])->save();
         $member->syncRoles([Role::findOrCreate(RoleEnum::MEMBER->value, 'web')]);
 
-        if (Offer::query()->where('user_id', $member->getKey())->count() >= 20) {
-            return;
+        if (Offer::query()->where('user_id', $member->getKey())->count() < 20) {
+            $this->offers($member, $cameroon);
         }
 
+        $this->photos($member);
+    }
+
+    /**
+     * Les 20 logements du membre.
+     */
+    private function offers(User $member, Country $cameroon): void
+    {
         $addresses = $this->addresses($member, $cameroon);
         $categories = OfferCategory::query()->pluck('id', 'slug');
 
@@ -88,6 +97,26 @@ class DemoSeeder extends Seeder
                 ],
             ]);
         }
+    }
+
+    /**
+     * Deux photos dessinées par logement qui n'en a pas encore (rejouable).
+     */
+    private function photos(User $member): void
+    {
+        Offer::query()->where('user_id', $member->getKey())->orderBy('id')->get()->each(function (Offer $offer, int $index): void {
+            if ($offer->getMedia(Offer::PHOTOS)->isNotEmpty()) {
+                return;
+            }
+
+            $type = (string) ($offer->detail('property_type') ?? 'apartment');
+
+            foreach ([0, 1] as $shot) {
+                $offer->addMediaFromString(DemoPhoto::jpeg($type, $index + $shot * 3))
+                    ->usingFileName("demo-{$offer->getKey()}-{$shot}.jpg")
+                    ->toMediaCollection(Offer::PHOTOS);
+            }
+        });
     }
 
     /**

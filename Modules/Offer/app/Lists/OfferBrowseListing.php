@@ -3,6 +3,7 @@
 namespace Modules\Offer\Lists;
 
 use App\Support\Locales;
+use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -83,6 +84,6 @@ class OfferBrowseListing extends Listing
             $record->getKey(),
             (string) $record->getTranslation('title', app()->getLocale()),
             implode(' · ', array_filter([$price, $record->address?->city])) ?: null,
-        )->image($record->photoUrl());
+        )->image(MediaUrl::onRequestHost($record->photoUrl()));
     }
 }
