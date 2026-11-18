@@ -47,6 +47,9 @@ return [
         'save' => 'Enregistrer',
         'saved' => 'Enregistré.',
     ],
+    'browse' => [
+        'empty' => "Aucune offre publiée dans ce pays pour l'instant.",
+    ],
     'list' => [
         'empty' => 'Rien pour l\'instant.',
         'search' => 'Rechercher par titre…',
