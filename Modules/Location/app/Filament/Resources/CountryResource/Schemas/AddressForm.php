@@ -9,7 +9,6 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -18,7 +17,7 @@ use Modules\Location\Services\AddressService;
 /**
  * Formulaire d'une adresse dans le back-office. Dans la fiche d'un pays, le pays
  * est implicite ; dans celle d'un utilisateur, il se choisit. Les bornes sont
- * celles du formulaire `location.address` de l'app ; latitude, longitude et
+ * celles du formulaire `auth.address` de l'app ; latitude, longitude et
  * suggestions de rue n'existent qu'ici (décision 2026-11-18-adresse-app-simplifiee).
  */
 abstract class AddressForm
@@ -97,30 +96,6 @@ abstract class AddressForm
                 $set('latitude', $address->latitude);
                 $set('longitude', $address->longitude);
             });
-    }
-
-    /**
-     * Genre, prénom et nom du destinataire d'une adresse de compte.
-     *
-     * @return list<Component>
-     */
-    public static function recipient(): array
-    {
-        return [
-            Select::make('gender')
-                ->label(__('auth::user.gender'))
-                ->options(GenderEnum::options())
-                ->required()
-                ->columnSpanFull(),
-            TextInput::make('first_name')
-                ->label(__('auth::user.first_name'))
-                ->required()
-                ->maxLength(255),
-            TextInput::make('last_name')
-                ->label(__('auth::user.last_name'))
-                ->required()
-                ->maxLength(255),
-        ];
     }
 
     /**

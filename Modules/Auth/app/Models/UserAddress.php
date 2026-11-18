@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Location\Models;
+namespace Modules\Auth\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Auth\Database\Factories\UserAddressFactory;
 use Modules\Auth\Enums\GenderEnum;
-use Modules\Auth\Models\User;
-use Modules\Location\Database\Factories\UserAddressFactory;
+use Modules\Location\Models\Address;
 
 /**
- * Une adresse d'un compte : l'adresse partagée (`Address`) et son destinataire,
- * propre à ce compte (décision 2026-11-18-adresse-du-compte-modele). Un compte
+ * Une adresse d'un compte : l'adresse partagée (`Address`, module Location) et
+ * son destinataire,
+ * propre à ce compte (décisions 2026-11-18-adresse-du-compte-modele et
+ * 2026-11-18-useraddress-dans-auth). Un compte
  * peut viser la même adresse plusieurs fois, pour des destinataires différents.
  *
  * @property int $user_id

@@ -46,7 +46,7 @@ class ProfileMenuApiTest extends TestCase
             array_column($menu, 'form'),
         );
         // Un lien vers une liste n'a pas de `form` : une version de l'app sans listes l'ignore.
-        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'location.addresses'], $menu[5]);
+        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'auth.addresses'], $menu[5]);
     }
 
     public function test_a_disabled_channel_removes_its_link(): void

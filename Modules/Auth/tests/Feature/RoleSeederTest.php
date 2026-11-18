@@ -9,7 +9,7 @@ use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
-use Modules\Location\Models\UserAddress;
+use Modules\Auth\Models\UserAddress;
 use Tests\TestCase;
 
 /**

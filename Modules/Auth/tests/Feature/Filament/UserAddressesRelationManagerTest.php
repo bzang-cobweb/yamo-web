@@ -11,9 +11,9 @@ use Modules\Auth\Filament\Resources\UserResource;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\RelationManagers\AddressesRelationManager;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
-use Modules\Location\Models\UserAddress;
 
 /**
  * Les adresses d'un utilisateur (`UserAddress`) : ajouter ou modifier reprend

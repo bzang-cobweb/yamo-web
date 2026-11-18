@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\Location\Database\Factories\AddressFactory;
 
 /**
  * Une adresse d'un pays, qui n'existe qu'une fois et que plusieurs comptes
- * peuvent viser (`UserAddress`, décisions 2026-11-18-adresses-liste-generique
- * et 2026-11-18-adresse-du-compte-modele). Deux adresses sont la même si pays,
+ * peuvent viser (module Auth : décisions
+ * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
+ * 2026-11-18-useraddress-dans-auth). Deux adresses sont la même si pays,
  * rue, NPA et ville sont identiques, sans tenir compte de la casse ni des
  * espaces : c'est ce que dit l'empreinte `fingerprint`, calculée à chaque
  * enregistrement. Les espaces en trop sont retirés.
@@ -74,16 +74,6 @@ class Address extends Model
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class);
-    }
-
-    /**
-     * Les entrées des comptes qui visent cette adresse.
-     *
-     * @return HasMany<UserAddress, $this>
-     */
-    public function userAddresses(): HasMany
-    {
-        return $this->hasMany(UserAddress::class);
     }
 
     /**

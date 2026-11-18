@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\Location\Policies;
+namespace Modules\Auth\Policies;
 
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\Response;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
-use Modules\Location\Models\UserAddress;
 
 /**
  * Adresses d'un compte (décision 2026-11-18-adresse-du-compte-modele).

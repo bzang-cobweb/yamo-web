@@ -7,11 +7,11 @@ use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
+use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Listing;
-use Modules\Location\Lists\AddressListing;
 
 /**
  * Les liens possibles du menu du profil : chacun ouvre soit un formulaire, que
@@ -56,7 +56,7 @@ enum ProfileMenuKey: string
     public function listingClass(): ?string
     {
         return match ($this) {
-            self::ADDRESSES => AddressListing::class,
+            self::ADDRESSES => UserAddressListing::class,
             default => null,
         };
     }
@@ -72,7 +72,7 @@ enum ProfileMenuKey: string
     }
 
     /**
-     * Nom de la liste dans l'API (`location.addresses`), que l'app ouvre.
+     * Nom de la liste dans l'API (`auth.addresses`), que l'app ouvre.
      */
     public function list(): ?string
     {

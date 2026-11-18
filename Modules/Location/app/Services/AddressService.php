@@ -4,22 +4,13 @@ namespace Modules\Location\Services;
 
 use App\Support\ContainsSearch;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
-use Modules\Location\Models\UserAddress;
 
 /**
- * La règle des adresses d'un compte, servie à l'API comme au back-office
- * (décisions 2026-11-18-adresses-liste-generique et
- * 2026-11-18-adresse-du-compte-modele) :
- * - ajouter : l'adresse identique est reprise, ou créée, puis une `UserAddress`
- *   la vise avec le destinataire saisi ;
- * - modifier : le destinataire change sur place ; l'adresse saisie est reprise ou
- *   créée, et la `UserAddress` la vise. Une adresse partagée n'est jamais
- *   modifiée par un compte ;
- * - retirer : la `UserAddress` disparaît, l'adresse reste dans son pays.
+ * L'adresse partagée, unique par pays : la retrouver, la créer, la suggérer
+ * (back-office). Les adresses d'un compte sont gérées par le module Auth, qui
+ * s'appuie sur ce service (décision 2026-11-18-useraddress-dans-auth).
  */
 class AddressService
 {
@@ -28,9 +19,6 @@ class AddressService
 
     /** Longueur minimale de la rue avant de proposer des adresses existantes (back-office). */
     public const SUGGESTION_MIN_LENGTH = 3;
-
-    /** Champs du destinataire, propres au compte. */
-    public const RECIPIENT_FIELDS = ['gender', 'first_name', 'last_name'];
 
     /**
      * L'adresse identique à la saisie (même pays, même empreinte), ou `null`.
@@ -64,48 +52,6 @@ class AddressService
     }
 
     /**
-     * Ajoute au compte l'adresse saisie, avec son destinataire.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public function attach(User $user, array $data): UserAddress
-    {
-        return DB::transaction(function () use ($user, $data): UserAddress {
-            $address = $this->findOrCreate($data);
-
-            return $user->addresses()->create([
-                'address_id' => $address->getKey(),
-                ...$this->recipient($data),
-            ]);
-        });
-    }
-
-    /**
-     * Modifie une adresse du compte : son destinataire, et l'adresse visée.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public function update(UserAddress $userAddress, array $data): UserAddress
-    {
-        return DB::transaction(function () use ($userAddress, $data): UserAddress {
-            $userAddress->fill([
-                'address_id' => $this->findOrCreate($data)->getKey(),
-                ...$this->recipient($data),
-            ])->save();
-
-            return $userAddress->refresh();
-        });
-    }
-
-    /**
-     * Retire l'adresse du compte ; l'adresse reste dans son pays.
-     */
-    public function detach(UserAddress $userAddress): void
-    {
-        $userAddress->delete();
-    }
-
-    /**
      * Adresses existantes dont la rue contient `$search` (sans casse, `%` et `_`
      * cherchés tels quels : `ContainsSearch`), dans le
      * pays donné s'il l'est, par ordre de rue : les suggestions de la saisie.
@@ -133,18 +79,5 @@ class AddressService
     {
         return $this->suggest(Str::before($label, ' — '), $countryId, 50)
             ->first(fn (Address $address): bool => $address->suggestionLabel() === $label);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array{gender: mixed, first_name: mixed, last_name: mixed}
-     */
-    private function recipient(array $data): array
-    {
-        return [
-            'gender' => $data['gender'] ?? null,
-            'first_name' => $data['first_name'] ?? '',
-            'last_name' => $data['last_name'] ?? '',
-        ];
     }
 }

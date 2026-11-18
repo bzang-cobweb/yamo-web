@@ -1,16 +1,16 @@
 <?php
 
-namespace Modules\Location\Forms;
+namespace Modules\Auth\Forms;
 
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Country;
-use Modules\Location\Models\UserAddress;
 
 /**
  * Une adresse du compte, depuis la liste « Mes adresses » de l'app : vide pour
@@ -23,13 +23,13 @@ use Modules\Location\Models\UserAddress;
  * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
  * 2026-11-18-adresse-app-simplifiee).
  */
-class AddressForm extends Form
+class UserAddressForm extends Form
 {
     private ?UserAddress $userAddress = null;
 
     public static function name(): string
     {
-        return 'location.address';
+        return 'auth.address';
     }
 
     /**
@@ -91,7 +91,7 @@ class AddressForm extends Form
 
     public function title(): string
     {
-        return __('location::address.form.'.($this->userAddress === null ? 'create_title' : 'edit_title'));
+        return __('auth::address.form.'.($this->userAddress === null ? 'create_title' : 'edit_title'));
     }
 
     /**
@@ -99,7 +99,7 @@ class AddressForm extends Form
      */
     public function submission(): Submission
     {
-        $message = __('location::address.form.saved');
+        $message = __('auth::address.form.saved');
 
         return $this->userAddress === null
             ? Submission::toRoute('api.v1.auth.me.addresses.store', SuccessAction::BACK, $message)
@@ -108,6 +108,6 @@ class AddressForm extends Form
 
     public function submitLabel(): string
     {
-        return __('location::address.form.save');
+        return __('auth::address.form.save');
     }
 }

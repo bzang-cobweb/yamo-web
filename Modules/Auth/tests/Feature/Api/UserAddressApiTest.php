@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Location\Tests\Feature\Api;
+namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
-use Modules\Location\Models\UserAddress;
 use Tests\TestCase;
 
 /**
@@ -16,7 +16,7 @@ use Tests\TestCase;
  * 2026-11-18-contrat-liste-infinie-role-admin, 2026-11-18-adresses-liste-generique,
  * 2026-11-18-adresse-du-compte-modele et 2026-11-18-adresse-app-simplifiee).
  */
-class AddressApiTest extends TestCase
+class UserAddressApiTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -47,20 +47,20 @@ class AddressApiTest extends TestCase
 
     public function test_the_list_requires_authentication_and_unknown_lists_are_404(): void
     {
-        $this->getJson('/api/v1/lists/location.addresses')->assertUnauthorized();
+        $this->getJson('/api/v1/lists/auth.addresses')->assertUnauthorized();
         $this->asUser(User::factory()->create())->getJson('/api/v1/lists/nothing.here')->assertNotFound();
     }
 
     public function test_an_empty_list_describes_its_title_text_and_create_button(): void
     {
         $this->asUser(User::factory()->create())
-            ->getJson('/api/v1/lists/location.addresses')
+            ->getJson('/api/v1/lists/auth.addresses')
             ->assertOk()
             ->assertExactJson(['data' => [
-                'name' => 'location.addresses',
+                'name' => 'auth.addresses',
                 'title' => 'Mes adresses',
                 'empty' => "Aucune adresse pour l'instant.",
-                'create' => ['label' => 'Ajouter une adresse', 'form' => 'location.address'],
+                'create' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address'],
                 'search' => 'Rechercher une adresse…',
                 'next_cursor' => null,
                 'items' => [],
@@ -74,13 +74,13 @@ class AddressApiTest extends TestCase
         $mine = UserAddress::factory()->for($user)->for($address)->create(['first_name' => 'Jeanne', 'last_name' => 'Dupont']);
         UserAddress::factory()->for($address)->create();
 
-        $items = $this->asUser($user)->getJson('/api/v1/lists/location.addresses')->assertOk()->json('data.items');
+        $items = $this->asUser($user)->getJson('/api/v1/lists/auth.addresses')->assertOk()->json('data.items');
 
         $this->assertSame([[
             'id' => (string) $mine->getKey(),
             'title' => 'Jeanne Dupont',
             'subtitle' => 'Rue du Lac 4, 1200 Genève, Suisse',
-            'edit' => ['form' => 'location.address', 'record' => (string) $mine->getKey()],
+            'edit' => ['form' => 'auth.address', 'record' => (string) $mine->getKey()],
             'delete' => [
                 'label' => 'Retirer',
                 'confirm' => 'Retirer cette adresse ?',
@@ -104,7 +104,7 @@ class AddressApiTest extends TestCase
         $cursor = null;
 
         do {
-            $data = $this->getJson('/api/v1/lists/location.addresses'.($cursor === null ? '' : '?cursor='.urlencode($cursor)))->assertOk()->json('data');
+            $data = $this->getJson('/api/v1/lists/auth.addresses'.($cursor === null ? '' : '?cursor='.urlencode($cursor)))->assertOk()->json('data');
             $pages[] = array_column($data['items'], 'id');
             $cursor = $data['next_cursor'];
         } while ($cursor !== null && count($pages) < 10);
@@ -135,7 +135,7 @@ class AddressApiTest extends TestCase
      */
     private function searchIds(string $search): array
     {
-        return array_column($this->getJson('/api/v1/lists/location.addresses?search='.urlencode($search))->assertOk()->json('data.items'), 'id');
+        return array_column($this->getJson('/api/v1/lists/auth.addresses?search='.urlencode($search))->assertOk()->json('data.items'), 'id');
     }
 
     public function test_searching_matches_recipient_street_zip_and_city_of_the_account_only(): void
@@ -167,7 +167,7 @@ class AddressApiTest extends TestCase
         $this->assertSame([], $this->searchIds('_'));
         $this->assertCount(3, $this->searchIds(''));
         $this->assertCount(3, $this->searchIds('   '));
-        $this->getJson('/api/v1/lists/location.addresses?search[]=x')->assertOk()->assertJsonCount(3, 'data.items');
+        $this->getJson('/api/v1/lists/auth.addresses?search[]=x')->assertOk()->assertJsonCount(3, 'data.items');
     }
 
     public function test_cursors_follow_the_search_to_the_last_result(): void
@@ -189,7 +189,7 @@ class AddressApiTest extends TestCase
         $pages = [];
         $cursor = null;
         do {
-            $data = $this->getJson('/api/v1/lists/location.addresses?search=lac'.($cursor === null ? '' : '&cursor='.urlencode($cursor)))->assertOk()->json('data');
+            $data = $this->getJson('/api/v1/lists/auth.addresses?search=lac'.($cursor === null ? '' : '&cursor='.urlencode($cursor)))->assertOk()->json('data');
             $pages[] = array_column($data['items'], 'id');
             $cursor = $data['next_cursor'];
         } while ($cursor !== null && count($pages) < 10);
@@ -203,7 +203,7 @@ class AddressApiTest extends TestCase
         $user = User::factory()->create(['gender' => 'male', 'first_name' => 'Paul', 'last_name' => 'Martin']);
 
         $data = $this->asUser($user)
-            ->getJson('/api/v1/forms/location.address')
+            ->getJson('/api/v1/forms/auth.address')
             ->assertOk()
             ->assertJsonPath('data.title', 'Ajouter une adresse')
             ->assertJsonPath('data.submit', [
@@ -226,7 +226,7 @@ class AddressApiTest extends TestCase
         $entry = UserAddress::factory()->for($user)->for($address)->create(['gender' => 'female', 'first_name' => 'Léa', 'last_name' => 'Roux']);
 
         $definition = $this->asUser($user)
-            ->getJson("/api/v1/forms/location.address?record={$entry->getKey()}")
+            ->getJson("/api/v1/forms/auth.address?record={$entry->getKey()}")
             ->assertOk()
             ->assertJsonPath('data.title', "Modifier l'adresse")
             ->assertJsonPath('data.submit.method', 'PATCH')
@@ -245,7 +245,7 @@ class AddressApiTest extends TestCase
         $entry = UserAddress::factory()->create();
 
         $this->asUser(User::factory()->create())
-            ->getJson("/api/v1/forms/location.address?record={$entry->getKey()}")
+            ->getJson("/api/v1/forms/auth.address?record={$entry->getKey()}")
             ->assertNotFound();
     }
 

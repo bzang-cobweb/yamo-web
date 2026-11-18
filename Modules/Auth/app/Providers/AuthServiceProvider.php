@@ -21,15 +21,20 @@ use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Forms\RegisterForm;
 use Modules\Auth\Forms\ResetPasswordForm;
+use Modules\Auth\Forms\UserAddressForm;
+use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Policies\PermissionPolicy;
 use Modules\Auth\Policies\RolePolicy;
+use Modules\Auth\Policies\UserAddressPolicy;
 use Modules\Auth\Policies\UserPolicy;
 use Modules\Auth\Sms\LogSmsSender;
 use Modules\Auth\Sms\SmsSender;
 use Modules\Form\Support\FormRegistry;
+use Modules\Form\Support\ListingRegistry;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class AuthServiceProvider extends ModuleServiceProvider
@@ -48,6 +53,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
+        Gate::policy(UserAddress::class, UserAddressPolicy::class);
 
         // Formulaires servis à l'app mobile (module Form).
         $registry = $this->app->make(FormRegistry::class);
@@ -62,6 +68,10 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(PhoneChangeForm::class);
         $registry->register(ForgotPasswordForm::class);
         $registry->register(ResetPasswordForm::class);
+        $registry->register(UserAddressForm::class);
+
+        // Listes servies à l'app : « Mes adresses » (décision 2026-11-18-useraddress-dans-auth).
+        $this->app->make(ListingRegistry::class)->register(UserAddressListing::class);
 
         // Connexion API : 5 essais par minute pour un même identifiant (e-mail ou
         // numéro) depuis une même adresse.

@@ -26,7 +26,6 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Services\AvatarService;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
-use Modules\Location\Models\UserAddress;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;

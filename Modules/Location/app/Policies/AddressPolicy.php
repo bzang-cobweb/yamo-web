@@ -10,9 +10,9 @@ use Modules\Location\Models\Address;
 
 /**
  * Adresses partagées d'un pays, gérées dans le back-office seul (permissions
- * `addresses.*`). Site et API : un compte ne gère que ses `UserAddress`
- * (`UserAddressPolicy`, décisions 2026-11-18-adresse-du-compte-modele et
- * 2026-11-18-adresse-app-simplifiee).
+ * `addresses.*`). Site et API : un compte ne gère que ses propres adresses,
+ * par le module Auth (décisions 2026-11-18-adresse-app-simplifiee et
+ * 2026-11-18-useraddress-dans-auth).
  */
 class AddressPolicy
 {

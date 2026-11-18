@@ -13,8 +13,10 @@ use Modules\Auth\Http\Controllers\Api\PreferencesController;
 use Modules\Auth\Http\Controllers\Api\ProfileController;
 use Modules\Auth\Http\Controllers\Api\ProfileMenuController;
 use Modules\Auth\Http\Controllers\Api\RegisterController;
+use Modules\Auth\Http\Controllers\Api\UserAddressController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 
 // Routes d'API du module Auth (préfixe `api`, noms `api.`) : chaque route qui agit
 // sur un modèle porte la garde `can:` de sa policy (bza-laravel:create-policy).
@@ -54,5 +56,12 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
         Route::post('me/email', [EmailChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.store');
         Route::post('me/phone', [PhoneChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phone.store');
+
+        // Adresses du compte (décisions 2026-11-18-adresse-du-compte-modele et
+        // 2026-11-18-useraddress-dans-auth). Celle d'un autre compte répond 404
+        // (`UserAddressPolicy`).
+        Route::post('me/addresses', [UserAddressController::class, 'store'])->can('create', UserAddress::class)->name('me.addresses.store');
+        Route::patch('me/addresses/{userAddress}', [UserAddressController::class, 'update'])->can('update', 'userAddress')->name('me.addresses.update');
+        Route::delete('me/addresses/{userAddress}', [UserAddressController::class, 'destroy'])->can('delete', 'userAddress')->name('me.addresses.destroy');
     });
 });

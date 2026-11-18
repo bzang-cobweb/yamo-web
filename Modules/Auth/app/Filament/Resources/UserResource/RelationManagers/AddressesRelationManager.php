@@ -7,19 +7,25 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
+use Modules\Auth\Services\UserAddressService;
 use Modules\Location\Filament\Resources\CountryResource\Schemas\AddressForm;
-use Modules\Location\Models\UserAddress;
 use Modules\Location\Services\AddressService;
 
 /**
  * Adresses d'un utilisateur (`UserAddress`), chacune avec son destinataire,
- * selon la règle d'`AddressService` (décision 2026-11-18-adresse-du-compte-modele) :
+ * selon la règle d'`UserAddressService` (décisions 2026-11-18-adresse-du-compte-modele
+ * et 2026-11-18-useraddress-dans-auth) :
  * - ajouter reprend l'adresse identique, ou la crée d'abord ;
  * - modifier change le destinataire sur place et vise l'adresse saisie, reprise
  *   ou créée ; l'adresse précédente, peut-être partagée, n'est jamais modifiée ;
@@ -37,13 +43,7 @@ class AddressesRelationManager extends RelationManager
         return AddressForm::configure(
             $schema,
             before: [
-                ...array_map(fn ($field) => match ($field->getName()) {
-                    // À l'ajout, le destinataire est d'abord l'utilisateur lui-même.
-                    'gender' => $field->default($user->gender?->value),
-                    'first_name' => $field->default($user->first_name),
-                    'last_name' => $field->default($user->last_name),
-                    default => $field,
-                }, AddressForm::recipient()),
+                ...self::recipient($user),
                 AddressForm::country()->columnSpanFull(),
             ],
             suggestions: true,
@@ -57,7 +57,7 @@ class AddressesRelationManager extends RelationManager
             ->modifyQueryUsing(fn ($query) => $query->with('address.country'))
             ->columns([
                 TextColumn::make('recipient')
-                    ->label(__('location::address.recipient'))
+                    ->label(__('auth::address.recipient'))
                     ->state(fn (UserAddress $record): string => $record->recipient()),
                 TextColumn::make('address.street')
                     ->label(__('location::address.street'))
@@ -74,7 +74,7 @@ class AddressesRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()
-                    ->using(fn (array $data): UserAddress => app(AddressService::class)->attach($this->user(), $data)),
+                    ->using(fn (array $data): UserAddress => app(UserAddressService::class)->attach($this->user(), $data)),
             ])
             ->recordActions([
                 EditAction::make()
@@ -85,15 +85,43 @@ class AddressesRelationManager extends RelationManager
                         ...$record->address->only(AddressService::ADDRESS_FIELDS),
                         'country_id' => (string) $record->address->country_id,
                     ])
-                    ->using(fn (UserAddress $record, array $data): UserAddress => app(AddressService::class)->update($record, $data)),
+                    ->using(fn (UserAddress $record, array $data): UserAddress => app(UserAddressService::class)->update($record, $data)),
                 DeleteAction::make()
-                    ->label(__('location::address.detach')),
+                    ->label(__('auth::address.detach')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()->authorizeIndividualRecords('delete'),
                 ]),
             ]);
+    }
+
+    /**
+     * Genre, prénom et nom du destinataire ; à l'ajout, c'est d'abord
+     * l'utilisateur lui-même.
+     *
+     * @return list<Component>
+     */
+    private static function recipient(User $user): array
+    {
+        return [
+            Select::make('gender')
+                ->label(__('auth::user.gender'))
+                ->options(GenderEnum::options())
+                ->default($user->gender?->value)
+                ->required()
+                ->columnSpanFull(),
+            TextInput::make('first_name')
+                ->label(__('auth::user.first_name'))
+                ->default($user->first_name)
+                ->required()
+                ->maxLength(255),
+            TextInput::make('last_name')
+                ->label(__('auth::user.last_name'))
+                ->default($user->last_name)
+                ->required()
+                ->maxLength(255),
+        ];
     }
 
     private function user(): User

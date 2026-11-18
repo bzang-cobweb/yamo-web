@@ -1,12 +1,12 @@
 <?php
 
-namespace Modules\Location\Database\Factories;
+namespace Modules\Auth\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\UserAddress;
 use Modules\Location\Models\Address;
-use Modules\Location\Models\UserAddress;
 
 /**
  * @extends Factory<UserAddress>
