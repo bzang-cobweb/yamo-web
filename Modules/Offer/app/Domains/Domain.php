@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Domains;
 
+use Illuminate\Support\Number;
 use Modules\Form\Support\Field;
 use Modules\Offer\Models\Offer;
 
@@ -77,6 +78,31 @@ abstract class Domain
     public function itemTitle(Offer $offer): ?string
     {
         return null;
+    }
+
+    /**
+     * Unité du prix d'une offre (« nuit », « mois »), affichée après le prix :
+     * « 60 000 FCFA / nuit » (décision 2026-11-18-prix-par-nuit-ou-mois) ;
+     * `null` : aucune.
+     */
+    public function priceUnit(Offer $offer): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Le prix formaté, suivi de son unité s'il y en a une ; `null` sans prix.
+     */
+    final public function formattedPrice(Offer $offer, string $locale): ?string
+    {
+        if ($offer->price === null) {
+            return null;
+        }
+
+        $price = Number::currency((float) $offer->price, (string) $offer->currency, $locale);
+        $unit = $this->priceUnit($offer);
+
+        return $unit === null ? $price : $price.' / '.$unit;
     }
 
     /**

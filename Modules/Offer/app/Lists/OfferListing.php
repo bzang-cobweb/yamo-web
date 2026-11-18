@@ -6,7 +6,6 @@ use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Number;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
@@ -85,7 +84,8 @@ class OfferListing extends Listing
     public function item(Model $record): ListItem
     {
         /** @var Offer $record */
-        $price = $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale());
+        // « 60 000 FCFA / nuit » : le prix et son unité, selon le domaine.
+        $price = app(DomainRegistry::class)->require()->formattedPrice($record, app()->getLocale());
 
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 

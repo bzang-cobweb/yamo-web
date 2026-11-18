@@ -92,7 +92,7 @@ class OfferApiTest extends TestCase
             ['title', 'description', 'category_id', 'price', 'address_id', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'charges'],
             array_keys($fields),
         );
-        $this->assertSame('Loyer mensuel (CHF)', $fields['price']['label']);
+        $this->assertSame('Loyer (CHF)', $fields['price']['label']);
         $this->assertSame('Surface', $fields['surface']['label']);
         $this->assertSame('m²', $fields['surface']['suffix']);
         $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['category_id']['options'], 'label'));

@@ -21,6 +21,11 @@ return [
         'studio' => 'Studio meublé',
         'room' => 'Chambre meublée',
     ],
+    // Unité du loyer : par nuit pour un meublé, par mois sinon.
+    'price_units' => [
+        'night' => 'nuit',
+        'month' => 'mois',
+    ],
     'title_in_city' => ':type - :city',
     'furnished' => 'Meublé',
     'surface' => 'Surface',
@@ -30,5 +35,5 @@ return [
     'available_from' => 'Disponible dès le',
     'charges' => 'Charges mensuelles',
     'charges_help' => 'En plus du loyer.',
-    'price' => 'Loyer mensuel',
+    'price' => 'Loyer',
 ];

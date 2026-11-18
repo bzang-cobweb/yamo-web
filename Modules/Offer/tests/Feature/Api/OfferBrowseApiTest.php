@@ -54,7 +54,8 @@ class OfferBrowseApiTest extends TestCase
         $item = $data['items'][1];
         $this->assertSame('Studio à Akwa', $item['title']);
         // Sans attributs de logement : le titre saisi ; le prix en sous-titre.
-        $this->assertSame('25 000 FCFA', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['subtitle']));
+        // Rental sans « meublé » : au mois.
+        $this->assertSame('25 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['subtitle']));
         $this->assertNull($item['edit']);
         $this->assertNull($item['delete']);
 
@@ -77,6 +78,13 @@ class OfferBrowseApiTest extends TestCase
         $this->assertSame('Studio - Douala', $fr[(string) $studio->getKey()]);
         // Sans adresse : le type seul.
         $this->assertSame('Chambre meublée', $fr[(string) $room->getKey()]);
+
+        // Le prix suit le type de location : meublé à la nuit, sinon au mois.
+        $house->update(['price' => '45000', 'currency' => 'XAF']);
+        $studio->update(['price' => '80000', 'currency' => 'XAF']);
+        $subtitles = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($this->browse()->json('data.items'), 'subtitle', 'id'));
+        $this->assertSame('45 000 FCFA / nuit', $subtitles[(string) $house->getKey()]);
+        $this->assertSame('80 000 FCFA / mois', $subtitles[(string) $studio->getKey()]);
 
         $en = array_column($this->browse('', 'CM', 'en')->json('data.items'), 'title', 'id');
         $this->assertSame('Furnished house - Douala', $en[(string) $house->getKey()]);

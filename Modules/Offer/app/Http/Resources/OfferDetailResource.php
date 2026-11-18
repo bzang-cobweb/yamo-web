@@ -5,7 +5,6 @@ namespace Modules\Offer\Http\Resources;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Number;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
@@ -33,10 +32,10 @@ class OfferDetailResource extends JsonResource
         return [
             'id' => (string) $offer->getKey(),
             'title' => (string) $offer->getTranslation('title', $locale),
-            /** Prix formaté et son libellé (« Loyer mensuel ») ; `null` sans prix. */
+            /** Prix formaté avec son unité (« 60 000 FCFA / nuit ») et son libellé (« Loyer ») ; `null` sans prix. */
             'price' => $offer->price === null ? null : [
                 'label' => (string) $domain->priceLabel(),
-                'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
+                'value' => (string) $domain->formattedPrice($offer, $locale),
             ],
             /** La ville ; jamais la rue. */
             'location' => $offer->address?->city,

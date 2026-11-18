@@ -87,7 +87,7 @@ class CountrySpaceTest extends TestCase
         UserAddress::factory()->for($user)->for(Address::factory()->for($this->senegal))->create();
 
         $fields = array_column($this->in($user, 'CM')->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame('Loyer mensuel (XAF)', $fields['price']['label']);
+        $this->assertSame('Loyer (XAF)', $fields['price']['label']);
         $this->assertSame([(string) $address], array_column($fields['address_id']['options'], 'value'));
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [
@@ -100,7 +100,7 @@ class CountrySpaceTest extends TestCase
         $this->assertSame('XAF', $offer->currency);
         // Format français, sans décimales ; espaces insécables ramenés à des espaces.
         $subtitle = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $this->in($user, 'CM')->getJson('/api/v1/lists/offer.mine')->json('data.items.0.subtitle'));
-        $this->assertSame('Publiée · 85 000 FCFA', $subtitle);
+        $this->assertSame('Publiée · 85 000 FCFA / mois', $subtitle);
 
         // Au Sénégal : un autre espace, sans cette offre, qui y répond 404.
         $this->assertSame([], $this->in($user, 'SN')->getJson('/api/v1/lists/offer.mine')->json('data.items'));

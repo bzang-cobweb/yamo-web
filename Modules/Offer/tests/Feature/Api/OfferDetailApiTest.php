@@ -69,8 +69,8 @@ class OfferDetailApiTest extends TestCase
         $data = $response->json('data');
 
         $this->assertSame('Appartement 3 pièces à Bonapriso', $data['title']);
-        $this->assertSame('Loyer mensuel', $data['price']['label']);
-        $this->assertSame('250 000 FCFA', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
+        $this->assertSame('Loyer', $data['price']['label']);
+        $this->assertSame('250 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
         $this->assertSame('Douala', $data['location']);
         $this->assertCount(2, $data['photos']);
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
@@ -96,7 +96,8 @@ class OfferDetailApiTest extends TestCase
         $data = $this->show($this->home(), 'en')->assertOk()->json('data');
 
         $this->assertSame('3-room flat in Bonapriso', $data['title']);
-        $this->assertSame('Monthly rent', $data['price']['label']);
+        $this->assertSame('Rent', $data['price']['label']);
+        $this->assertStringEndsWith(' / month', $data['price']['value']);
         $this->assertContains(['label' => 'Furnished', 'value' => 'No'], $data['facts']);
         $this->assertContains(['label' => 'Area', 'value' => '85 m²'], $data['facts']);
     }

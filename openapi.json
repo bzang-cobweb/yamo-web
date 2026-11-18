@@ -2510,16 +2510,13 @@
                             "object",
                             "null"
                         ],
-                        "description": "Prix format\u00e9 et son libell\u00e9 (\u00ab Loyer mensuel \u00bb) ; `null` sans prix.",
+                        "description": "Prix format\u00e9 avec son unit\u00e9 (\u00ab 60 000 FCFA / nuit \u00bb) et son libell\u00e9 (\u00ab Loyer \u00bb) ; `null` sans prix.",
                         "properties": {
                             "label": {
                                 "type": "string"
                             },
                             "value": {
-                                "type": [
-                                    "string",
-                                    "boolean"
-                                ]
+                                "type": "string"
                             }
                         },
                         "required": [

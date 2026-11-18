@@ -7,7 +7,6 @@ use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Number;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Location\Support\CurrentCountry;
@@ -81,12 +80,14 @@ class OfferBrowseListing extends Listing
     public function item(Model $record): ListItem
     {
         /** @var Offer $record */
-        $price = $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale());
+        $domain = app(DomainRegistry::class)->require();
+        // « 60 000 FCFA / nuit » : le prix et son unité, selon le domaine.
+        $price = $domain->formattedPrice($record, app()->getLocale());
 
         // Le titre construit par le domaine (« Studio meublé - Douala »), sinon le titre saisi.
         return ListItem::make(
             $record->getKey(),
-            app(DomainRegistry::class)->require()->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),
+            $domain->itemTitle($record) ?? (string) $record->getTranslation('title', app()->getLocale()),
             $price,
         )->image(MediaUrl::onRequestHost($record->photoUrl()));
     }
