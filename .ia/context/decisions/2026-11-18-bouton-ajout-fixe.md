@@ -1,3 +1,6 @@
+Remplacée par : 2026-11-18-lien-creation-sous-recherche.md
+
+
 # `2026-11-18` — Bouton d'ajout fixe « + », hors du défilement de la liste
 
 - **Type** : décision
