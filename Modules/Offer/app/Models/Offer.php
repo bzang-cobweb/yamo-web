@@ -125,6 +125,14 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * URL de sa première photo, ou `null` (décision 2026-11-18-liste-photo-barre-connecte).
+     */
+    public function photoUrl(): ?string
+    {
+        return $this->getFirstMediaUrl(self::PHOTOS) ?: null;
+    }
+
+    /**
      * Valeur brute d'un attribut du domaine (par langue s'il est traduisible).
      */
     public function detail(string $name): mixed

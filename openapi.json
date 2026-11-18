@@ -2053,7 +2053,7 @@
                     },
                     "items": {
                         "type": "array",
-                        "description": "Items de la page : `edit` ouvre le formulaire li\u00e9 \u00e0 l'enregistrement (`?record=`), `delete` d\u00e9crit le retrait.",
+                        "description": "Items de la page : `image` est la photo affich\u00e9e au-dessus du titre ; `edit` ouvre le formulaire li\u00e9 \u00e0 l'enregistrement (`?record=`), `delete` d\u00e9crit le retrait.",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -2064,6 +2064,12 @@
                                     "type": "string"
                                 },
                                 "subtitle": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "image": {
                                     "type": [
                                         "string",
                                         "null"
@@ -2143,6 +2149,7 @@
                                 "id",
                                 "title",
                                 "subtitle",
+                                "image",
                                 "edit",
                                 "delete"
                             ]

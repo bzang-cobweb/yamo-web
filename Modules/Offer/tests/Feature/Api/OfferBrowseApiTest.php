@@ -3,6 +3,8 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -69,7 +71,21 @@ class OfferBrowseApiTest extends TestCase
 
         $this->assertSame([20, 6], [count($first['items']), count($second['items'])]);
         $this->assertNull($second['next_cursor']);
-        $this->assertSame(['id', 'title', 'subtitle', 'edit', 'delete'], array_keys($first['items'][0]));
+        $this->assertSame(['id', 'title', 'subtitle', 'image', 'edit', 'delete'], array_keys($first['items'][0]));
+    }
+
+    public function test_an_offer_shows_its_first_photo_and_none_without(): void
+    {
+        Storage::fake('public');
+        $with = Offer::factory()->create(['status' => 'published']);
+        $with->addMedia(UploadedFile::fake()->image('salon.jpg', 800, 600))->toMediaCollection(Offer::PHOTOS);
+        $with->addMedia(UploadedFile::fake()->image('cuisine.jpg', 800, 600))->toMediaCollection(Offer::PHOTOS);
+        $without = Offer::factory()->create(['status' => 'published']);
+
+        $items = array_column($this->browse()->assertOk()->json('data.items'), 'image', 'id');
+
+        $this->assertStringEndsWith('salon.jpg', (string) $items[(string) $with->getKey()]);
+        $this->assertNull($items[(string) $without->getKey()]);
     }
 
     public function test_a_member_sees_the_same_list(): void

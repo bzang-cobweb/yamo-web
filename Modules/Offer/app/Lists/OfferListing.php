@@ -69,6 +69,7 @@ class OfferListing extends Listing
     {
         // Les siennes, dans le pays courant (décision 2026-11-18-espace-pays).
         return Offer::query()
+            ->with('media')
             ->where('user_id', $this->user?->getAuthIdentifier())
             ->where('country_id', CurrentCountry::require()->getKey())
             ->orderBy('id');
@@ -88,6 +89,7 @@ class OfferListing extends Listing
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
         return ListItem::make($record->getKey(), $record->getTranslation('title', $locale), implode(' · ', array_filter([$record->status->label(), $price])))
+            ->image($record->photoUrl())
             ->edit(OfferForm::name())
             ->delete(
                 __('offer::offer.list.remove'),

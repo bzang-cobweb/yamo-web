@@ -63,7 +63,7 @@ class OfferBrowseListing extends Listing
     public function query(): Builder
     {
         return Offer::query()
-            ->with('address')
+            ->with(['address', 'media'])
             ->where('country_id', CurrentCountry::require()->getKey())
             ->where('status', OfferStatusEnum::PUBLISHED)
             ->orderByDesc('id');
@@ -83,6 +83,6 @@ class OfferBrowseListing extends Listing
             $record->getKey(),
             (string) $record->getTranslation('title', app()->getLocale()),
             implode(' · ', array_filter([$price, $record->address?->city])) ?: null,
-        );
+        )->image($record->photoUrl());
     }
 }
