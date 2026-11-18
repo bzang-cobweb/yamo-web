@@ -20,7 +20,11 @@ enum RoleEnum: string
     {
         return match ($this) {
             self::SUPER_ADMIN => [],
+            // Les adresses d'un utilisateur sont sur sa page d'édition (décision 2026-11-18-role-admin-acces-back-office).
             self::ADMIN => [
+                PermissionEnum::ACCESS_ADMIN,
+                PermissionEnum::VIEW_USERS,
+                PermissionEnum::UPDATE_USERS,
                 PermissionEnum::VIEW_ADDRESSES,
                 PermissionEnum::CREATE_ADDRESSES,
                 PermissionEnum::UPDATE_ADDRESSES,

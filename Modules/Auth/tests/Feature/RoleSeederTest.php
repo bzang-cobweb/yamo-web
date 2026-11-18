@@ -20,12 +20,12 @@ class RoleSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_the_admin_role_gets_the_address_permissions(): void
+    public function test_the_admin_role_gets_back_office_users_and_address_permissions(): void
     {
         $this->seed(AuthDatabaseSeeder::class);
 
         $this->assertEqualsCanonicalizing(
-            ['addresses.view', 'addresses.create', 'addresses.update', 'addresses.delete'],
+            ['admin.access', 'users.view', 'users.update', 'addresses.view', 'addresses.create', 'addresses.update', 'addresses.delete'],
             Role::findByName(RoleEnum::ADMIN->value)->permissions->pluck('name')->all(),
         );
         $this->assertTrue(Role::findByName(RoleEnum::SUPER_ADMIN->value)->permissions->isEmpty());
@@ -34,12 +34,12 @@ class RoleSeederTest extends TestCase
     public function test_replaying_the_seeder_keeps_permissions_given_in_the_back_office(): void
     {
         $this->seed(AuthDatabaseSeeder::class);
-        Role::findByName(RoleEnum::ADMIN->value)->givePermissionTo(PermissionEnum::ACCESS_ADMIN);
+        Role::findByName(RoleEnum::ADMIN->value)->givePermissionTo(PermissionEnum::VIEW_COUNTRIES);
 
         $this->seed(AuthDatabaseSeeder::class);
 
         $permissions = Role::findByName(RoleEnum::ADMIN->value)->fresh()->permissions->pluck('name');
-        $this->assertContains(PermissionEnum::ACCESS_ADMIN->value, $permissions);
+        $this->assertContains(PermissionEnum::VIEW_COUNTRIES->value, $permissions);
         $this->assertContains('addresses.delete', $permissions);
     }
 

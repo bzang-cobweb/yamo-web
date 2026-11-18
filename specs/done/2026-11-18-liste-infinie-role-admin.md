@@ -124,5 +124,5 @@ La liste est découpée en deux couches.
 
 ## Ce qui reste en suspens
 
-- **Faut-il donner au rôle `admin` l'accès au back-office** (`admin.access`) et la consultation des utilisateurs, pour qu'il atteigne les adresses ? Hors périmètre ici ; à trancher.
+- ~~Faut-il donner au rôle `admin` l'accès au back-office et la consultation des utilisateurs ?~~ Tranché après la clôture (décision `2026-11-18-role-admin-acces-back-office`) : le rôle reçoit `admin.access`, `users.view` et `users.update`.
 - **Rien n'est poussé.**

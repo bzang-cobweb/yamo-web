@@ -6,6 +6,8 @@ use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Filament\Resources\UserResource;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\RelationManagers\AddressesRelationManager;
 use Modules\Auth\Models\User;
@@ -47,6 +49,20 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
             'country_id' => (string) $country->getKey(), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève',
             ...$overrides,
         ];
+    }
+
+    public function test_the_admin_role_alone_reaches_a_user_page_and_manages_its_addresses(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::ADMIN);
+        $user = User::factory()->create();
+        $this->actingAs($admin);
+
+        $this->get(UserResource::getUrl('index'))->assertOk();
+        $this->get(UserResource::getUrl('edit', ['record' => $user]))->assertOk();
+        $this->manager($user)
+            ->assertSuccessful()
+            ->assertActionVisible(TestAction::make('create')->table());
     }
 
     public function test_lists_only_the_user_addresses_with_their_recipient(): void
