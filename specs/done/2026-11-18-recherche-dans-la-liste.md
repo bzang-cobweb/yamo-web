@@ -57,3 +57,40 @@ Les listes servies à l'app (« Mes adresses » aujourd'hui, toute liste demain)
 - La recherche dans le back-office (Filament a déjà la sienne).
 - Les filtres par champ, le tri choisi par l'utilisateur et le surlignage du texte trouvé.
 - La recherche plein texte ou approximative (fautes de frappe).
+
+## Ce que j'ai décidé seul
+
+- **Caractère d'échappement `!` dans le `LIKE`** (`ESCAPE '!'`) : le seul qui soit compris de la même façon par MariaDB et par SQLite, celui des tests. Avec `\`, SQLite refuse l'échappement.
+- **Une méthode et un texte d'aide.** Une liste est cherchable quand `searchPlaceholder()` rend un texte, et `search()` dit comment chercher. La classe de base fournit `orWhereContains()` pour que chaque liste ne refasse pas l'échappement.
+- **Les items précédents restent affichés** pendant qu'une nouvelle recherche se charge (`keepPreviousData`) : le champ ne disparaît pas et le clavier reste ouvert.
+- **« Aucun résultat. » s'affiche dès qu'une recherche est active** et que la liste est vide.
+
+## Ce qui a été fait
+
+- **Web** (commit `e40d556`) :
+  - `?search=` passe à `Listing::page()` ;
+  - la réponse porte le champ `search` (texte d'aide ou `null`) ;
+  - « Mes adresses » cherche dans le prénom, le nom, la rue, le NPA et la ville ;
+  - textes ajoutés en fr et en : `list.search` et `list.noResults` ;
+  - OpenAPI régénéré ;
+  - tests : correspondances, autre compte, `%` et `_`, texte vide, curseurs sur la recherche, liste non cherchable.
+- **Mobile** (commit `bd30e29`) :
+  - `List` reçoit la prop `search`, avec le champ placé hors de la `FlatList` ;
+  - `ListService.get(name, cursor, search)` ;
+  - `useListDefinition(name, search)` ;
+  - `ProfileListScreen` envoie la recherche 300 ms après la dernière frappe ;
+  - tests et README.
+- **Contrôles** : 319 tests web, Pint propre, `openapi.json` à jour. 169 tests mobile, tsc et lint propres. L'échappement est vérifié sur MariaDB.
+- **QA** (`bza-dev:qa-check`) : GO, rejoué sur MariaDB. Détail dans `.ia/runs/2026-11-18-recherche-dans-la-liste/qa-check.md`.
+
+## Ce que je n'ai pas vérifié
+
+- **Le clavier et le délai de frappe sur un appareil ou un simulateur.**
+- **Les performances sur un gros volume** : `LIKE '%…%'` ne profite d'aucun index.
+
+## Ce qui reste en suspens
+
+- **Comportement selon la base** : sur MariaDB, la recherche ignore aussi les accents (« ERIC » trouve « Éric ») ; dans les tests, sur SQLite, non.
+- **Prénom et nom ensemble** : « jeanne dupont » ne trouve rien, car chaque champ est comparé séparément. C'est conforme au contrat.
+- **Recherche en échec** : l'écran passe à l'état d'erreur et le champ disparaît, mais le texte saisi est gardé. Il revient avec « Réessayer ».
+- **Rien n'est poussé.**
