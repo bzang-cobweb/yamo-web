@@ -60,9 +60,9 @@ abstract class Domain
     abstract public function attributes(): array;
 
     /**
-     * Catégories de départ, créées par le seeder si elles manquent.
+     * Catégories de départ, en arbre (`children`), créées par le seeder si elles manquent.
      *
-     * @return list<array{slug: string, name: array<string, string>}>
+     * @return list<array{slug: string, name: array<string, string>, children?: list<array<string, mixed>>}>
      */
     public function categories(): array
     {

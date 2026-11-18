@@ -22,6 +22,8 @@ abstract class OfferTable
     {
         return $table
             ->defaultSort('id', 'desc')
+            // Propriétaire et chemin de la catégorie sans requête par ligne.
+            ->modifyQueryUsing(fn ($query) => $query->with(['user', 'category.parent.parent']))
             ->columns([
                 TextColumn::make('title')
                     ->label(__('offer::offer.title_field'))
@@ -48,7 +50,7 @@ abstract class OfferTable
                     ->sortable(),
                 TextColumn::make('category.name')
                     ->label(__('offer::offer.category'))
-                    ->state(fn (Offer $record): ?string => $record->category?->getTranslation('name', app()->getLocale())),
+                    ->state(fn (Offer $record): ?string => $record->category?->path()),
                 TextColumn::make('published_at')
                     ->label(__('offer::offer.published_at'))
                     ->dateTime()

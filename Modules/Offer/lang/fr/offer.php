@@ -32,6 +32,11 @@ return [
         'slug' => 'Identifiant',
         'position' => 'Position',
         'offers_count' => 'Offres',
+        'parent' => 'Catégorie parente',
+        'parent_none' => 'Aucune (catégorie racine)',
+        'children' => 'Sous-catégories',
+        'cycle' => "Une catégorie ne peut pas être rangée sous elle-même ni sous l'une de ses sous-catégories.",
+        'has_children' => "Cette catégorie a des sous-catégories : supprimez-les ou déplacez-les d'abord.",
     ],
     'form' => [
         'create_title' => 'Ajouter : :label',

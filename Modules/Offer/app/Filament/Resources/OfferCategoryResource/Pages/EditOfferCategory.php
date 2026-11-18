@@ -16,12 +16,13 @@ class EditOfferCategory extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            OfferCategoryResource::deleteAction(DeleteAction::make()),
         ];
     }
 
     public function getRecordTitle(): string
     {
-        return (string) $this->getRecord()->getTranslation('name', app()->getLocale());
+        // Le chemin : « Location › Meublée ».
+        return OfferCategoryResource::getRecordTitle($this->getRecord()) ?? '';
     }
 }

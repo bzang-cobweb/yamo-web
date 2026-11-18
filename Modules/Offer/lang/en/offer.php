@@ -32,6 +32,11 @@ return [
         'slug' => 'Identifier',
         'position' => 'Position',
         'offers_count' => 'Offers',
+        'parent' => 'Parent category',
+        'parent_none' => 'None (root category)',
+        'children' => 'Subcategories',
+        'cycle' => 'A category cannot be placed under itself or one of its subcategories.',
+        'has_children' => 'This category has subcategories: delete or move them first.',
     ],
     'form' => [
         'create_title' => 'Add: :label',
