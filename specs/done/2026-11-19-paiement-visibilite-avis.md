@@ -54,3 +54,31 @@ Demande : « 1. afficher un seul avis par défaut, cette valeur doit être fourn
    fiche (défaut : **oui**, sinon une offre invisible resterait dans l'accueil).
 2. Paiement appliqué et aucune date d'expiration : **non visible** (défaut).
 3. Le nombre d'avis est une configuration du code (défaut), pas un réglage du back-office.
+
+---
+
+## Ce que j'ai décidé seul
+
+- La règle est une portée `Offer::visibleToOthers()` et sa jumelle `isVisibleToOthers()` pour une offre chargée ; la policy (fiche, avis, favori), l'accueil (liste, épinglées, villes) et les favoris les utilisent. La liste des avis passe par la policy de la fiche.
+- Avis et favori sur une offre invisible : 404 avant le 403 « c'est la vôtre » (l'auteur d'une offre expirée reçoit donc 404 s'il tente de la noter, ce qu'il ne peut de toute façon pas faire).
+- `Setting::paymentRequired()` lit la colonne à chaque appel (une requête par liste ou par fiche), sans cache.
+- « Appliquer le paiement » n'est pas servi à l'app (`GET /v1/app` inchangé).
+- Le texte d'aide de la date d'expiration et de la case explique l'effet (sans date : non visible).
+- Le bouton « Voir tous les avis » suit la règle « plus d'avis que ceux servis », ce qui remplace « dès deux avis » sans changer le résultat avec 1.
+
+## Ce qui a été fait
+
+- Web 1b13046 : config `offer.reviews_shown` = 1 ; migration `settings.payment_required` et case « Appliquer le paiement » (section « Paiement » de la page Application) ; migration `paid_until` → `expires_at` (« Date d'expiration ») ; règle de visibilité dans `Offer`, utilisée par `OfferPolicy`, `OfferBrowseListing`, `OfferFavoritesListing` ; tests `OfferVisibilityApiTest` (sans et avec paiement), page Application, avis (nombre servi selon la configuration).
+- Mobile f3d9dd4 : bouton « Voir tous les avis » quand il y a plus d'avis que ceux servis.
+- Migrations exécutées en local. Simulateur : la fiche montre un avis, « (2) » et le bouton.
+- Suites : serveur 505 verts, app 235 verts, tsc et lint propres ; OpenAPI inchangé (forme des réponses inchangée).
+
+## Ce que je n'ai pas vérifié
+
+- La case « Appliquer le paiement » dans un vrai navigateur (test Livewire seulement).
+- Le masquage au simulateur avec le paiement appliqué (couvert par les tests d'API) : la base locale n'a pas été modifiée.
+
+## Ce qui reste en suspens
+
+- Cocher « Appliquer le paiement » masque d'un coup toutes les offres sans date d'expiration future : à faire seulement une fois les dates saisies.
+- Rien n'avertit l'auteur que son offre a expiré (statut dans « Mes logements », rappel) : hors périmètre.
