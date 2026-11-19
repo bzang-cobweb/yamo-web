@@ -153,7 +153,8 @@ class TranslationTest extends AuthFilamentTestCase
         $migration = require module_path('Offer', 'database/migrations/2026_11_23_110000_make_offer_texts_translatable.php');
         $migration->down();
         $user = User::factory()->create();
-        DB::table('offers')->insert(['user_id' => $user->getKey(), 'title' => 'Studio', 'description' => null, 'status' => 'draft', 'details' => '[]']);
+        // Le pays est obligatoire (décision 2026-11-19-pays-obligatoire-offre).
+        DB::table('offers')->insert(['user_id' => $user->getKey(), 'country_id' => Country::factory()->create()->getKey(), 'title' => 'Studio', 'description' => null, 'status' => 'draft', 'details' => '[]']);
 
         $migration->up();
         $this->assertSame(['fr' => 'Studio'], Offer::query()->sole()->getTranslations('title'));

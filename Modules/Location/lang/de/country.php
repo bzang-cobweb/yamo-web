@@ -22,4 +22,6 @@ return [
         'native_name' => 'Name des Landes in seiner eigenen Sprache, zum Beispiel Deutschland.',
         'dial_code' => 'Mit dem „+“, zum Beispiel +41.',
     ],
+    // Décision 2026-11-19-pays-obligatoire-offre.
+    'delete_in_use' => 'Dieses Land hat noch Angebote: Es kann nicht gelöscht werden.',
 ];
