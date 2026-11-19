@@ -34,6 +34,7 @@ return [
         // Liste de groupes (décision 2026-11-19-contrat-offer-informations).
         'repeaterRemove' => 'Remove this block',
         'repeaterAdd' => 'Add',
+        'repeaterUntitled' => 'Untitled',
         'uploadSending' => 'Sending…',
         'uploadWrongType' => 'Format not accepted.',
         'uploadTooLarge' => 'File too large: :max at most.',
