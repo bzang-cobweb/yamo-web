@@ -112,13 +112,6 @@ abstract class OfferForm
                                     ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
                                     ->searchable(['name', 'first_name', 'last_name', 'email'])
                                     ->required(),
-                                // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
-                                SingleCountry::lock(Select::make('country_id')
-                                    ->label(__('offer::offer.country'))
-                                    ->live()
-                                    ->options(fn (): array => Country::options())
-                                    ->searchable()
-                                    ->required()),
                                 // Traduits : un onglet par langue ; un titre dans au moins une langue
                                 // (décision 2026-11-19-contrat-langue-saisie-allemand), l'erreur sous la langue par défaut.
                                 TranslatableTabs::make(fn (string $locale): array => [
@@ -199,9 +192,17 @@ abstract class OfferForm
                                     ->columnSpanFull(),
                             ]),
                         // L'adresse et son indication (décision 2026-11-19-onglets-localisation-informations).
+                        // Le pays aussi (décision 2026-11-19-pays-dans-localisation) : l'onglet est
+                        // toujours là ; l'adresse, pour un domaine qui en a une.
                         Tab::make(__('offer::offer.tabs.location'))
-                            ->visible($domain->hasAddress())
                             ->schema([
+                                // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
+                                SingleCountry::lock(Select::make('country_id')
+                                    ->label(__('offer::offer.country'))
+                                    ->live()
+                                    ->options(fn (): array => Country::options())
+                                    ->searchable()
+                                    ->required()),
                                 // L'adresse et son indication, dans `offer_addresses` (décision
                                 // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
                                 // n'est pas créée, ou elle est retirée.
@@ -228,6 +229,7 @@ abstract class OfferForm
                                     ], 'indication')->columnSpanFull(),
                                 ])
                                     ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
+                                    ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
                             ]),
                         Tab::make(__('offer::offer.photos'))
