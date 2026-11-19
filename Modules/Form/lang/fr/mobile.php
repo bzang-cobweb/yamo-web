@@ -29,7 +29,7 @@ return [
     'list' => [
         // Filtres d'une liste (décision 2026-11-19-contrat-filtres-vitrine).
         'filters' => 'Filtres',
-        'applyFilters' => 'Afficher les offres',
+        'applyFilters' => 'Appliquer les filtres',
         'clearFilters' => 'Effacer les filtres',
         'noFilterResults' => 'Aucune offre ne correspond à ces filtres.',
         // Cœur de favori sur une photo (décision 2026-11-19-contrat-vedette-favoris).

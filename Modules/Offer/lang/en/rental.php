@@ -47,9 +47,9 @@ return [
     'filters' => [
         'amenities_help' => 'Homes that have all the chosen amenities.',
         'any' => 'All',
-        'furnished' => 'Furnished',
-        'unfurnished' => 'Unfurnished',
-        'bedrooms' => 'Bedrooms, at least',
+        'furnished' => 'Yes',
+        'unfurnished' => 'No',
+        'bedrooms' => 'Bedrooms',
         'available_from' => 'Free on',
         'available_from_help' => 'Homes available on this date or earlier.',
     ],

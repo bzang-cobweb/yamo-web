@@ -47,9 +47,9 @@ return [
     'filters' => [
         'amenities_help' => 'Les logements qui ont tous les équipements choisis.',
         'any' => 'Tous',
-        'furnished' => 'Meublé',
-        'unfurnished' => 'Non meublé',
-        'bedrooms' => 'Chambres, au moins',
+        'furnished' => 'Oui',
+        'unfurnished' => 'Non',
+        'bedrooms' => 'Chambres',
         'available_from' => 'Libre le',
         'available_from_help' => 'Les logements disponibles à cette date ou avant.',
     ],
