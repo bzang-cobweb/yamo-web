@@ -107,7 +107,9 @@ class OfferForm extends Form
             ! $domain->hasAddress() ? null : Field::textarea('indication')
                 ->label(__('offer::offer.indication'))
                 ->placeholder(__('offer::offer.indication_placeholder'))
-                ->default($offer?->offerAddress?->indication)
+                // Traduite (décision 2026-11-19-indication-traduisible) : la langue de saisie, sinon l'original.
+                ->translatable()
+                ->default($offer?->offerAddress?->getTranslation('indication', $this->locale()) ?: null)
                 ->maxLength(OfferAddress::INDICATION_MAX_LENGTH),
             Field::select('status')
                 ->label(__('offer::offer.status'))

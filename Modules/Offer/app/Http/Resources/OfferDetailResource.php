@@ -54,7 +54,7 @@ class OfferDetailResource extends JsonResource
             // L'adresse complète, rue comprise (décision 2026-11-19-fiche-localisation).
             'address' => $address,
             // L'indication propre à l'offre (décision 2026-11-19-contrat-adresse-offre-table).
-            'indication' => $offer->offerAddress?->indication,
+            'indication' => $this->indication($offer, $locale),
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
@@ -258,5 +258,16 @@ class OfferDetailResource extends JsonResource
         }
 
         return $informations;
+    }
+
+    /**
+     * L'indication de l'adresse, traduite : dans la langue demandée, sinon d'origine
+     * (décision 2026-11-19-indication-traduisible) ; `null` sans indication.
+     */
+    private function indication(Offer $offer, string $locale): ?string
+    {
+        $text = (string) $offer->offerAddress?->getTranslation('indication', $locale);
+
+        return $text === '' ? null : $text;
     }
 }

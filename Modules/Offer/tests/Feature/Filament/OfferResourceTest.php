@@ -82,7 +82,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'title.en' => 'House with a garden',
                 'price' => '2400',
                 'offerAddress.address_id' => $address->getKey(),
-                'offerAddress.indication' => 'Portail vert',
+                'offerAddress.indication.fr' => 'Portail vert',
                 'category_id' => (string) OfferCategory::query()->where('slug', 'long-term')->value('id'),
                 'details.property_type' => 'house',
                 'details.surface' => '120',
@@ -99,7 +99,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $this->assertSame('CHF', $offer->currency);
         $this->assertNotNull($offer->published_at);
         $this->assertTrue($offer->address->is($address));
-        $this->assertSame('Portail vert', $offer->offerAddress->indication);
+        $this->assertSame(['fr' => 'Portail vert'], $offer->offerAddress->getTranslations('indication'));
     }
 
     public function test_an_admin_features_an_offer_until_a_date_and_filters_featured_ones(): void
@@ -209,7 +209,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'currency' => 'CHF', 'details' => ['property_type' => 'studio', 'surface' => 30, 'rooms' => 1]]);
 
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
-            ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr'), 'offerAddress.indication' => 'Portail bleu'])
+            ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr'), 'offerAddress.indication.fr' => 'Portail bleu'])
             ->fillForm(['details.surface' => '32'])
             ->call('save')
             ->assertHasNoFormErrors();

@@ -151,11 +151,13 @@ abstract class OfferForm
                                         ->searchable(['street', 'zip', 'city'])
                                         ->required($domain->requiresAddress())
                                         ->columnSpanFull(),
-                                    Textarea::make('indication')
-                                        ->label(__('offer::offer.indication'))
-                                        ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
-                                        ->rows(2)
-                                        ->columnSpanFull(),
+                                    // Traduite : un onglet par langue (décision 2026-11-19-indication-traduisible).
+                                    TranslatableTabs::make(fn (string $locale): array => [
+                                        Textarea::make("indication.{$locale}")
+                                            ->label(__('offer::offer.indication'))
+                                            ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
+                                            ->rows(2),
+                                    ], 'indication')->columnSpanFull(),
                                 ])
                                     ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
                                     ->visible($domain->hasAddress())

@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-indication-traduisible.md (l'indication devient traduisible)
+
 Remplace : 2026-11-19-description-adresse-offre.md
 
 # `2026-11-19` — Contrat « adresse d'une offre : table `offer_addresses` », validé

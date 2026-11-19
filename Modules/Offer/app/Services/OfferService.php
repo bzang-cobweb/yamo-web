@@ -38,8 +38,8 @@ class OfferService
             'locale' => $locale,
             ...$this->columns($domain, $data, $country, $locale ?? $user->preferredLocale()),
         ]);
-        $this->syncAddress($offer, $domain, $data, $country);
-        $this->syncInformations($offer, $data, $locale ?? $user->preferredLocale());
+        $this->syncAddress($offer, $domain, $data, $country, $locale);
+        $this->syncInformations($offer, $data, $locale);
 
         return $offer;
     }
@@ -50,7 +50,7 @@ class OfferService
     public function update(Offer $offer, Domain $domain, array $data, ?string $locale = null): Offer
     {
         $offer->fill($this->columns($domain, $data, $offer->country, $locale ?? $offer->user->preferredLocale(), $offer))->save();
-        $this->syncAddress($offer, $domain, $data, $offer->country);
+        $this->syncAddress($offer, $domain, $data, $offer->country, $locale ?? $offer->user->preferredLocale());
         $this->syncInformations($offer, $data, $locale ?? $offer->user->preferredLocale());
 
         return $offer->refresh();
@@ -132,12 +132,13 @@ class OfferService
     /**
      * L'adresse de l'offre et son indication, dans `offer_addresses` (décision
      * 2026-11-19-contrat-adresse-offre-table). Sans adresse, la ligne est retirée,
-     * indication comprise. Sans le champ `indication` envoyé (ancien envoi),
-     * l'indication actuelle reste ; un champ vide la retire.
+     * indication comprise. L'indication est traduite (décision 2026-11-19-indication-traduisible) :
+     * seule la langue `$locale` est remplacée ; sans le champ envoyé (ancien envoi),
+     * elle reste ; un champ vide retire cette langue.
      *
      * @param  array<string, mixed>  $data
      */
-    private function syncAddress(Offer $offer, Domain $domain, array $data, ?Country $country): void
+    private function syncAddress(Offer $offer, Domain $domain, array $data, ?Country $country, string $locale): void
     {
         $current = $offer->offerAddress;
         $addressId = $domain->hasAddress() ? $this->addressId($data, $country, $current) : null;
@@ -149,11 +150,17 @@ class OfferService
             return;
         }
 
-        $indication = array_key_exists('indication', $data)
-            ? (filled($data['indication']) ? trim((string) $data['indication']) : null)
-            : $current?->indication;
+        $address = $current ?? new OfferAddress(['offer_id' => $offer->getKey()]);
+        $address->address_id = $addressId;
 
-        $offer->setRelation('offerAddress', $offer->offerAddress()->updateOrCreate([], ['address_id' => $addressId, 'indication' => $indication]));
+        if (array_key_exists('indication', $data)) {
+            filled($data['indication'])
+                ? $address->setTranslation('indication', $locale, trim((string) $data['indication']))
+                : $address->forgetTranslation('indication', $locale);
+        }
+
+        $address->save();
+        $offer->setRelation('offerAddress', $address);
         $offer->unsetRelation('address');
     }
 

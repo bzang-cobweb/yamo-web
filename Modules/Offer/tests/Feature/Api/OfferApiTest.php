@@ -263,7 +263,7 @@ class OfferApiTest extends TestCase
         // À la création : pas d'étape « Langue ».
         $this->assertNotContains('content_locale', array_column($form['fields'], 'name'));
 
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['title' => 'Appartement lumineux', 'informations' => [['title' => 'Arrivée', 'description' => 'Clés chez le gardien.']]]))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['title' => 'Appartement lumineux', 'indication' => 'Portail bleu', 'informations' => [['title' => 'Arrivée', 'description' => 'Clés chez le gardien.']]]))->assertNoContent();
         $offer = Offer::query()->sole();
         $this->assertSame('fr', $offer->locale);
         $this->assertSame(['fr' => 'Appartement lumineux'], $offer->getTranslations('title'));
@@ -287,17 +287,25 @@ class OfferApiTest extends TestCase
         $this->assertSame('en', $defaults['content_locale']);
         $this->assertSame('Appartement lumineux', $defaults['title']);
         $this->assertSame('Arrivée', $defaults['informations'][0]['title']);
+        $this->assertSame('Portail bleu', $defaults['indication']);
 
         // Enregistrer en anglais n'ajoute que l'anglais.
         $photos = $offer->getMedia(Offer::PHOTOS)->pluck('uuid')->all();
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, [
-            'content_locale' => 'en', 'photos' => $photos, 'title' => 'Bright flat',
+            'content_locale' => 'en', 'photos' => $photos, 'title' => 'Bright flat', 'indication' => 'Blue gate',
             'informations' => [['id' => $defaults['informations'][0]['id'], 'title' => 'Arrival', 'description' => 'Keys with the caretaker.']],
         ]))->assertNoContent();
         $offer->refresh();
         $this->assertSame(['fr' => 'Appartement lumineux', 'en' => 'Bright flat'], $offer->getTranslations('title'));
         $this->assertSame('fr', $offer->locale);
         $this->assertSame(['fr' => 'Arrivée', 'en' => 'Arrival'], $offer->informations->sole()->getTranslations('title'));
+        // L'indication de l'adresse aussi, par langue (décision 2026-11-19-indication-traduisible).
+        $this->assertSame(['fr' => 'Portail bleu', 'en' => 'Blue gate'], $offer->offerAddress->getTranslations('indication'));
+        // Lue par un visiteur anglophone (la langue d'un compte connecté primerait).
+        app('auth')->forgetGuards();
+        $this->flushHeaders();
+        $this->assertSame('Blue gate', $this->withHeader('Accept-Language', 'en')->getJson("/api/v1/offers/{$offer->getKey()}")->json('data.indication'));
+        $this->assertSame('Portail bleu', $this->withHeader('Accept-Language', 'fr')->getJson("/api/v1/offers/{$offer->getKey()}")->json('data.indication'));
         $labels = array_column(array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->json('data.fields'), null, 'name')['content_locale']['options'], 'label');
         $this->assertSame('English — traduite', $labels[1]);
 
@@ -394,7 +402,7 @@ class OfferApiTest extends TestCase
         $this->assertSame($first->offerAddress->address_id, $second->offerAddress->address_id);
         $this->assertSame(1, Address::query()->count());
         $this->assertSame('Portail bleu, 2e étage', $first->offerAddress->indication);
-        $this->assertNull($second->offerAddress->indication);
+        $this->assertSame([], $second->offerAddress->getTranslations('indication'));
         $this->assertSame('Portail bleu, 2e étage', array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$first->getKey()}")->json('data.fields'), 'default', 'name')['indication']);
         $this->assertSame('Portail bleu, 2e étage', $this->getJson("/api/v1/offers/{$first->getKey()}")->json('data.indication'));
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['indication' => str_repeat('a', 501)]))
@@ -422,7 +430,7 @@ class OfferApiTest extends TestCase
         // Un champ vide retire l'indication (les photos déjà enregistrées sont renvoyées).
         $photos = $offer->getMedia(Offer::PHOTOS)->pluck('uuid')->all();
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", [...$input, 'photos' => $photos, 'indication' => ''])->assertNoContent();
-        $this->assertNull($offer->offerAddress()->value('indication'));
+        $this->assertSame([], $offer->offerAddress()->sole()->getTranslations('indication'));
 
         // Supprimer l'adresse retire la ligne, pas l'offre.
         $offer->fresh()->address->delete();
