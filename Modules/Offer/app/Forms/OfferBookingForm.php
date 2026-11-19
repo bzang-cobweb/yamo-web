@@ -64,6 +64,7 @@ class OfferBookingForm extends Form
             return [
                 Field::date('check_in')
                     ->label(__('offer::booking.form.visit_date'))
+                    ->dateRange(today()->toDateString(), $latest)
                     ->required()
                     ->rules([...$dates, $this->onePending()]),
                 $message,
@@ -76,10 +77,12 @@ class OfferBookingForm extends Form
         return [
             Field::date('check_in')
                 ->label(__('offer::booking.form.check_in'))
+                ->dateRange(today()->toDateString(), $latest)
                 ->required()
                 ->rules([...$dates, $this->onePending()]),
             Field::date('check_out')
                 ->label(__('offer::booking.form.check_out'))
+                ->dateRange(today()->addDay()->toDateString(), $latest)
                 ->help($price === null ? null : __('offer::booking.form.price_help', ['price' => $price]))
                 ->required()
                 ->rules(['date', 'after:check_in', $this->withinMaxDays($tooFar)]),

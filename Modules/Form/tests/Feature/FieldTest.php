@@ -163,6 +163,7 @@ class FieldTest extends TestCase
             'reloads' => false,
             'suggestions' => null,
             'max_length' => null,
+            'date_range' => null,
             'suffix' => null,
             'suffix_when' => null,
             'upload' => null,
@@ -298,5 +299,15 @@ class FieldTest extends TestCase
         $this->assertSame(5, $field->toArray()['max_length']);
         $this->assertTrue(Validator::make(['note' => 'abcde'], $field->validationRules())->passes());
         $this->assertFalse(Validator::make(['note' => 'abcdef'], $field->validationRules())->passes());
+    }
+
+    public function test_a_date_serves_its_calendar_bounds(): void
+    {
+        // Décision 2026-11-19-bornes-des-dates : sans borne par défaut ; bornée à la demande.
+        $this->assertSame(['min' => null, 'max' => null], Field::date('available_from')->toArray()['date_range']);
+        $this->assertSame(['min' => '2026-11-19', 'max' => '2027-11-19'], Field::date('check_in')->dateRange('2026-11-19', '2027-11-19')->toArray()['date_range']);
+
+        $this->expectException(\LogicException::class);
+        Field::text('name')->dateRange('2026-11-19', null);
     }
 }

@@ -53,6 +53,11 @@ final class Field
 
     private ?int $maxLength = null;
 
+    /** Bornes d'une date (`AAAA-MM-JJ`), proposées par le calendrier de l'app ; `null` : sans borne. */
+    private ?string $dateMin = null;
+
+    private ?string $dateMax = null;
+
     /** Unité affichée après la valeur (« m² ») : formulaire et fiche (décision 2026-11-18-fiche-offre). */
     private ?string $suffix = null;
 
@@ -537,6 +542,24 @@ final class Field
     }
 
     /**
+     * Les dates que le calendrier de l'app propose (`AAAA-MM-JJ`, décision
+     * 2026-11-19-bornes-des-dates) : une naissance jusqu'à aujourd'hui, une
+     * réservation à partir d'aujourd'hui. Sans borne, toute date. La validation
+     * reste dans `rules()`.
+     */
+    public function dateRange(?string $min, ?string $max): self
+    {
+        if ($this->type !== FieldType::DATE) {
+            throw new LogicException("Champ « {$this->name} » : seule une date a des bornes.");
+        }
+
+        $this->dateMin = $min;
+        $this->dateMax = $max;
+
+        return $this;
+    }
+
+    /**
      * Nombre maximal de caractères : validé par le serveur, envoyé à l'app (qui
      * bloque la saisie au-delà et affiche un compteur).
      */
@@ -902,6 +925,8 @@ final class Field
             'reloads' => $this->reloads,
             'suggestions' => $this->suggestions,
             'max_length' => $this->maxLength,
+            /** Bornes du calendrier d'une date (`AAAA-MM-JJ` ou `null`) ; `null` pour un autre champ. */
+            'date_range' => $this->type !== FieldType::DATE ? null : ['min' => $this->dateMin, 'max' => $this->dateMax],
             /** Unité affichée après la valeur (« m² »). */
             'suffix' => $this->suffix,
             /** Unité qui suit la valeur d'un autre champ (`suffixes` : valeur => unité) ; `suffix` à défaut. */

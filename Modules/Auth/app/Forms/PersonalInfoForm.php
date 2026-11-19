@@ -39,9 +39,11 @@ class PersonalInfoForm extends Form
             $rules[] = new MinimumAge($minimumAge);
         }
 
-        // `required` à faux, la règle devient `nullable`.
+        // `required` à faux, la règle devient `nullable`. Le calendrier s'arrête à aujourd'hui,
+        // ou à la dernière date qui donne l'âge minimum (décision 2026-11-19-bornes-des-dates).
         return Field::date('birth_date')
             ->label(__('auth::user.birth_date'))
+            ->dateRange(self::BIRTH_DATE_MIN, today()->subYears($minimumAge ?? 0)->toDateString())
             ->help($minimumAge === null ? null : __('auth::form.birth_date.help', ['age' => $minimumAge]))
             ->required($minimumAge !== null)
             ->rules($rules);

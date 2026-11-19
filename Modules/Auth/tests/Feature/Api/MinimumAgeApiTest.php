@@ -52,7 +52,9 @@ class MinimumAgeApiTest extends TestCase
         $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register')
             ->assertJsonPath('data.fields.4.name', 'birth_date')
             ->assertJsonPath('data.fields.4.required', true)
-            ->assertJsonPath('data.fields.4.help', 'Au moins 18 ans.');
+            ->assertJsonPath('data.fields.4.help', 'Au moins 18 ans.')
+            // Le calendrier s'arrête à la dernière date qui donne 18 ans (décision 2026-11-19-bornes-des-dates).
+            ->assertJsonPath('data.fields.4.date_range', ['min' => '1900-01-01', 'max' => today()->subYears(18)->toDateString()]);
 
         $this->postJson('/api/v1/forms/auth.register/steps/1', self::IDENTITY)->assertJsonValidationErrors('birth_date');
     }

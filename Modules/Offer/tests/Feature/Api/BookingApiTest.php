@@ -100,6 +100,10 @@ class BookingApiTest extends TestCase
             // Le prix par jour, tel que la fiche l'affiche (espaces insécables compris).
             ->assertJsonPath('data.fields.1.help', app(DomainRegistry::class)->require()->formattedPrice($offer, 'fr').' ; le total figure dans « Mes réservations » une fois la demande envoyée.');
 
+        // Le calendrier : à partir d'aujourd'hui (le départ, de demain), un an au plus (décision 2026-11-19-bornes-des-dates).
+        $stay->assertJsonPath('data.fields.0.date_range', ['min' => today()->toDateString(), 'max' => today()->addDays(365)->toDateString()])
+            ->assertJsonPath('data.fields.1.date_range.min', today()->addDay()->toDateString());
+
         $visit = $this->asUser($guest)->getJson('/api/v1/forms/offer.booking?record='.$this->home(false)->getKey())->assertOk();
         $this->assertSame(['check_in', 'message'], array_column($visit->json('data.fields'), 'name'));
         $visit->assertJsonPath('data.title', 'Demander une visite')->assertJsonPath('data.fields.0.label', 'Date souhaitée');
