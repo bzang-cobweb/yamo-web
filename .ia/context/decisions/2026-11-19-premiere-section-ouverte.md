@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-sections-fiche-laravel.md (l'ordre et l'ouverture viennent de Laravel)
+
 Remplace en partie : 2026-11-19-fiche-localisation-accordeon.md (les trois sections étaient ouvertes à l'affichage).
 
 # `2026-11-19` — Fiche d'une offre : seule la première section repliable est ouverte

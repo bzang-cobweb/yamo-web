@@ -25,7 +25,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, information: string|null, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, information: string|null, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -33,6 +33,11 @@ class OfferDetailResource extends JsonResource
         $domain = app(DomainRegistry::class)->require();
         $locale = app()->getLocale();
         $owner = (int) $request->user('sanctum')?->getAuthIdentifier() === (int) $offer->user_id;
+        $address = $this->address($offer);
+        $facts = $this->facts($offer, $domain, $locale);
+        $rules = array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)));
+        $information = $this->information($offer, $domain, $locale);
+        $reviews = $this->reviews($offer, $request);
 
         return [
             'id' => (string) $offer->getKey(),
@@ -46,23 +51,30 @@ class OfferDetailResource extends JsonResource
             'location' => $offer->address?->city,
             /** Indications sur l'adresse écrites par le propriétaire, ou `null`. */
             // L'adresse complète, rue comprise (décision 2026-11-19-fiche-localisation).
-            'address' => $this->address($offer),
+            'address' => $address,
             // L'indication propre à l'offre (décision 2026-11-19-contrat-adresse-offre-table).
             'indication' => $offer->offerAddress?->indication,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
             /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
-            'facts' => $this->facts($offer, $domain, $locale),
+            'facts' => $facts,
             /** Règles du logement renseignées, lisibles (décision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine. */
-            'rules' => array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true))),
+            'rules' => $rules,
             /** Autres informations pratiques, texte libre dans la langue demandée (retours à la ligne gardés), ou `null`. */
-            'information' => $this->information($offer, $domain, $locale),
+            'information' => $information,
             'published_at' => $offer->published_at?->toIso8601String(),
             /** Statut, servi au seul propriétaire. */
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
             /** Les avis (décision 2026-11-19-contrat-avis-offres) : moyenne, nombre, 5 derniers, le sien, s'il peut en donner un, et le retrait du sien ; `null` pour une offre non publiée. */
-            'reviews' => $this->reviews($offer, $request),
+            'reviews' => $reviews,
+            /** Les sections repliables à afficher, dans l'ordre, et si elles sont ouvertes à l'arrivée (configuration `offer.sections`) ; seulement celles qui ont un contenu. */
+            'sections' => $this->sections([
+                'location' => $address !== null,
+                'facts' => $facts !== [],
+                'rules' => $rules !== [] || $information !== null,
+                'reviews' => $reviews !== null,
+            ]),
             /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
             'favorite' => $this->favorite($offer, $request),
         ];
@@ -209,5 +221,30 @@ class OfferDetailResource extends JsonResource
         $text = $name === null ? null : $offer->detailIn($name, $locale);
 
         return is_string($text) && trim($text) !== '' ? $text : null;
+    }
+
+    /**
+     * Les sections de la fiche (décision 2026-11-19-sections-fiche-laravel) : dans
+     * l'ordre de `offer.sections`, celles qui ont un contenu, ouvertes ou non ; si
+     * aucune n'est ouverte, la première l'est.
+     *
+     * @param  array<string, bool>  $present
+     * @return list<array{key: string, open: bool}>
+     */
+    private function sections(array $present): array
+    {
+        $sections = [];
+
+        foreach ((array) config('offer.sections', []) as $key => $open) {
+            if ($present[$key] ?? false) {
+                $sections[] = ['key' => (string) $key, 'open' => (bool) $open];
+            }
+        }
+
+        if ($sections !== [] && ! in_array(true, array_column($sections, 'open'), true)) {
+            $sections[0]['open'] = true;
+        }
+
+        return $sections;
     }
 }

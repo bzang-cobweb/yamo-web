@@ -182,6 +182,34 @@ class OfferDetailApiTest extends TestCase
         $this->assertNull($this->show($unfurnished)->json('data.information'));
     }
 
+    public function test_sections_come_from_the_configuration(): void
+    {
+        // Décision 2026-11-19-sections-fiche-laravel.
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'min_age' => 21]]);
+        $this->assertSame([
+            ['key' => 'location', 'open' => true],
+            ['key' => 'facts', 'open' => false],
+            ['key' => 'rules', 'open' => false],
+            ['key' => 'reviews', 'open' => false],
+        ], $this->show($offer)->json('data.sections'));
+
+        // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
+        config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);
+        $this->assertSame([
+            ['key' => 'reviews', 'open' => true],
+            ['key' => 'facts', 'open' => true],
+            ['key' => 'location', 'open' => false],
+        ], $this->show($offer)->json('data.sections'));
+
+        // Aucune ouverte parmi celles servies : la première l'est.
+        config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
+        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'min_age' => 21]]);
+        $this->assertSame([
+            ['key' => 'facts', 'open' => true],
+            ['key' => 'rules', 'open' => false],
+        ], $this->show($withoutAddress)->json('data.sections'));
+    }
+
     public function test_no_private_data_leaks(): void
     {
         $owner = User::factory()->create(['email' => 'proprio@example.test']);

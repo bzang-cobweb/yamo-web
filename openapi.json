@@ -2802,6 +2802,32 @@
                             "delete"
                         ]
                     },
+                    "sections": {
+                        "type": "array",
+                        "description": "Les sections repliables \u00e0 afficher, dans l'ordre, et si elles sont ouvertes \u00e0 l'arriv\u00e9e (configuration `offer.sections`) ; seulement celles qui ont un contenu.",
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string"
+                                        },
+                                        "open": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "key",
+                                        "open"
+                                    ]
+                                },
+                                {
+                                    "type": "boolean"
+                                }
+                            ]
+                        }
+                    },
                     "favorite": {
                         "type": [
                             "object",
@@ -2837,6 +2863,7 @@
                     "published_at",
                     "status",
                     "reviews",
+                    "sections",
                     "favorite"
                 ],
                 "title": "OfferDetailResource"
