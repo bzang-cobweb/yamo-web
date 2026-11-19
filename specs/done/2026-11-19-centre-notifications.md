@@ -52,3 +52,29 @@ Hors de ce chantier ; préparé pour s'y ajouter sans rien refaire :
 - Un membre ne voit ni ne modifie les notifications d'un autre.
 - « Mes réservations » et « Réservations reçues » n'ont pas de pastille.
 - Suites web et app vertes, tsc propre, OpenAPI à jour, simulateur vu, QA indépendante.
+
+## Ce que j'ai décidé seul
+
+- **Routes de l'API sans garde `can:`** : elles ne portent que sur les notifications du compte (relation `notifications`) ; inscrites comme exceptions motivées dans `RouteGuardTest`.
+- **Dates relatives construites dans l'app** à partir de textes servis (« à l'instant », « il y a :count min », « hier »…) : le moteur JavaScript de l'app n'a pas `Intl.RelativeTimeFormat`.
+- **La pastille se recharge** à chaque changement d'écran et quand l'app revient au premier plan.
+- **Un lien de notification** n'est suivi que s'il désigne un écran de l'app (`/…`), jamais une adresse externe.
+- **Le bouton « Tout marquer comme lu »** ne s'affiche que s'il reste une non lue.
+- **Travailleur de file dans DDEV** (`web_extra_daemons`), nécessaire pour que les notifications mises en file partent ; actif après `ddev restart`.
+
+## Ce qui a été fait
+
+- Web 6d1aa53 : module `Notification` (table `notifications`, API liste / non lues / lue / tout lu, `notification:prune` planifié chaque jour, `notification.retention_days` ← `NOTIFICATION_RETENTION_DAYS`, ajouté à `.env` et `.env.example`), canal `database` et `toArray()` des quatre notifications de réservation, OpenAPI, tests ; 7a16c95 : textes de l'app (fr, en, de). Avant : b3c9746 (notifications en file), 1361454 (travailleur DDEV).
+- Mobile ec7a8c7 : onglet « Notifications » entre Accueil et Profil avec pastille (« 0 » compris), écran (liste, lue / non lue, tout marquer lu, ouverture de l'écran désigné, dates relatives), tests.
+- Simulateur : une réponse acceptée (file vidée à la main) → pastille 1, notification « Demande acceptée · il y a 1 min » ; toucher → « Mes réservations », pastille 0.
+- Suites : serveur 554 verts, app 262 verts (49 suites), tsc propre. QA indépendante : GO.
+
+## Ce que je n'ai pas vérifié
+
+- Le travailleur DDEV en marche (déclaré ; DDEV pas redémarré) : la file a été vidée à la main.
+- « Tout marquer comme lu » et une longue liste paginée au simulateur (couverts par les tests).
+- La pastille au-delà de 99 à l'écran.
+
+## Ce qui reste en suspens
+
+- Notifications poussées du téléphone : sur signal de l'humain (dépendance `expo-notifications` à autoriser alors).
