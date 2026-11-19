@@ -175,11 +175,11 @@ abstract class Domain
 
     /**
      * Les étapes du formulaire de l'app (décision
-     * 2026-11-19-contrat-formulaire-etapes-symbole-devise) : titre traduit et noms
+     * 2026-11-19-contrat-formulaire-etapes-symbole-devise) : titre traduit (ou `null`, sans titre) et noms
      * des champs, attributs du domaine et champs communs (`COMMON_FIELDS`). Aucune
      * par défaut : un formulaire d'un seul tenant.
      *
-     * @return list<array{title: string, fields: list<string>}>
+     * @return list<array{title: string|null, fields: list<string>}>
      */
     public function formSteps(): array
     {

@@ -157,7 +157,8 @@ class OfferApiTest extends TestCase
         // Décision 2026-11-19-contrat-formulaire-etapes-symbole-devise.
         $steps = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
-        $this->assertSame(['Le logement', 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));
+        // L'étape 1 sans titre (décision 2026-11-19-etape-1-sans-titre).
+        $this->assertSame([null, 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
