@@ -1271,6 +1271,601 @@
                 }
             }
         },
+        "/v1/offers/{offer}/calendar": {
+            "get": {
+                "operationId": "v1.offers.calendar.month",
+                "summary": "Un mois (`month=AAAA-MM`, le mois courant par d\u00e9faut) : l'\u00e9tat de chaque jour",
+                "tags": [
+                    "OfferCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "month": {
+                                                    "type": "string"
+                                                },
+                                                "label": {
+                                                    "type": "string"
+                                                },
+                                                "previous": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "weekdays": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                },
+                                                "offset": {
+                                                    "type": "number"
+                                                },
+                                                "days": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "day": {
+                                                                "type": "integer"
+                                                            },
+                                                            "state": {
+                                                                "type": "string",
+                                                                "description": "`past`, `conflict`, `accepted`, `blocked`, `pending` ou `free`.",
+                                                                "enum": [
+                                                                    "past",
+                                                                    "conflict",
+                                                                    "accepted",
+                                                                    "blocked",
+                                                                    "pending",
+                                                                    "free"
+                                                                ]
+                                                            },
+                                                            "dot": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Le point des visites du jour : `success` (une accept\u00e9e), `warning` (en attente), ou `null`.",
+                                                                "enum": [
+                                                                    "success",
+                                                                    "warning",
+                                                                    null
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "date",
+                                                            "day",
+                                                            "state",
+                                                            "dot"
+                                                        ]
+                                                    }
+                                                },
+                                                "legend": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                }
+                                            },
+                                            "required": [
+                                                "title",
+                                                "month",
+                                                "label",
+                                                "previous",
+                                                "next",
+                                                "weekdays",
+                                                "offset",
+                                                "days",
+                                                "legend"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/offers/{offer}/calendar/{date}": {
+            "get": {
+                "operationId": "v1.offers.calendar.day",
+                "summary": "Le panneau d'un jour : ses demandes et l'action \u00ab Bloquer \u00bb ou \u00ab D\u00e9bloquer \u00bb",
+                "tags": [
+                    "OfferCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "subtitle": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "image": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "rating": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Note moyenne (1 \u00e0 5, au dixi\u00e8me) et nombre de notes ; `null` sans note.",
+                                                                "properties": {
+                                                                    "average": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "count": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "average",
+                                                                    "count"
+                                                                ]
+                                                            },
+                                                            "highlight": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Phrase mise en avant, affich\u00e9e en gras sur sa ligne ; `null` sans."
+                                                            },
+                                                            "quote": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Message cit\u00e9 sur la carte, sous le sous-titre ; `null` sans."
+                                                            },
+                                                            "favorite": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "description": "C\u0153ur de favori : plein si `active` ; PUT sur `endpoint` ajoute, DELETE retire ; `null` : pas de c\u0153ur.",
+                                                                "properties": {
+                                                                    "active": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "endpoint": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "active",
+                                                                    "endpoint"
+                                                                ]
+                                                            },
+                                                            "link": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ],
+                                                                "description": "\u00c9cran de l'app ouvert en touchant l'item ; `null` : aucun."
+                                                            },
+                                                            "edit": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "properties": {
+                                                                    "form": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "record": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "form",
+                                                                    "record"
+                                                                ]
+                                                            },
+                                                            "actions": {
+                                                                "type": "array",
+                                                                "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi, un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`) ou un \u00e9cran de l'app (`link`).",
+                                                                "items": {}
+                                                            },
+                                                            "tag": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Pastille de couleur (un statut) : libell\u00e9 et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune.",
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "tone": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "tone"
+                                                                ]
+                                                            },
+                                                            "counter": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "description": "Compteur de la carte : son libell\u00e9, la liste qu'il ouvre et les filtres d\u00e9j\u00e0 choisis ; `null` : aucun.",
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "list": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "filter": {
+                                                                        "type": "object",
+                                                                        "additionalProperties": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "list",
+                                                                    "filter"
+                                                                ]
+                                                            },
+                                                            "delete": {
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "confirm": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "method": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "endpoint": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "destructive": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "success": {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                            "action": {
+                                                                                "type": "string",
+                                                                                "enum": [
+                                                                                    "profile",
+                                                                                    "sign-out",
+                                                                                    "back"
+                                                                                ]
+                                                                            },
+                                                                            "message": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "required": [
+                                                                            "action",
+                                                                            "message"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "confirm",
+                                                                    "method",
+                                                                    "endpoint",
+                                                                    "destructive",
+                                                                    "success"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "title",
+                                                            "subtitle",
+                                                            "image",
+                                                            "rating",
+                                                            "highlight",
+                                                            "quote",
+                                                            "favorite",
+                                                            "link",
+                                                            "edit",
+                                                            "actions",
+                                                            "tag",
+                                                            "counter",
+                                                            "delete"
+                                                        ]
+                                                    }
+                                                },
+                                                "empty": {
+                                                    "type": "string"
+                                                },
+                                                "action": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "label": {
+                                                            "type": "string"
+                                                        },
+                                                        "style": {
+                                                            "type": "string",
+                                                            "const": "destructive"
+                                                        },
+                                                        "confirm": {
+                                                            "type": "string"
+                                                        },
+                                                        "submission": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "method": {
+                                                                    "type": "string"
+                                                                },
+                                                                "endpoint": {
+                                                                    "type": "string"
+                                                                },
+                                                                "destructive": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "success": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "action": {
+                                                                            "type": "string",
+                                                                            "enum": [
+                                                                                "profile",
+                                                                                "sign-out",
+                                                                                "back"
+                                                                            ]
+                                                                        },
+                                                                        "message": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "action",
+                                                                        "message"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "method",
+                                                                "endpoint",
+                                                                "destructive",
+                                                                "success"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "label",
+                                                        "style",
+                                                        "confirm",
+                                                        "submission"
+                                                    ]
+                                                },
+                                                "note": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "title",
+                                                "items",
+                                                "empty",
+                                                "action",
+                                                "note"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/offers/{offer}/blocked-dates/{date}": {
+            "put": {
+                "operationId": "v1.offers.blocked-dates.save",
+                "summary": "Bloquer un jour \u00e0 venir que n'occupe aucun s\u00e9jour accept\u00e9",
+                "tags": [
+                    "OfferCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.offers.blocked-dates.destroy",
+                "summary": "D\u00e9bloquer un jour",
+                "tags": [
+                    "OfferCalendar"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/offers/{offer}/favorite": {
             "put": {
                 "operationId": "v1.offers.favorite.save",
@@ -2799,7 +3394,7 @@
                                 },
                                 "actions": {
                                     "type": "array",
-                                    "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi ou un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`).",
+                                    "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi, un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`) ou un \u00e9cran de l'app (`link`).",
                                     "items": {}
                                 },
                                 "tag": {

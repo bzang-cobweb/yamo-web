@@ -14,6 +14,7 @@ use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Services\OfferAvailability;
 
 /**
  * Demander une réservation ou une visite (décision 2026-11-19-contrat-reservations),
@@ -60,11 +61,15 @@ class OfferBookingForm extends Form
             ->placeholder(__('offer::booking.form.message_placeholder'))
             ->maxLength(Booking::MESSAGE_MAX_LENGTH);
 
+        // Les jours déjà pris ou bloqués, grisés sur la grille (décision 2026-11-19-contrat-calendrier-offre).
+        $unavailable = $this->offer === null ? [] : app(OfferAvailability::class)->unavailableDays($this->offer, $this->type(), today(), today()->addDays(Booking::MAX_DAYS + 1));
+
         if ($this->type() === BookingTypeEnum::VISIT) {
             return [
                 Field::date('check_in')
                     ->label(__('offer::booking.form.visit_date'))
                     ->dateRange(today()->toDateString(), $latest)
+                    ->calendar($unavailable)
                     ->required()
                     ->rules([...$dates, $this->onePending()]),
                 $message,
@@ -78,11 +83,13 @@ class OfferBookingForm extends Form
             Field::date('check_in')
                 ->label(__('offer::booking.form.check_in'))
                 ->dateRange(today()->toDateString(), $latest)
+                ->calendar($unavailable)
                 ->required()
                 ->rules([...$dates, $this->onePending()]),
             Field::date('check_out')
                 ->label(__('offer::booking.form.check_out'))
                 ->dateRange(today()->addDay()->toDateString(), $latest)
+                ->calendar($unavailable, after: 'check_in')
                 ->help($price === null ? null : __('offer::booking.form.price_help', ['price' => $price]))
                 ->required()
                 ->rules(['date', 'after:check_in', $this->withinMaxDays($tooFar)]),

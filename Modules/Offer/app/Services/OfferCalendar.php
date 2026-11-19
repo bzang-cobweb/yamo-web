@@ -51,7 +51,7 @@ class OfferCalendar
 
             $days[] = [
                 'date' => $date,
-                'day' => $day->day,
+                'day' => (int) $day->day,
                 /** `past`, `conflict`, `accepted`, `blocked`, `pending` ou `free`. */
                 'state' => match (true) {
                     $day->lessThan(today()) => 'past',
@@ -74,10 +74,10 @@ class OfferCalendar
 
         return [
             'title' => __('offer::booking.calendar.title', ['offer' => $this->offerTitle($offer, $locale)], $locale),
-            'month' => $from->format('Y-m'),
+            'month' => (string) $from->format('Y-m'),
             'label' => ucfirst($from->copy()->locale($locale)->isoFormat('MMMM YYYY')),
-            'previous' => $from->greaterThan($current->copy()->subMonths(self::PAST_MONTHS)) ? $from->copy()->subMonth()->format('Y-m') : null,
-            'next' => $from->lessThan($last) ? $to->format('Y-m') : null,
+            'previous' => $from->greaterThan($current->copy()->subMonths(self::PAST_MONTHS)) ? (string) $from->copy()->subMonth()->format('Y-m') : null,
+            'next' => $from->lessThan($last) ? (string) $to->format('Y-m') : null,
             'weekdays' => $this->weekdays($locale),
             'offset' => $from->dayOfWeekIso - 1,
             'days' => $days,
@@ -115,11 +115,29 @@ class OfferCalendar
 
         return [
             'title' => ucfirst($day->copy()->locale($locale)->isoFormat('dddd LL')).($isBlocked ? ' · '.__('offer::booking.calendar.legend.blocked', [], $locale) : ''),
-            'items' => $bookings->map(fn (Booking $booking): array => $listing->item($booking)->toArray())->values()->all(),
+            'items' => $this->cards($listing, $bookings),
             'empty' => __('offer::booking.calendar.empty_day', [], $locale),
             'action' => $action,
             'note' => $note,
         ];
+    }
+
+    /**
+     * Les demandes en cartes, comme dans « Demandes reçues » (Accepter, Refuser).
+     *
+     * @param  Collection<int, Booking>  $bookings
+     * @return list<array<string, mixed>>
+     */
+    private function cards(ReceivedBookingListing $listing, Collection $bookings): array
+    {
+        $cards = [];
+        foreach ($bookings as $booking) {
+            /** @var array<string, mixed> $card */
+            $card = $listing->item($booking)->toArray();
+            $cards[] = $card;
+        }
+
+        return $cards;
     }
 
     /**

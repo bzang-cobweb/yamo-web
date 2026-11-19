@@ -58,6 +58,9 @@ final class Field
 
     private ?string $dateMax = null;
 
+    /** @var array{unavailable: list<string>, after: string|null}|null */
+    private ?array $calendar = null;
+
     /** Unité affichée après la valeur (« m² ») : formulaire et fiche (décision 2026-11-18-fiche-offre). */
     private ?string $suffix = null;
 
@@ -560,6 +563,27 @@ final class Field
     }
 
     /**
+     * La date se choisit sur une grille de mois au lieu du sélecteur natif
+     * (décision 2026-11-19-contrat-calendrier-offre) : les jours `$unavailable`
+     * (`AAAA-MM-JJ`) y sont grisés. Avec `$after` (le champ du début d'une période,
+     * « check_in »), ils comptent comme des nuits : la fin se choisit après le début
+     * et au plus tard le premier jour indisponible qui le suit. La validation reste
+     * dans `rules()`.
+     *
+     * @param  list<string>  $unavailable
+     */
+    public function calendar(array $unavailable, ?string $after = null): self
+    {
+        if ($this->type !== FieldType::DATE) {
+            throw new LogicException("Champ « {$this->name} » : seule une date se choisit sur une grille.");
+        }
+
+        $this->calendar = ['unavailable' => array_values($unavailable), 'after' => $after];
+
+        return $this;
+    }
+
+    /**
      * Nombre maximal de caractères : validé par le serveur, envoyé à l'app (qui
      * bloque la saisie au-delà et affiche un compteur).
      */
@@ -927,6 +951,8 @@ final class Field
             'max_length' => $this->maxLength,
             /** Bornes du calendrier d'une date (`AAAA-MM-JJ` ou `null`) ; `null` pour un autre champ. */
             'date_range' => $this->type !== FieldType::DATE ? null : ['min' => $this->dateMin, 'max' => $this->dateMax],
+            /** Grille de mois (date seulement) : jours indisponibles, et le champ du début d'une période (`after`) ; `null` : sélecteur natif. */
+            'calendar' => $this->calendar,
             /** Unité affichée après la valeur (« m² »). */
             'suffix' => $this->suffix,
             /** Unité qui suit la valeur d'un autre champ (`suffixes` : valeur => unité) ; `suffix` à défaut. */

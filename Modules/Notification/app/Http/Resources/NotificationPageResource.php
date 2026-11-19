@@ -87,7 +87,7 @@ class NotificationPageResource extends JsonResource
 
         foreach (is_array($data['links'] ?? null) ? $data['links'] : [] as $link) {
             if (is_array($link) && is_string($link['label'] ?? null) && is_string($link['link'] ?? null)) {
-                $links[] = ['label' => $link['label'], 'link' => $link['link']];
+                $links[] = ['label' => (string) $link['label'], 'link' => (string) $link['link']];
             }
         }
 

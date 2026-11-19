@@ -158,4 +158,22 @@ class BookingAvailabilityTest extends TestCase
         $this->asUser($offer->user)->postJson("/api/v1/bookings/{$overlapping->getKey()}/answer", ['answer' => 'refuse'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::REFUSED, $overlapping->fresh()->status);
     }
+
+    public function test_the_booking_form_greys_out_taken_and_blocked_days(): void
+    {
+        $offer = $this->home();
+        $this->stay($offer, 5, 7, BookingStatusEnum::ACCEPTED);
+        $this->stay($offer, 9, 11);
+        $this->block($offer, 12);
+        $day = fn (int $days): string => today()->addDays($days)->toDateString();
+
+        $fields = collect($this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$offer->getKey())->assertOk()->json('data.fields'))->keyBy('name');
+        $this->assertSame(['unavailable' => [$day(5), $day(6), $day(12)], 'after' => null], $fields['check_in']['calendar']);
+        $this->assertSame(['unavailable' => [$day(5), $day(6), $day(12)], 'after' => 'check_in'], $fields['check_out']['calendar']);
+        $this->assertNull($fields['guests']['calendar']);
+
+        $visit = $this->home(false);
+        $this->block($visit, 3);
+        $this->assertSame(['unavailable' => [$day(3)], 'after' => null], $this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$visit->getKey())->json('data.fields.0.calendar'));
+    }
 }

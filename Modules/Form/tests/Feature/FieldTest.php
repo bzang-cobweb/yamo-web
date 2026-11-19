@@ -164,6 +164,7 @@ class FieldTest extends TestCase
             'suggestions' => null,
             'max_length' => null,
             'date_range' => null,
+            'calendar' => null,
             'suffix' => null,
             'suffix_when' => null,
             'upload' => null,
