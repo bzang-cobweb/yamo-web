@@ -30,7 +30,7 @@ class OfferCalendar
     public const PAST_MONTHS = 12;
 
     /**
-     * @return array{title: string, heading: string, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
+     * @return array{title: string, heading: string, address: string|null, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
      */
     public function month(Offer $offer, Carbon $month, string $locale): array
     {
@@ -75,8 +75,10 @@ class OfferCalendar
         return [
             /** Titre de la barre du haut (« Calendrier »). */
             'title' => __('offer::booking.calendar.title', [], $locale),
-            /** Titre du contenu : l'offre (« Studio · meublé · Douala »). */
+            /** Titre du contenu : le titre saisi de l'offre (« Studio photos »). */
             'heading' => $this->offerTitle($offer, $locale),
+            /** Son adresse sous le titre (« Rue Njo-Njo, Bonapriso, 00237 Douala, Cameroun »), ou `null`. */
+            'address' => $this->offerAddress($offer, $locale),
             'month' => (string) $from->format('Y-m'),
             'label' => ucfirst($from->copy()->locale($locale)->isoFormat('MMMM YYYY')),
             'previous' => $from->greaterThan($current->copy()->subMonths(self::PAST_MONTHS)) ? (string) $from->copy()->subMonth()->format('Y-m') : null,
@@ -209,9 +211,20 @@ class OfferCalendar
         return array_map(fn (array $entry): array => ['kind' => $entry[0], 'tone' => $entry[1], 'label' => $entry[2]], [...$entries, ['day', 'blocked', $label('blocked')]]);
     }
 
+    /** Le titre saisi par le propriétaire, dans la langue (sa langue de saisie à défaut). */
     private function offerTitle(Offer $offer, string $locale): string
     {
-        return app(DomainRegistry::class)->require()->itemTitle($offer) ?? (string) $offer->getTranslation('title', $locale);
+        return (string) $offer->getTranslation('title', $locale);
+    }
+
+    private function offerAddress(Offer $offer, string $locale): ?string
+    {
+        $current = app()->getLocale();
+        app()->setLocale($locale);
+        $address = $offer->fullAddress();
+        app()->setLocale($current);
+
+        return $address;
     }
 
     /**

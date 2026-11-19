@@ -1316,7 +1316,14 @@
                                                 },
                                                 "heading": {
                                                     "type": "string",
-                                                    "description": "Titre du contenu : l'offre (\u00ab Studio \u00b7 meubl\u00e9 \u00b7 Douala \u00bb)."
+                                                    "description": "Titre du contenu : le titre saisi de l'offre (\u00ab Studio photos \u00bb)."
+                                                },
+                                                "address": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Son adresse sous le titre (\u00ab Rue Njo-Njo, Bonapriso, 00237 Douala, Cameroun \u00bb), ou `null`."
                                                 },
                                                 "month": {
                                                     "type": "string"
@@ -1395,6 +1402,7 @@
                                             "required": [
                                                 "title",
                                                 "heading",
+                                                "address",
                                                 "month",
                                                 "label",
                                                 "previous",

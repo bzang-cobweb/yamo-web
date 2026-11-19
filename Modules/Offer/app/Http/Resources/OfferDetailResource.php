@@ -149,13 +149,7 @@ class OfferDetailResource extends JsonResource
      */
     private function address(Offer $offer): ?string
     {
-        $address = $offer->address;
-
-        if ($address === null) {
-            return null;
-        }
-
-        return implode(', ', array_filter([trim((string) $address->street), $address->subtitle()], fn (string $part): bool => $part !== '')) ?: null;
+        return $offer->fullAddress();
     }
 
     /**

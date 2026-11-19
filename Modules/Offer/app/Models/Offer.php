@@ -176,6 +176,22 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * « Rue du Lac 4, 1200 Genève, Suisse », le pays toujours, dans la langue courante
+     * (décision 2026-11-19-fiche-localisation-accordeon) ; sans adresse, `null`. Sert la
+     * fiche et le calendrier.
+     */
+    public function fullAddress(): ?string
+    {
+        $address = $this->address;
+
+        if ($address === null) {
+            return null;
+        }
+
+        return implode(', ', array_filter([trim((string) $address->street), $address->subtitle()], fn (string $part): bool => $part !== '')) ?: null;
+    }
+
+    /**
      * Les jours bloqués par le propriétaire (décision 2026-11-19-contrat-calendrier-offre).
      *
      * @return HasMany<OfferBlockedDate, $this>
