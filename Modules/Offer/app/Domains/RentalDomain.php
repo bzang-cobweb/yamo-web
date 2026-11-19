@@ -138,17 +138,17 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Quatre étapes dans l'app (décision 2026-11-19-etapes-formulaire-reordonnees) :
-     * le logement (type, meublé, catégorie, titre, description, statut), le prix et
-     * la disponibilité, l'adresse, puis les caractéristiques.
+     * Quatre étapes dans l'app (décision 2026-11-19-etapes-formulaire-ordre-final) :
+     * le logement (type, meublé, catégorie, titre, description), les
+     * caractéristiques, le prix et la disponibilité (avec le statut), puis l'adresse.
      */
     public function formSteps(): array
     {
         return [
-            ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'category_id', 'title', 'description', 'status']],
-            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from']],
-            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city']],
+            ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
+            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
+            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city']],
         ];
     }
 

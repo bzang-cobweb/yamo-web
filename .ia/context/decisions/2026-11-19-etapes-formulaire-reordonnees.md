@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-19-etapes-formulaire-ordre-final.md
 # `2026-11-19` — Étapes du formulaire de logement réordonnées
 
 - **Remplace en partie** : `2026-11-19-contrat-formulaire-etapes-symbole-devise.md` (le contenu des quatre étapes).
