@@ -41,6 +41,11 @@ class RentalDomain extends Domain
         return __('offer::rental.add');
     }
 
+    public function requestLabel(): string
+    {
+        return __('offer::rental.request');
+    }
+
     public function priceLabel(): string
     {
         return __('offer::rental.price');

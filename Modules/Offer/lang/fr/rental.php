@@ -7,6 +7,7 @@ return [
     'plural' => 'Logements',
     'mine' => 'Mes logements',
     'add' => 'Ajouter un logement',
+    'request' => 'Demande de logement',
     'property_type' => 'Type de logement',
     'property_types' => [
         'apartment' => 'Appartement',

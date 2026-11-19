@@ -7,6 +7,7 @@ return [
     'plural' => 'Homes',
     'mine' => 'My homes',
     'add' => 'Add a home',
+    'request' => 'Home request',
     'property_type' => 'Property type',
     'property_types' => [
         'apartment' => 'Apartment',

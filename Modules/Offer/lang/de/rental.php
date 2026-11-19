@@ -7,6 +7,7 @@ return [
     'plural' => 'Unterkünfte',
     'mine' => 'Meine Unterkünfte',
     'add' => 'Unterkunft hinzufügen',
+    'request' => 'Unterkunftsanfrage',
     'property_type' => 'Art der Unterkunft',
     'property_types' => [
         'apartment' => 'Wohnung',

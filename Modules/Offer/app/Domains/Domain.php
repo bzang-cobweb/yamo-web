@@ -49,6 +49,14 @@ abstract class Domain
     }
 
     /**
+     * Une demande sur une offre, titre de ses notifications (« Demande de logement »).
+     */
+    public function requestLabel(): string
+    {
+        return __('offer::booking.notify.title');
+    }
+
+    /**
      * Libellé du prix (« Loyer mensuel »).
      */
     public function priceLabel(): string

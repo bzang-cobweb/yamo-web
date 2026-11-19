@@ -57,28 +57,26 @@ return [
         'search' => 'Search an offer…',
     ],
     'notify' => [
+        'title' => 'Request',
+        'view_offer' => 'View the listing',
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'requested' => [
-            'title' => 'New request',
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
             'sms' => ':app: :guest requests :type :period for “:offer”. Reply in the app.',
         ],
         'accepted' => [
-            'title' => 'Request accepted',
             'subject' => 'Request accepted: :offer',
             'body' => 'Your request for “:offer” (:period) has been accepted.',
             'sms' => ':app: your request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
-            'title' => 'Request declined',
             'subject' => 'Request declined: :offer',
             'body' => 'Your request for “:offer” (:period) has been declined.',
             'sms' => ':app: your request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [
-            'title' => 'Request cancelled',
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their request for “:offer” (:period).',
             'sms' => ':app: :guest cancelled their request for “:offer” (:period).',

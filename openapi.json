@@ -2980,6 +2980,25 @@
                                 "title": {
                                     "type": "string"
                                 },
+                                "tag": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "Statut en pastille sous le titre (\u00ab En attente \u00bb, ton `warning`), ou `null`.",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "tone": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "tone"
+                                    ]
+                                },
                                 "body": {
                                     "type": "string"
                                 },
@@ -2989,6 +3008,25 @@
                                         "null"
                                     ],
                                     "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                                },
+                                "links": {
+                                    "type": "array",
+                                    "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "label": {
+                                                "type": "string"
+                                            },
+                                            "link": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "label",
+                                            "link"
+                                        ]
+                                    }
                                 },
                                 "read": {
                                     "type": "boolean"
@@ -3004,8 +3042,10 @@
                             "required": [
                                 "id",
                                 "title",
+                                "tag",
                                 "body",
                                 "link",
+                                "links",
                                 "read",
                                 "created_at"
                             ]

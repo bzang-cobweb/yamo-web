@@ -29,7 +29,7 @@ class NotificationApiTest extends TestCase
         $notification = $user->notifications()->create([
             'id' => (string) Str::uuid(),
             'type' => 'Test',
-            'data' => ['title' => $title, 'body' => "Texte de {$title}", 'link' => '/profile/lists/offer.bookings'],
+            'data' => ['title' => $title, 'tag' => ['label' => 'En attente', 'tone' => 'warning'], 'body' => "Texte de {$title}", 'link' => '/profile/lists/offer.bookings', 'links' => [['label' => "Voir l'annonce", 'link' => '/offers/7'], ['label' => 'Incomplet']]],
             'read_at' => $readAt,
         ]);
         if ($createdAt !== null) {
@@ -52,6 +52,8 @@ class NotificationApiTest extends TestCase
         $this->assertSame([false, true], array_column($items, 'read'));
         $this->assertSame('Texte de Récente', $items[0]['body']);
         $this->assertSame('/profile/lists/offer.bookings', $items[0]['link']);
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $items[0]['tag']);
+        $this->assertSame([['label' => "Voir l'annonce", 'link' => '/offers/7']], $items[0]['links']);
     }
 
     public function test_pages_follow_the_cursor(): void

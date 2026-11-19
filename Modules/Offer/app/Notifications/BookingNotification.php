@@ -8,6 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
@@ -25,8 +26,13 @@ abstract class BookingNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /** Le statut à l'envoi : la demande, rechargée quand la file traite la notification, a pu changer depuis. */
+    public readonly BookingStatusEnum $status;
+
     public function __construct(public readonly Booking $booking)
     {
+        $this->status = $booking->status;
+
         // La connexion de file n'attend pas la fin des transactions : la notification, si.
         $this->afterCommit();
     }
@@ -52,19 +58,25 @@ abstract class BookingNotification extends Notification implements ShouldQueue
     }
 
     /**
-     * Dans l'onglet « Notifications » : un titre, un texte, l'écran à ouvrir (la
-     * liste où retrouver la demande). Textes figés dans la langue du destinataire.
+     * Dans l'onglet « Notifications » : le titre de la demande (« Demande de
+     * logement »), son statut en pastille comme dans Mes réservations, un texte,
+     * l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
+     * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, body: string, link: string}
+     * @return array{title: string, tag: array{label: string, tone: string}, body: string, link: string, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
         $list = $this->section() === 'received' ? ReceivedBookingListing::name() : BookingListing::name();
 
         return [
-            'title' => __("offer::booking.notify.{$this->key()}.title"),
+            'title' => app(DomainRegistry::class)->require()->requestLabel(),
+            'tag' => ['label' => $this->status->label(), 'tone' => $this->status->tone()],
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
             'link' => '/profile/lists/'.$list,
+            'links' => [
+                ['label' => __('offer::booking.notify.view_offer'), 'link' => '/offers/'.$this->booking->offer_id],
+            ],
         ];
     }
 

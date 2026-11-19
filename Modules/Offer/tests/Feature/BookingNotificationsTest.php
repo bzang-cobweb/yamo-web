@@ -120,6 +120,18 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('Marie Curie requests a stay', $this->sms->messages[0]['message']);
     }
 
+    public function test_the_notification_status_is_the_one_at_send_time(): void
+    {
+        $booking = $this->booking();
+        $notification = new BookingRequestReceived($booking);
+        $booking->forceFill(['status' => BookingStatusEnum::ACCEPTED])->save();
+
+        $data = unserialize(serialize($notification))->toArray($booking->offer->user);
+
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $data['tag']);
+        $this->assertSame('Demande de logement', $data['title']);
+    }
+
     public function test_an_accepted_answer_reaches_the_guest(): void
     {
         $booking = $this->booking(guest: ['phone' => '+237690000008', 'phone_verified_at' => now()]);
@@ -140,9 +152,11 @@ class BookingNotificationsTest extends TestCase
         app(BookingService::class)->request($booking->user, $booking->offer, ['check_in' => today()->addDay()->toDateString(), 'check_out' => today()->addDays(2)->toDateString(), 'guests' => 1]);
 
         $notification = $owner->notifications()->sole();
-        $this->assertSame('New request', $notification->data['title']);
+        $this->assertSame('Home request', $notification->data['title']);
+        $this->assertSame(['label' => 'Pending', 'tone' => 'warning'], $notification->data['tag']);
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
         $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
+        $this->assertSame([['label' => 'View the listing', 'link' => '/offers/'.$booking->offer_id]], $notification->data['links']);
         $this->assertNull($notification->read_at);
     }
 }
