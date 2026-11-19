@@ -85,11 +85,13 @@ class OfferApiTest extends TestCase
     {
         $menu = $this->asUser($this->member())->getJson('/api/v1/auth/me/menu')->assertOk()->json('data');
 
-        // « Mes logements », puis « Mes favoris » (décision 2026-11-19-contrat-vedette-favoris).
+        // « Mes logements », « Mes favoris » (décision 2026-11-19-contrat-vedette-favoris), puis
+        // « Mes réservations » ; sans offre, pas de « Réservations reçues » (décision 2026-11-19-contrat-reservations).
         $this->assertSame([
             ['key' => 'offers', 'label' => 'Mes logements', 'list' => 'offer.mine'],
             ['key' => 'favorites', 'label' => 'Mes favoris', 'list' => 'offer.favorites'],
-        ], array_slice($menu, -2));
+            ['key' => 'bookings', 'label' => 'Mes réservations', 'list' => 'offer.bookings'],
+        ], array_slice($menu, -3));
     }
 
     public function test_the_form_has_the_common_fields_then_the_domain_attributes(): void

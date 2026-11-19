@@ -5,6 +5,7 @@
 // Sans domaine choisi, elles répondent 404 (décision 2026-11-18-offres-et-domaines).
 
 use Illuminate\Support\Facades\Route;
+use Modules\Offer\Http\Controllers\Api\BookingController;
 use Modules\Offer\Http\Controllers\Api\OfferController;
 use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
 use Modules\Offer\Http\Controllers\Api\OfferReviewController;
@@ -26,7 +27,16 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     Route::put('{offer}/review', [OfferReviewController::class, 'save'])->can('review', 'offer')->name('review.save');
     Route::delete('{offer}/review', [OfferReviewController::class, 'destroy'])->can('review', 'offer')->name('review.destroy');
 
+    // Demander une réservation ou une visite (décision 2026-11-19-contrat-reservations).
+    Route::post('{offer}/bookings', [BookingController::class, 'store'])->can('book', 'offer')->middleware('throttle:20,1')->name('bookings.store');
+
     // Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
     Route::put('{offer}/favorite', [OfferFavoriteController::class, 'save'])->can('favorite', 'offer')->name('favorite.save');
     Route::delete('{offer}/favorite', [OfferFavoriteController::class, 'destroy'])->can('favorite', 'offer')->name('favorite.destroy');
+});
+
+// Répondre à une demande (le propriétaire), l'annuler (le membre) : décision 2026-11-19-contrat-reservations.
+Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/bookings')->name('v1.bookings.')->group(function () {
+    Route::post('{booking}/answer', [BookingController::class, 'answer'])->can('answer', 'booking')->name('answer');
+    Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->can('cancel', 'booking')->name('cancel');
 });

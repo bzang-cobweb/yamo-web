@@ -12,6 +12,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
@@ -78,6 +79,8 @@ class OfferDetailResource extends JsonResource
                 'reviews' => $reviews !== null,
                 'informations' => $informations !== [],
             ]),
+            /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
+            'booking' => $this->booking($offer, $domain, $owner),
             /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
             'favorite' => $this->favorite($offer, $request),
         ];
@@ -186,6 +189,20 @@ class OfferDetailResource extends JsonResource
         $leading = array_intersect_key(array_flip($domain->leadingFacts()), $facts);
 
         return array_values([...array_replace($leading, array_intersect_key($facts, $leading)), ...array_diff_key($facts, $leading)]);
+    }
+
+    /**
+     * @return array{type: string, label: string, form: string}|null
+     */
+    private function booking(Offer $offer, Domain $domain, bool $owner): ?array
+    {
+        $type = $domain->bookingType($offer);
+
+        if ($owner || $type === null || ! $offer->isVisibleToOthers()) {
+            return null;
+        }
+
+        return ['type' => $type->value, 'label' => $type->actionLabel(), 'form' => OfferBookingForm::name()];
     }
 
     /**

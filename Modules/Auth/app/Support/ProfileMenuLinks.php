@@ -13,7 +13,7 @@ use Modules\Auth\Models\User;
  */
 final class ProfileMenuLinks
 {
-    /** @var array<string, array{label: Closure(User): string, list: Closure(): ?string, available: Closure(): bool}> */
+    /** @var array<string, array{label: Closure(User): string, list: Closure(): ?string, available: Closure(User): bool}> */
     private array $links = [];
 
     /**
@@ -22,7 +22,7 @@ final class ProfileMenuLinks
      *
      * @param  Closure(User): string  $label
      * @param  Closure(): ?string  $list
-     * @param  (Closure(): bool)|null  $available
+     * @param  (Closure(User): bool)|null  $available  proposé à ce compte ?
      */
     public function addList(string $key, Closure $label, Closure $list, ?Closure $available = null): void
     {
@@ -41,7 +41,8 @@ final class ProfileMenuLinks
         foreach ($this->links as $key => $link) {
             $list = ($link['list'])();
 
-            if ($list !== null && ($link['available'])()) {
+            // La disponibilité peut dépendre du compte (« Réservations reçues » : qui a des offres).
+            if ($list !== null && ($link['available'])($user)) {
                 $links[] = ['key' => $key, 'label' => ($link['label'])($user), 'list' => $list];
             }
         }

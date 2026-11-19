@@ -28,7 +28,7 @@ class OfferPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        return in_array($ability, ['review', 'favorite'], true) ? null : $this->superAdminBefore($user, $ability);
+        return in_array($ability, ['review', 'favorite', 'book'], true) ? null : $this->superAdminBefore($user, $ability);
     }
 
     public function viewAny(User $user): bool
@@ -77,6 +77,22 @@ class OfferPolicy
 
         return (int) $offer->user_id === (int) $user->getKey()
             ? Response::deny(__('offer::review.own_offer'))
+            : Response::allow();
+    }
+
+    /**
+     * Demander une réservation ou une visite (décision 2026-11-19-contrat-reservations) :
+     * une offre visible des autres que le domaine laisse demander (sinon 404), qui
+     * n'est pas la sienne (403).
+     */
+    public function book(User $user, Offer $offer): Response
+    {
+        if (! $offer->isVisibleToOthers() || app(DomainRegistry::class)->require()->bookingType($offer) === null) {
+            return Response::denyAsNotFound();
+        }
+
+        return (int) $offer->user_id === (int) $user->getKey()
+            ? Response::deny(__('offer::booking.own_offer'))
             : Response::allow();
     }
 

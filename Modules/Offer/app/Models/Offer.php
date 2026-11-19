@@ -166,6 +166,16 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * Les demandes de réservation ou de visite (décision 2026-11-19-contrat-reservations).
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
      * Ses blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations).
      *
      * @return HasMany<OfferInformation, $this>

@@ -6,6 +6,7 @@ use App\Support\Currency;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
 use Modules\Form\Support\Field;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -127,6 +128,15 @@ abstract class Domain
         $unit = $this->priceUnit($offer);
 
         return $unit === null ? $price : $price.' / '.$unit;
+    }
+
+    /**
+     * Ce qu'un membre peut demander sur l'offre : un séjour, une visite, ou rien
+     * (`null`, pas de bouton sur la fiche ; décision 2026-11-19-contrat-reservations).
+     */
+    public function bookingType(Offer $offer): ?BookingTypeEnum
+    {
+        return null;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Modules\Offer\Domains;
 
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Form\Support\Field;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -263,6 +264,15 @@ class RentalDomain extends Domain
     public function listingAttributes(): array
     {
         return ['property_type', 'furnished'];
+    }
+
+    /**
+     * Un meublé se réserve par dates ; un non meublé se visite (décision
+     * 2026-11-19-contrat-reservations).
+     */
+    public function bookingType(Offer $offer): ?BookingTypeEnum
+    {
+        return $offer->detail('furnished') === true ? BookingTypeEnum::STAY : BookingTypeEnum::VISIT;
     }
 
     /**

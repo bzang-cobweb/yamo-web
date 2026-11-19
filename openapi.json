@@ -250,6 +250,153 @@
                 "security": []
             }
         },
+        "/v1/offers/{offer}/bookings": {
+            "post": {
+                "operationId": "v1.offers.bookings.store",
+                "summary": "Demander un s\u00e9jour ou une visite",
+                "tags": [
+                    "Booking"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OfferBookingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/bookings/{booking}/answer": {
+            "post": {
+                "operationId": "v1.bookings.answer",
+                "summary": "Accepter ou refuser une demande en attente sur une de ses offres",
+                "tags": [
+                    "Booking"
+                ],
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "required": true,
+                        "description": "The booking ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BookingAnswerRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/bookings/{booking}/cancel": {
+            "post": {
+                "operationId": "v1.bookings.cancel",
+                "summary": "Annuler sa demande, en attente ou accept\u00e9e et pas encore commenc\u00e9e",
+                "tags": [
+                    "Booking"
+                ],
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "required": true,
+                        "description": "The booking ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/countries": {
             "get": {
                 "operationId": "v1.countries.index",
@@ -2153,6 +2300,30 @@
                 ],
                 "title": "ApplicationResource"
             },
+            "BookingAnswerRequest": {
+                "type": "object",
+                "description": "La r\u00e9ponse du propri\u00e9taire, valid\u00e9e par le formulaire `offer.booking.answer` :\naccepter ou refuser, avec un message facultatif.",
+                "properties": {
+                    "answer": {
+                        "type": "string",
+                        "enum": [
+                            "accept",
+                            "refuse"
+                        ]
+                    },
+                    "refusal_message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "answer"
+                ],
+                "title": "BookingAnswerRequest"
+            },
             "CountryResource": {
                 "type": "object",
                 "properties": {
@@ -2576,6 +2747,27 @@
                 ],
                 "title": "LoginRequest"
             },
+            "OfferBookingRequest": {
+                "type": "object",
+                "description": "Une demande de r\u00e9servation ou de visite, valid\u00e9e par le formulaire\n`offer.booking` de l'offre de la route (s\u00e9jour ou visite, selon le domaine).",
+                "properties": {
+                    "check_in": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "check_in"
+                ],
+                "title": "OfferBookingRequest"
+            },
             "OfferDetailResource": {
                 "type": "object",
                 "properties": {
@@ -2890,6 +3082,29 @@
                             ]
                         }
                     },
+                    "booking": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Bouton de la barre fixe (d\u00e9cision 2026-11-19-contrat-reservations) : \u00ab R\u00e9server \u00bb (s\u00e9jour) ou \u00ab Demander une visite \u00bb, et le formulaire \u00e0 ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connect\u00e9 le voit aussi : l'app le m\u00e8ne d'abord \u00e0 la connexion.",
+                        "properties": {
+                            "type": {
+                                "type": "string"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "form": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "type",
+                            "label",
+                            "form"
+                        ]
+                    },
                     "favorite": {
                         "type": [
                             "object",
@@ -2926,6 +3141,7 @@
                     "status",
                     "reviews",
                     "sections",
+                    "booking",
                     "favorite"
                 ],
                 "title": "OfferDetailResource"
