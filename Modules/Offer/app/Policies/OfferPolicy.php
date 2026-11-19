@@ -24,12 +24,12 @@ class OfferPolicy
     use HasBeforeAbility { before as superAdminBefore; }
 
     /**
-     * Le super administrateur a tous les droits, sauf sur les avis : les règles
-     * d'un avis (offre publiée, pas la sienne) valent pour tout compte.
+     * Le super administrateur a tous les droits, sauf sur les avis et les favoris :
+     * leurs règles (offre publiée, pas la sienne) valent pour tout compte.
      */
     public function before(User $user, string $ability): ?bool
     {
-        return $ability === 'review' ? null : $this->superAdminBefore($user, $ability);
+        return in_array($ability, ['review', 'favorite'], true) ? null : $this->superAdminBefore($user, $ability);
     }
 
     public function viewAny(User $user): bool
@@ -79,6 +79,21 @@ class OfferPolicy
 
         return (int) $offer->user_id === (int) $user->getKey()
             ? Response::deny(__('offer::review.own_offer'))
+            : Response::allow();
+    }
+
+    /**
+     * Mettre une offre en favori, ou l'en retirer (décision 2026-11-19-contrat-vedette-favoris) :
+     * mêmes règles qu'un avis — publiée, du pays courant (sinon 404), pas la sienne (403).
+     */
+    public function favorite(User $user, Offer $offer): Response
+    {
+        if ($offer->status !== OfferStatusEnum::PUBLISHED || (int) $offer->country_id !== (int) CurrentCountry::require()->getKey()) {
+            return Response::denyAsNotFound();
+        }
+
+        return (int) $offer->user_id === (int) $user->getKey()
+            ? Response::deny(__('offer::offer.favorites.own_offer'))
             : Response::allow();
     }
 

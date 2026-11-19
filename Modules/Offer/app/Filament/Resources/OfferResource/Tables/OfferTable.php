@@ -8,6 +8,7 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Number;
@@ -61,6 +62,12 @@ abstract class OfferTable
                     ->label(__('offer::offer.published_at'))
                     ->dateTime()
                     ->sortable(),
+                // Décision 2026-11-19-contrat-vedette-favoris.
+                TextColumn::make('featured_until')
+                    ->label(__('offer::offer.featured_until'))
+                    ->dateTime()
+                    ->placeholder('—')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -77,6 +84,12 @@ abstract class OfferTable
                     ->relationship('user', 'name')
                     ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
                     ->searchable(),
+                TernaryFilter::make('featured')
+                    ->label(__('offer::offer.featured'))
+                    ->queries(
+                        true: fn ($query) => $query->featured(),
+                        false: fn ($query) => $query->notFeatured(),
+                    ),
                 TrashedFilter::make(),
             ])
             ->recordActions([...OfferResource::getActions(), RestoreAction::make()])

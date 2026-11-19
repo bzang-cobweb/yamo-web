@@ -89,7 +89,7 @@ class ProjectInitCommandTest extends TestCase
         $member->assignRole(RoleEnum::MEMBER);
         $token = $member->createToken('iPhone')->plainTextToken;
         $menu = $this->withToken($token)->getJson('/api/v1/auth/me/menu')->assertOk()->json('data');
-        $this->assertSame('Mes logements', end($menu)['label']);
+        $this->assertContains('Mes logements', array_column($menu, 'label'));
         $fields = array_column($this->withToken($token)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.fields'), 'name');
         $this->assertContains('surface', $fields);
     }

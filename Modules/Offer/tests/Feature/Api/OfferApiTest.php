@@ -74,7 +74,11 @@ class OfferApiTest extends TestCase
     {
         $menu = $this->asUser($this->member())->getJson('/api/v1/auth/me/menu')->assertOk()->json('data');
 
-        $this->assertSame(['key' => 'offers', 'label' => 'Mes logements', 'list' => 'offer.mine'], end($menu));
+        // « Mes logements », puis « Mes favoris » (décision 2026-11-19-contrat-vedette-favoris).
+        $this->assertSame([
+            ['key' => 'offers', 'label' => 'Mes logements', 'list' => 'offer.mine'],
+            ['key' => 'favorites', 'label' => 'Mes favoris', 'list' => 'offer.favorites'],
+        ], array_slice($menu, -2));
     }
 
     public function test_the_form_has_the_common_fields_then_the_domain_attributes(): void

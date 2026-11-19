@@ -758,6 +758,72 @@
                 }
             }
         },
+        "/v1/offers/{offer}/favorite": {
+            "put": {
+                "operationId": "v1.offers.favorite.save",
+                "summary": "Mettre une offre en favori",
+                "tags": [
+                    "OfferFavorite"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "v1.offers.favorite.destroy",
+                "summary": "Retirer une offre de ses favoris",
+                "tags": [
+                    "OfferFavorite"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/offers/{offer}/review": {
             "put": {
                 "operationId": "v1.offers.review.save",
@@ -2225,6 +2291,35 @@
                                     ],
                                     "description": "Phrase mise en avant, affich\u00e9e en gras sur sa ligne ; `null` sans."
                                 },
+                                "favorite": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "C\u0153ur de favori : plein si `active` ; PUT sur `endpoint` ajoute, DELETE retire ; `null` : pas de c\u0153ur.",
+                                    "properties": {
+                                        "active": {
+                                            "type": "boolean"
+                                        },
+                                        "endpoint": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "active",
+                                        "endpoint"
+                                    ]
+                                },
+                                "link": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "\u00c9cran de l'app ouvert en touchant l'item ; `null` : aucun."
+                                },
                                 "edit": {
                                     "type": [
                                         "object",
@@ -2302,6 +2397,8 @@
                                 "image",
                                 "rating",
                                 "highlight",
+                                "favorite",
+                                "link",
                                 "edit",
                                 "delete"
                             ]
@@ -2828,6 +2925,25 @@
                             "can_review",
                             "delete"
                         ]
+                    },
+                    "favorite": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "C\u0153ur de favori d'un membre connect\u00e9 : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publi\u00e9e.",
+                        "properties": {
+                            "active": {
+                                "type": "boolean"
+                            },
+                            "endpoint": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "active",
+                            "endpoint"
+                        ]
                     }
                 },
                 "required": [
@@ -2840,7 +2956,8 @@
                     "facts",
                     "published_at",
                     "status",
-                    "reviews"
+                    "reviews",
+                    "favorite"
                 ],
                 "title": "OfferDetailResource"
             },

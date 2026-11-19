@@ -49,6 +49,8 @@ class ListingApiTest extends TestCase
                     'image' => null,
                     'rating' => null,
                     'highlight' => null,
+                    'favorite' => null,
+                    'link' => null,
                     'edit' => null,
                     'delete' => [
                         'label' => 'Retirer', 'confirm' => 'Sûr ?', 'method' => 'DELETE', 'endpoint' => "/v1/test/cards/{$user->getKey()}",

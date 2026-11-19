@@ -11,6 +11,7 @@ use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Forms\OfferReviewForm;
 use Modules\Offer\Lists\OfferBrowseListing;
+use Modules\Offer\Lists\OfferFavoritesListing;
 use Modules\Offer\Lists\OfferListing;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
@@ -72,12 +73,19 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(ListingRegistry::class)->register(OfferListing::class);
         // La vitrine de l'accueil, ouverte sans connexion (décision 2026-11-18-accueil-offres-du-pays).
         $this->app->make(ListingRegistry::class)->register(OfferBrowseListing::class);
+        // « Mes favoris » (décision 2026-11-19-contrat-vedette-favoris).
+        $this->app->make(ListingRegistry::class)->register(OfferFavoritesListing::class);
 
         // « Mes logements » (libellé du domaine), après les liens d'Auth.
         $this->app->make(ProfileMenuLinks::class)->addList(
             'offers',
             fn (): string => $domains->require()->mineLabel(),
             fn (): ?string => OfferListing::isAvailable() ? OfferListing::name() : null,
+        );
+        $this->app->make(ProfileMenuLinks::class)->addList(
+            'favorites',
+            fn (): string => __('offer::offer.favorites.title'),
+            fn (): ?string => OfferFavoritesListing::isAvailable() ? OfferFavoritesListing::name() : null,
         );
     }
 }

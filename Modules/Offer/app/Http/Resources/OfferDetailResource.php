@@ -25,7 +25,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, published_at: string|null, status: array{value: string, label: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -54,6 +54,8 @@ class OfferDetailResource extends JsonResource
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
             /** Les avis (décision 2026-11-19-contrat-avis-offres) : moyenne, nombre, 5 derniers, le sien, s'il peut en donner un, et le retrait du sien ; `null` pour une offre non publiée. */
             'reviews' => $this->reviews($offer, $request),
+            /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
+            'favorite' => $this->favorite($offer, $request),
         ];
     }
 
@@ -96,6 +98,23 @@ class OfferDetailResource extends JsonResource
                 'confirm' => __('offer::review.delete_confirm'),
                 ...Submission::toRoute('api.v1.offers.review.destroy', SuccessAction::BACK, __('offer::review.deleted'), destructive: true, parameters: ['offer' => $offer->getKey()])->toArray(),
             ],
+        ];
+    }
+
+    /**
+     * @return array{active: bool, endpoint: string}|null
+     */
+    private function favorite(Offer $offer, Request $request): ?array
+    {
+        $user = $request->user('sanctum');
+
+        if ($user === null || ! Gate::forUser($user)->allows('favorite', $offer)) {
+            return null;
+        }
+
+        return [
+            'active' => $offer->favorites()->where('user_id', $user->getAuthIdentifier())->exists(),
+            'endpoint' => $offer->favoriteEndpoint(),
         ];
     }
 

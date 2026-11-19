@@ -1,0 +1,23 @@
+# `2026-11-19` — Contrat « offres en vedette et favoris », validé
+
+- **Type** : décision
+- **Question posée** : valider le contrat `specs/2026-11-19-vedette-et-favoris.md`.
+- **Réponse** : « pas de badge en vedette », « pas de favoris sur les photos si pas connecté », puis « Approved ».
+- **Ce qui est retenu** :
+  - **vedette** : une colonne `featured_until` sur l'offre, fixée par un administrateur au lancement, plus tard par un paiement :
+    - une offre en vedette passe en tête de la vitrine jusqu'à cette date ;
+    - **aucun badge** ;
+  - **favoris** :
+    - un cœur en haut à droite de la photo, dans la vitrine et sur la fiche ;
+    - **seulement pour un membre connecté**, et jamais sur ses propres offres ;
+    - une liste « Mes favoris » dans le menu du profil ;
+    - `PUT/DELETE /api/v1/offers/{offer}/favorite` ;
+  - `ListItem` gagne un champ générique `favorite`.
+- **Motif** : la demande de l'humain ; la vedette sera payante pour le propriétaire (décision `2026-11-19-modele-proprietaire-payant`).
+- **Portée** : modules Offer et Form, app (vitrine, fiche, profil).
+- **Corollaires** : hors périmètre :
+  - le paiement ;
+  - une limite au nombre de vedettes ;
+  - les notifications ;
+  - les favoris sans compte.
+- **Tranché par** : humain

@@ -59,4 +59,13 @@ return [
         'remove' => 'Remove',
         'removed' => 'Offer removed.',
     ],
+    // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
+    'featured_until' => 'Featured until',
+    'featured' => 'Featured',
+    'featured_help' => 'Empty: not featured. Later, a promotion paid by the owner will fill this date.',
+    'favorites' => [
+        'title' => 'My favorites',
+        'empty' => 'No favorites yet. Tap the heart of an offer to find it here.',
+        'own_offer' => 'You cannot add your own offer to your favorites.',
+    ],
 ];

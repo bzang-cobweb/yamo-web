@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -38,6 +39,8 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $currency
  * @property array<string, mixed>|null $details
  * @property Carbon|null $published_at
+ * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
+ * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
  * @property-read Country|null $country
  * @property-read OfferCategory|null $category
@@ -45,7 +48,7 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -84,6 +87,7 @@ class Offer extends Model implements HasMedia
             'price' => 'decimal:2',
             'details' => 'array',
             'published_at' => 'datetime',
+            'featured_until' => 'datetime',
         ];
     }
 
@@ -136,6 +140,59 @@ class Offer extends Model implements HasMedia
     public function reviews(): HasMany
     {
         return $this->hasMany(OfferReview::class);
+    }
+
+    /**
+     * Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
+     *
+     * @return HasMany<OfferFavorite, $this>
+     */
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(OfferFavorite::class);
+    }
+
+    /**
+     * Est-elle en favori de `$userId` ? Chargé en `is_favorite`.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeWithFavoriteOf(Builder $query, int|string|null $userId): void
+    {
+        $query->withExists(['favorites as is_favorite' => fn (Builder $favorites) => $favorites->where('user_id', $userId)]);
+    }
+
+    /**
+     * En vedette maintenant : sa date n'est pas passée.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeFeatured(Builder $query): void
+    {
+        $query->where('featured_until', '>', now());
+    }
+
+    /**
+     * Pas en vedette maintenant.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeNotFeatured(Builder $query): void
+    {
+        $query->where(fn (Builder $dates) => $dates->whereNull('featured_until')->orWhere('featured_until', '<=', now()));
+    }
+
+    /**
+     * Point d'API de son cœur de favori, relatif à l'API (« /v1/offers/12/favorite »).
+     */
+    public function favoriteEndpoint(): string
+    {
+        return '/'.Str::after(ltrim(route('api.v1.offers.favorite.save', ['offer' => $this->getKey()], false), '/'), 'api/');
+    }
+
+    public function isFeatured(): bool
+    {
+        return $this->featured_until !== null && $this->featured_until->isFuture();
     }
 
     /**

@@ -6,6 +6,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Offer\Http\Controllers\Api\OfferController;
+use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
 use Modules\Offer\Http\Controllers\Api\OfferReviewController;
 use Modules\Offer\Http\Middleware\RequireOfferDomain;
 use Modules\Offer\Models\Offer;
@@ -22,4 +23,8 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     // Son avis sur une offre (décision 2026-11-19-contrat-avis-offres).
     Route::put('{offer}/review', [OfferReviewController::class, 'save'])->can('review', 'offer')->name('review.save');
     Route::delete('{offer}/review', [OfferReviewController::class, 'destroy'])->can('review', 'offer')->name('review.destroy');
+
+    // Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
+    Route::put('{offer}/favorite', [OfferFavoriteController::class, 'save'])->can('favorite', 'offer')->name('favorite.save');
+    Route::delete('{offer}/favorite', [OfferFavoriteController::class, 'destroy'])->can('favorite', 'offer')->name('favorite.destroy');
 });

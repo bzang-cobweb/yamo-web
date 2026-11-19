@@ -26,6 +26,14 @@ final class ListItem
     /** Phrase mise en avant, sur sa ligne et en gras ; aucune par défaut. */
     private ?string $highlight = null;
 
+    /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
+    private ?bool $favoriteActive = null;
+
+    private ?string $favoriteEndpoint = null;
+
+    /** Écran de l'app ouvert en touchant l'item (« /offers/12 ») ; aucun par défaut. */
+    private ?string $link = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -81,6 +89,29 @@ final class ListItem
     }
 
     /**
+     * Un cœur sur la photo (décision 2026-11-19-contrat-vedette-favoris) : plein si
+     * `$active` ; `$endpoint` (relatif à l'API, `/v1/…`) reçoit PUT pour ajouter,
+     * DELETE pour retirer. Sans appel, pas de cœur (visiteur, sa propre offre).
+     */
+    public function favorite(bool $active, string $endpoint): self
+    {
+        $this->favoriteActive = $active;
+        $this->favoriteEndpoint = $endpoint;
+
+        return $this;
+    }
+
+    /**
+     * Toucher l'item ouvre cet écran de l'app (« /offers/12 »), quand il n'ouvre pas de formulaire.
+     */
+    public function link(?string $path): self
+    {
+        $this->link = $path;
+
+        return $this;
+    }
+
+    /**
      * Toucher l'item ouvre le formulaire `$form` lié à cet enregistrement.
      */
     public function edit(string $form, string|int|null $record = null): self
@@ -103,7 +134,7 @@ final class ListItem
     }
 
     /**
-     * @return array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}
+     * @return array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, favorite: array{active: bool, endpoint: string}|null, link: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}
      */
     public function toArray(): array
     {
@@ -116,6 +147,10 @@ final class ListItem
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
             /** Phrase mise en avant, affichée en gras sur sa ligne ; `null` sans. */
             'highlight' => $this->highlight,
+            /** Cœur de favori : plein si `active` ; PUT sur `endpoint` ajoute, DELETE retire ; `null` : pas de cœur. */
+            'favorite' => $this->favoriteEndpoint === null ? null : ['active' => (bool) $this->favoriteActive, 'endpoint' => $this->favoriteEndpoint],
+            /** Écran de l'app ouvert en touchant l'item ; `null` : aucun. */
+            'link' => $this->link,
             'edit' => $this->edit,
             'delete' => $this->deleteSubmission === null ? null : [
                 'label' => (string) $this->deleteLabel,

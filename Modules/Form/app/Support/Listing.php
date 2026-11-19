@@ -93,6 +93,45 @@ abstract class Listing
     }
 
     /**
+     * Enregistrements épinglés en tête de la première page, hors pagination (les
+     * offres en vedette, décision 2026-11-19-contrat-vedette-favoris) ; aucun par
+     * défaut. `query()` doit les exclure, pour qu'ils ne reviennent pas plus loin.
+     * Peu nombreux : au plus `pinnedLimit()`.
+     *
+     * @return Builder<covariant Model>|null
+     */
+    protected function pinned(): ?Builder
+    {
+        return null;
+    }
+
+    public function pinnedLimit(): int
+    {
+        return 20;
+    }
+
+    /**
+     * Les épinglés à afficher : sur la première page seulement, restreints à la recherche.
+     *
+     * @return list<Model>
+     */
+    final public function pinnedItems(?string $cursor = null, ?string $search = null): array
+    {
+        $query = $this->pinned();
+
+        if ($query === null || filled($cursor)) {
+            return [];
+        }
+
+        $term = Str::squish((string) $search);
+        if ($term !== '' && $this->searchPlaceholder() !== null) {
+            $query->where(fn (Builder $group) => $this->search($group, $term));
+        }
+
+        return $query->limit($this->pinnedLimit())->get()->all();
+    }
+
+    /**
      * Texte d'aide du champ de recherche, traduit. Une liste qui en donne un est
      * cherchable et doit définir `search()` ; aucun par défaut.
      */

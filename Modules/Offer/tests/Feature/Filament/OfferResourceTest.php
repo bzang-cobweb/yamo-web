@@ -99,6 +99,30 @@ class OfferResourceTest extends AuthFilamentTestCase
         $this->assertNotNull($offer->published_at);
     }
 
+    public function test_an_admin_features_an_offer_until_a_date_and_filters_featured_ones(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::ADMIN);
+        $this->actingAs($admin);
+        $offer = Offer::factory()->create([
+            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
+            'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio'],
+        ]);
+        $other = Offer::factory()->create(['status' => 'published']);
+
+        // Décision 2026-11-19-contrat-vedette-favoris.
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->fillForm(['featured_until' => now()->addDays(10)->format('Y-m-d H:i')])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($offer->fresh()->isFeatured());
+        Livewire::test(ListOffers::class)
+            ->filterTable('featured', true)
+            ->assertCanSeeTableRecords([$offer])
+            ->assertCanNotSeeTableRecords([$other]);
+    }
+
     public function test_the_domain_schema_validates_in_the_back_office_too(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);

@@ -14,6 +14,7 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferFavorite;
 use Modules\Offer\Models\OfferReview;
 
 /**
@@ -61,6 +62,28 @@ class DemoSeeder extends Seeder
 
         $this->photos($member);
         $this->reviews($member, $cameroon);
+        $this->featuredAndFavorites($member);
+    }
+
+    /**
+     * Deux logements en vedette pour 30 jours, et trois favoris du premier visiteur
+     * (décision 2026-11-19-contrat-vedette-favoris). Rejouable.
+     */
+    private function featuredAndFavorites(User $member): void
+    {
+        $offers = Offer::query()->where('user_id', $member->getKey())->where('status', OfferStatusEnum::PUBLISHED)->orderBy('id')->get()->values();
+
+        foreach ([2, 9] as $index) {
+            $offers->get($index)?->update(['featured_until' => now()->addDays(30)]);
+        }
+
+        $visitor = User::query()->where('email', 'demo-visiteur-1@example.test')->first();
+        foreach ($visitor === null ? [] : [0, 4, 10] as $index) {
+            $offer = $offers->get($index);
+            if ($offer instanceof Offer) {
+                OfferFavorite::query()->firstOrCreate(['user_id' => $visitor->getKey(), 'offer_id' => $offer->getKey()]);
+            }
+        }
     }
 
     /**

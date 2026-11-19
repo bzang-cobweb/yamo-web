@@ -64,13 +64,57 @@ class OfferBrowseListing extends Listing
      */
     public function query(): Builder
     {
+        // Les vedettes épinglées en tête (`pinned()`) sont exclues ici ; au-delà de la
+        // limite des épinglées, une vedette reste dans la liste, à sa place.
+        return $this->base()->whereNotIn('id', $this->pinnedIds())->orderByDesc('id');
+    }
+
+    /** @var list<int>|null */
+    private ?array $pinnedIds = null;
+
+    /**
+     * Les vedettes épinglées : les `pinnedLimit()` premières, la date la plus
+     * lointaine d'abord, hors recherche (la même pour toutes les pages).
+     *
+     * @return list<int>
+     */
+    private function pinnedIds(): array
+    {
+        return $this->pinnedIds ??= Offer::query()
+            ->where('country_id', CurrentCountry::require()->getKey())
+            ->where('status', OfferStatusEnum::PUBLISHED)
+            ->featured()
+            ->orderByDesc('featured_until')->orderByDesc('id')
+            ->limit($this->pinnedLimit())
+            ->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+    }
+
+    /**
+     * Les offres en vedette, en tête de la première page, la date la plus lointaine
+     * d'abord (décision 2026-11-19-contrat-vedette-favoris). Aucun badge.
+     *
+     * @return Builder<Offer>
+     */
+    protected function pinned(): Builder
+    {
+        return $this->base()->whereIn('id', $this->pinnedIds())->orderByDesc('featured_until')->orderByDesc('id');
+    }
+
+    /**
+     * Publiées, du pays courant, avec ce qu'affiche un item.
+     *
+     * @return Builder<Offer>
+     */
+    private function base(): Builder
+    {
         return Offer::query()
             ->with(['address', 'media'])
             // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
             ->withReviewSummary()
+            // Le cœur d'un membre connecté (décision 2026-11-19-contrat-vedette-favoris).
+            ->when($this->user !== null, fn (Builder $query) => $query->withFavoriteOf($this->user?->getAuthIdentifier()))
             ->where('country_id', CurrentCountry::require()->getKey())
-            ->where('status', OfferStatusEnum::PUBLISHED)
-            ->orderByDesc('id');
+            ->where('status', OfferStatusEnum::PUBLISHED);
     }
 
     protected function search(Builder $query, string $term): void
@@ -93,9 +137,17 @@ class OfferBrowseListing extends Listing
         // Titre construit par le domaine (« Studio · meublé · Douala »), sinon le titre saisi ;
         // en sous-titre, le titre saisi ; en gras, les détails puis le prix
         // (« 3 chambres · 80 000 FCFA / mois », décision 2026-11-19-item-titre-saisi-details).
-        return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
+        $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)
-            ->highlight(implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null);
+            ->highlight(implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null)
+            ->link('/offers/'.$record->getKey());
+
+        // Un cœur pour un membre connecté, jamais sur ses propres offres.
+        if ($this->user !== null && (int) $record->user_id !== (int) $this->user->getAuthIdentifier()) {
+            $item->favorite((bool) $record->is_favorite, $record->favoriteEndpoint());
+        }
+
+        return $item;
     }
 }

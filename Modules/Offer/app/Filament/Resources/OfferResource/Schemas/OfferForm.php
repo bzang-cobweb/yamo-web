@@ -5,6 +5,7 @@ namespace Modules\Offer\Filament\Resources\OfferResource\Schemas;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
 use Closure;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -75,6 +76,12 @@ abstract class OfferForm
                             ->options(OfferStatusEnum::options())
                             ->default(OfferStatusEnum::DRAFT->value)
                             ->required(),
+                        // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
+                        DateTimePicker::make('featured_until')
+                            ->label(__('offer::offer.featured_until'))
+                            ->helperText(__('offer::offer.featured_help'))
+                            ->native(false)
+                            ->seconds(false),
                         // Traduits : un onglet par langue ; seule la langue par défaut est obligatoire.
                         TranslatableTabs::make(fn (string $locale): array => [
                             TextInput::make("title.{$locale}")

@@ -59,4 +59,13 @@ return [
         'remove' => 'Retirer',
         'removed' => 'Offre retirée.',
     ],
+    // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
+    'featured_until' => "En vedette jusqu'au",
+    'featured' => 'En vedette',
+    'featured_help' => 'Vide : pas en vedette. Plus tard, une mise en avant payée par le propriétaire remplira cette date.',
+    'favorites' => [
+        'title' => 'Mes favoris',
+        'empty' => "Aucun favori pour l'instant. Touchez le cœur d'une offre pour la retrouver ici.",
+        'own_offer' => 'Vous ne pouvez pas mettre votre propre offre en favori.',
+    ],
 ];

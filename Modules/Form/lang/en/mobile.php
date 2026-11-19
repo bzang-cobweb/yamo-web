@@ -22,6 +22,9 @@ return [
         'stepOf' => 'Step :current of :total',
     ],
     'list' => [
+        // Cœur de favori sur une photo (décision 2026-11-19-contrat-vedette-favoris).
+        'addFavorite' => 'Add to favorites',
+        'removeFavorite' => 'Remove from favorites',
         // Note moyenne d'un item, lue par l'accessibilité (décision 2026-11-19-contrat-avis-offres).
         'ratingSummary' => 'Average rating :average out of 5, :count reviews',
         'loading' => 'Loading list…',
