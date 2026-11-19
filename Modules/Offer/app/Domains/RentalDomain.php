@@ -143,6 +143,11 @@ class RentalDomain extends Domain
         ];
     }
 
+    public function accessAttributes(): array
+    {
+        return ['available_from'];
+    }
+
     public function categories(): array
     {
         return [

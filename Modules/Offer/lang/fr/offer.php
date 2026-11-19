@@ -68,4 +68,9 @@ return [
         'empty' => "Aucun favori pour l'instant. Touchez le cœur d'une offre pour la retrouver ici.",
         'own_offer' => 'Vous ne pouvez pas mettre votre propre offre en favori.',
     ],
+    // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
+    'access' => 'Accès',
+    'paid_until' => "Payée jusqu'au",
+    'paid_help' => 'Vide : pas payée. Au lancement tout est gratuit ; plus tard, une offre non payée ne sera plus visible.',
+    'reviews' => 'Avis',
 ];

@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-acces-avis-backoffice.md (page « Avis » du back-office → onglet de l'offre)
+
 Remplacée par : 2026-11-19-item-titre-saisi-details.md (pour le contenu de `highlight` des offres seulement)
 
 # `2026-11-19` — Contrat des avis sur les offres, validé

@@ -68,4 +68,9 @@ return [
         'empty' => 'No favorites yet. Tap the heart of an offer to find it here.',
         'own_offer' => 'You cannot add your own offer to your favorites.',
     ],
+    // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
+    'access' => 'Access',
+    'paid_until' => 'Paid until',
+    'paid_help' => 'Empty: not paid. At launch everything is free; later, an unpaid offer will no longer be visible.',
+    'reviews' => 'Reviews',
 ];

@@ -11,6 +11,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\CreateOffer;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\EditOffer;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\ListOffers;
+use Modules\Offer\Filament\Resources\OfferResource\RelationManagers\ReviewsRelationManager;
 use Modules\Offer\Filament\Resources\OfferResource\Schemas\OfferForm;
 use Modules\Offer\Filament\Resources\OfferResource\Tables\OfferTable;
 use Modules\Offer\Models\Offer;
@@ -47,6 +48,16 @@ class OfferResource extends AbstractOfferResource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->withoutGlobalScopes([SoftDeletingScope::class]);
+    }
+
+    /**
+     * Les avis de l'offre, en onglet de sa fiche (décision 2026-11-19-acces-avis-backoffice).
+     */
+    public static function getRelations(): array
+    {
+        return [
+            ReviewsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

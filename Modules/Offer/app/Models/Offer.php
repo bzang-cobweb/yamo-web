@@ -40,6 +40,7 @@ use Spatie\Translatable\HasTranslations;
  * @property array<string, mixed>|null $details
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
+ * @property Carbon|null $paid_until payée jusqu'à cette date (décision 2026-11-19-acces-avis-backoffice)
  * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
  * @property-read Country|null $country
@@ -48,7 +49,7 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -88,6 +89,7 @@ class Offer extends Model implements HasMedia
             'details' => 'array',
             'published_at' => 'datetime',
             'featured_until' => 'datetime',
+            'paid_until' => 'datetime',
         ];
     }
 

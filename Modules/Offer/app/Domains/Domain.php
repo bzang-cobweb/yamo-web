@@ -186,6 +186,18 @@ abstract class Domain
     }
 
     /**
+     * Attributs qui règlent l'accès à l'offre (« Disponible dès le ») : dans le
+     * back-office, ils rejoignent la section « Accès » (décision
+     * 2026-11-19-acces-avis-backoffice). Aucun par défaut.
+     *
+     * @return list<string>
+     */
+    public function accessAttributes(): array
+    {
+        return [];
+    }
+
+    /**
      * Noms des attributs.
      *
      * @return list<string>

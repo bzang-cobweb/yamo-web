@@ -33,18 +33,24 @@ use Modules\Offer\Models\OfferCategory;
 abstract class OfferForm
 {
     /**
-     * Les attributs du domaine ; un attribut traduisible a un onglet par langue.
+     * Les attributs du domaine, ceux de l'accès (`$access`) ou les autres ; un
+     * attribut traduisible a un onglet par langue.
      *
      * @return list<Component>
      */
-    private static function attributes(Domain $domain): array
+    private static function attributes(Domain $domain, bool $access = false): array
     {
+        $fields = array_values(array_filter(
+            $domain->inputAttributes(),
+            fn (Field $field): bool => in_array($field->name, $domain->accessAttributes(), true) === $access,
+        ));
+
         return array_map(fn (Field $field): Component => $field->isTranslatable()
             ? TranslatableTabs::make(fn (string $locale): array => [
                 FieldComponent::make($field, "details.{$field->name}.{$locale}")
                     ->required($field->isRequired() && $locale === Locales::default()),
             ], "details-{$field->name}")->columnSpanFull()
-            : FieldComponent::make($field, 'details.'.$field->name), $domain->inputAttributes());
+            : FieldComponent::make($field, 'details.'.$field->name), $fields);
     }
 
     public static function configure(Schema $schema): Schema
@@ -71,17 +77,6 @@ abstract class OfferForm
                             ->options(fn (): array => Country::options())
                             ->searchable()
                             ->required()),
-                        Select::make('status')
-                            ->label(__('offer::offer.status'))
-                            ->options(OfferStatusEnum::options())
-                            ->default(OfferStatusEnum::DRAFT->value)
-                            ->required(),
-                        // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
-                        DateTimePicker::make('featured_until')
-                            ->label(__('offer::offer.featured_until'))
-                            ->helperText(__('offer::offer.featured_help'))
-                            ->native(false)
-                            ->seconds(false),
                         // Traduits : un onglet par langue ; seule la langue par défaut est obligatoire.
                         TranslatableTabs::make(fn (string $locale): array => [
                             TextInput::make("title.{$locale}")
@@ -117,6 +112,29 @@ abstract class OfferForm
                             ->required($domain->requiresAddress())
                             ->visible($domain->hasAddress())
                             ->columnSpanFull(),
+                    ]),
+                // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
+                Section::make(__('offer::offer.access'))
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('status')
+                            ->label(__('offer::offer.status'))
+                            ->options(OfferStatusEnum::options())
+                            ->default(OfferStatusEnum::DRAFT->value)
+                            ->required(),
+                        // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
+                        DateTimePicker::make('featured_until')
+                            ->label(__('offer::offer.featured_until'))
+                            ->helperText(__('offer::offer.featured_help'))
+                            ->native(false)
+                            ->seconds(false),
+                        ...self::attributes($domain, access: true),
+                        DateTimePicker::make('paid_until')
+                            ->label(__('offer::offer.paid_until'))
+                            ->helperText(__('offer::offer.paid_help'))
+                            ->native(false)
+                            ->seconds(false),
                     ]),
                 Section::make(__('offer::offer.attributes'))
                     ->columns(2)

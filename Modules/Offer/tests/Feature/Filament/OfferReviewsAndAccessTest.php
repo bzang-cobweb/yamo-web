@@ -1,0 +1,99 @@
+<?php
+
+namespace Modules\Offer\Tests\Feature\Filament;
+
+use Filament\Actions\Testing\TestAction;
+use Livewire\Livewire;
+use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Models\User;
+use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
+use Modules\Location\Models\Address;
+use Modules\Location\Models\Country;
+use Modules\Offer\Filament\Resources\OfferResource;
+use Modules\Offer\Filament\Resources\OfferResource\Pages\EditOffer;
+use Modules\Offer\Filament\Resources\OfferResource\RelationManagers\ReviewsRelationManager;
+use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferReview;
+
+/**
+ * Les avis d'une offre, en onglet de sa fiche du back-office, et la section
+ * « Accès » (décision 2026-11-19-acces-avis-backoffice).
+ */
+class OfferReviewsAndAccessTest extends AuthFilamentTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['offer.domain' => 'rental']);
+        Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
+    }
+
+    private function offer(): Offer
+    {
+        return Offer::factory()->create([
+            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
+            'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio'],
+        ]);
+    }
+
+    public function test_the_reviews_tab_needs_the_permission_and_creates_nothing(): void
+    {
+        $offer = $this->offer();
+
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
+        $this->assertFalse(ReviewsRelationManager::canViewForRecord($offer, EditOffer::class));
+
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS, PermissionEnum::VIEW_OFFER_REVIEWS);
+        $this->assertTrue(ReviewsRelationManager::canViewForRecord($offer, EditOffer::class));
+        // Aucun bouton de création : un avis vient de l'app seulement.
+        $this->assertNull(Livewire::test(ReviewsRelationManager::class, ['ownerRecord' => $offer, 'pageClass' => EditOffer::class])->instance()->getTable()->getAction('create'));
+    }
+
+    public function test_the_admin_role_filters_and_deletes_the_reviews_of_an_offer(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::ADMIN);
+        $this->actingAs($admin);
+        $offer = $this->offer();
+        $good = OfferReview::factory()->for($offer)->create(['rating' => 5, 'comment' => 'Parfait']);
+        $bad = OfferReview::factory()->for($offer)->create(['rating' => 1, 'comment' => 'Insultant']);
+        $elsewhere = OfferReview::factory()->create();
+
+        $this->get(OfferResource::getUrl('edit', ['record' => $offer]))->assertOk();
+        $this->assertSame('Avis (2)', ReviewsRelationManager::getTitle($offer, EditOffer::class));
+
+        Livewire::test(ReviewsRelationManager::class, ['ownerRecord' => $offer, 'pageClass' => EditOffer::class])
+            ->assertCanSeeTableRecords([$good, $bad])
+            ->assertCanNotSeeTableRecords([$elsewhere])
+            ->filterTable('rating', 1)
+            ->assertCanSeeTableRecords([$bad])
+            ->assertCanNotSeeTableRecords([$good])
+            ->callAction(TestAction::make('delete')->table($bad));
+
+        $this->assertModelMissing($bad);
+        $this->assertModelExists($good);
+    }
+
+    public function test_the_access_section_saves_status_featured_available_and_paid_dates(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
+        $offer = $this->offer();
+
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->fillForm([
+                'status' => 'draft',
+                'featured_until' => '2027-01-31 12:00',
+                'details.available_from' => '2026-12-15',
+                'paid_until' => '2027-06-30 23:59',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $offer->refresh();
+        $this->assertSame('draft', $offer->status->value);
+        $this->assertSame('2027-06-30 23:59', $offer->paid_until?->format('Y-m-d H:i'));
+        $this->assertSame('2026-12-15', $offer->detail('available_from'));
+    }
+}

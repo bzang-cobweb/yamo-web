@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-19-acces-avis-backoffice.md (ligne de note de l'item : étoiles seules en bas à droite)
 # `2026-11-19` — Item d'offre : titre saisi en sous-titre, détails et prix en gras
 
 - **Remplace** : `2026-11-19-contrat-avis-offres.md`, sur un seul point — le contenu de `highlight` pour les offres.
