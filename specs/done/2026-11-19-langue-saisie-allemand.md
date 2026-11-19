@@ -86,3 +86,40 @@ Demande, après discussion : « à la création, pas d'étape de sélection de l
 2. ~~L'étape « Langue » apparaît à l'édition même quand l'offre n'a qu'une langue~~ — **tranché** : l'étape n'apparaît à l'édition que si **l'app** propose plusieurs langues ; dans ce cas elle apparaît même si l'offre n'est écrite que dans une langue (c'est là qu'on traduit).
 3. Traductions allemandes rédigées par moi, sans relecture humaine avant livraison (défaut ; relecture conseillée).
 4. Pas de traduction automatique (défaut).
+
+---
+
+## Ce que j'ai décidé seul
+
+- Le repli par la langue d'origine est porté par les modèles (`Offer`, `OfferInformation`, via `OriginalLocale`) : toute lecture d'un texte traduit en profite (fiche, listes, back-office, formulaire).
+- `content_locale` est **facultatif** côté serveur : une app plus ancienne ne l'envoie pas, la langue du compte vaut alors (comme avant).
+- Back-office : un titre dans au moins une langue, l'erreur sous la langue par défaut ; à la création, la langue d'origine est la langue par défaut si son titre est saisi, sinon la première saisie.
+- Noms des pays, régions et catégories au back-office : toujours exigés dans **toutes** les langues (règle existante) — l'allemand y devient donc obligatoire.
+- Bug trouvé au simulateur et corrigé : la validation d'une étape ignorait l'enregistrement, donc l'étape « Langue » était validée comme « Présentation ». `POST …/steps/{n}` accepte désormais `?record=`, et l'app l'envoie.
+- Les textes allemands standard (validation, authentification, pagination…) viennent du paquet `laravel-lang` déjà installé (`lang:add de`) ; ceux du projet sont rédigés par moi.
+- Les tests fixent les langues à fr/en (`tests/TestCase.php`) ; un test qui porte sur l'allemand le déclare.
+
+## Ce qui a été fait
+
+- Web 554a7d8 :
+  - `offers.locale` et son remplissage ; repli par la langue d'origine ;
+  - champ `reloads` du module Form ; étape « Langue » à l'édition ; enregistrement dans la langue choisie ;
+  - validation d'étape avec `record` ; back-office ;
+  - `de` dans `app.supported_locales`, fichiers `lang/de` (app et modules), catégories et pays en allemand (migrations de remplissage, seeder des pays) ;
+  - tests (étape, pré-remplissage, enregistrement, repli, migration, back-office, parité des textes allemands, textes de l'app en allemand), OpenAPI.
+- Mobile c4959db : rechargement du formulaire, confirmation, `record` avec la validation d'étape, `de` dans les langues de l'app et textes hors ligne.
+- Migrations exécutées en local. API vue en allemand : « Kamerun », « Art der Unterkunft », « Langzeitmiete ».
+- Simulateur : étape « Langue » à l'édition (« Français — langue d'origine », « English — à traduire », « Deutsch — à traduire »), rechargement en allemand, étape 2 pré-remplie avec le texte français ; sans enregistrer.
+- Suites : serveur 518 verts, app 246 verts, tsc et lint propres.
+- QA indépendante : NO-GO (OpenAPI sans `record` sur la validation d'étape), corrigé en 95f4569 (paramètre d'adresse documenté, parité des textes de l'app avec l'allemand testée), contre-vérification GO.
+
+## Ce que je n'ai pas vérifié
+
+- L'app entière en allemand au simulateur (la langue du compte connecté n'a pas été changée) ; les textes sont vérifiés par l'API et par un test de parité.
+- La qualité de l'allemand par un germanophone.
+- La confirmation avant de perdre des modifications au simulateur (test seulement).
+
+## Ce qui reste en suspens
+
+- Relecture de l'allemand par un germanophone.
+- L'e-mail et le SMS de code en allemand dépendent de la langue du compte : vérifiés à la lecture des textes seulement.
