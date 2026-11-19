@@ -80,7 +80,7 @@ class OfferDetailResource extends JsonResource
         $latest = [];
 
         // Même forme que la liste complète (`OfferReviewResource`).
-        foreach ($offer->reviews()->with('user')->latest('updated_at')->latest('id')->limit(5)->get() as $review) {
+        foreach ($offer->reviews()->with('user')->latest('updated_at')->latest('id')->limit((int) config('offer.reviews_shown', 1))->get() as $review) {
             /** @var OfferReview $review */
             $latest[] = (new OfferReviewResource($review))->toArray($request);
         }

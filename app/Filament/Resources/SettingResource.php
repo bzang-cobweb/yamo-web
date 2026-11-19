@@ -8,6 +8,7 @@ use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -42,6 +43,13 @@ class SettingResource extends AbstractResource
                                 ->maxLength(Field::TEXTAREA_MAX_LENGTH)
                                 ->rows(5),
                         ], 'description'),
+                    ]),
+                // Décision 2026-11-19-contrat-paiement-visibilite-avis.
+                Section::make(__('settings.sections.payment'))
+                    ->schema([
+                        Toggle::make('payment_required')
+                            ->label(__('settings.payment_required'))
+                            ->helperText(__('settings.help.payment_required')),
                     ]),
             ]);
     }

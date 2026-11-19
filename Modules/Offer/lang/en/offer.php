@@ -71,8 +71,8 @@ return [
     ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Access',
-    'paid_until' => 'Paid until',
-    'paid_help' => 'Empty: not paid. At launch everything is free; later, an unpaid offer will no longer be visible.',
+    'expires_at' => 'Expiration date',
+    'expires_help' => 'If payment is applied (Application page), the offer is no longer visible to others after this date; empty: not visible.',
     'reviews' => 'Reviews',
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
     'tabs' => [

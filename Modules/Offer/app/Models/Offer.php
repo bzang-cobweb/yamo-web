@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Models;
 
+use App\Models\Setting;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -18,6 +19,7 @@ use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Spatie\MediaLibrary\HasMedia;
@@ -41,7 +43,7 @@ use Spatie\Translatable\HasTranslations;
  * @property array<string, mixed>|null $details
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
- * @property Carbon|null $paid_until payée jusqu'à cette date (décision 2026-11-19-acces-avis-backoffice)
+ * @property Carbon|null $expires_at date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis)
  * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
  * @property-read Country|null $country
@@ -51,7 +53,7 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -91,7 +93,7 @@ class Offer extends Model implements HasMedia
             'details' => 'array',
             'published_at' => 'datetime',
             'featured_until' => 'datetime',
-            'paid_until' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
@@ -219,6 +221,31 @@ class Offer extends Model implements HasMedia
     public function scopeWithReviewSummary(Builder $query): void
     {
         $query->withAvg('reviews', 'rating')->withCount('reviews');
+    }
+
+    /**
+     * Les offres que voient les autres que leur auteur (décision
+     * 2026-11-19-contrat-paiement-visibilite-avis) : publiées, du pays courant et,
+     * si le paiement est appliqué, pas expirées (sans date : non visibles). La fiche,
+     * l'accueil, les favoris et les avis suivent cette règle ; voir `isVisibleToOthers()`.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeVisibleToOthers(Builder $query): void
+    {
+        $query->where($query->qualifyColumn('status'), OfferStatusEnum::PUBLISHED)
+            ->where($query->qualifyColumn('country_id'), CurrentCountry::require()->getKey())
+            ->when(Setting::paymentRequired(), fn (Builder $query) => $query->where($query->qualifyColumn('expires_at'), '>', now()));
+    }
+
+    /**
+     * La même règle que `scopeVisibleToOthers()`, pour une offre chargée.
+     */
+    public function isVisibleToOthers(): bool
+    {
+        return $this->status === OfferStatusEnum::PUBLISHED
+            && (int) $this->country_id === (int) CurrentCountry::require()->getKey()
+            && (! Setting::paymentRequired() || ($this->expires_at !== null && $this->expires_at->isFuture()));
     }
 
     /**

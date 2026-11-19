@@ -14,7 +14,6 @@ use Modules\Form\Support\ListItem;
 use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 
@@ -85,8 +84,7 @@ class OfferBrowseListing extends Listing
     private function pinnedIds(): array
     {
         return $this->pinnedIds ??= Offer::query()
-            ->where('country_id', CurrentCountry::require()->getKey())
-            ->where('status', OfferStatusEnum::PUBLISHED)
+            ->visibleToOthers()
             ->featured()
             ->orderByDesc('featured_until')->orderByDesc('id')
             ->limit($this->pinnedLimit())
@@ -117,8 +115,8 @@ class OfferBrowseListing extends Listing
             ->withReviewSummary()
             // Le cœur d'un membre connecté (décision 2026-11-19-contrat-vedette-favoris).
             ->when($this->user !== null, fn (Builder $query) => $query->withFavoriteOf($this->user?->getAuthIdentifier()))
-            ->where('country_id', CurrentCountry::require()->getKey())
-            ->where('status', OfferStatusEnum::PUBLISHED);
+            // Visibles des autres (décision 2026-11-19-contrat-paiement-visibilite-avis).
+            ->visibleToOthers();
     }
 
     /**
@@ -153,9 +151,7 @@ class OfferBrowseListing extends Listing
         return Address::query()
             ->whereIn('id', OfferAddress::query()
                 ->select('address_id')
-                ->whereHas('offer', fn (Builder $offer) => $offer
-                    ->where('country_id', CurrentCountry::require()->getKey())
-                    ->where('status', OfferStatusEnum::PUBLISHED)))
+                ->whereHas('offer', fn (Builder $offer) => $offer->visibleToOthers()))
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')

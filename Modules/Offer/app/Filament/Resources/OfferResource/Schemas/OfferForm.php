@@ -172,9 +172,10 @@ abstract class OfferForm
                                     ->native(false)
                                     ->seconds(false),
                                 ...self::attributes($domain, 'access'),
-                                DateTimePicker::make('paid_until')
-                                    ->label(__('offer::offer.paid_until'))
-                                    ->helperText(__('offer::offer.paid_help'))
+                                // La date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis).
+                                DateTimePicker::make('expires_at')
+                                    ->label(__('offer::offer.expires_at'))
+                                    ->helperText(__('offer::offer.expires_help'))
                                     ->native(false)
                                     ->seconds(false),
                             ]),

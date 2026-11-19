@@ -16,7 +16,7 @@ use Tests\TestCase;
 /**
  * Avis sur les offres (décision 2026-11-19-contrat-avis-offres) : un membre note
  * une offre publiée d'un autre membre ; les listes montrent la moyenne et le
- * dernier commentaire, la fiche les 5 derniers avis.
+ * dernier commentaire, la fiche les derniers avis (`offer.reviews_shown`).
  */
 class OfferReviewApiTest extends TestCase
 {
@@ -78,6 +78,8 @@ class OfferReviewApiTest extends TestCase
         // Le commentaire reste sur la fiche, pas dans la liste (décision 2026-11-19-item-titre-saisi-details).
         $this->assertStringNotContainsString('recommande', (string) $item['highlight']);
 
+        // Plusieurs avis servis, pour lire leur ordre (décision 2026-11-19-contrat-paiement-visibilite-avis).
+        config(['offer.reviews_shown' => 5]);
         $reviews = $this->api($awa, 'GET', "/api/v1/offers/{$offer->getKey()}")->assertOk()->json('data.reviews');
         $this->assertSame(4.5, $reviews['average']);
         $this->assertSame(2, $reviews['count']);
@@ -106,6 +108,7 @@ class OfferReviewApiTest extends TestCase
         $this->review($this->member('Paul'), $offer, 5, 'Parfait.')->assertNoContent();
         $this->travel(1)->minutes();
         $this->review($awa, $offer, 3, 'Bruyant le soir, mais bien situé.')->assertNoContent();
+        config(['offer.reviews_shown' => 5]);
         $this->assertSame(['Awa', 'Paul'], array_column($this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.reviews.latest'), 'author'));
         OfferReview::query()->whereNot('user_id', $awa->getKey())->delete();
 
@@ -182,8 +185,12 @@ class OfferReviewApiTest extends TestCase
         $this->assertNull($items[(string) $quiet->getKey()]['rating']);
         $this->assertSame(7, $items[(string) $busy->getKey()]['rating']['count']);
 
+        // Un seul avis servi par défaut ; le nombre vient de la configuration (décision 2026-11-19-contrat-paiement-visibilite-avis).
+        config(['offer.reviews_shown' => 3]);
+        $this->assertCount(3, $this->api(null, 'GET', "/api/v1/offers/{$busy->getKey()}")->json('data.reviews.latest'));
+        config(['offer.reviews_shown' => 1]);
         $reviews = $this->api(null, 'GET', "/api/v1/offers/{$busy->getKey()}")->json('data.reviews');
-        $this->assertCount(5, $reviews['latest']);
+        $this->assertCount(1, $reviews['latest']);
         $this->assertNull($reviews['mine']);
         $this->assertFalse($reviews['can_review']);
         $this->assertNull($reviews['delete']);

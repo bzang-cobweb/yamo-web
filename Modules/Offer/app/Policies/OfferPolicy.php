@@ -10,7 +10,6 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -51,9 +50,10 @@ class OfferPolicy
     }
 
     /**
-     * La fiche d'une offre (décision 2026-11-18-fiche-offre), visiteur compris :
-     * publiée et du pays courant ; le propriétaire voit aussi la sienne en
-     * brouillon ou archivée. Sinon 404.
+     * La fiche d'une offre (décisions 2026-11-18-fiche-offre et
+     * 2026-11-19-contrat-paiement-visibilite-avis), visiteur compris : son auteur la
+     * voit toujours ; les autres, si elle leur est visible (`Offer::isVisibleToOthers()` :
+     * publiée, du pays courant, pas expirée si le paiement est appliqué). Sinon 404.
      */
     public function show(?User $user, Offer $offer): Response
     {
@@ -61,19 +61,17 @@ class OfferPolicy
             return Response::allow();
         }
 
-        return $offer->status === OfferStatusEnum::PUBLISHED && (int) $offer->country_id === (int) CurrentCountry::require()->getKey()
-            ? Response::allow()
-            : Response::denyAsNotFound();
+        return $offer->isVisibleToOthers() ? Response::allow() : Response::denyAsNotFound();
     }
 
     /**
      * Donner, modifier ou retirer son avis sur une offre (décision
-     * 2026-11-19-contrat-avis-offres) : une offre publiée du pays courant (sinon
-     * 404), qui n'est pas la sienne (403).
+     * 2026-11-19-contrat-avis-offres) : une offre visible des autres (sinon 404),
+     * qui n'est pas la sienne (403).
      */
     public function review(User $user, Offer $offer): Response
     {
-        if ($offer->status !== OfferStatusEnum::PUBLISHED || (int) $offer->country_id !== (int) CurrentCountry::require()->getKey()) {
+        if (! $offer->isVisibleToOthers()) {
             return Response::denyAsNotFound();
         }
 
@@ -84,11 +82,11 @@ class OfferPolicy
 
     /**
      * Mettre une offre en favori, ou l'en retirer (décision 2026-11-19-contrat-vedette-favoris) :
-     * mêmes règles qu'un avis — publiée, du pays courant (sinon 404), pas la sienne (403).
+     * mêmes règles qu'un avis — visible des autres (sinon 404), pas la sienne (403).
      */
     public function favorite(User $user, Offer $offer): Response
     {
-        if ($offer->status !== OfferStatusEnum::PUBLISHED || (int) $offer->country_id !== (int) CurrentCountry::require()->getKey()) {
+        if (! $offer->isVisibleToOthers()) {
             return Response::denyAsNotFound();
         }
 

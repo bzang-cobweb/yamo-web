@@ -8,17 +8,37 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Réglages de l'application, édités dans le back-office (page Application) et
- * servis par `GET /api/v1/app` : description traduite. Une seule ligne, obtenue
+ * servis par `GET /api/v1/app` : description traduite ; « Appliquer le paiement »
+ * (`payment_required`, décision 2026-11-19-contrat-paiement-visibilite-avis), non servi. Une seule ligne, obtenue
  * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
  * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
-#[Fillable(['description'])]
+#[Fillable(['description', 'payment_required'])]
 class Setting extends Model
 {
     use HasTranslations;
 
     /** @var list<string> */
     public array $translatable = ['description'];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'payment_required' => 'boolean',
+        ];
+    }
+
+    /**
+     * Le paiement est-il appliqué ? Alors une offre n'est visible des autres que
+     * jusqu'à sa date d'expiration.
+     */
+    public static function paymentRequired(): bool
+    {
+        return (bool) self::query()->oldest('id')->value('payment_required');
+    }
 
     /**
      * La ligne des réglages, créée vide au premier besoin.

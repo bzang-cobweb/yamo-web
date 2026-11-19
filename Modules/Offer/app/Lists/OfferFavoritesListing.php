@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
-use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\OfferFavorite;
 
 /**
@@ -55,9 +53,8 @@ class OfferFavoritesListing extends Listing
     {
         return OfferFavorite::query()
             ->where('user_id', $this->user?->getAuthIdentifier())
-            ->whereHas('offer', fn (Builder $offer) => $offer
-                ->where('status', OfferStatusEnum::PUBLISHED)
-                ->where('country_id', CurrentCountry::require()->getKey()))
+            // Visibles des autres (décision 2026-11-19-contrat-paiement-visibilite-avis).
+            ->whereHas('offer', fn (Builder $offer) => $offer->visibleToOthers())
             ->with(['offer' => fn ($offer) => $offer->with(['address', 'media'])->withReviewSummary()])
             ->orderByDesc('id');
     }
