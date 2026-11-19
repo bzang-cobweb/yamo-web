@@ -55,7 +55,7 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
-        $this->assertSame(['city', 'price', 'property_type', 'furnished', 'bedrooms', 'available_from', 'amenities'], array_keys($filters));
+        $this->assertSame(['city', 'price', 'property_type', 'furnished', 'bedrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
         // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
@@ -64,6 +64,29 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame('multiselect', $filters['property_type']['type']);
         $this->assertSame('multiselect', $filters['amenities']['type']);
         $this->assertSame('any', $filters['furnished']['default']);
+    }
+
+    public function test_yes_no_rules_filter_on_the_owner_answer(): void
+    {
+        // Décision 2026-11-19-filtres-regles.
+        $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
+        $this->assertSame('segmented', $filters['pets']['type']);
+        $this->assertSame('Animaux acceptés', $filters['pets']['label']);
+        $this->assertSame(['Tous', 'Oui', 'Non'], array_column($filters['pets']['options'], 'label'));
+        $this->assertSame('any', $filters['pets']['default']);
+
+        $pets = $this->home('Douala', 80000, ['property_type' => 'studio', 'pets' => 'yes', 'smoking' => 'no']);
+        $noPets = $this->home('Douala', 80000, ['property_type' => 'studio', 'pets' => 'no', 'smoking' => 'no']);
+        $unknown = $this->home('Douala', 80000, ['property_type' => 'studio']);
+
+        $this->assertSame([(string) $pets->getKey()], $this->ids('?filter[pets]=yes'));
+        $this->assertSame([(string) $noPets->getKey()], $this->ids('?filter[pets]=no'));
+        $this->assertEqualsCanonicalizing(array_map('strval', [$pets->getKey(), $noPets->getKey()]), $this->ids('?filter[smoking]=no'));
+        $this->assertSame([], $this->ids('?filter[pets]=yes&filter[parties]=yes'));
+        // « Tous », ou une valeur inconnue, ne filtre rien.
+        $this->assertCount(3, $this->ids('?filter[pets]=any'));
+        $this->assertCount(3, $this->ids('?filter[pets]=maybe'));
+        $this->assertContains((string) $unknown->getKey(), $this->ids());
     }
 
     public function test_filters_combine_with_each_other_and_the_search(): void

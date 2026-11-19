@@ -93,6 +93,9 @@ class RentalDomain extends Domain
     public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
 
     /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
+    /** Les règles qui se répondent par Oui / Non : saisies, affichées et filtrées pareil. */
+    public const YES_NO_RULES = ['pets', 'smoking', 'parties'];
+
     public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
 
     /**
@@ -144,7 +147,7 @@ class RentalDomain extends Domain
             // Oui / Non plutôt qu'un interrupteur : « non renseigné » n'est pas « non ».
             ...array_map(fn (string $rule): Field => Field::select($rule)
                 ->label(__('offer::rental.rules.'.$rule))
-                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), ['pets', 'smoking', 'parties']),
+                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), self::YES_NO_RULES),
             // Les documents en dernier (décision 2026-11-19-documents-en-dernier).
             Field::multiselect('documents')
                 ->label(__('offer::rental.rules.documents'))
@@ -215,6 +218,11 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.amenities_label'))
                 ->help(__('offer::rental.filters.amenities_help'))
                 ->options($this->amenityOptions()),
+            // Les règles Oui / Non, comme « Meublé » (décision 2026-11-19-filtres-regles).
+            ...array_map(fn (string $rule): Field => Field::segmented($rule)
+                ->label(__('offer::rental.rules.'.$rule))
+                ->options(['any' => __('offer::rental.filters.any'), 'yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')])
+                ->default('any'), self::YES_NO_RULES),
         ];
     }
 
@@ -239,6 +247,13 @@ class RentalDomain extends Domain
         // Tous les équipements choisis.
         foreach ((array) ($filters['amenities'] ?? []) as $amenity) {
             $query->whereJsonContains('details->amenities', (string) $amenity);
+        }
+        // Une règle Oui / Non : la réponse du propriétaire ; une règle non renseignée ne
+        // répond ni oui ni non (décision 2026-11-19-filtres-regles).
+        foreach (self::YES_NO_RULES as $rule) {
+            if (in_array($filters[$rule] ?? 'any', ['yes', 'no'], true)) {
+                $query->where('details->'.$rule, $filters[$rule]);
+            }
         }
     }
 
