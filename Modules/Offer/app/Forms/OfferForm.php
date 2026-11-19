@@ -242,9 +242,6 @@ class OfferForm extends Form
     }
 
     /**
-     * Langue de saisie : celle du compte (décision 2026-11-18-offres-multilingues-categories-arbre).
-     */
-    /**
      * La langue de saisie des textes : celle choisie à l'étape « Langue » (paramètre
      * ou champ `content_locale`), sinon la langue du compte.
      */

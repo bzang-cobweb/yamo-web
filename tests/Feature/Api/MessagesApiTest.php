@@ -49,6 +49,8 @@ class MessagesApiTest extends TestCase
 
     public function test_every_language_has_exactly_the_same_keys(): void
     {
+        // Toutes les langues du projet, allemand compris (les tests sont fixés à fr/en par défaut).
+        config(['app.supported_locales' => ['fr', 'en', 'de']]);
         $keys = array_map(
             fn (string $locale): array => array_keys(MobileMessages::for($locale)),
             config('app.supported_locales'),

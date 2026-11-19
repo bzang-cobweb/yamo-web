@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Http\Controllers\Api;
 
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
@@ -23,14 +24,12 @@ class FormStepController
      *
      * @unauthenticated
      */
+    #[QueryParameter('record', description: "Identifiant de l'enregistrement modifié.", type: 'string', required: false, example: '12')]
     public function validate(Request $request, Form $form, int $step): Response
     {
-        $request->validate([
-            /** Identifiant de l'enregistrement modifié. @example 12 */
-            'record' => ['sometimes', 'string', 'max:64'],
-        ]);
+        // Dans l'adresse, pas dans les valeurs de l'étape ; une valeur invalide est ignorée.
         $record = $request->query('record');
-        $form = is_string($record) && $record !== '' ? $form->forRecord($record) : $form;
+        $form = is_string($record) && $record !== '' && strlen($record) <= 64 ? $form->forRecord($record) : $form;
 
         $rules = $form->stepRules($step);
         abort_if($rules === null, 404);

@@ -405,7 +405,7 @@
         "/v1/forms/{form}/steps/{step}": {
             "post": {
                 "operationId": "v1.forms.steps.validate",
-                "summary": "Valider l'\u00e9tape `{step}` (\u00e0 partir de 1) : seuls ses champs sont v\u00e9rifi\u00e9s, avec\nles r\u00e8gles du formulaire. Rien n'est enregistr\u00e9. 204 si l'\u00e9tape est valide,\n422 avec les erreurs sinon, 404 si l'\u00e9tape n'existe pas. L'envoi final se fait\npar l'appel propre au formulaire, qui valide tout",
+                "summary": "Valider l'\u00e9tape `{step}` (\u00e0 partir de 1) : seuls ses champs sont v\u00e9rifi\u00e9s, avec\nles r\u00e8gles du formulaire. Rien n'est enregistr\u00e9. 204 si l'\u00e9tape est valide,\n422 avec les erreurs sinon, 404 si l'\u00e9tape n'existe pas. L'envoi final se fait\npar l'appel propre au formulaire, qui valide tout. `record` (comme pour la\nd\u00e9finition) : les \u00e9tapes d'un formulaire li\u00e9 \u00e0 un enregistrement peuvent\ndiff\u00e9rer (l'\u00e9tape \u00ab Langue \u00bb d'une offre modifi\u00e9e, d\u00e9cision\n2026-11-19-contrat-langue-saisie-allemand)",
                 "tags": [
                     "FormStep"
                 ],
@@ -426,6 +426,15 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "record",
+                        "in": "query",
+                        "description": "Identifiant de l'enregistrement modifi\u00e9.",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "12"
                     }
                 ],
                 "responses": {
