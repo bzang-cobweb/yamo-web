@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-19-fond-blanc-filtres.md (la phrase de l'item n'a plus la couleur primaire)
 # `2026-11-19` — Avis en onglet de l'offre, section « Accès », date « Payée jusqu'au », retouches de l'item de liste
 
 - **Remplace** : partiellement `2026-11-19-contrat-avis-offres.md` (la page « Avis » du back-office devient un onglet de l'offre) et `2026-11-19-item-titre-saisi-details.md` (la ligne de note de l'item).
