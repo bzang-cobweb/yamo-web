@@ -1,0 +1,22 @@
+# `2026-11-19` — Contrat « liste à choix multiples, intervalle, équipements », validé
+
+- **Type** : décision
+- **Question posée** : valider le contrat `specs/2026-11-19-multiselect-intervalle-equipements.md` et la liste des équipements.
+- **Réponse** : « Approved ».
+- **Ce qui est retenu** :
+  - deux types de champ génériques :
+    - `multiselect` : une liste déroulante à choix multiples ;
+    - `range` : un intervalle, dont la valeur est `[min, max]`, chaque borne étant facultative et max ≥ min ;
+  - le filtre « Type » passe en `multiselect`, et le loyer devient un seul filtre `range` (`price`) ;
+  - un attribut « Équipements » (`amenities`, `multiselect`) avec 12 équipements :
+    - wifi, parking, climatisation, eau chaude ;
+    - groupe électrogène, réserve d'eau, gardien, cuisine équipée ;
+    - lave-linge, télévision, balcon, piscine ;
+  - le filtre « Équipements » ne garde que les offres qui ont **tous** les équipements choisis.
+- **Motif** : la demande de l'humain.
+- **Portée** : modules Form et Offer, back-office, app (champs, filtres).
+- **Corollaires** : hors périmètre :
+  - les icônes d'équipement ;
+  - les équipements dans l'item de liste ;
+  - un intervalle de dates.
+- **Tranché par** : humain

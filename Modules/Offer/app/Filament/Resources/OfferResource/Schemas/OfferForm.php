@@ -51,7 +51,7 @@ abstract class OfferForm
                 FieldComponent::make($field, "details.{$field->name}.{$locale}")
                     ->required($field->isRequired() && $locale === Locales::default()),
             ], "details-{$field->name}")->columnSpanFull()
-            : FieldComponent::make($field, 'details.'.$field->name), $fields);
+            : FieldComponent::component($field, 'details.'.$field->name), $fields);
     }
 
     public static function configure(Schema $schema): Schema

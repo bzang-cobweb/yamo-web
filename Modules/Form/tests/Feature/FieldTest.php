@@ -40,6 +40,8 @@ class FieldTest extends TestCase
                     Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41'], 'FR' => ['label' => 'France', 'hint' => '+33']]),
                     Field::code('otp'),
                     Field::rating('stars'),
+                    Field::multiselect('colors')->options(['red' => 'Rouge', 'blue' => 'Bleu']),
+                    Field::range('budget')->rules(['min:0']),
                     Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
                     Field::text('pager')->visibleWhen('contact', 'sms')->required(),
                     Field::text('locked')->readonly()->required(),
@@ -86,6 +88,21 @@ class FieldTest extends TestCase
             $this->assertNotContains('stars', $this->errors([...$this->valid(), 'stars' => $valid]));
         }
         $this->assertSame('★★★★☆', Field::rating('stars')->displayValue(4, 'fr'));
+    }
+
+    public function test_a_multiselect_and_a_range_are_validated(): void
+    {
+        $this->assertNotContains('colors.0', $this->errors([...$this->valid(), 'colors' => ['red', 'blue']]));
+        $this->assertContains('colors.1', $this->errors([...$this->valid(), 'colors' => ['red', 'green']]));
+        foreach ([[null, '100'], ['50', null], ['50', '100'], ['5', '5']] as $valid) {
+            $this->assertSame([], array_values(array_filter($this->errors([...$this->valid(), 'budget' => $valid]), fn (string $key): bool => str_starts_with($key, 'budget'))), json_encode($valid));
+        }
+        $this->assertContains('budget', $this->errors([...$this->valid(), 'budget' => ['100', '50']]));
+        $this->assertContains('budget.0', $this->errors([...$this->valid(), 'budget' => ['-1', '50']]));
+        $this->assertContains('budget', $this->errors([...$this->valid(), 'budget' => ['1']]));
+        $this->assertSame('50 – 100', Field::range('budget')->displayValue(['50', '100'], 'fr'));
+        $this->assertSame('≤ 100', Field::range('budget')->displayValue([null, '100'], 'fr'));
+        $this->assertSame('Rouge, Bleu', Field::multiselect('colors')->options(['red' => 'Rouge', 'blue' => 'Bleu'])->displayValue(['red', 'blue'], 'fr'));
     }
 
     public function test_valid_data_passes(): void

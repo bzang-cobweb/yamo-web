@@ -45,11 +45,28 @@ return [
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
+        'amenities_help' => 'Homes that have all the chosen amenities.',
         'any' => 'All',
         'furnished' => 'Furnished',
         'unfurnished' => 'Unfurnished',
         'bedrooms' => 'Bedrooms, at least',
         'available_from' => 'Free on',
         'available_from_help' => 'Homes available on this date or earlier.',
+    ],
+    // Équipements (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
+    'amenities_label' => 'Amenities',
+    'amenities' => [
+        'wifi' => 'Wi-Fi',
+        'parking' => 'Parking',
+        'air_conditioning' => 'Air conditioning',
+        'hot_water' => 'Hot water',
+        'generator' => 'Generator',
+        'water_tank' => 'Water tank / borehole',
+        'security' => 'Guard / security',
+        'equipped_kitchen' => 'Equipped kitchen',
+        'washing_machine' => 'Washing machine',
+        'tv' => 'Television',
+        'balcony' => 'Balcony / terrace',
+        'pool' => 'Swimming pool',
     ],
 ];

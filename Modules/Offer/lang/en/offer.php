@@ -80,7 +80,5 @@ return [
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
         'city' => 'City',
-        'price_min' => 'Minimum rent',
-        'price_max' => 'Maximum rent',
     ],
 ];

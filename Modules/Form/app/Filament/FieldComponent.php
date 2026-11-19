@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Filament;
 
+use Closure;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Field as FilamentField;
@@ -10,6 +11,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
 use LogicException;
 use Modules\Form\Enums\FieldType;
@@ -23,6 +26,41 @@ use Modules\Form\Support\Field;
  */
 final class FieldComponent
 {
+    /**
+     * Le composant d'un `Field`, quel que soit son type : un intervalle (`range`)
+     * devient deux nombres côte à côte, « Min » et « Max » (décision
+     * 2026-11-19-contrat-multiselect-intervalle-equipements) ; tout autre type, le
+     * champ de `make()`.
+     */
+    public static function component(Field $field, ?string $statePath = null): Component
+    {
+        if ($field->type !== FieldType::RANGE) {
+            return self::make($field, $statePath);
+        }
+
+        $name = $statePath ?? $field->name;
+        $rules = array_values(array_filter($field->validationRules()[$field->name.'.*'] ?? [], fn (mixed $rule): bool => is_string($rule) && $rule !== 'nullable'));
+        $bound = fn (int $index, string $label): TextInput => TextInput::make("{$name}.{$index}")
+            ->label($label)
+            ->numeric()
+            ->suffix($field->getSuffix())
+            ->rules($rules);
+
+        return Fieldset::make($field->getLabel() ?? $field->name)
+            ->columns(2)
+            ->schema([
+                $bound(0, __('form::field.range_min')),
+                // La borne max au moins égale à la min, quand les deux sont données.
+                $bound(1, __('form::field.range_max'))
+                    ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get, $name): void {
+                        $min = $get("{$name}.0");
+                        if (is_numeric($min) && is_numeric($value) && (float) $value < (float) $min) {
+                            $fail(__('form::validation.range_order'));
+                        }
+                    }),
+            ]);
+    }
+
     /**
      * @param  string|null  $statePath  chemin de l'état, si différent du nom (ex. `attributes.surface` dans une colonne JSON)
      */
@@ -38,6 +76,7 @@ final class FieldComponent
             FieldType::RADIO => Radio::make($name)->options($field->optionLabels()),
             FieldType::CHECKBOX, FieldType::SWITCH => Toggle::make($name),
             FieldType::CHECKBOX_GROUP => CheckboxList::make($name)->options($field->optionLabels()),
+            FieldType::MULTISELECT => Select::make($name)->multiple()->options($field->optionLabels()),
             FieldType::RATING => Select::make($name)->options(array_combine(range(1, 5), array_map(fn (int $stars): string => str_repeat('★', $stars), range(1, 5)))),
             FieldType::DATE => DatePicker::make($name)->native(false)->format('Y-m-d'),
             default => throw new LogicException("Champ « {$field->name} » : type {$field->type->value} sans équivalent dans le back-office."),

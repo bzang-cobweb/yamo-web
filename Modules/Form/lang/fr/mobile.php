@@ -19,6 +19,11 @@ return [
         'ratingValue' => ':value sur 5',
         // Unité d'un champ, dans sa ligne d'aide (« En m² »).
         'unit' => 'En :unit',
+        // Liste à choix multiples et intervalle (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
+        'confirm' => 'Valider',
+        'rangeMin' => 'Min',
+        'rangeMax' => 'Max',
+        'rangeOrder' => 'Le maximum doit être au moins égal au minimum.',
         'stepOf' => 'Étape :current sur :total',
     ],
     'list' => [

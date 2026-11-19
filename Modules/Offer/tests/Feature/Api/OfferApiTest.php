@@ -93,7 +93,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'address_id', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'charges'],
+            ['title', 'description', 'category_id', 'price', 'address_id', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -107,6 +107,22 @@ class OfferApiTest extends TestCase
         $this->assertSame('draft', $fields['status']['default']);
         // Les charges : un montant mensuel dans la devise du pays.
         $this->assertSame('CHF / mois', $fields['charges']['suffix']);
+    }
+
+    public function test_amenities_are_a_multiselect_saved_and_validated(): void
+    {
+        $user = $this->member();
+
+        // Décision 2026-11-19-contrat-multiselect-intervalle-equipements.
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        $this->assertSame('multiselect', $fields['amenities']['type']);
+        $this->assertCount(12, $fields['amenities']['options']);
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['spa']]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('amenities.0');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['wifi', 'parking']]))->assertNoContent();
+        $this->assertSame(['wifi', 'parking'], Offer::query()->sole()->detail('amenities'));
     }
 
     public function test_a_furnished_home_has_no_charges(): void
@@ -137,7 +153,7 @@ class OfferApiTest extends TestCase
         $steps = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
         $this->assertSame(['Le logement', 'Prix et disponibilité', 'Adresse et catégorie', "L'annonce"], array_column($steps, 'title'));
         $this->assertSame([
-            ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms'],
+            ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from'],
             ['address_id', 'category_id'],
             ['title', 'description', 'status'],

@@ -121,7 +121,7 @@ class OfferBrowseListing extends Listing
     }
 
     /**
-     * Ville, loyer min et max, puis les filtres du domaine (décision
+     * Ville, loyer (intervalle), puis les filtres du domaine (décision
      * 2026-11-19-contrat-filtres-vitrine).
      */
     public function filters(): array
@@ -133,12 +133,9 @@ class OfferBrowseListing extends Listing
             ! $domain->hasAddress() ? null : Field::select('city')
                 ->label(__('offer::offer.filters.city'))
                 ->options($this->cities()),
-            ! $domain->hasPrice() ? null : Field::number('price_min')
-                ->label(__('offer::offer.filters.price_min'))
-                ->suffix($currency)
-                ->rules(['min:0']),
-            ! $domain->hasPrice() ? null : Field::number('price_max')
-                ->label(__('offer::offer.filters.price_max'))
+            // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
+            ! $domain->hasPrice() ? null : Field::range('price')
+                ->label($domain->priceLabel())
                 ->suffix($currency)
                 ->rules(['min:0']),
             ...$domain->filters(),
@@ -169,11 +166,12 @@ class OfferBrowseListing extends Listing
         if (isset($filters['city'])) {
             $query->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city']));
         }
-        if (isset($filters['price_min'])) {
-            $query->where('price', '>=', $filters['price_min']);
+        [$min, $max] = array_values((array) ($filters['price'] ?? [])) + [null, null];
+        if (is_numeric($min)) {
+            $query->where('price', '>=', $min);
         }
-        if (isset($filters['price_max'])) {
-            $query->where('price', '<=', $filters['price_max']);
+        if (is_numeric($max)) {
+            $query->where('price', '<=', $max);
         }
 
         app(DomainRegistry::class)->require()->applyFilters($query, $filters);

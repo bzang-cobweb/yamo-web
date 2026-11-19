@@ -63,6 +63,7 @@ class DemoSeeder extends Seeder
         $this->photos($member);
         $this->reviews($member, $cameroon);
         $this->featuredAndFavorites($member);
+        $this->amenities($member);
     }
 
     /**
@@ -154,7 +155,8 @@ class DemoSeeder extends Seeder
                     'rooms' => $rooms,
                     'bedrooms' => $bedrooms,
                     'available_from' => now()->addDays(7 * ($index % 6))->toDateString(),
-                    'charges' => $charges,
+                    'charges' => $furnished ? null : $charges,
+                    'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
                 ],
             ]);
         }
@@ -200,6 +202,32 @@ class DemoSeeder extends Seeder
         }
 
         return $ids;
+    }
+
+    /**
+     * Équipements des logements, tour à tour (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
+     *
+     * @var list<list<string>>
+     */
+    private const AMENITY_SETS = [
+        ['wifi', 'parking', 'security'],
+        ['wifi', 'air_conditioning', 'hot_water', 'tv'],
+        ['parking', 'generator', 'water_tank', 'security'],
+        ['wifi', 'equipped_kitchen', 'washing_machine'],
+        ['wifi', 'parking', 'air_conditioning', 'generator', 'pool', 'balcony'],
+        [],
+    ];
+
+    /**
+     * Les équipements des logements de démonstration qui n'en ont pas encore (rejouable).
+     */
+    private function amenities(User $member): void
+    {
+        Offer::query()->where('user_id', $member->getKey())->orderBy('id')->get()->values()->each(function (Offer $offer, int $index): void {
+            if ($offer->detail('amenities') === null) {
+                $offer->update(['details' => [...($offer->details ?? []), 'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)]]]);
+            }
+        });
     }
 
     /** @var list<array{string, string}> prénom, nom des visiteurs */

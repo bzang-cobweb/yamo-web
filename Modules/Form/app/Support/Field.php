@@ -3,6 +3,7 @@
 namespace Modules\Form\Support;
 
 use App\Support\Locales;
+use Closure;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Illuminate\Validation\Rule;
@@ -142,6 +143,24 @@ final class Field
     public static function checkbox(string $name): self
     {
         return new self($name, FieldType::CHECKBOX);
+    }
+
+    /**
+     * Liste déroulante à choix multiples : la valeur est la liste des options
+     * choisies (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
+     */
+    public static function multiselect(string $name): self
+    {
+        return new self($name, FieldType::MULTISELECT);
+    }
+
+    /**
+     * Intervalle : deux bornes `[min, max]`, chacune facultative ; max ≥ min.
+     * L'unité éventuelle (`suffix()`) vaut pour les deux.
+     */
+    public static function range(string $name): self
+    {
+        return new self($name, FieldType::RANGE);
     }
 
     public static function checkboxGroup(string $name): self
@@ -423,10 +442,24 @@ final class Field
             return [$this->name => [...$presence, ...$this->type->rules($values), new OptionBelongsToParent($this->dependsOn, $parents), ...$this->rules]];
         }
 
-        if ($this->type === FieldType::CHECKBOX_GROUP) {
+        if (in_array($this->type, [FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT], true)) {
             return [
                 $this->name => [...$presence, 'array', ...$this->rules],
                 $this->name.'.*' => ['string', Rule::in($values)],
+            ];
+        }
+
+        if ($this->type === FieldType::RANGE) {
+            return [
+                // Deux bornes, la seconde au moins égale à la première quand les deux sont données.
+                $this->name => [...$presence, 'array', 'size:2', function (string $attribute, mixed $value, Closure $fail): void {
+                    [$min, $max] = array_values((array) $value) + [null, null];
+                    if (is_numeric($min) && is_numeric($max) && (float) $max < (float) $min) {
+                        $fail('form::validation.range_order')->translate();
+                    }
+                }],
+                // Les règles du champ (`min:0`) valent pour chaque borne.
+                $this->name.'.*' => ['nullable', 'numeric', ...$this->rules],
             ];
         }
 
@@ -434,6 +467,26 @@ final class Field
         $contact = $this->withoutContactDetails ? [new NoContactDetails] : [];
 
         return [$this->name => [...$presence, ...$this->type->rules($values), ...$length, ...$contact, ...$this->rules]];
+    }
+
+    /**
+     * « 50 000 – 100 000 », « ≥ 50 000 », « ≤ 100 000 » ; vide : rien.
+     *
+     * @param  array<int|string, mixed>  $value
+     */
+    private static function rangeText(array $value, string $locale): ?string
+    {
+        [$min, $max] = array_map(
+            fn (mixed $bound): ?string => is_numeric($bound) ? (string) Number::format((float) $bound, locale: $locale) : null,
+            array_values($value) + [null, null],
+        );
+
+        return match (true) {
+            $min !== null && $max !== null => $min.' – '.$max,
+            $min !== null => '≥ '.$min,
+            $max !== null => '≤ '.$max,
+            default => null,
+        };
     }
 
     public function getLabel(): ?string
@@ -488,6 +541,11 @@ final class Field
         return $this;
     }
 
+    public function getSuffix(): ?string
+    {
+        return $this->suffix;
+    }
+
     /**
      * Unité affichée après la valeur (« m² »).
      */
@@ -530,7 +588,8 @@ final class Field
         $labels = $this->optionLabels();
         $text = match ($this->type) {
             FieldType::SELECT, FieldType::RADIO, FieldType::SEGMENTED => $labels[(string) $value] ?? (string) $value,
-            FieldType::CHECKBOX_GROUP => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
+            FieldType::RANGE => self::rangeText((array) $value, $locale),
+            FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
             FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
             FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) $value))).str_repeat('☆', 5 - $stars) : (string) $value,
             FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,

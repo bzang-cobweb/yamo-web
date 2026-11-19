@@ -86,6 +86,20 @@ class RentalDomain extends Domain
         ];
     }
 
+    /**
+     * Équipements proposés (décision 2026-11-19-contrat-multiselect-intervalle-equipements) ;
+     * leurs libellés sont dans `offer::rental.amenities`.
+     */
+    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'tv', 'balcony', 'pool'];
+
+    /**
+     * @return array<string, string>
+     */
+    private function amenityOptions(): array
+    {
+        return collect(self::AMENITIES)->mapWithKeys(fn (string $amenity): array => [$amenity => __('offer::rental.amenities.'.$amenity)])->all();
+    }
+
     public function attributes(): array
     {
         return [
@@ -109,6 +123,9 @@ class RentalDomain extends Domain
                 ->rules(['integer', 'min:0', 'max:50']),
             Field::date('available_from')
                 ->label(__('offer::rental.available_from')),
+            Field::multiselect('amenities')
+                ->label(__('offer::rental.amenities_label'))
+                ->options($this->amenityOptions()),
             Field::number('charges')
                 ->label(__('offer::rental.charges'))
                 ->help(__('offer::rental.charges_help'))
@@ -127,7 +144,7 @@ class RentalDomain extends Domain
     public function formSteps(): array
     {
         return [
-            ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms']],
+            ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from']],
             ['title' => __('offer::rental.steps.place'), 'fields' => ['address_id', 'category_id']],
             ['title' => __('offer::rental.steps.listing'), 'fields' => ['title', 'description', 'status']],
@@ -141,7 +158,7 @@ class RentalDomain extends Domain
     public function filters(): array
     {
         return [
-            Field::checkboxGroup('property_type')
+            Field::multiselect('property_type')
                 ->label(__('offer::rental.property_type'))
                 ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all()),
             Field::segmented('furnished')
@@ -154,6 +171,10 @@ class RentalDomain extends Domain
             Field::date('available_from')
                 ->label(__('offer::rental.filters.available_from'))
                 ->help(__('offer::rental.filters.available_from_help')),
+            Field::multiselect('amenities')
+                ->label(__('offer::rental.amenities_label'))
+                ->help(__('offer::rental.filters.amenities_help'))
+                ->options($this->amenityOptions()),
         ];
     }
 
@@ -174,6 +195,10 @@ class RentalDomain extends Domain
             $query->where(fn (Builder $dates) => $dates
                 ->whereNull('details->available_from')
                 ->orWhere('details->available_from', '<=', (string) $filters['available_from']));
+        }
+        // Tous les équipements choisis.
+        foreach ((array) ($filters['amenities'] ?? []) as $amenity) {
+            $query->whereJsonContains('details->amenities', (string) $amenity);
         }
     }
 

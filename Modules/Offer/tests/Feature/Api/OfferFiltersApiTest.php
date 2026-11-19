@@ -56,11 +56,14 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
-        $this->assertSame(['city', 'price_min', 'price_max', 'property_type', 'furnished', 'bedrooms', 'available_from'], array_keys($filters));
+        $this->assertSame(['city', 'price', 'property_type', 'furnished', 'bedrooms', 'available_from', 'amenities'], array_keys($filters));
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
-        $this->assertSame('FCFA', $filters['price_max']['suffix']);
-        $this->assertSame('checkbox_group', $filters['property_type']['type']);
+        // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
+        $this->assertSame('range', $filters['price']['type']);
+        $this->assertSame('FCFA', $filters['price']['suffix']);
+        $this->assertSame('multiselect', $filters['property_type']['type']);
+        $this->assertSame('multiselect', $filters['amenities']['type']);
         $this->assertSame('any', $filters['furnished']['default']);
     }
 
@@ -72,13 +75,14 @@ class OfferFiltersApiTest extends TestCase
         $house = $this->home('Douala', 80000, ['property_type' => 'house', 'furnished' => false, 'bedrooms' => 3]);
         $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'furnished' => true, 'bedrooms' => 2, 'available_from' => '2027-01-15']);
 
-        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price_max]=100000'));
-        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city]=Douala&filter[price_max]=100000'));
+        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
+        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city]=Douala&filter[price][]=&filter[price][]=100000'));
         $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[furnished]=true'));
         $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[furnished]=false'));
         $this->assertCount(5, $this->ids('?filter[furnished]=any'));
         $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $furnished->getKey()]), $this->ids('?filter[bedrooms]=2'));
-        $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price_min]=150000'));
+        $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
+        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
         // Libre le 1er janvier : pas celui qui se libère le 15.
         $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
         $this->assertContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-02-01'));
@@ -93,8 +97,20 @@ class OfferFiltersApiTest extends TestCase
         $this->home('Douala', 1000, ['property_type' => 'studio']);
         $this->home('Yaoundé', 1000, ['property_type' => 'house']);
 
-        $this->assertCount(2, $this->ids('?filter[city]=Paris&filter[price_max]=abc&filter[property_type][]=castle&filter[bedrooms]=9&filter[colour]=red&filter=oops'));
+        $this->assertCount(2, $this->ids('?filter[city]=Paris&filter[price][]=abc&filter[price][]=1&filter[property_type][]=castle&filter[bedrooms]=9&filter[colour]=red&filter=oops'));
         $this->assertCount(2, $this->ids('?filter[available_from]=demain'));
+    }
+
+    public function test_a_range_upside_down_is_ignored_and_amenities_must_all_be_there(): void
+    {
+        $both = $this->home('Douala', 1000, ['property_type' => 'studio', 'amenities' => ['wifi', 'parking']]);
+        $wifi = $this->home('Douala', 1000, ['property_type' => 'studio', 'amenities' => ['wifi']]);
+        $this->home('Douala', 1000, ['property_type' => 'studio']);
+
+        // Max sous le min : filtre invalide, ignoré.
+        $this->assertCount(3, $this->ids('?filter[price][]=5000&filter[price][]=100'));
+        $this->assertEqualsCanonicalizing(array_map('strval', [$both->getKey(), $wifi->getKey()]), $this->ids('?filter[amenities][]=wifi'));
+        $this->assertSame([(string) $both->getKey()], $this->ids('?filter[amenities][]=wifi&filter[amenities][]=parking'));
     }
 
     public function test_featured_offers_and_pages_follow_the_filters(): void
