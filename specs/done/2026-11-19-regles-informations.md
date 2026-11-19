@@ -57,3 +57,29 @@ Nouveaux attributs du domaine « logement », tous facultatifs :
 2. Oui / Non plutôt qu'un interrupteur pour animaux, fumeurs, fêtes, pour distinguer
    « non renseigné » de « non » (défaut : oui).
 3. Pas de filtre sur ces champs dans l'accueil pour l'instant (défaut).
+
+---
+
+## Ce que j'ai décidé seul
+
+- Les règles sont des attributs du domaine comme les autres (dans `details`) ; le domaine dit lesquels sont des règles (`ruleAttributes()`) et lequel est le texte libre (`informationAttribute()`). La fiche, le back-office et le formulaire s'en servent sans liste en dur ailleurs.
+- Âge minimum affiché « 21 ans » (suffixe) ; heures en liste fixe de demi-heures, sans nouveau type de champ.
+- Le texte libre n'a pas de titre dans la section : il suit les lignes, séparé par un espace.
+- Une ligne « libellé — valeur » commune aux caractéristiques et aux règles (`FactRow`) dans l'app.
+- Vérification au simulateur : règles ajoutées le temps de la capture à l'offre de démonstration n° 11, puis remises à l'identique (vérifié).
+
+## Ce qui a été fait
+
+- Web 859197d : attributs, étape, `Domain::ruleAttributes()` / `informationAttribute()`, fiche (`rules`, `information`, faits sans les règles), onglet « Règles » du back-office, textes fr/en, tests (formulaire, enregistrement et validation, fiche, back-office), OpenAPI.
+- Mobile a30866b : section repliable « Règles du logement », test.
+- Suites : serveur 508 verts, app 236 verts, tsc et lint propres. Simulateur : section vue sur l'offre 11.
+
+## Ce que je n'ai pas vérifié
+
+- La nouvelle étape du formulaire dans le simulateur (le compte connecté n'est pas propriétaire d'une offre de démonstration) ; couverte par les tests d'API.
+- L'onglet « Règles » dans un vrai navigateur (test Livewire seulement).
+
+## Ce qui reste en suspens
+
+- Point 1 de la même demande (« rename avis by reviews ») : sans réponse sur ce qu'il faut renommer ; rien n'a été changé.
+- Le diff d'`openapi.json` reflète aussi la base locale à un seul pays ouvert (énumérations de pays réduites).

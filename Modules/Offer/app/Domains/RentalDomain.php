@@ -90,13 +90,13 @@ class RentalDomain extends Domain
      * Équipements proposés (décision 2026-11-19-contrat-multiselect-intervalle-equipements) ;
      * leurs libellés sont dans `offer::rental.amenities`.
      */
+    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
+
     /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
     public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
 
     /** Longueur maximale des autres informations. */
     public const INFORMATION_MAX_LENGTH = 2000;
-
-    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
 
     /**
      * @return array<string, string>
