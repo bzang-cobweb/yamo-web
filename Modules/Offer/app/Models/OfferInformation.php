@@ -28,7 +28,9 @@ use Spatie\Translatable\HasTranslations;
 class OfferInformation extends Model
 {
     /** @use HasFactory<OfferInformationFactory> */
-    use HasFactory, HasTranslations;
+    use HasFactory;
+
+    use HasTranslations { normalizeLocale as translatableLocale; }
 
     /** Longueurs maximales et nombre maximal de blocs par offre. */
     public const TITLE_MAX_LENGTH = 100;
@@ -39,6 +41,16 @@ class OfferInformation extends Model
 
     /** @var list<string> */
     public array $translatable = ['title', 'description'];
+
+    /**
+     * Un texte manquant s'affiche dans la langue d'origine de l'offre (décision
+     * 2026-11-19-contrat-langue-saisie-allemand).
+     */
+    protected function normalizeLocale(string $key, string $locale, bool $useFallbackLocale): string
+    {
+        return OriginalLocale::pick($this->getTranslatedLocales($key), $locale, $useFallbackLocale ? $this->offer?->locale : null)
+            ?? $this->translatableLocale($key, $locale, $useFallbackLocale);
+    }
 
     /**
      * @return BelongsTo<Offer, $this>

@@ -145,24 +145,28 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasFormErrors(['details.property_type', 'details.surface']);
     }
 
-    public function test_only_the_default_language_title_is_required(): void
+    public function test_a_title_in_at_least_one_language_is_required(): void
     {
+        // Décision 2026-11-19-contrat-langue-saisie-allemand.
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);
+        $form = fn (array $title): array => [
+            'user_id' => User::factory()->create()->getKey(),
+            'status' => 'draft',
+            ...$title,
+            'price' => '1000',
+            'offerAddress.address_id' => Address::factory()->create()->getKey(),
+            'details.property_type' => 'studio',
+            'details.surface' => '20',
+            'details.rooms' => '1',
+        ];
 
-        Livewire::test(CreateOffer::class)
-            ->fillForm([
-                'user_id' => User::factory()->create()->getKey(),
-                'status' => 'draft',
-                'title.en' => 'Only English',
-                'price' => '1000',
-                'offerAddress.address_id' => Address::factory()->create()->getKey(),
-                'details.property_type' => 'studio',
-                'details.surface' => '20',
-                'details.rooms' => '1',
-            ])
-            ->call('create')
-            ->assertHasFormErrors(['title.fr'])
-            ->assertHasNoFormErrors(['title.en']);
+        Livewire::test(CreateOffer::class)->fillForm($form([]))->call('create')->assertHasFormErrors(['title.fr']);
+
+        Livewire::test(CreateOffer::class)->fillForm($form(['title.en' => 'Only English']))->call('create')->assertHasNoFormErrors();
+        $offer = Offer::query()->sole();
+        $this->assertSame(['en' => 'Only English'], $offer->getTranslations('title'));
+        // Sa langue d'origine : l'anglais.
+        $this->assertSame('en', $offer->locale);
     }
 
     public function test_offers_are_filtered_by_country(): void

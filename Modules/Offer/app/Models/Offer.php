@@ -35,6 +35,7 @@ use Spatie\Translatable\HasTranslations;
  *
  * @property int $user_id
  * @property int|null $country_id
+ * @property string|null $locale langue d'origine (décision 2026-11-19-contrat-langue-saisie-allemand)
  * @property int|null $category_id
  * @property string $title
  * @property string|null $description
@@ -55,12 +56,14 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'expires_at'])]
+#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
     /** @use HasFactory<OfferFactory> */
-    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
+
+    use HasTranslations { normalizeLocale as translatableLocale; }
 
     /**
      * Textes traduits (décision 2026-11-18-offres-multilingues-categories-arbre) :
@@ -71,6 +74,16 @@ class Offer extends Model implements HasMedia
     public array $translatable = ['title', 'description'];
 
     public const PHOTOS = 'photos';
+
+    /**
+     * Un texte manquant dans `$locale` s'affiche dans la langue d'origine de l'offre,
+     * puis la langue par défaut, puis une autre (décision 2026-11-19-contrat-langue-saisie-allemand).
+     */
+    protected function normalizeLocale(string $key, string $locale, bool $useFallbackLocale): string
+    {
+        return OriginalLocale::pick($this->getTranslatedLocales($key), $locale, $useFallbackLocale ? $this->locale : null)
+            ?? $this->translatableLocale($key, $locale, $useFallbackLocale);
+    }
 
     /**
      * Publier fixe la date de publication, une fois.
@@ -286,7 +299,7 @@ class Offer extends Model implements HasMedia
 
     /**
      * Valeur d'un attribut du domaine dans une langue : la sienne, sinon la langue
-     * par défaut, sinon une autre. Un attribut non traduit est rendu tel quel, une
+     * d'origine de l'offre, la langue par défaut, une autre. Un attribut non traduit est rendu tel quel, une
      * liste aussi (les équipements choisis) : seules les traductions sont rangées
      * par langue.
      */
@@ -298,6 +311,7 @@ class Offer extends Model implements HasMedia
             return $value;
         }
 
-        return $value[$locale] ?? $value[Locales::default()] ?? (reset($value) ?: null);
+        // La langue demandée, puis d'origine, puis par défaut, puis une autre.
+        return $value[$locale] ?? ($this->locale !== null ? ($value[$this->locale] ?? null) : null) ?? $value[Locales::default()] ?? (reset($value) ?: null);
     }
 }

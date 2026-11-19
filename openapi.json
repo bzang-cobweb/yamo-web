@@ -3566,7 +3566,8 @@
                         "type": "string",
                         "enum": [
                             "fr",
-                            "en"
+                            "en",
+                            "de"
                         ]
                     }
                 },

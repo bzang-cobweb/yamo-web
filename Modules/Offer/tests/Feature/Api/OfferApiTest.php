@@ -17,6 +17,7 @@ use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferInformation;
 use Tests\TestCase;
 
 /**
@@ -252,6 +253,75 @@ class OfferApiTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors(['informations.0.title']);
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['informations' => array_fill(0, 11, ['title' => 'T', 'description' => 'D'])]))
             ->assertUnprocessable()->assertJsonValidationErrors(['informations']);
+    }
+
+    public function test_editing_asks_the_writing_language_prefills_and_saves_only_that_language(): void
+    {
+        // Décision 2026-11-19-contrat-langue-saisie-allemand.
+        $user = $this->member();
+        $form = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data');
+        // À la création : pas d'étape « Langue ».
+        $this->assertNotContains('content_locale', array_column($form['fields'], 'name'));
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['title' => 'Appartement lumineux', 'informations' => [['title' => 'Arrivée', 'description' => 'Clés chez le gardien.']]]))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $this->assertSame('fr', $offer->locale);
+        $this->assertSame(['fr' => 'Appartement lumineux'], $offer->getTranslations('title'));
+
+        // À l'édition : l'étape « Langue » en premier, l'état de chaque langue, un champ qui recharge.
+        $form = $this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->json('data');
+        $this->assertSame(['content_locale'], $form['steps'][0]['fields']);
+        $this->assertSame('Langue', $form['steps'][0]['title']);
+        $field = array_column($form['fields'], null, 'name')['content_locale'];
+        $this->assertTrue($field['reloads']);
+        $this->assertSame('fr', $field['default']);
+        $this->assertSame(['Français — langue d\'origine', 'English — à traduire'], array_column($field['options'], 'label'));
+
+        // « Suivant » sur l'étape « Langue » ne vérifie que la langue (étapes de l'offre modifiée).
+        $this->asUser($user)->postJson("/api/v1/forms/offer.offer/steps/1?record={$offer->getKey()}", ['content_locale' => 'en'])->assertNoContent();
+        $this->asUser($user)->postJson("/api/v1/forms/offer.offer/steps/1?record={$offer->getKey()}", ['content_locale' => 'xx'])
+            ->assertUnprocessable()->assertJsonValidationErrors('content_locale');
+
+        // L'anglais choisi : les textes sont pré-remplis avec l'original.
+        $defaults = array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}&content_locale=en")->json('data.fields'), 'default', 'name');
+        $this->assertSame('en', $defaults['content_locale']);
+        $this->assertSame('Appartement lumineux', $defaults['title']);
+        $this->assertSame('Arrivée', $defaults['informations'][0]['title']);
+
+        // Enregistrer en anglais n'ajoute que l'anglais.
+        $photos = $offer->getMedia(Offer::PHOTOS)->pluck('uuid')->all();
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, [
+            'content_locale' => 'en', 'photos' => $photos, 'title' => 'Bright flat',
+            'informations' => [['id' => $defaults['informations'][0]['id'], 'title' => 'Arrival', 'description' => 'Keys with the caretaker.']],
+        ]))->assertNoContent();
+        $offer->refresh();
+        $this->assertSame(['fr' => 'Appartement lumineux', 'en' => 'Bright flat'], $offer->getTranslations('title'));
+        $this->assertSame('fr', $offer->locale);
+        $this->assertSame(['fr' => 'Arrivée', 'en' => 'Arrival'], $offer->informations->sole()->getTranslations('title'));
+        $labels = array_column(array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->json('data.fields'), null, 'name')['content_locale']['options'], 'label');
+        $this->assertSame('English — traduite', $labels[1]);
+
+        // Une langue inconnue est refusée ; une app à une seule langue n'a pas d'étape.
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['content_locale' => 'xx', 'photos' => $photos]))
+            ->assertUnprocessable()->assertJsonValidationErrors('content_locale');
+        config(['app.supported_locales' => ['fr']]);
+        $this->assertNotContains('content_locale', array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->json('data.fields'), 'name'));
+    }
+
+    public function test_a_missing_text_shows_in_the_original_language_before_the_default_one(): void
+    {
+        // Décision 2026-11-19-contrat-langue-saisie-allemand : demandée, d'origine, par défaut, une autre.
+        config(['app.supported_locales' => ['fr', 'en', 'de']]);
+        $offer = Offer::factory()->create(['locale' => 'en', 'title' => ['fr' => 'Studio', 'en' => 'Studio flat'], 'details' => ['note' => ['fr' => 'Calme', 'en' => 'Quiet']]]);
+        OfferInformation::factory()->for($offer)->create(['title' => ['fr' => 'Arrivée', 'en' => 'Arrival']]);
+
+        $this->assertSame('Studio flat', $offer->getTranslation('title', 'de'));
+        $this->assertSame('Studio', $offer->getTranslation('title', 'fr'));
+        $this->assertSame('Quiet', $offer->detailIn('note', 'de'));
+        $this->assertSame('Arrival', $offer->informations->sole()->getTranslation('title', 'de'));
+        // Sans langue d'origine connue : la langue par défaut, comme avant.
+        $offer->locale = null;
+        $this->assertSame('Studio', $offer->getTranslation('title', 'de'));
     }
 
     public function test_a_member_adds_a_home_with_its_attributes(): void

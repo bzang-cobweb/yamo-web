@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Http\Requests\OfferRequest;
 use Modules\Offer\Http\Resources\OfferDetailResource;
 use Modules\Offer\Models\Offer;
@@ -47,6 +48,7 @@ class OfferController
         $user = $request->user();
         // L'offre et ses photos ensemble (décision 2026-11-19-contrat-champ-upload-photos).
         DB::transaction(function () use ($request, $service, $photos, $domains, $user): void {
+            // À la création, la langue du compte, qui devient la langue d'origine.
             $offer = $service->create($user, $domains->require(), CurrentCountry::require(), $request->validated(), $user->preferredLocale());
             $photos->sync($offer, $user->getKey(), $request->validated('photos', []));
         });
@@ -63,7 +65,8 @@ class OfferController
         $user = $request->user();
         // Saisie dans la langue du compte (décision 2026-11-18-offres-multilingues-categories-arbre).
         DB::transaction(function () use ($request, $offer, $service, $photos, $domains, $user): void {
-            $service->update($offer, $domains->require(), $request->validated(), $user->preferredLocale());
+            // La langue choisie à l'étape « Langue », sinon celle du compte (décision 2026-11-19-contrat-langue-saisie-allemand).
+            $service->update($offer, $domains->require(), $request->validated(), $request->validated(OfferForm::CONTENT_LOCALE) ?? $user->preferredLocale());
             $photos->sync($offer, $user->getKey(), $request->validated('photos', []));
         });
 

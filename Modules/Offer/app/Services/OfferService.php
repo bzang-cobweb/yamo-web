@@ -30,9 +30,12 @@ class OfferService
             throw ValidationException::withMessages(['title' => __('offer::offer.one_per_account')]);
         }
 
+        $locale ??= $user->preferredLocale();
         $offer = Offer::query()->create([
             'user_id' => $user->getKey(),
             'country_id' => $country->getKey(),
+            // La langue d'origine (décision 2026-11-19-contrat-langue-saisie-allemand).
+            'locale' => $locale,
             ...$this->columns($domain, $data, $country, $locale ?? $user->preferredLocale()),
         ]);
         $this->syncAddress($offer, $domain, $data, $country);

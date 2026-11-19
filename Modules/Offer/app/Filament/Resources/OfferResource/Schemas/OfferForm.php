@@ -117,11 +117,12 @@ abstract class OfferForm
                                     ->options(fn (): array => Country::options())
                                     ->searchable()
                                     ->required()),
-                                // Traduits : un onglet par langue ; seule la langue par défaut est obligatoire.
+                                // Traduits : un onglet par langue ; un titre dans au moins une langue
+                                // (décision 2026-11-19-contrat-langue-saisie-allemand), l'erreur sous la langue par défaut.
                                 TranslatableTabs::make(fn (string $locale): array => [
                                     TextInput::make("title.{$locale}")
                                         ->label(__('offer::offer.title_field'))
-                                        ->required($locale === Locales::default())
+                                        ->required(fn (Get $get): bool => $locale === Locales::default() && collect(Locales::values())->every(fn (string $other): bool => blank($get("title.{$other}"))))
                                         ->maxLength(255),
                                     Textarea::make("description.{$locale}")
                                         ->label(__('offer::offer.description'))

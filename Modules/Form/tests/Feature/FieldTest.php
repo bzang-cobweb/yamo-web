@@ -160,6 +160,7 @@ class FieldTest extends TestCase
             'locked' => false,
             'depends_on' => null,
             'visible_when' => null,
+            'reloads' => false,
             'suggestions' => null,
             'max_length' => null,
             'suffix' => null,

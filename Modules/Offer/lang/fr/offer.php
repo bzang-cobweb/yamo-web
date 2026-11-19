@@ -102,4 +102,13 @@ return [
         'description' => 'Description',
         'help' => "Des blocs d'informations pratiques, chacun avec un titre : arrivée, parking, règles de la maison…",
     ],
+    // Langue de saisie (décision 2026-11-19-contrat-langue-saisie-allemand).
+    'content_locale' => [
+        'step' => 'Langue',
+        'label' => 'Langue de saisie',
+        'help' => "Dans quelle langue modifiez-vous cette annonce ? Une langue à traduire est pré-remplie avec le texte d'origine.",
+        'original' => "langue d'origine",
+        'translated' => 'traduite',
+        'to_translate' => 'à traduire',
+    ],
 ];

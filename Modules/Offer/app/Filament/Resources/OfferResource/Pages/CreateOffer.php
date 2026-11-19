@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Filament\Resources\OfferResource\Pages;
 
+use App\Support\Locales;
 use Filament\Resources\Pages\CreateRecord;
 use Modules\Location\Models\Country;
 use Modules\Offer\Domains\DomainRegistry;
@@ -24,6 +25,10 @@ class CreateOffer extends CreateRecord
         $domain = app(DomainRegistry::class)->require();
         $data['currency'] = filled($data['price'] ?? null) ? Country::query()->whereKey($data['country_id'] ?? null)->value('currency') : null;
         $data['details'] = app(OfferService::class)->typedDetails($domain, (array) ($data['details'] ?? []));
+        // La langue d'origine : celle par défaut si son titre est saisi, sinon la première saisie
+        // (décision 2026-11-19-contrat-langue-saisie-allemand).
+        $titles = array_keys(array_filter((array) ($data['title'] ?? []), fn (mixed $title): bool => filled($title)));
+        $data['locale'] = in_array(Locales::default(), $titles, true) ? Locales::default() : ($titles[0] ?? Locales::default());
 
         return $data;
     }

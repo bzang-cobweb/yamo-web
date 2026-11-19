@@ -289,9 +289,9 @@ class RentalDomain extends Domain
     public function categories(): array
     {
         return [
-            ['slug' => 'long-term', 'name' => ['fr' => 'Location longue durée', 'en' => 'Long-term rental']],
-            ['slug' => 'furnished', 'name' => ['fr' => 'Location meublée', 'en' => 'Furnished rental']],
-            ['slug' => 'shared', 'name' => ['fr' => 'Colocation', 'en' => 'Flat share']],
+            ['slug' => 'long-term', 'name' => ['fr' => 'Location longue durée', 'en' => 'Long-term rental', 'de' => 'Langzeitmiete']],
+            ['slug' => 'furnished', 'name' => ['fr' => 'Location meublée', 'en' => 'Furnished rental', 'de' => 'Möblierte Vermietung']],
+            ['slug' => 'shared', 'name' => ['fr' => 'Colocation', 'en' => 'Flat share', 'de' => 'Wohngemeinschaft']],
         ];
     }
 

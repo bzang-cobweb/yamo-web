@@ -86,7 +86,8 @@ return [
 
     // Langues proposées : contenu traduisible (spatie/laravel-translatable, Filament),
     // langue des comptes, de l'API et de l'app mobile. Domicile : App\Support\Locales.
-    'supported_locales' => ['fr', 'en'],
+    // L'allemand (décision 2026-11-19-contrat-langue-saisie-allemand).
+    'supported_locales' => ['fr', 'en', 'de'],
 
     // Langue par défaut, stable : `app.locale` est réécrite à chaque requête par
     // App::setLocale() (langue du compte ou de l'appareil). Lire Locales::default().

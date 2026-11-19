@@ -102,6 +102,9 @@ final class Field
 
     private ?string $addLabel = null;
 
+    /** Changer la valeur recharge le formulaire avec `?<nom>=<valeur>` (`reloads()`). */
+    private bool $reloads = false;
+
     /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
     private bool $withoutContactDetails = false;
 
@@ -378,6 +381,18 @@ final class Field
         if ($this->type !== FieldType::REPEATER) {
             throw new LogicException("Champ « {$this->name} » : réservé à une liste de groupes.");
         }
+    }
+
+    /**
+     * Changer la valeur recharge la définition du formulaire avec `?<nom>=<valeur>`
+     * (décision 2026-11-19-contrat-langue-saisie-allemand) : les autres champs, leurs
+     * valeurs de départ comprises, peuvent en dépendre (ex. la langue de saisie).
+     */
+    public function reloads(bool $reloads = true): self
+    {
+        $this->reloads = $reloads;
+
+        return $this;
     }
 
     public static function switch(string $name): self
@@ -862,7 +877,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -881,6 +896,8 @@ final class Field
             'depends_on' => $this->dependsOn,
             /** Afficher seulement quand le champ `field` vaut `value`. */
             'visible_when' => $this->visibleWhen,
+            /** Changer la valeur recharge le formulaire avec `?<nom>=<valeur>` (les autres champs en dépendent). */
+            'reloads' => $this->reloads,
             'suggestions' => $this->suggestions,
             'max_length' => $this->maxLength,
             /** Unité affichée après la valeur (« m² »). */

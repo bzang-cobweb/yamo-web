@@ -35,6 +35,9 @@ return [
         'repeaterRemove' => 'Remove this block',
         'repeaterAdd' => 'Add',
         'repeaterUntitled' => 'Untitled',
+        // Champ qui recharge le formulaire (décision 2026-11-19-contrat-langue-saisie-allemand).
+        'reloadConfirm' => 'Change? Unsaved changes will be lost.',
+        'reloadContinue' => 'Continue',
         'uploadSending' => 'Sending…',
         'uploadWrongType' => 'Format not accepted.',
         'uploadTooLarge' => 'File too large: :max at most.',

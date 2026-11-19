@@ -3,6 +3,7 @@
 namespace Modules\Offer\Forms;
 
 use App\Support\Currency;
+use App\Support\Locales;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
@@ -61,6 +62,9 @@ class OfferForm extends Form
         $categories = OfferCategory::options();
 
         return array_values(array_filter([
+            // La langue de saisie, à l'édition seulement et si l'app a plusieurs langues
+            // (décision 2026-11-19-contrat-langue-saisie-allemand) : la changer recharge le formulaire.
+            $this->contentLocaleField(),
             Field::text('title')
                 ->label(__('offer::offer.title_field'))
                 ->default($offer?->getTranslation('title', $this->locale()))
@@ -186,6 +190,11 @@ class OfferForm extends Form
             return [];
         }
 
+        // L'étape « Langue » en premier, quand elle existe (décision 2026-11-19-contrat-langue-saisie-allemand).
+        if ($this->hasContentLocale()) {
+            $declared = [['title' => __('offer::offer.content_locale.step'), 'fields' => [self::CONTENT_LOCALE]], ...$declared];
+        }
+
         $present = array_map(fn (Field $field): string => $field->name, $this->fields());
         $steps = [];
         $placed = [];
@@ -235,9 +244,62 @@ class OfferForm extends Form
     /**
      * Langue de saisie : celle du compte (décision 2026-11-18-offres-multilingues-categories-arbre).
      */
-    private function locale(): string
+    /**
+     * La langue de saisie des textes : celle choisie à l'étape « Langue » (paramètre
+     * ou champ `content_locale`), sinon la langue du compte.
+     */
+    public function locale(): string
     {
+        $chosen = request()->input(self::CONTENT_LOCALE);
+
+        if (is_string($chosen) && in_array($chosen, Locales::values(), true) && $this->hasContentLocale()) {
+            return $chosen;
+        }
+
         return $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
+    }
+
+    /** Le champ de la langue de saisie. */
+    public const CONTENT_LOCALE = 'content_locale';
+
+    /**
+     * L'étape « Langue » existe-t-elle ? À l'édition, quand l'app propose plusieurs langues.
+     */
+    private function hasContentLocale(): bool
+    {
+        return $this->offer !== null && count(Locales::values()) > 1;
+    }
+
+    /**
+     * « Dans quelle langue modifiez-vous cette annonce ? » : chaque langue avec son
+     * état (langue d'origine, traduite, à traduire) ; la choisir recharge le formulaire.
+     */
+    private function contentLocaleField(): ?Field
+    {
+        if (! $this->hasContentLocale()) {
+            return null;
+        }
+
+        $offer = $this->offer;
+        $titles = array_keys(array_filter($offer?->getTranslations('title') ?? [], fn (mixed $title): bool => filled($title)));
+        $options = [];
+
+        foreach (Locales::options() as $code => $label) {
+            $state = match (true) {
+                $code === $offer?->locale => __('offer::offer.content_locale.original'),
+                in_array($code, $titles, true) => __('offer::offer.content_locale.translated'),
+                default => __('offer::offer.content_locale.to_translate'),
+            };
+            $options[$code] = $label.' — '.$state;
+        }
+
+        return Field::select(self::CONTENT_LOCALE)
+            ->label(__('offer::offer.content_locale.label'))
+            ->help(__('offer::offer.content_locale.help'))
+            ->options($options)
+            ->default($this->locale())
+            // Facultatif : une app plus ancienne ne l'envoie pas, et la langue du compte vaut.
+            ->reloads();
     }
 
     public function domain(): Domain

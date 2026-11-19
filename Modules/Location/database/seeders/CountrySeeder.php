@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Database\Seeders;
 
+use App\Support\Locales;
 use Illuminate\Database\Seeder;
 use libphonenumber\PhoneNumberUtil;
 use Locale;
@@ -41,14 +42,12 @@ class CountrySeeder extends Seeder
         $phoneNumbers = PhoneNumberUtil::getInstance();
 
         foreach ($phoneNumbers->getSupportedRegions() as $code) {
-            $names = [
-                'fr' => $this->regionName($code, 'fr') ?? $code,
-                'en' => $this->regionName($code, 'en') ?? $code,
-            ];
+            // Un nom par langue de l'app (décision 2026-11-19-contrat-langue-saisie-allemand).
+            $names = collect(Locales::values())->mapWithKeys(fn (string $locale): array => [$locale => $this->regionName($code, $locale) ?? $code])->all();
 
             $country = Country::query()->firstOrNew(['code' => $code]);
             $country->setTranslations('name', $names);
-            $country->native_name = $this->nativeName($code) ?? $names['en'];
+            $country->native_name = $this->nativeName($code) ?? $names['en'] ?? $names[Locales::default()];
 
             if (! $country->exists) {
                 $country->dial_code = '+'.$phoneNumbers->getCountryCodeForRegion($code);
@@ -120,7 +119,7 @@ class CountrySeeder extends Seeder
         return $candidates;
     }
 
-    private function regionName(string $code, string $locale): ?string
+    public function regionName(string $code, string $locale): ?string
     {
         $name = Locale::getDisplayRegion('-'.$code, $locale);
 
