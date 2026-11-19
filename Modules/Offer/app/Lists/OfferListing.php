@@ -96,12 +96,20 @@ class OfferListing extends Listing
         $typed = (string) $record->getTranslation('title', $locale);
         $title = $domain->itemTitle($record) ?? $typed;
 
+        // La date d'expiration, après le statut (décision 2026-11-19-expiration-mes-logements) :
+        // « Expire le 30 juin 2027 », « Expirée le 2 janvier 2026 » ; sans date, rien.
+        $expiration = $record->expires_at === null ? null : __(
+            $record->expires_at->isFuture() ? 'offer::offer.list.expires' : 'offer::offer.list.expired',
+            ['date' => $record->expires_at->copy()->locale($locale)->isoFormat('LL')],
+            $locale,
+        );
+
         // En sous-titre, le titre saisi ; en gras, « Publiée · 80 000 FCFA / mois »
         // (décision 2026-11-19-item-titre-saisi-details). La note, tant qu'elle est publiée.
         return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
-            ->highlight(implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
+            ->highlight(implode(' · ', array_filter([$record->status->label(), $expiration, ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
             // « Voir » : sa fiche, brouillon compris (décision 2026-11-19-nuit-voir-editer-retirer).
             ->link('/offers/'.$record->getKey())

@@ -59,6 +59,8 @@ return [
         'confirm' => 'Remove this offer?',
         'remove' => 'Remove',
         'removed' => 'Offer removed.',
+        'expires' => 'Expires on :date',
+        'expired' => 'Expired on :date',
     ],
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Featured until',
