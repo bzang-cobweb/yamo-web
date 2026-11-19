@@ -31,7 +31,7 @@ class RouteGuardTest extends TestCase
         'api/v1/notifications' => 'ses notifications seulement (relation `notifications` du compte) : gardée par auth:sanctum',
         'api/v1/notifications/unread-count' => 'le nombre de ses notifications non lues : gardée par auth:sanctum',
         'api/v1/notifications/read' => 'marque lues ses seules notifications : gardée par auth:sanctum',
-        'api/v1/notifications/{notification}/read' => "cherchée parmi ses seules notifications (404 sinon) : gardée par auth:sanctum",
+        'api/v1/notifications/{notification}/read' => 'cherchée parmi ses seules notifications (404 sinon) : gardée par auth:sanctum',
     ];
 
     public function test_every_controller_route_is_guarded(): void

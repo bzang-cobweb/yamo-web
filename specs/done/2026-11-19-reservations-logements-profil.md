@@ -66,3 +66,30 @@ Demande : « ok avec le profil groupé. On n'affiche plus le menu du bas dans le
 - « Mes logements » : filtres comme l'accueil plus le statut ; « Ajouter un logement » en bas ouvre le formulaire d'ajout ; chaque carte montre le nombre de demandes en attente.
 - Toucher le compteur ouvre les demandes de ce logement ; « Accepter » (après confirmation) et « Refuser » (avec message facultatif) changent le statut, font baisser le compteur et préviennent le membre.
 - Suites web et app vertes, tsc propre, OpenAPI à jour, simulateur vu, QA indépendante.
+
+## Ce que j'ai décidé seul
+
+- **Refuser** passe par un petit formulaire (`offer.booking.refuse`, réponse « refuser » déjà choisie, message facultatif) qui envoie à la route de réponse existante ; **Accepter** a sa route directe (`POST /v1/bookings/{id}/accept`) après confirmation.
+- **Pastille de statut générique** (`ListItem::tag`, tons warning / success / danger / neutral) ; sur une demande, le total reste en gras.
+- **Titre selon les filtres** (`Listing::titleFor`) : « Demandes · <logement> » ; sinon « Demandes reçues ».
+- **Filtres de l'accueil factorisés** (`Lists/Concerns/FiltersOffers`) pour « Mes logements ».
+- **« Aucun résultat ne correspond à ces filtres »** remplace « Aucune offre… » partout (le texte valait pour toute liste filtrée).
+- Avec un seul logement, le filtre « Logement » est présélectionné par défaut : il ne compte pas dans le nombre de filtres actifs (comportement générique existant).
+
+## Ce qui a été fait
+
+- Web 04a9ad3 : groupes du menu (`ProfileMenuLinks::addGroup`, Compte / Voyageur / Hôte), « Réservations reçues » retirée du menu ; listes génériques : barre du bas (`footer`), boutons de carte (`actions`), compteur (`counter`), titre selon les filtres.
+- Web d333e99 : « Mes logements » (filtres + statut, « Ajouter un logement » en bas, compteur des demandes en attente), « Mes réservations » (filtres statut / ville / type, « Rechercher un logement »), demandes d'un logement (Accepter, Refuser), regroupements de statuts (`Booking::scopeInStatusGroup`) ; 87a5894 : pastille de statut, texte « Aucun résultat ».
+- Mobile fcc4e03 : groupes du menu ; listes du profil hors des onglets ; filtres, barre du bas, boutons de carte avec confirmation, compteur, pastille.
+- Simulateur : groupes, « Mes logements » (compteur, barre du bas), demandes du logement, « Accepter » de bout en bout (demande temporaire, effacée ensuite), « Mes réservations » (pastille verte, « Rechercher un logement » ramène à l'accueil).
+- Suites : serveur 557 verts, app 268 verts (49 suites), tsc propre. QA indépendante : GO.
+
+## Ce que je n'ai pas vérifié
+
+- « Refuser » au simulateur (formulaire et envoi couverts par les tests).
+- L'écran des filtres de « Mes logements » à l'écran (les filtres de l'accueil, déjà vus ailleurs).
+- Les e-mails et SMS de l'acceptation (travailleur de file arrêté ; les jobs de la demande temporaire ont été effacés).
+
+## Ce qui reste en suspens
+
+- Rien de demandé.
