@@ -29,6 +29,9 @@ final class Field
 
     private bool $required = false;
 
+    /** Libellé non affiché par l'app (`hideLabel()`) ; lu par l'accessibilité, il sert aux messages. */
+    private bool $labelHidden = false;
+
     /** Affiché, non modifiable, jamais validé ni enregistré. */
     private bool $readonly = false;
 
@@ -316,6 +319,18 @@ final class Field
     public function label(string $label): self
     {
         $this->label = $label;
+
+        return $this;
+    }
+
+    /**
+     * Ne pas afficher le libellé dans l'app (décision 2026-11-19-nuit-ordre-photos-libelle),
+     * par exemple quand le titre de l'étape le dit déjà ; il reste lu par
+     * l'accessibilité et nomme le champ dans les messages de validation.
+     */
+    public function hideLabel(bool $hidden = true): self
+    {
+        $this->labelHidden = $hidden;
 
         return $this;
     }
@@ -765,7 +780,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -773,6 +788,8 @@ final class Field
             'name' => $this->name,
             'type' => $this->type->value,
             'label' => $this->label,
+            /** Libellé à ne pas afficher (lu par l'accessibilité seulement). */
+            'label_hidden' => $this->labelHidden,
             'placeholder' => $this->placeholder,
             'help' => $this->help,
             'required' => $this->required,

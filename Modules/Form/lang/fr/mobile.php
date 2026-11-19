@@ -26,14 +26,15 @@ return [
         'rangeOrder' => 'Le maximum doit être au moins égal au minimum.',
         'stepOf' => 'Étape :current sur :total',
         // Champ de fichiers (décision 2026-11-19-contrat-champ-upload-photos).
-        'uploadAdd' => "Ajouter des photos",
-        'uploadMain' => "Principale",
-        'uploadMakeMain' => "Mettre en premier",
-        'uploadRemove' => "Retirer",
-        'uploadSending' => "Envoi…",
-        'uploadWrongType' => "Format non accepté.",
-        'uploadTooLarge' => "Fichier trop lourd : :max au plus.",
-        'uploadTooMany' => "Au plus :max fichiers.",
+        'uploadAdd' => 'Ajouter des photos',
+        'uploadMain' => 'Principale',
+        'uploadMoveLeft' => "Avancer d'une place",
+        'uploadMoveRight' => "Reculer d'une place",
+        'uploadRemove' => 'Retirer',
+        'uploadSending' => 'Envoi…',
+        'uploadWrongType' => 'Format non accepté.',
+        'uploadTooLarge' => 'Fichier trop lourd : :max au plus.',
+        'uploadTooMany' => 'Au plus :max fichiers.',
         'uploadFailed' => "L'envoi a échoué. Réessayez.",
     ],
     'list' => [
@@ -41,6 +42,9 @@ return [
         'filters' => 'Filtres',
         'applyFilters' => 'Appliquer les filtres',
         'clearFilters' => 'Effacer les filtres',
+        // Actions d'un item avec un écran et un formulaire (décision 2026-11-19-nuit-voir-editer-retirer).
+        'view' => 'Voir',
+        'edit' => 'Éditer',
         'noFilterResults' => 'Aucune offre ne correspond à ces filtres.',
         // Cœur de favori sur une photo (décision 2026-11-19-contrat-vedette-favoris).
         'addFavorite' => 'Ajouter aux favoris',

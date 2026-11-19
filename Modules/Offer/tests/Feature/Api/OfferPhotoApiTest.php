@@ -82,6 +82,9 @@ class OfferPhotoApiTest extends TestCase
 
         $this->assertSame('upload', $fields['photos']['type']);
         $this->assertTrue($fields['photos']['required']);
+        // Libellé masqué : le titre d'étape suffit ; il sert encore aux messages (décision 2026-11-19-nuit-ordre-photos-libelle).
+        $this->assertSame(['Photos', true], [$fields['photos']['label'], $fields['photos']['label_hidden']]);
+        $this->assertFalse($fields['title']['label_hidden']);
         $this->assertSame([
             'accept' => ['image/jpeg', 'image/png', 'image/webp'],
             'max_size_kb' => OfferPhotoService::MAX_UPLOAD_KB,

@@ -148,6 +148,7 @@ class FieldTest extends TestCase
             'name' => 'city',
             'type' => 'select',
             'label' => null,
+            'label_hidden' => false,
             'placeholder' => null,
             'help' => null,
             'required' => true,

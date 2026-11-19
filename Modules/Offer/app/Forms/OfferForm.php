@@ -112,6 +112,8 @@ class OfferForm extends Form
             // Les photos, au moins une (décision 2026-11-19-contrat-champ-upload-photos).
             Field::upload('photos')
                 ->label(__('offer::offer.photos'))
+                // Le titre de l'étape « Photos » suffit (décision 2026-11-19-nuit-ordre-photos-libelle).
+                ->hideLabel()
                 ->help(__('offer::offer.photos_help'))
                 ->accept(OfferPhotoService::ACCEPTED_MIME_TYPES)
                 ->maxSize(OfferPhotoService::MAX_UPLOAD_KB)
