@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-contrat-bouton-fixe-formulaires.md (plus de menu du bas sur les formulaires)
+
 # `2026-11-16` — Contrat du chantier menu du bas et profil, validé
 
 Remplace : 2026-11-15-services-login-logout-profile.md (partie « PATCH /api/v1/auth/me », `ProfileService::update` et service mobile `update` uniquement ; le reste reste en vigueur)
