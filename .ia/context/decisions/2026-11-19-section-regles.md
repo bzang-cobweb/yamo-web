@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-section-rules-en.md (l'anglais devient « Rules »)
+
 # `2026-11-19` — Fiche d'une offre : la section « Règles du logement » s'appelle « Règles »
 
 - **Type** : décision

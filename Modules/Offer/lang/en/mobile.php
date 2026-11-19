@@ -9,7 +9,7 @@ return [
         'publishedOn' => 'Published on :date',
         'photoPosition' => ':current / :total',
         'details' => 'Features',
-        'rules' => 'House rules',
+        'rules' => 'Rules',
         'description' => 'Description',
         // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
         'location' => 'Location',
