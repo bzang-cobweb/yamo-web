@@ -192,30 +192,46 @@ class OfferDetailApiTest extends TestCase
 
     public function test_sections_come_from_the_configuration(): void
     {
-        // Décision 2026-11-19-sections-fiche-laravel.
+        // Décision 2026-11-19-sections-fiche-laravel ; complètes (décision 2026-11-19-sections-construites-laravel).
         $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'pets' => 'no']]);
+        $sections = $this->show($offer)->json('data.sections');
         $this->assertSame([
-            ['key' => 'location', 'open' => true],
-            ['key' => 'facts', 'open' => false],
-            ['key' => 'rules', 'open' => false],
-            ['key' => 'reviews', 'open' => false],
-        ], $this->show($offer)->json('data.sections'));
+            ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => true],
+            ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => false],
+            ['key' => 'rules', 'type' => 'rows', 'title' => 'Règles', 'open' => false],
+            ['key' => 'reviews', 'type' => 'reviews', 'title' => 'Avis', 'open' => false],
+        ], $this->outline($sections));
+        // Le contenu avec : l'adresse et son indication, les lignes.
+        $this->assertSame($this->show($offer)->json('data.address'), $sections[0]['text']);
+        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[2]['rows']);
+        $this->assertSame($this->show($offer)->json('data.facts'), $sections[1]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
         config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);
-        $this->assertSame([
-            ['key' => 'reviews', 'open' => true],
-            ['key' => 'facts', 'open' => true],
-            ['key' => 'location', 'open' => false],
-        ], $this->show($offer)->json('data.sections'));
+        $this->assertSame([['reviews', true], ['facts', true], ['location', false]], $this->keysAndOpen($this->show($offer)->json('data.sections')));
 
         // Aucune ouverte parmi celles servies : la première l'est.
         config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
         $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'pets' => 'no']]);
-        $this->assertSame([
-            ['key' => 'facts', 'open' => true],
-            ['key' => 'rules', 'open' => false],
-        ], $this->show($withoutAddress)->json('data.sections'));
+        $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $sections
+     * @return list<array<string, mixed>>
+     */
+    private function outline(array $sections): array
+    {
+        return array_map(fn (array $section): array => array_intersect_key($section, array_flip(['key', 'type', 'title', 'open'])), $sections);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $sections
+     * @return list<array{0: mixed, 1: mixed}>
+     */
+    private function keysAndOpen(array $sections): array
+    {
+        return array_map(fn (array $section): array => [$section['key'], $section['open']], $sections);
     }
 
     public function test_information_blocks_are_served_in_order_and_language_as_last_sections(): void
@@ -228,8 +244,12 @@ class OfferDetailApiTest extends TestCase
         $data = $this->show($offer)->assertOk()->json('data');
         $this->assertSame([['Arrivée', "Clés chez le gardien.\nAppeler."], ['Parking', 'Dans la cour.']], array_map(fn (array $information): array => [$information['title'], $information['description']], $data['informations']));
         $this->assertSame('Arrival', $this->show($offer, 'en')->json('data.informations.0.title'));
-        // Après les avis, fermées par défaut.
-        $this->assertSame(['key' => 'informations', 'open' => false], end($data['sections']));
+        // Après les avis, une section `text` par bloc, dans l'ordre, fermées par défaut
+        // (décision 2026-11-19-sections-construites-laravel).
+        $blocks = array_slice($data['sections'], -2);
+        $this->assertSame(['text', 'Arrivée', "Clés chez le gardien.\nAppeler.", false], [$blocks[0]['type'], $blocks[0]['title'], $blocks[0]['text'], $blocks[0]['open']]);
+        $this->assertSame('Parking', $blocks[1]['title']);
+        $this->assertStringStartsWith('information-', $blocks[0]['key']);
         $this->assertSame([], $this->show($this->home())->json('data.informations'));
     }
 

@@ -114,4 +114,11 @@ return [
         'translated' => 'übersetzt',
         'to_translate' => 'zu übersetzen',
     ],
+    // Titres des sections de la fiche, servis avec elles (décision 2026-11-19-sections-construites-laravel).
+    'section_titles' => [
+        'location' => 'Lage',
+        'facts' => 'Merkmale',
+        'rules' => 'Regeln',
+        'reviews' => 'Bewertungen',
+    ],
 ];

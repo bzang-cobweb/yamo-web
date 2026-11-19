@@ -3243,29 +3243,22 @@
                     },
                     "sections": {
                         "type": "array",
-                        "description": "Les sections repliables \u00e0 afficher, dans l'ordre, et si elles sont ouvertes \u00e0 l'arriv\u00e9e (configuration `offer.sections`) ; seulement celles qui ont un contenu.",
-                        "items": {
-                            "anyOf": [
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "key": {
-                                            "type": "string"
-                                        },
-                                        "open": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "required": [
-                                        "key",
-                                        "open"
-                                    ]
+                        "description": "Les sections repliables de la fiche, construites par Laravel (d\u00e9cision\n2026-11-19-sections-construites-laravel) : dans l'ordre et l'ouverture de\n`offer.sections`, seulement celles qui ont un contenu. Chacune porte son\ntype (`rows` : lignes \u00ab libell\u00e9 \u2014 valeur \u00bb ; `text` : un texte et une note ;\n`reviews` : les avis de `reviews`), son titre et son contenu ; un bloc\nd'informations est une section `text` \u00e0 lui seul.",
+                        "prefixItems": [
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "open": {
+                                        "type": "boolean"
+                                    }
                                 },
-                                {
-                                    "type": "boolean"
-                                }
-                            ]
-                        }
+                                "required": [
+                                    "open"
+                                ]
+                            }
+                        ],
+                        "minItems": 1,
+                        "maxItems": 1
                     },
                     "booking": {
                         "type": [

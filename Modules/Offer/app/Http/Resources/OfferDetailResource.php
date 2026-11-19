@@ -71,14 +71,15 @@ class OfferDetailResource extends JsonResource
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
             /** Les avis (décision 2026-11-19-contrat-avis-offres) : moyenne, nombre, 5 derniers, le sien, s'il peut en donner un, et le retrait du sien ; `null` pour une offre non publiée. */
             'reviews' => $reviews,
-            /** Les sections repliables à afficher, dans l'ordre, et si elles sont ouvertes à l'arrivée (configuration `offer.sections`) ; seulement celles qui ont un contenu. */
-            'sections' => $this->sections([
-                'location' => $address !== null,
-                'facts' => $facts !== [],
-                'rules' => $rules !== [],
-                'reviews' => $reviews !== null,
-                'informations' => $informations !== [],
-            ]),
+            /**
+             * Les sections repliables de la fiche, construites par Laravel (décision
+             * 2026-11-19-sections-construites-laravel) : dans l'ordre et l'ouverture de
+             * `offer.sections`, seulement celles qui ont un contenu. Chacune porte son
+             * type (`rows` : lignes « libellé — valeur » ; `text` : un texte et une note ;
+             * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
+             * d'informations est une section `text` à lui seul.
+             */
+            'sections' => $this->sections($address, $this->indication($offer, $locale), $facts, $rules, $informations, $reviews !== null),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
@@ -247,21 +248,40 @@ class OfferDetailResource extends JsonResource
     }
 
     /**
-     * Les sections de la fiche (décision 2026-11-19-sections-fiche-laravel) : dans
-     * l'ordre de `offer.sections`, celles qui ont un contenu, ouvertes ou non ; si
-     * aucune n'est ouverte, la première l'est.
+     * Les sections de la fiche, complètes (décisions 2026-11-19-sections-fiche-laravel
+     * et 2026-11-19-sections-construites-laravel) : dans l'ordre de `offer.sections`,
+     * celles qui ont un contenu, ouvertes ou non ; si aucune n'est ouverte, la première
+     * l'est. Les blocs d'informations prennent chacun une section, à la place de la clé
+     * `informations`, avec l'ouverture réglée pour elle.
      *
-     * @param  array<string, bool>  $present
-     * @return list<array{key: string, open: bool}>
+     * @param  list<array{label: string, value: string}>  $facts
+     * @param  list<array{label: string, value: string}>  $rules
+     * @param  list<array{id: string, title: string, description: string}>  $informations
+     * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null}>
      */
-    private function sections(array $present): array
+    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews): array
     {
         $sections = [];
 
         foreach ((array) config('offer.sections', []) as $key => $open) {
-            if ($present[$key] ?? false) {
-                $sections[] = ['key' => (string) $key, 'open' => (bool) $open];
-            }
+            $open = (bool) $open;
+            $title = __('offer::offer.section_titles.'.$key);
+
+            array_push($sections, ...match ((string) $key) {
+                'location' => $address === null ? [] : [['key' => 'location', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $address, 'note' => $indication]],
+                'facts' => $facts === [] ? [] : [['key' => 'facts', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $facts]],
+                'rules' => $rules === [] ? [] : [['key' => 'rules', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $rules]],
+                'reviews' => $hasReviews ? [['key' => 'reviews', 'type' => 'reviews', 'title' => $title, 'open' => $open]] : [],
+                'informations' => array_map(fn (array $information): array => [
+                    'key' => 'information-'.$information['id'],
+                    'type' => 'text',
+                    'title' => $information['title'],
+                    'open' => $open,
+                    'text' => $information['description'],
+                    'note' => null,
+                ], $informations),
+                default => [],
+            });
         }
 
         if ($sections !== [] && ! in_array(true, array_column($sections, 'open'), true)) {
