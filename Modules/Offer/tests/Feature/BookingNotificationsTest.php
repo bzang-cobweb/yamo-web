@@ -149,7 +149,7 @@ class BookingNotificationsTest extends TestCase
         $booking = $this->booking(owner: ['locale' => 'en', 'email_verified_at' => null]);
         $owner = $booking->offer->user;
 
-        app(BookingService::class)->request($booking->user, $booking->offer, ['check_in' => today()->addDay()->toDateString(), 'check_out' => today()->addDays(2)->toDateString(), 'guests' => 1]);
+        app(BookingService::class)->request($booking->user, $booking->offer, ['check_in' => today()->addDay()->toDateString(), 'check_out' => today()->addDays(2)->toDateString(), 'guests' => 1, 'message' => 'Bonjour, je viens pour le travail.']);
 
         $notification = $owner->notifications()->sole();
         $this->assertSame('Home request', $notification->data['title']);
@@ -157,6 +157,8 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
         $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
         $this->assertSame([['label' => 'View the listing', 'link' => '/offers/'.$booking->offer_id]], $notification->data['links']);
+        $this->assertSame($booking->offer_id, $notification->data['offer_id']);
+        $this->assertSame('Bonjour, je viens pour le travail.', $notification->data['message']);
         $this->assertNull($notification->read_at);
     }
 }

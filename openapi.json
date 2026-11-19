@@ -3002,6 +3002,13 @@
                                 "body": {
                                     "type": "string"
                                 },
+                                "message": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                                },
                                 "link": {
                                     "type": [
                                         "string",
@@ -3044,6 +3051,7 @@
                                 "title",
                                 "tag",
                                 "body",
+                                "message",
                                 "link",
                                 "links",
                                 "read",
