@@ -111,7 +111,8 @@ class OfferCalendarApiTest extends TestCase
 
         $data = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar")->assertOk()->json('data');
         $this->assertSame(today()->format('Y-m'), $data['month']);
-        $this->assertStringStartsWith('Calendrier · ', $data['title']);
+        $this->assertSame('Calendrier', $data['title']);
+        $this->assertSame('Studio · meublé', $data['heading']);
         $this->assertSame(today()->daysInMonth, count($data['days']));
         $this->assertSame(today()->startOfMonth()->dayOfWeekIso - 1, $data['offset']);
         $this->assertCount(7, $data['weekdays']);

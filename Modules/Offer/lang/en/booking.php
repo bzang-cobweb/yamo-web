@@ -130,7 +130,7 @@ return [
     ],
     // Le calendrier d'une offre (décision 2026-11-19-contrat-calendrier-offre).
     'calendar' => [
-        'title' => 'Calendar · :offer',
+        'title' => 'Calendar',
         'button' => 'Calendar',
         'block' => 'Block this day',
         'block_confirm' => 'Block this day? It can no longer be requested.',

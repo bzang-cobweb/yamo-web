@@ -1311,7 +1311,12 @@
                                             "type": "object",
                                             "properties": {
                                                 "title": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "description": "Titre de la barre du haut (\u00ab Calendrier \u00bb)."
+                                                },
+                                                "heading": {
+                                                    "type": "string",
+                                                    "description": "Titre du contenu : l'offre (\u00ab Studio \u00b7 meubl\u00e9 \u00b7 Douala \u00bb)."
                                                 },
                                                 "month": {
                                                     "type": "string"
@@ -1389,6 +1394,7 @@
                                             },
                                             "required": [
                                                 "title",
+                                                "heading",
                                                 "month",
                                                 "label",
                                                 "previous",

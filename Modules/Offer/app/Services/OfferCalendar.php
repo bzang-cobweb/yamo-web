@@ -30,7 +30,7 @@ class OfferCalendar
     public const PAST_MONTHS = 12;
 
     /**
-     * @return array{title: string, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
+     * @return array{title: string, heading: string, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
      */
     public function month(Offer $offer, Carbon $month, string $locale): array
     {
@@ -73,7 +73,10 @@ class OfferCalendar
         $last = today()->addDays(Booking::MAX_DAYS)->startOfMonth();
 
         return [
-            'title' => __('offer::booking.calendar.title', ['offer' => $this->offerTitle($offer, $locale)], $locale),
+            /** Titre de la barre du haut (« Calendrier »). */
+            'title' => __('offer::booking.calendar.title', [], $locale),
+            /** Titre du contenu : l'offre (« Studio · meublé · Douala »). */
+            'heading' => $this->offerTitle($offer, $locale),
             'month' => (string) $from->format('Y-m'),
             'label' => ucfirst($from->copy()->locale($locale)->isoFormat('MMMM YYYY')),
             'previous' => $from->greaterThan($current->copy()->subMonths(self::PAST_MONTHS)) ? (string) $from->copy()->subMonth()->format('Y-m') : null,
