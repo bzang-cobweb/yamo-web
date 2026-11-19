@@ -6,6 +6,7 @@ use App\Support\Locales;
 use Closure;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
@@ -65,6 +66,9 @@ final class Field
     private bool $money = false;
 
     private ?string $moneyPer = null;
+
+    /** Suggestions pendant la saisie : point d'API relatif (`/v1/…`), ou aucune. */
+    private ?string $suggestions = null;
 
     /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
     private bool $withoutContactDetails = false;
@@ -541,6 +545,23 @@ final class Field
         return $this;
     }
 
+    /**
+     * Suggestions pendant la saisie d'un texte (décision
+     * 2026-11-19-contrat-adresse-offre-recherche) : l'app appelle la route nommée
+     * `$route` avec `?q=` et propose ses réponses `{ value, label, fill }` ; en
+     * choisir une remplit ce champ (`value`) et les champs de `fill`.
+     */
+    public function suggestions(string $route): self
+    {
+        if ($this->type !== FieldType::TEXT) {
+            throw new LogicException("Champ « {$this->name} » : seul un texte propose des suggestions.");
+        }
+
+        $this->suggestions = '/'.Str::after(ltrim(route($route, [], false), '/'), 'api/');
+
+        return $this;
+    }
+
     public function getSuffix(): ?string
     {
         return $this->suffix;
@@ -625,7 +646,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -642,6 +663,7 @@ final class Field
             'depends_on' => $this->dependsOn,
             /** Afficher seulement quand le champ `field` vaut `value`. */
             'visible_when' => $this->visibleWhen,
+            'suggestions' => $this->suggestions,
             'max_length' => $this->maxLength,
             /** Unité affichée après la valeur (« m² »). */
             'suffix' => $this->suffix,

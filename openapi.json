@@ -149,6 +149,77 @@
                 }
             }
         },
+        "/v1/addresses/suggestions": {
+            "get": {
+                "operationId": "v1.addresses.suggestions",
+                "summary": "Au plus 10 adresses (une adresse est unique par pays), par ordre de rue ; rien\nsous 3 caract\u00e8res. Chaque suggestion remplit le code postal et la ville",
+                "tags": [
+                    "AddressSuggestion"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Le d\u00e9but ou un morceau de la rue. @example Njo",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `AddressSuggestionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AddressSuggestionResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/app": {
             "get": {
                 "operationId": "v1.app.show",
@@ -1784,6 +1855,41 @@
             }
         },
         "schemas": {
+            "AddressSuggestionResource": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "description": "La rue, qui remplit le champ saisi."
+                    },
+                    "label": {
+                        "type": "string",
+                        "description": "\u00ab Rue du Lac 4 \u2014 1200 Gen\u00e8ve \u00bb."
+                    },
+                    "fill": {
+                        "type": "object",
+                        "description": "Les autres champs qu'elle remplit.",
+                        "properties": {
+                            "zip": {
+                                "type": "string"
+                            },
+                            "city": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "zip",
+                            "city"
+                        ]
+                    }
+                },
+                "required": [
+                    "value",
+                    "label",
+                    "fill"
+                ],
+                "title": "AddressSuggestionResource"
+            },
             "ApplicationResource": {
                 "type": "object",
                 "properties": {

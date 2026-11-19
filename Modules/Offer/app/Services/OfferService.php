@@ -7,6 +7,7 @@ use Modules\Auth\Models\User;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
+use Modules\Location\Services\AddressService;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Models\Offer;
 
@@ -83,6 +84,32 @@ class OfferService
     }
 
     /**
+     * L'adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche) : une
+     * adresse de même empreinte dans le pays est reprise, sinon elle est créée ;
+     * rien n'est ajouté au carnet du compte. Sans rue ni ville saisies : aucune
+     * adresse ; sans les champs (ancien envoi) : l'adresse actuelle de l'offre.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function addressId(array $data, ?Country $country, ?Offer $offer): ?int
+    {
+        if (! array_key_exists('street', $data) && ! array_key_exists('city', $data)) {
+            return $offer?->address_id;
+        }
+
+        $street = trim((string) ($data['street'] ?? ''));
+        $zip = trim((string) ($data['zip'] ?? ''));
+        $city = trim((string) ($data['city'] ?? ''));
+
+        if ($street === '' || $city === '' || $country === null) {
+            return null;
+        }
+
+        // La même règle que partout : une adresse unique par pays (`AddressService`).
+        return (int) app(AddressService::class)->findOrCreate(['country_id' => $country->getKey(), 'street' => $street, 'zip' => $zip, 'city' => $city])->getKey();
+    }
+
+    /**
      * Un nombre saisi est gardé comme nombre (64, 3.5), pas comme texte.
      */
     private function value(Field $field, mixed $value): mixed
@@ -103,7 +130,7 @@ class OfferService
             'title' => $this->translations($offer?->getTranslations('title') ?? [], $locale, $data['title']),
             'description' => $this->translations($offer?->getTranslations('description') ?? [], $locale, $data['description'] ?? null),
             'category_id' => $data['category_id'] ?? null,
-            'address_id' => $domain->hasAddress() ? ($data['address_id'] ?? null) : null,
+            'address_id' => $domain->hasAddress() ? $this->addressId($data, $country, $offer) : null,
             'status' => $data['status'],
             'price' => $price,
             'currency' => $price === null ? null : $country?->currency,

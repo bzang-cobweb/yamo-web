@@ -81,4 +81,9 @@ return [
     'filters' => [
         'city' => 'Ville',
     ],
+    // Adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche).
+    'street' => 'Rue',
+    'street_help' => 'Tapez au moins 3 caractères : les adresses connues sont proposées.',
+    'zip' => 'Code postal',
+    'city' => 'Ville',
 ];

@@ -83,23 +83,23 @@ class CountrySpaceTest extends TestCase
     public function test_offers_live_in_their_country_with_its_currency(): void
     {
         $user = $this->member();
-        $address = UserAddress::factory()->for($user)->for(Address::factory()->for($this->cameroon))->create()->address_id;
-        UserAddress::factory()->for($user)->for(Address::factory()->for($this->senegal))->create();
-
         $fields = array_column($this->in($user, 'CM')->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
         $this->assertSame('Loyer', $fields['price']['label']);
         // Le symbole local de la devise, pas son code (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
         $this->assertSame('FCFA / mois', $fields['price']['suffix']);
-        $this->assertSame([(string) $address], array_column($fields['address_id']['options'], 'value'));
+        // L'adresse se saisit (décision 2026-11-19-contrat-adresse-offre-recherche).
+        $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [
-            'title' => 'Studio à Bonanza', 'status' => 'published', 'price' => '85000', 'address_id' => (string) $address,
+            'title' => 'Studio à Bonanza', 'status' => 'published', 'price' => '85000', 'street' => 'Rue Njo-Njo', 'city' => 'Douala',
             'property_type' => 'studio', 'surface' => '25', 'rooms' => '1',
         ])->assertNoContent();
 
         $offer = Offer::query()->sole();
         $this->assertTrue($offer->country->is($this->cameroon));
         $this->assertSame('XAF', $offer->currency);
+        // L'adresse saisie est créée dans le pays de l'offre.
+        $this->assertTrue($offer->address->country->is($this->cameroon));
         // Format français, sans décimales ; espaces insécables ramenés à des espaces.
         // Statut et prix en gras (décision 2026-11-19-item-titre-saisi-details).
         $highlight = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $this->in($user, 'CM')->getJson('/api/v1/lists/offer.mine')->json('data.items.0.highlight'));

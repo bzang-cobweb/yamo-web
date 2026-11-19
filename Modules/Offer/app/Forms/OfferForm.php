@@ -4,7 +4,6 @@ namespace Modules\Offer\Forms;
 
 use App\Support\Currency;
 use Modules\Auth\Models\User;
-use Modules\Auth\Models\UserAddress;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -76,12 +75,27 @@ class OfferForm extends Form
                 ->default($offer?->price)
                 ->required($domain->requiresPrice())
                 ->rules(['min:0', 'max:100000000']),
-            ! $domain->hasAddress() ? null : Field::select('address_id')
-                ->label(__('offer::offer.address'))
-                ->help(__('offer::offer.address_help'))
-                ->options($this->addressOptions())
-                ->default($offer?->address_id === null ? null : (string) $offer->address_id)
-                ->required($domain->requiresAddress()),
+            // L'adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche) :
+            // la rue propose les adresses existantes du pays ; à l'enregistrement, une
+            // adresse identique est reprise, sinon créée. Jamais le carnet du compte.
+            ! $domain->hasAddress() ? null : Field::text('street')
+                ->label(__('offer::offer.street'))
+                ->help(__('offer::offer.street_help'))
+                ->suggestions('api.v1.addresses.suggestions')
+                ->default($offer?->address?->street)
+                ->required($domain->requiresAddress())
+                ->maxLength(255)
+                ->rules(['required_with:city']),
+            ! $domain->hasAddress() ? null : Field::text('zip')
+                ->label(__('offer::offer.zip'))
+                ->default($offer?->address?->zip ?: null)
+                ->maxLength(20),
+            ! $domain->hasAddress() ? null : Field::text('city')
+                ->label(__('offer::offer.city'))
+                ->default($offer?->address?->city)
+                ->required($domain->requiresAddress())
+                ->maxLength(255)
+                ->rules(['required_with:street']),
             Field::select('status')
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())
@@ -175,22 +189,5 @@ class OfferForm extends Form
     public function domain(): Domain
     {
         return app(DomainRegistry::class)->require();
-    }
-
-    /**
-     * Les adresses du compte dans le pays courant, sans doublon : id de l'adresse => « Rue du Lac 4, 1200 Genève ».
-     *
-     * @return array<string, string>
-     */
-    private function addressOptions(): array
-    {
-        $user = $this->user instanceof User ? $this->user : null;
-
-        return $user === null ? [] : $user->addresses()->with('address')
-            ->whereHas('address', fn ($query) => $query->where('country_id', CurrentCountry::require()->getKey()))
-            ->get()
-            ->unique('address_id')
-            ->mapWithKeys(fn (UserAddress $entry): array => [(string) $entry->address_id => $entry->address->street.', '.$entry->address->zip.' '.$entry->address->city])
-            ->all();
     }
 }

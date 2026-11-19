@@ -7,6 +7,7 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -50,14 +51,15 @@ class OfferApiTest extends TestCase
      */
     private function input(User $user, array $overrides = []): array
     {
-        $address = UserAddress::factory()->for($user)->create()->address_id;
 
         return [
             'title' => 'Appartement lumineux',
             'description' => 'Proche du lac.',
             'category_id' => (string) OfferCategory::query()->where('slug', 'furnished')->value('id'),
             'price' => '1850',
-            'address_id' => (string) $address,
+            'street' => 'Rue du Lac 4',
+            'zip' => '1200',
+            'city' => 'Genève',
             'status' => 'published',
             'property_type' => 'apartment',
             'furnished' => true,
@@ -93,7 +95,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'address_id', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -103,7 +105,10 @@ class OfferApiTest extends TestCase
         $this->assertSame('Surface', $fields['surface']['label']);
         $this->assertSame('m²', $fields['surface']['suffix']);
         $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['category_id']['options'], 'label'));
-        $this->assertCount(1, $fields['address_id']['options']);
+        // La rue propose des adresses ; le code postal est facultatif (décision 2026-11-19-contrat-adresse-offre-recherche).
+        $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);
+        $this->assertTrue($fields['street']['required']);
+        $this->assertFalse($fields['zip']['required']);
         $this->assertSame('draft', $fields['status']['default']);
         // Les charges : un montant mensuel dans la devise du pays.
         $this->assertSame('CHF / mois', $fields['charges']['suffix']);
@@ -155,7 +160,7 @@ class OfferApiTest extends TestCase
         $this->assertSame([
             ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from'],
-            ['address_id', 'category_id'],
+            ['street', 'zip', 'city', 'category_id'],
             ['title', 'description', 'status'],
         ], array_column($steps, 'fields'));
 
@@ -163,7 +168,7 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'castle'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['property_type'])
-            ->assertJsonMissingValidationErrors(['surface', 'rooms', 'title', 'price', 'address_id']);
+            ->assertJsonMissingValidationErrors(['surface', 'rooms', 'title', 'price', 'street']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio'])->assertNoContent();
     }
@@ -204,14 +209,49 @@ class OfferApiTest extends TestCase
         $this->assertSame('Studio, appelez le 699 12 34 56', Offer::query()->sole()->getTranslation('title', 'fr'));
     }
 
-    public function test_the_address_must_be_one_of_the_account(): void
+    public function test_an_existing_address_is_reused_otherwise_created_never_in_the_account(): void
     {
         $user = $this->member();
-        $foreign = UserAddress::factory()->create()->address_id;
+        $existing = Address::query()->create(['country_id' => Country::query()->where('code', 'CH')->value('id'), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
 
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_id' => (string) $foreign]))
+        // Décision 2026-11-19-contrat-adresse-offre-recherche : même empreinte (casse, espaces), même adresse.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => '  rue du lac 4 ', 'city' => 'GENÈVE']))->assertNoContent();
+        $this->assertSame($existing->getKey(), Offer::query()->latest('id')->value('address_id'));
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => 'Chemin Neuf 1', 'zip' => '', 'city' => 'Nyon']))->assertNoContent();
+        $created = Address::query()->whereKey(Offer::query()->latest('id')->value('address_id'))->sole();
+        $this->assertSame(['Chemin Neuf 1', '', 'Nyon'], [$created->street, $created->zip, $created->city]);
+        $this->assertSame(2, Address::query()->count());
+        // Le carnet du compte n'est ni lu ni rempli.
+        $this->assertSame(0, $user->addresses()->count());
+
+        // Rue et ville obligatoires.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => '', 'city' => '']))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['address_id']);
+            ->assertJsonValidationErrors(['street', 'city']);
+    }
+
+    public function test_street_suggestions_serve_only_street_zip_and_city_of_the_country(): void
+    {
+        $user = $this->member();
+        $switzerland = Country::query()->where('code', 'CH')->value('id');
+        foreach (['Rue du Lac 4', 'Rue du Lac 10', 'Avenue de la Gare'] as $street) {
+            Address::query()->create(['country_id' => $switzerland, 'street' => $street, 'zip' => '1200', 'city' => 'Genève']);
+        }
+        Address::query()->create(['country_id' => Country::factory()->create(['code' => 'FR'])->getKey(), 'street' => 'Rue du Lac 99', 'zip' => '75000', 'city' => 'Paris']);
+
+        $this->getJson('/api/v1/addresses/suggestions?q=lac')->assertUnauthorized();
+        $this->assertSame([], $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=la')->assertOk()->json('data'));
+
+        $suggestions = $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=du lac')->assertOk()->json('data');
+        $this->assertSame(['Rue du Lac 10', 'Rue du Lac 4'], array_column($suggestions, 'value'));
+        $this->assertSame(['value' => 'Rue du Lac 4', 'label' => 'Rue du Lac 4 — 1200 Genève', 'fill' => ['zip' => '1200', 'city' => 'Genève']], $suggestions[1]);
+
+        // Au plus 10.
+        foreach (range(1, 12) as $number) {
+            Address::query()->create(['country_id' => $switzerland, 'street' => "Chemin des Pins {$number}", 'zip' => '1260', 'city' => 'Nyon']);
+        }
+        $this->assertCount(10, $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=pins')->json('data'));
     }
 
     public function test_an_account_without_the_member_role_cannot_add(): void
@@ -254,6 +294,8 @@ class OfferApiTest extends TestCase
             ->json('data.fields'), 'default', 'name');
         $this->assertSame('Appartement lumineux', $fields['title']);
         $this->assertSame('apartment', $fields['property_type']);
+        // L'adresse de l'offre, préremplie.
+        $this->assertSame(['Rue du Lac 4', '1200', 'Genève'], [$fields['street'], $fields['zip'], $fields['city']]);
 
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['title' => 'Grand 3,5 pièces', 'surface' => '70']))->assertNoContent();
 

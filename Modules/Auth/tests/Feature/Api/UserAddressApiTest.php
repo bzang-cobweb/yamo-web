@@ -228,10 +228,11 @@ class UserAddressApiTest extends TestCase
             ->json('data.fields');
 
         $fields = array_column($data, null, 'name');
-        // Latitude, longitude et suggestions de rue sont réservées au back-office.
+        // Latitude et longitude sont réservées au back-office ; le carnet n'a pas de suggestions
+        // (seule l'adresse d'une offre en a, décision 2026-11-19-contrat-adresse-offre-recherche).
         $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city'], array_keys($fields));
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
-        $this->assertArrayNotHasKey('suggestions', $fields['street']);
+        $this->assertNull($fields['street']['suggestions']);
     }
 
     public function test_the_form_for_one_of_its_addresses_is_prefilled_and_sent_to_its_route(): void
@@ -345,12 +346,5 @@ class UserAddressApiTest extends TestCase
 
         $this->assertNotNull($entry->fresh());
         $this->assertSame(0, $intruder->addresses()->count());
-    }
-
-    public function test_there_is_no_address_search_for_the_app(): void
-    {
-        Address::factory()->create(['street' => 'Rue du Lac 4']);
-
-        $this->asUser(User::factory()->create())->getJson('/api/v1/addresses/suggestions?q=rue')->assertNotFound();
     }
 }

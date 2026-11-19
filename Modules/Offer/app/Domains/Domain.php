@@ -17,7 +17,7 @@ use Modules\Offer\Models\Offer;
 abstract class Domain
 {
     /** Champs communs à toutes les offres : un attribut ne peut pas porter ces noms. */
-    public const COMMON_FIELDS = ['title', 'description', 'category_id', 'price', 'currency', 'address_id', 'status'];
+    public const COMMON_FIELDS = ['title', 'description', 'category_id', 'price', 'currency', 'address_id', 'street', 'zip', 'city', 'status'];
 
     /**
      * Clé du domaine, celle de `config('offer.domain')`.

@@ -146,7 +146,7 @@ class RentalDomain extends Domain
         return [
             ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from']],
-            ['title' => __('offer::rental.steps.place'), 'fields' => ['address_id', 'category_id']],
+            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'category_id']],
             ['title' => __('offer::rental.steps.listing'), 'fields' => ['title', 'description', 'status']],
         ];
     }

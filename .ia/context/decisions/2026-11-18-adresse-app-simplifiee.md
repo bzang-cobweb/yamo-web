@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-19-contrat-adresse-offre-recherche.md (les suggestions de rue reviennent dans l'app, pour l'adresse d'une offre seulement)
 Remplacée en partie par : 2026-11-18-bouton-ajout-fixe.md (point 3).
 
 
