@@ -6,6 +6,7 @@
 return [
     'nav' => [
         'back' => 'Retour',
+        'close' => 'Fermer',
     ],
     'error' => [
         'unknown' => 'Une erreur est survenue. Réessayez.',

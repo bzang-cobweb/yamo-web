@@ -6,6 +6,7 @@
 return [
     'nav' => [
         'back' => 'Back',
+        'close' => 'Close',
     ],
     'error' => [
         'unknown' => 'Something went wrong. Please try again.',
