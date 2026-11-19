@@ -7,6 +7,7 @@ use Illuminate\Testing\TestResponse;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
@@ -167,5 +168,33 @@ class OfferFavoriteApiTest extends TestCase
 
         $offer->update(['status' => 'published']);
         $this->assertSame([(string) $offer->getKey()], array_column($this->api($member, 'GET', '/api/v1/lists/offer.favorites')->json('data.items'), 'id'));
+    }
+
+    public function test_my_favorites_have_the_home_search_and_filters_and_a_search_button(): void
+    {
+        // Décision 2026-11-19-favoris-recherche-filtres.
+        $user = $this->member();
+        $douala = Offer::factory()->at(Address::factory()->for(Country::query()->where('code', 'CM')->sole())->create(['city' => 'Douala']))
+            ->create(['status' => 'published', 'title' => ['fr' => 'Studio Akwa'], 'price' => '50000', 'details' => ['property_type' => 'studio', 'furnished' => true]]);
+        $yaounde = Offer::factory()->at(Address::factory()->for(Country::query()->where('code', 'CM')->sole())->create(['city' => 'Yaoundé']))
+            ->create(['status' => 'published', 'title' => ['fr' => 'Maison Bastos'], 'price' => '300000', 'details' => ['property_type' => 'house', 'furnished' => false]]);
+        $notMine = Offer::factory()->create(['status' => 'published']);
+        foreach ([$douala, $yaounde] as $offer) {
+            OfferFavorite::query()->create(['user_id' => $user->getKey(), 'offer_id' => $offer->getKey()]);
+        }
+        $ids = fn (string $query = ''): array => array_column($this->api($user, 'GET', '/api/v1/lists/offer.favorites'.$query)->json('data.items'), 'id');
+
+        $data = $this->api($user, 'GET', '/api/v1/lists/offer.favorites')->json('data');
+        $this->assertNotNull($data['search']);
+        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/'], $data['footer']);
+        $filters = array_column($data['filters'], null, 'name');
+        $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
+
+        $this->assertSame([(string) $douala->getKey()], $ids('?filter[city]=Douala'));
+        $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[furnished]=false'));
+        $this->assertSame([(string) $douala->getKey()], $ids('?filter[price][]=&filter[price][]=100000'));
+        $this->assertSame([(string) $yaounde->getKey()], $ids('?search=bastos'));
+        $this->assertSame([(string) $yaounde->getKey()], $ids('?search=yaound'));
+        $this->assertNotContains((string) $notMine->getKey(), $ids());
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Lists;
 
+use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Lists\Concerns\FiltersOffers;
+use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferFavorite;
 
 /**
@@ -19,6 +22,8 @@ use Modules\Offer\Models\OfferFavorite;
  */
 class OfferFavoritesListing extends Listing
 {
+    use FiltersOffers;
+
     public static function name(): string
     {
         return 'offer.favorites';
@@ -42,6 +47,41 @@ class OfferFavoritesListing extends Listing
     public function emptyText(): string
     {
         return __('offer::offer.favorites.empty');
+    }
+
+    /**
+     * La recherche, les filtres et le bouton du bas, comme l'accueil et « Mes
+     * réservations » (décision 2026-11-19-favoris-recherche-filtres).
+     */
+    public function searchPlaceholder(): string
+    {
+        return __('offer::offer.browse.search');
+    }
+
+    protected function search(Builder $query, string $term): void
+    {
+        $query->orWhereHas('offer', fn (Builder $offer) => $offer->where(function (Builder $columns) use ($term): void {
+            $this->orWhereContains($columns, array_map(fn (string $locale): string => "title->{$locale}", Locales::values()), $term);
+            $columns->orWhereHas('address', fn (Builder $address) => $address->where(fn (Builder $city) => $this->orWhereContains($city, ['city'], $term)));
+        }));
+    }
+
+    /**
+     * Les filtres de l'accueil, parmi ses favoris.
+     */
+    public function filters(): array
+    {
+        return $this->offerFilters(Offer::query()->whereIn('id', OfferFavorite::query()->select('offer_id')->where('user_id', $this->user?->getAuthIdentifier())));
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        $query->whereHas('offer', fn (Builder $offer) => $this->applyOfferFilters($offer, $filters));
+    }
+
+    public function footer(): ?array
+    {
+        return ['label' => __('offer::booking.profile.search_home'), 'form' => null, 'link' => '/'];
     }
 
     /**
