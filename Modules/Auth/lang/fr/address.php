@@ -6,6 +6,8 @@
 
 return [
     'recipient' => 'Destinataire',
+    'indication' => "Indications sur l'adresse",
+    'indication_placeholder' => 'Ex. : derrière le marché, portail bleu',
     'detach' => 'Retirer',
     'form' => [
         'create_title' => 'Ajouter une adresse',

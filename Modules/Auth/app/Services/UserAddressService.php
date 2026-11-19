@@ -70,14 +70,17 @@ class UserAddressService
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{gender: mixed, first_name: mixed, last_name: mixed}
+     * @return array{gender: mixed, first_name: mixed, last_name: mixed, indication: string|null}
      */
     private function recipient(array $data): array
     {
+        $indication = trim((string) ($data['indication'] ?? ''));
+
         return [
             'gender' => $data['gender'] ?? null,
             'first_name' => $data['first_name'] ?? '',
             'last_name' => $data['last_name'] ?? '',
+            'indication' => $indication === '' ? null : $indication,
         ];
     }
 }

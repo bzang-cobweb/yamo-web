@@ -26,8 +26,9 @@ abstract class AddressForm
      * @param  list<Component>  $before  champs placés avant la rue (le pays)
      * @param  Closure|null  $streetRule  règle de plus sur la rue (unicité), évaluée par Filament
      * @param  bool  $suggestions  la rue propose les adresses existantes ; en choisir une remplit les champs de l'adresse
+     * @param  list<Component>  $after  champs placés après les coordonnées (les indications d'un compte)
      */
-    public static function configure(Schema $schema, array $before = [], ?Closure $streetRule = null, bool $suggestions = false): Schema
+    public static function configure(Schema $schema, array $before = [], ?Closure $streetRule = null, bool $suggestions = false, array $after = []): Schema
     {
         return $schema
             ->columns(2)
@@ -58,6 +59,7 @@ abstract class AddressForm
                     ->numeric()
                     ->minValue(-180)
                     ->maxValue(180),
+                ...$after,
             ]);
     }
 

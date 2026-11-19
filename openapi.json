@@ -3758,6 +3758,13 @@
                     "city": {
                         "type": "string",
                         "maxLength": 255
+                    },
+                    "indication": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
                     }
                 },
                 "required": [

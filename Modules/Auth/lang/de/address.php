@@ -6,6 +6,8 @@
 
 return [
     'recipient' => 'Empfänger',
+    'indication' => 'Wegbeschreibung',
+    'indication_placeholder' => 'Z. B. hinter dem Markt, blaues Tor',
     'detach' => 'Entfernen',
     'form' => [
         'create_title' => 'Adresse hinzufügen',

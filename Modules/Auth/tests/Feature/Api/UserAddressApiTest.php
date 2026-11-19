@@ -230,7 +230,8 @@ class UserAddressApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         // Latitude et longitude sont réservées au back-office ; le carnet n'a pas de suggestions
         // (seule l'adresse d'une offre en a, décision 2026-11-19-contrat-adresse-offre-recherche).
-        $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city'], array_keys($fields));
+        $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city', 'indication'], array_keys($fields));
+        $this->assertSame(['textarea', false, null], [$fields['indication']['type'], $fields['indication']['required'], $fields['indication']['default']]);
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
         $this->assertNull($fields['street']['suggestions']);
     }
@@ -285,6 +286,29 @@ class UserAddressApiTest extends TestCase
         $this->assertSame('Rue du Lac 4', $entry->address->street);
         $this->assertNull($entry->address->latitude);
         $this->assertNull($entry->address->longitude);
+    }
+
+    public function test_the_indication_belongs_to_the_account_entry_and_is_prefilled(): void
+    {
+        $country = $this->switzerland();
+        $user = User::factory()->create();
+
+        $this->asUser($user)->postJson('/api/v1/auth/me/addresses', $this->input($country, ['indication' => '  Derrière le marché, portail bleu ']))
+            ->assertNoContent();
+
+        $entry = $user->addresses()->sole();
+        $this->assertSame('Derrière le marché, portail bleu', $entry->indication);
+
+        $defaults = array_column($this->asUser($user)->getJson("/api/v1/forms/auth.address?record={$entry->getKey()}")->json('data.fields'), 'default', 'name');
+        $this->assertSame('Derrière le marché, portail bleu', $defaults['indication']);
+
+        // Une autre entrée sur la même adresse partagée garde la sienne ; vider l'indication la retire.
+        $partner = UserAddress::factory()->for($entry->address)->create(['indication' => 'Sonnez deux fois']);
+        $this->asUser($user)->patchJson("/api/v1/auth/me/addresses/{$entry->getKey()}", $this->input($country, ['indication' => '']))
+            ->assertNoContent();
+
+        $this->assertNull($entry->fresh()->indication);
+        $this->assertSame('Sonnez deux fois', $partner->fresh()->indication);
     }
 
     public function test_adding_an_existing_address_reuses_it(): void

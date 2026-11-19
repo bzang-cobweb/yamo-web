@@ -14,7 +14,7 @@ use Modules\Location\Models\Address;
 
 /**
  * Une adresse d'un compte : l'adresse partagée (`Address`, module Location) et
- * son destinataire,
+ * son destinataire et ses indications (« derrière le marché, portail bleu »),
  * propre à ce compte (décisions 2026-11-18-adresse-du-compte-modele et
  * 2026-11-18-useraddress-dans-auth). Un compte
  * peut viser la même adresse plusieurs fois, pour des destinataires différents.
@@ -24,10 +24,11 @@ use Modules\Location\Models\Address;
  * @property GenderEnum|null $gender
  * @property string $first_name
  * @property string $last_name
+ * @property string|null $indication
  * @property-read Address $address
  */
 #[Table('user_addresses')]
-#[Fillable(['user_id', 'address_id', 'gender', 'first_name', 'last_name'])]
+#[Fillable(['user_id', 'address_id', 'gender', 'first_name', 'last_name', 'indication'])]
 #[UseFactory(UserAddressFactory::class)]
 class UserAddress extends Model
 {

@@ -6,6 +6,8 @@
 
 return [
     'recipient' => 'Recipient',
+    'indication' => 'Directions to the address',
+    'indication_placeholder' => 'E.g. behind the market, blue gate',
     'detach' => 'Remove',
     'form' => [
         'create_title' => 'Add an address',

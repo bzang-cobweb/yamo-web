@@ -16,7 +16,8 @@ use Modules\Location\Support\CurrentCountry;
  * en ajouter une (`POST /api/v1/auth/me/addresses`), ou liée à l'une de ses
  * adresses (`?record=12`, une `UserAddress`) pour la modifier
  * (`PATCH …/addresses/12`). Destinataire (genre, prénom, nom, préremplis depuis
- * le compte à l'ajout), puis pays, rue, NPA et ville obligatoires. Latitude,
+ * le compte à l'ajout), puis pays, rue, NPA et ville obligatoires, et des
+ * indications facultatives. Latitude,
  * longitude et suggestions de rue sont réservées au back-office : une adresse
  * créée depuis l'app n'a pas de coordonnées (décisions
  * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
@@ -91,6 +92,11 @@ class UserAddressForm extends Form
                 ->default($address?->city)
                 ->required()
                 ->maxLength(255),
+            // Facultatives, propres au compte (l'adresse est partagée).
+            Field::textarea('indication')
+                ->label(__('auth::address.indication'))
+                ->placeholder(__('auth::address.indication_placeholder'))
+                ->default($this->userAddress?->indication),
         ];
     }
 

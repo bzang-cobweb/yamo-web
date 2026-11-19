@@ -153,6 +153,24 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
         $this->assertSame(1, Address::query()->count());
     }
 
+    public function test_the_indication_is_prefilled_and_saved_on_the_entry(): void
+    {
+        $this->actingAsAddressManager();
+        $user = User::factory()->create();
+        $entry = UserAddress::factory()->for($user)->create(['indication' => 'Portail bleu']);
+
+        $this->manager($user)
+            ->mountAction(TestAction::make('edit')->table($entry))
+            ->assertSchemaStateSet(['indication' => 'Portail bleu'])
+            ->callMountedAction();
+
+        $this->manager($user)
+            ->callAction(TestAction::make('edit')->table($entry), ['indication' => 'Derrière le marché'])
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('Derrière le marché', $entry->fresh()->indication);
+    }
+
     public function test_editing_the_address_leaves_the_shared_one_intact(): void
     {
         $this->actingAsAddressManager();

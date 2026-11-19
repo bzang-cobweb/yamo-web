@@ -8,6 +8,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Component;
@@ -19,6 +20,7 @@ use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Services\UserAddressService;
+use Modules\Form\Support\Field;
 use Modules\Location\Filament\Resources\CountryResource\Schemas\AddressForm;
 use Modules\Location\Services\AddressService;
 
@@ -47,6 +49,14 @@ class AddressesRelationManager extends RelationManager
                 AddressForm::country()->columnSpanFull(),
             ],
             suggestions: true,
+            after: [
+                Textarea::make('indication')
+                    ->label(__('auth::address.indication'))
+                    ->placeholder(__('auth::address.indication_placeholder'))
+                    ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ],
         );
     }
 
@@ -82,6 +92,7 @@ class AddressesRelationManager extends RelationManager
                         'gender' => $record->gender?->value,
                         'first_name' => $record->first_name,
                         'last_name' => $record->last_name,
+                        'indication' => $record->indication,
                         ...$record->address->only(AddressService::ADDRESS_FIELDS),
                         'country_id' => (string) $record->address->country_id,
                     ])
