@@ -146,9 +146,6 @@ class OfferApiTest extends TestCase
             ->assertJsonMissingValidationErrors(['surface', 'rooms', 'title', 'price', 'address_id']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio'])->assertNoContent();
-        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/4', ['title' => 'Studio, tél 699 12 34 56', 'status' => 'draft'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('title');
     }
 
     public function test_a_member_adds_a_home_with_its_attributes(): void
@@ -178,27 +175,13 @@ class OfferApiTest extends TestCase
             ->assertJsonValidationErrors(['surface', 'property_type', 'price']);
     }
 
-    public function test_contact_details_are_refused_in_the_title_and_the_description(): void
+    public function test_contact_details_are_allowed_in_an_offer(): void
     {
         $user = $this->member();
 
-        // Décision 2026-11-19-contrat-annonces-sans-coordonnees.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['title' => 'Studio, appelez le 699 12 34 56']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['title' => 'Retirez les coordonnées'])
-            ->assertJsonMissingValidationErrors('description');
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['description' => 'Plus de photos sur WhatsApp']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('description');
-        $this->assertSame(0, Offer::query()->count());
-
-        // Modifier une offre existante : même contrôle.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['description' => 'Loyer 250 000 FCFA, caution 2 mois. Libre dès le 01.12.2026.']))->assertNoContent();
-        $offer = Offer::query()->sole();
-        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['description' => 'Écrire à awa@gmail.com']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('description');
-        $this->assertStringNotContainsString('gmail', (string) $offer->fresh()->getTranslation('description', 'fr'));
+        // Le propriétaire paiera pour publier : ses coordonnées sont permises (décision 2026-11-19-modele-proprietaire-payant).
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['title' => 'Studio, appelez le 699 12 34 56', 'description' => 'Plus de photos sur WhatsApp']))->assertNoContent();
+        $this->assertSame('Studio, appelez le 699 12 34 56', Offer::query()->sole()->getTranslation('title', 'fr'));
     }
 
     public function test_the_address_must_be_one_of_the_account(): void

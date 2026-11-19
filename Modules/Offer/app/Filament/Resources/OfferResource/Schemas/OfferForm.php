@@ -15,7 +15,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
 use Modules\Form\Filament\FieldComponent;
-use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Address;
@@ -81,13 +80,10 @@ abstract class OfferForm
                             TextInput::make("title.{$locale}")
                                 ->label(__('offer::offer.title_field'))
                                 ->required($locale === Locales::default())
-                                ->maxLength(255)
-                                // Pas de coordonnées, dans chaque langue (décision 2026-11-19-contrat-annonces-sans-coordonnees).
-                                ->rule(new NoContactDetails),
+                                ->maxLength(255),
                             Textarea::make("description.{$locale}")
                                 ->label(__('offer::offer.description'))
                                 ->maxLength(Field::TEXTAREA_MAX_LENGTH)
-                                ->rule(new NoContactDetails)
                                 ->rows(4),
                         ], 'texts')->columnSpanFull(),
                         Select::make('category_id')

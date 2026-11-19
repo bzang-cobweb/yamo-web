@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-modele-proprietaire-payant.md
+
 # `2026-11-19` — Contrat « annonces sans coordonnées », validé
 
 - **Type** : décision

@@ -63,14 +63,11 @@ class OfferForm extends Form
                 ->label(__('offer::offer.title_field'))
                 ->default($offer?->getTranslation('title', $this->locale()))
                 ->required()
-                ->maxLength(255)
-                // Pas de coordonnées dans une annonce (décision 2026-11-19-contrat-annonces-sans-coordonnees).
-                ->withoutContactDetails(),
+                ->maxLength(255),
             Field::textarea('description')
                 ->label(__('offer::offer.description'))
                 ->default($offer?->getTranslation('description', $this->locale()))
-                ->maxLength(Field::TEXTAREA_MAX_LENGTH)
-                ->withoutContactDetails(),
+                ->maxLength(Field::TEXTAREA_MAX_LENGTH),
             $categories === [] ? null : Field::select('category_id')
                 ->label(__('offer::offer.category'))
                 ->options($categories)

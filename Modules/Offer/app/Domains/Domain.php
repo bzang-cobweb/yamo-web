@@ -4,7 +4,6 @@ namespace Modules\Offer\Domains;
 
 use App\Support\Currency;
 use Illuminate\Support\Number;
-use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Offer\Models\Offer;
 
@@ -197,9 +196,9 @@ abstract class Domain
     }
 
     /**
-     * Les attributs, tels qu'on les saisit : un texte libre y refuse les
-     * coordonnées (décision 2026-11-19-contrat-annonces-sans-coordonnees) ; un
-     * montant prend le symbole de la devise `$currency` (code ISO), s'il est connu.
+     * Les attributs, tels qu'on les saisit : un montant prend le symbole de la
+     * devise `$currency` (code ISO), s'il est connu. Les coordonnées ne sont plus
+     * refusées (décision 2026-11-19-modele-proprietaire-payant).
      *
      * @return list<Field>
      */
@@ -208,7 +207,7 @@ abstract class Domain
         $symbol = Currency::symbol($currency);
 
         return array_map(
-            fn (Field $field): Field => (in_array($field->type, [FieldType::TEXT, FieldType::TEXTAREA], true) ? $field->withoutContactDetails() : $field)->inCurrency($symbol),
+            fn (Field $field): Field => $field->inCurrency($symbol),
             $this->attributes(),
         );
     }
