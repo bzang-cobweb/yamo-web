@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-contrat-offer-informations.md (« Autres informations » devient des blocs)
+
 # `2026-11-19` — Contrat « règles et informations pratiques d'un logement », validé
 
 - **Type** : décision
