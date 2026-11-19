@@ -66,21 +66,29 @@ return [
         'requested' => [
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'requests :type :period for “:offer”.',
             'sms' => ':app: :guest requests :type :period for “:offer”. Reply in the app.',
         ],
         'accepted' => [
             'subject' => 'Request accepted: :offer',
             'body' => 'Your request for “:offer” (:period) has been accepted.',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'accepted your request for “:offer” (:period).',
             'sms' => ':app: your request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
             'subject' => 'Request declined: :offer',
             'body' => 'Your request for “:offer” (:period) has been declined.',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'declined your request for “:offer” (:period).',
             'sms' => ':app: your request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their request for “:offer” (:period).',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'cancelled their request for “:offer” (:period).',
             'sms' => ':app: :guest cancelled their request for “:offer” (:period).',
         ],
         'message' => 'Message: :message',

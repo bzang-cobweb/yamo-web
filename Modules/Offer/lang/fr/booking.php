@@ -66,21 +66,29 @@ return [
         'requested' => [
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'demande :type :period pour « :offer ».',
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [
             'subject' => 'Demande acceptée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est acceptée.',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'a accepté votre demande pour « :offer » (:period).',
             'sms' => ':app : votre demande pour « :offer » (:period) est acceptée.',
         ],
         'refused' => [
             'subject' => 'Demande refusée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est refusée.',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'a refusé votre demande pour « :offer » (:period).',
             'sms' => ':app : votre demande pour « :offer » (:period) est refusée.',
         ],
         'cancelled' => [
             'subject' => 'Demande annulée : :offer',
             'body' => ':guest a annulé sa demande pour « :offer » (:period).',
+            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            'summary' => 'a annulé sa demande pour « :offer » (:period).',
             'sms' => ':app : :guest a annulé sa demande pour « :offer » (:period).',
         ],
         'message' => 'Message : :message',

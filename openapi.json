@@ -3809,6 +3809,51 @@
                                 "body": {
                                     "type": "string"
                                 },
+                                "actor": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "initials": {
+                                            "type": "string"
+                                        },
+                                        "photo": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "online": {
+                                            "type": "boolean"
+                                        },
+                                        "link": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "initials",
+                                        "photo",
+                                        "online",
+                                        "link"
+                                    ]
+                                },
+                                "summary": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
+                                },
                                 "message": {
                                     "type": [
                                         "string",
@@ -3884,6 +3929,8 @@
                                 "title",
                                 "tag",
                                 "body",
+                                "actor",
+                                "summary",
                                 "message",
                                 "link",
                                 "links",
@@ -3937,6 +3984,51 @@
                     },
                     "body": {
                         "type": "string"
+                    },
+                    "actor": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "initials": {
+                                "type": "string"
+                            },
+                            "photo": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "online": {
+                                "type": "boolean"
+                            },
+                            "link": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name",
+                            "initials",
+                            "photo",
+                            "online",
+                            "link"
+                        ]
+                    },
+                    "summary": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
                     },
                     "message": {
                         "type": [
@@ -4013,6 +4105,8 @@
                     "title",
                     "tag",
                     "body",
+                    "actor",
+                    "summary",
                     "message",
                     "link",
                     "links",

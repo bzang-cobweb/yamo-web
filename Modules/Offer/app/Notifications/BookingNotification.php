@@ -63,7 +63,7 @@ abstract class BookingNotification extends Notification implements ShouldQueue
      * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
      * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, body: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, tag: array{label: string, tone: string}, body: string, actor_id: int, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -73,6 +73,9 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
             'tag' => ['label' => $this->status->label(), 'tone' => $this->status->tone()],
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
+            // La carte : qui agit (photo, nom, en ligne : lus à l'affichage), puis le texte sans son nom.
+            'actor_id' => (int) $this->actor()->getKey(),
+            'summary' => __("offer::booking.notify.{$this->key()}.summary", $this->replacements()),
             'message' => $this->note(),
             'link' => '/profile/lists/'.$list,
             // Le bouton de la page de la notification : la liste où retrouver la demande.
@@ -83,6 +86,15 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             // Plus de lien à part : le nom de l'offre, dans le texte, mène à l'annonce.
             'links' => [],
         ];
+    }
+
+    /**
+     * Qui agit : le membre pour le propriétaire (une demande, une annulation), le
+     * propriétaire pour le membre (une réponse).
+     */
+    private function actor(): User
+    {
+        return $this->section() === 'received' ? $this->booking->user : $this->booking->offer->user;
     }
 
     /**
