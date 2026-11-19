@@ -313,6 +313,9 @@ class OfferApiTest extends TestCase
         $this->assertStringStartsWith('Publiée · ', $data[0]['highlight']);
         $this->assertStringContainsString('900', $data[0]['highlight']);
         $this->assertSame("/v1/offers/{$mine->getKey()}", $data[0]['delete']['endpoint']);
+        // « Voir » (sa fiche) et « Éditer » (le formulaire) (décision 2026-11-19-nuit-voir-editer-retirer).
+        $this->assertSame("/offers/{$mine->getKey()}", $data[0]['link']);
+        $this->assertSame('offer.offer', $data[0]['edit']['form']);
     }
 
     public function test_editing_prefills_and_updates_my_offer(): void

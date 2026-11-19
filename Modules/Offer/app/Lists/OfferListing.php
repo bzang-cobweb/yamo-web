@@ -103,6 +103,8 @@ class OfferListing extends Listing
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
             ->highlight(implode(' · ', array_filter([$record->status->label(), ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
+            // « Voir » : sa fiche, brouillon compris (décision 2026-11-19-nuit-voir-editer-retirer).
+            ->link('/offers/'.$record->getKey())
             ->delete(
                 __('offer::offer.list.remove'),
                 __('offer::offer.list.confirm'),

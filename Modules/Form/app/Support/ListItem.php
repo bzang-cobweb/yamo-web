@@ -103,6 +103,8 @@ final class ListItem
 
     /**
      * Toucher l'item ouvre cet écran de l'app (« /offers/12 »), quand il n'ouvre pas de formulaire.
+     * Avec un formulaire (`edit()`) aussi, l'app propose « Voir » et « Éditer »
+     * (décision 2026-11-19-nuit-voir-editer-retirer).
      */
     public function link(?string $path): self
     {
