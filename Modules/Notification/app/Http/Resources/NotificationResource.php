@@ -48,7 +48,7 @@ class NotificationResource extends JsonResource
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
             'actor' => $this->actor($data),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
-            'summary' => isset($data['summary']) && is_string($data['summary']) ? $data['summary'] : null,
+            'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
             'message' => $this->message($data),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
@@ -86,6 +86,14 @@ class NotificationResource extends JsonResource
             'online' => (bool) $actor->is_online,
             'link' => '/members/'.$actor->getKey(),
         ];
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     */
+    private function summary(array $data): ?string
+    {
+        return isset($data['summary']) && is_string($data['summary']) ? (string) $data['summary'] : null;
     }
 
     /**
