@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Tests\Feature\Api;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -165,26 +166,34 @@ class OfferDetailApiTest extends TestCase
         // Décision 2026-11-19-contrat-regles-informations.
         // Une heure d'arrivée enregistrée avant le retrait du champ n'est plus servie
         // (décision 2026-11-19-arrivee-depart-en-informations).
-        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
+        // Un âge minimum propre à l'offre, enregistré avant son retrait, non plus
+        // (décision 2026-11-19-age-minimum-de-l-app).
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'min_age' => 30, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
-            ['label' => 'Âge minimum', 'value' => '21 ans'],
             ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
             ['label' => 'Animaux acceptés', 'value' => 'Non'],
         ], $data['rules']);
-        $this->assertNotContains('Âge minimum', array_column($data['facts'], 'label'));
+        $this->assertNotContains('Animaux acceptés', array_column($data['facts'], 'label'));
         $this->assertNotContains('15:00', array_column([...$data['facts'], ...$data['rules']], 'value'));
+        $this->assertNotContains('Âge minimum', array_column([...$data['facts'], ...$data['rules']], 'label'));
 
-        // Sans rien de renseigné : rien.
+        // Sans rien de renseigné ni âge minimum réglé : rien.
         $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false]]);
         $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
+
+        // L'âge minimum de l'application, réglé : en tête des règles de toute offre.
+        Setting::current()->update(['minimum_age' => 18]);
+        $this->assertSame(['label' => 'Âge minimum', 'value' => '18 ans'], $this->show($furnished)->json('data.rules.0'));
+        $this->assertSame([['label' => 'Âge minimum', 'value' => '18 ans']], $this->show($this->home(['details' => ['property_type' => 'studio']]))->json('data.rules'));
+
     }
 
     public function test_sections_come_from_the_configuration(): void
     {
         // Décision 2026-11-19-sections-fiche-laravel.
-        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'min_age' => 21]]);
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'pets' => 'no']]);
         $this->assertSame([
             ['key' => 'location', 'open' => true],
             ['key' => 'facts', 'open' => false],
@@ -202,7 +211,7 @@ class OfferDetailApiTest extends TestCase
 
         // Aucune ouverte parmi celles servies : la première l'est.
         config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
-        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'min_age' => 21]]);
+        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'pets' => 'no']]);
         $this->assertSame([
             ['key' => 'facts', 'open' => true],
             ['key' => 'rules', 'open' => false],

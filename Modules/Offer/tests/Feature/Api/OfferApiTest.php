@@ -104,7 +104,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'informations', 'photos'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'documents', 'pets', 'smoking', 'parties', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -177,7 +177,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['min_age', 'documents', 'pets', 'smoking', 'parties'],
+            ['documents', 'pets', 'smoking', 'parties'],
             ['informations'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],
@@ -207,12 +207,14 @@ class OfferApiTest extends TestCase
         ]))->assertNoContent();
         $offer = Offer::query()->sole();
         $this->assertNull($offer->detail('check_in_from'));
-        $this->assertSame(21, $offer->detail('min_age'));
+        // Plus d'âge minimum propre à l'offre (décision 2026-11-19-age-minimum-de-l-app).
+        $this->assertNull($offer->detail('min_age'));
+        $this->assertSame('no', $offer->detail('pets'));
 
         // Valeurs inconnues ou hors limites refusées ; tout le reste est facultatif.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['min_age' => '12', 'documents' => ['visa'], 'pets' => 'maybe']))
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['documents' => ['visa'], 'pets' => 'maybe']))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['min_age', 'documents.0', 'pets']);
+            ->assertJsonValidationErrors(['documents.0', 'pets']);
     }
 
     public function test_information_blocks_are_added_edited_and_removed_in_order(): void

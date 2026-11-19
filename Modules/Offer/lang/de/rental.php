@@ -75,8 +75,6 @@ return [
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [
-        'min_age' => 'Mindestalter',
-        'years' => 'Jahre',
         'documents' => 'Erforderliche Dokumente',
         'document_options' => [
             'id_card' => 'Personalausweis',

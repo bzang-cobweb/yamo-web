@@ -2640,8 +2640,45 @@
                     },
                     "rules": {
                         "type": "array",
-                        "description": "R\u00e8gles du logement renseign\u00e9es, lisibles (d\u00e9cision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine.",
-                        "items": {}
+                        "description": "R\u00e8gles lisibles : l'\u00e2ge minimum de l'application s'il est r\u00e9gl\u00e9 (d\u00e9cision 2026-11-19-age-minimum-de-l-app), puis les r\u00e8gles renseign\u00e9es de l'offre, dans l'ordre du domaine (d\u00e9cision 2026-11-19-contrat-regles-informations).",
+                        "items": {},
+                        "prefixItems": [
+                            {
+                                "anyOf": [
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 0,
+                                        "maxItems": 0
+                                    },
+                                    {
+                                        "type": "array",
+                                        "prefixItems": [
+                                            {
+                                                "type": "object",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "value": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "label",
+                                                    "value"
+                                                ]
+                                            }
+                                        ],
+                                        "minItems": 1,
+                                        "maxItems": 1
+                                    }
+                                ]
+                            }
+                        ],
+                        "minItems": 1
                     },
                     "informations": {
                         "type": "array",
@@ -3032,14 +3069,6 @@
                         ],
                         "minimum": 0,
                         "maximum": 100000
-                    },
-                    "min_age": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
-                        "minimum": 16,
-                        "maximum": 99
                     },
                     "documents": {
                         "type": [

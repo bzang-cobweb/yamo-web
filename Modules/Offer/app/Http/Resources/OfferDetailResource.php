@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Http\Resources;
 
+use App\Models\Setting;
 use App\Support\Currency;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class OfferDetailResource extends JsonResource
         $owner = (int) $request->user('sanctum')?->getAuthIdentifier() === (int) $offer->user_id;
         $address = $this->address($offer);
         $facts = $this->facts($offer, $domain, $locale);
-        $rules = array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)));
+        $rules = [...$this->minimumAge(), ...array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)))];
         $informations = $this->informations($offer, $locale);
         $reviews = $this->reviews($offer, $request);
 
@@ -60,7 +61,7 @@ class OfferDetailResource extends JsonResource
             'description' => $offer->getTranslation('description', $locale) ?: null,
             /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
             'facts' => $facts,
-            /** Règles du logement renseignées, lisibles (décision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine. */
+            /** Règles lisibles : l'âge minimum de l'application s'il est réglé (décision 2026-11-19-age-minimum-de-l-app), puis les règles renseignées de l'offre, dans l'ordre du domaine (décision 2026-11-19-contrat-regles-informations). */
             'rules' => $rules,
             /** Blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations) : titre et description dans la langue demandée, retours à la ligne gardés. */
             'informations' => $informations,
@@ -185,6 +186,19 @@ class OfferDetailResource extends JsonResource
         $leading = array_intersect_key(array_flip($domain->leadingFacts()), $facts);
 
         return array_values([...array_replace($leading, array_intersect_key($facts, $leading)), ...array_diff_key($facts, $leading)]);
+    }
+
+    /**
+     * L'âge minimum de l'application (réglage du back-office), en tête des règles de
+     * toute offre ; rien s'il n'est pas réglé.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    private function minimumAge(): array
+    {
+        $age = Setting::minimumAge();
+
+        return $age === null ? [] : [['label' => (string) __('settings.minimum_age'), 'value' => $age.' '.__('settings.years')]];
     }
 
     /**

@@ -139,11 +139,8 @@ class RentalDomain extends Domain
                 ->rules(['min:0', 'max:100000']),
             // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Les heures
             // d'arrivée et de départ n'y sont plus : un bloc d'informations les dit (décision
-            // 2026-11-19-arrivee-depart-en-informations).
-            Field::number('min_age')
-                ->label(__('offer::rental.rules.min_age'))
-                ->suffix(__('offer::rental.rules.years'))
-                ->rules(['integer', 'min:16', 'max:99']),
+            // 2026-11-19-arrivee-depart-en-informations). Pas d'âge minimum propre à l'offre : celui
+            // de l'application vaut pour toutes (décision 2026-11-19-age-minimum-de-l-app).
             Field::multiselect('documents')
                 ->label(__('offer::rental.rules.documents'))
                 ->options(collect(self::DOCUMENTS)->mapWithKeys(fn (string $document): array => [$document => __('offer::rental.rules.document_options.'.$document)])->all()),
@@ -159,7 +156,7 @@ class RentalDomain extends Domain
      */
     public function ruleAttributes(): array
     {
-        return ['min_age', 'documents', 'pets', 'smoking', 'parties'];
+        return ['documents', 'pets', 'smoking', 'parties'];
     }
 
     /**

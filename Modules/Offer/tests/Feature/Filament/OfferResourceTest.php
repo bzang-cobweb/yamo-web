@@ -219,10 +219,10 @@ class OfferResourceTest extends AuthFilamentTestCase
         // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSee('Règles')
-            ->fillForm(['details.min_age' => '25', 'details.pets' => 'yes'])
+            ->fillForm(['details.pets' => 'yes'])
             ->call('save')
             ->assertHasNoFormErrors();
-        $this->assertSame(25, $offer->fresh()->detail('min_age'));
+        $this->assertSame('yes', $offer->fresh()->detail('pets'));
 
         // Les blocs d'informations, par langue (décision 2026-11-19-contrat-offer-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
