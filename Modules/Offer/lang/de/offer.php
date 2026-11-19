@@ -59,8 +59,8 @@ return [
         'confirm' => 'Dieses Angebot entfernen?',
         'remove' => 'Entfernen',
         'removed' => 'Angebot entfernt.',
-        'expires' => 'Läuft ab am :date',
-        'expired' => 'Abgelaufen am :date',
+        'expires' => 'Bezahlt bis :date',
+        'expired' => 'Bezahlung endete am :date',
     ],
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Hervorgehoben bis',
@@ -73,7 +73,7 @@ return [
     ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Zugang',
-    'expires_at' => 'Ablaufdatum',
+    'expires_at' => 'Bezahlt bis',
     'expires_help' => 'Wenn die Zahlung angewendet wird (Seite Anwendung), ist das Angebot nach diesem Datum für andere nicht mehr sichtbar; leer: nicht sichtbar.',
     'reviews' => 'Bewertungen',
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).

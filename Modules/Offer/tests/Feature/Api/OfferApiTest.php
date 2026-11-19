@@ -505,8 +505,8 @@ class OfferApiTest extends TestCase
 
         $highlights = array_column($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()->json('data.items'), 'highlight', 'title');
 
-        $this->assertStringStartsWith('Publiée · Expire le 30 juin 2027', $highlights['A']);
-        $this->assertStringStartsWith('Publiée · Expirée le 2 janvier 2026', $highlights['B']);
+        $this->assertStringStartsWith("Publiée · Payé jusqu'au 30 juin 2027", $highlights['A']);
+        $this->assertStringStartsWith('Publiée · Paiement échu le 2 janvier 2026', $highlights['B']);
         $this->assertStringNotContainsString('Expir', $highlights['C']);
     }
 
