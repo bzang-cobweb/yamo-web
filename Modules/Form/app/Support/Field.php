@@ -235,6 +235,43 @@ final class Field
     /**
      * N'afficher (et ne valider) ce champ que si `$field` vaut `$value`.
      */
+    /**
+     * La condition d'affichage (`visibleWhen()`), ou `null`.
+     *
+     * @return array{field: string, value: string}|null
+     */
+    public function getVisibleWhen(): ?array
+    {
+        return $this->visibleWhen;
+    }
+
+    /**
+     * Le champ s'affiche-t-il avec ces valeurs (par nom) ? Une case vaut « true » ou
+     * « false » (décision 2026-11-19-charges-meuble-surface-facultative).
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function isVisibleFor(array $values): bool
+    {
+        if ($this->visibleWhen === null) {
+            return true;
+        }
+
+        return self::conditionValue($values[$this->visibleWhen['field']] ?? null) === $this->visibleWhen['value'];
+    }
+
+    /**
+     * Une valeur telle qu'une condition la compare : « true »/« false » pour une case.
+     */
+    public static function conditionValue(mixed $value): string
+    {
+        return match (true) {
+            is_bool($value) => $value ? 'true' : 'false',
+            $value === null => '',
+            default => (string) $value,
+        };
+    }
+
     public function visibleWhen(string $field, string $value): self
     {
         $this->visibleWhen = ['field' => $field, 'value' => $value];

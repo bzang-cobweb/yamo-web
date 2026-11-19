@@ -105,6 +105,25 @@ class OfferApiTest extends TestCase
         $this->assertSame('CHF / mois', $fields['charges']['suffix']);
     }
 
+    public function test_a_furnished_home_has_no_charges(): void
+    {
+        $user = $this->member();
+
+        // Décision 2026-11-19-charges-meuble-surface-facultative.
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        $this->assertSame(['field' => 'furnished', 'value' => 'false'], $fields['charges']['visible_when']);
+        $this->assertFalse($fields['surface']['required']);
+        $this->assertFalse($fields['rooms']['required']);
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['furnished' => true, 'charges' => '180']))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['furnished' => false, 'charges' => '180', 'surface' => null, 'rooms' => null]))->assertNoContent();
+
+        [$furnished, $unfurnished] = Offer::query()->orderBy('id')->get()->all();
+        $this->assertNull($furnished->detail('charges'));
+        $this->assertSame(180, $unfurnished->detail('charges'));
+        $this->assertNull($unfurnished->detail('surface'));
+    }
+
     public function test_the_app_form_comes_in_the_4_steps_of_the_domain(): void
     {
         $user = $this->member();
@@ -123,9 +142,10 @@ class OfferApiTest extends TestCase
         // « Suivant » : seule l'étape est vérifiée.
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'castle'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['property_type', 'surface', 'rooms'])
-            ->assertJsonMissingValidationErrors(['title', 'price', 'address_id']);
-        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'surface' => '30', 'rooms' => '1'])->assertNoContent();
+            ->assertJsonValidationErrors(['property_type'])
+            ->assertJsonMissingValidationErrors(['surface', 'rooms', 'title', 'price', 'address_id']);
+        // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio'])->assertNoContent();
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/4', ['title' => 'Studio, tél 699 12 34 56', 'status' => 'draft'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('title');

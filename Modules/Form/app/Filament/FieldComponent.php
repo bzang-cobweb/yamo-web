@@ -10,6 +10,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
@@ -43,6 +44,18 @@ final class FieldComponent
         };
 
         $rules = $field->validationRules()[$field->name] ?? [];
+
+        // Une case change l'affichage d'autres champs : le formulaire suit sa valeur.
+        if (in_array($field->type, [FieldType::CHECKBOX, FieldType::SWITCH], true)) {
+            $component->live();
+        }
+
+        // Condition d'affichage : le champ voisin (même préfixe d'état) a la valeur attendue.
+        $condition = $field->getVisibleWhen();
+        if ($condition !== null) {
+            $prefix = str_contains($name, '.') ? substr($name, 0, (int) strrpos($name, '.') + 1) : '';
+            $component->visible(fn (Get $get): bool => Field::conditionValue($get($prefix.$condition['field'])) === $condition['value']);
+        }
 
         return $component
             ->label($field->getLabel())

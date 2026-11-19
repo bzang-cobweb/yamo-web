@@ -126,6 +126,11 @@ class OfferDetailResource extends JsonResource
 
         foreach ($domain->attributes() as $field) {
             $field->inCurrency($symbol);
+
+            // Un attribut masqué par sa condition (les charges d'un meublé) n'est pas affiché.
+            if (! $field->isVisibleFor($offer->details ?? [])) {
+                continue;
+            }
             $value = $field->displayValue($offer->detail($field->name), $locale);
 
             if ($value !== null) {

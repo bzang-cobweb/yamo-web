@@ -104,15 +104,14 @@ class RentalDomain extends Domain
                 ->required(),
             Field::switch('furnished')
                 ->label(__('offer::rental.furnished')),
+            // Facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
             Field::number('surface')
                 ->label(__('offer::rental.surface'))
                 ->suffix('m²')
-                ->required()
                 ->rules(['min:1', 'max:10000']),
             Field::number('rooms')
                 ->label(__('offer::rental.rooms'))
                 ->help(__('offer::rental.rooms_help'))
-                ->required()
                 ->rules(['min:1', 'max:50']),
             Field::number('bedrooms')
                 ->label(__('offer::rental.bedrooms'))
@@ -124,6 +123,8 @@ class RentalDomain extends Domain
                 ->help(__('offer::rental.charges_help'))
                 // Un montant mensuel : « FCFA / mois », la devise venant de qui l'affiche.
                 ->money(__('offer::rental.price_units.month'))
+                // Un meublé se loue charges comprises : pas de charges.
+                ->visibleWhen('furnished', 'false')
                 ->rules(['min:0', 'max:100000']),
         ];
     }

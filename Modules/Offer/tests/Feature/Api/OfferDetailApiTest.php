@@ -92,6 +92,14 @@ class OfferDetailApiTest extends TestCase
         $this->assertArrayNotHasKey('user_id', $data);
     }
 
+    public function test_a_furnished_home_does_not_show_old_charges(): void
+    {
+        // Décision 2026-11-19-charges-meuble-surface-facultative.
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'charges' => 0]]);
+
+        $this->assertNotContains('Charges mensuelles', array_column($this->show($offer)->assertOk()->json('data.facts'), 'label'));
+    }
+
     public function test_texts_follow_the_language(): void
     {
         $data = $this->show($this->home(), 'en')->assertOk()->json('data');
