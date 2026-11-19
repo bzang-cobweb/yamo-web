@@ -59,3 +59,37 @@ Demande : « annuler le champ autres informations et créer une table offer_info
 2. Ordre = ordre de saisie ; dans l'app, ajout et retrait seulement (réordonner : back-office) (défaut).
 3. Les sections d'informations sont fermées à l'arrivée (défaut, réglable dans `offer.sections`).
 4. Recopier les textes « Autres informations » existants en un bloc (défaut).
+
+---
+
+## Ce que j'ai décidé seul
+
+- Les blocs sont un champ commun à toutes les offres (comme les photos), pas un attribut du domaine ; le domaine « logement » les place dans son étape « Règles et informations ».
+- Le sous-champ caché `id` identifie un bloc enregistré : modifié, il garde ses autres langues ; un `id` inconnu crée un nouveau bloc.
+- Le titre « Autres informations » des textes repris est posé dans les langues où le texte existait.
+- Le back-office numérote les positions à partir de 1, l'app à partir de 0 : seul l'ordre compte.
+- Les données validées par Laravel ne gardent pas toujours l'ordre des groupes (indices préservés) : le service les trie par indice.
+- Dans l'app, l'erreur d'un sous-champ s'affiche sous lui ; l'erreur du champ (trop de blocs) au-dessus de la liste.
+- Textes de l'app « Retirer ce bloc » / « Ajouter » (module Form), le libellé d'ajout servi par le champ (« Ajouter une information »).
+
+## Ce qui a été fait
+
+- Web 74f6c8b :
+  - `FieldType::REPEATER`, `Field::repeater()` / `fields()` / `maxItems()` / `addLabel()` ;
+  - table `offer_informations`, modèle `OfferInformation`, recopie des textes existants ;
+  - formulaire de l'app, `OfferService::syncInformations()`, fiche (`informations`, section `informations`), configuration `offer.sections` ;
+  - liste réordonnable au back-office ;
+  - textes, tests (champ, formulaire, enregistrement, fiche, back-office), OpenAPI.
+- Mobile 7e87818 : `RepeaterField`, valeurs et erreurs des groupes, sections d'informations sur la fiche, tests.
+- Migration exécutée en local : un texte existant devenu un bloc, plus aucun `other_information`.
+- Simulateur : bloc vu dans une section de la fiche et dans l'étape 4 du formulaire (sans enregistrer).
+- Suites : serveur 512 verts, app 241 verts, tsc et lint propres.
+
+## Ce que je n'ai pas vérifié
+
+- L'ajout et l'enregistrement d'un bloc depuis l'app au simulateur (couverts par les tests ; je n'ai pas modifié l'offre de l'utilisateur).
+- La liste du back-office dans un vrai navigateur (test Livewire seulement).
+
+## Ce qui reste en suspens
+
+- Réordonner les blocs dans l'app (hors périmètre : back-office seulement).
