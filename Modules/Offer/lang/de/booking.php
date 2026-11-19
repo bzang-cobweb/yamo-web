@@ -128,4 +128,25 @@ return [
         'refuse_submit' => 'Anfrage ablehnen',
         'offer_status' => 'Status',
     ],
+    // Le calendrier d'une offre (décision 2026-11-19-contrat-calendrier-offre).
+    'calendar' => [
+        'title' => 'Kalender · :offer',
+        'button' => 'Kalender',
+        'block' => 'Diesen Tag sperren',
+        'block_confirm' => 'Diesen Tag sperren? Er kann dann nicht mehr angefragt werden.',
+        'blocked' => 'Tag gesperrt.',
+        'unblock' => 'Entsperren',
+        'unblocked' => 'Tag entsperrt.',
+        'block_accepted' => 'Ein angenommener Aufenthalt belegt diesen Tag: Er kann nicht gesperrt werden.',
+        'block_past' => 'Dieser Tag ist vergangen.',
+        'empty_day' => 'Keine Anfragen an diesem Tag.',
+        'legend' => [
+            'accepted' => 'Angenommener Aufenthalt',
+            'pending' => 'Offene Anfrage',
+            'conflict' => 'Überschneidung',
+            'blocked' => 'Gesperrt',
+            'visit_accepted' => 'Angenommene Besichtigung',
+            'visit_pending' => 'Offene Besichtigung',
+        ],
+    ],
 ];

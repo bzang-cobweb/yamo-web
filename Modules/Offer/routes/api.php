@@ -6,6 +6,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Offer\Http\Controllers\Api\BookingController;
+use Modules\Offer\Http\Controllers\Api\OfferCalendarController;
 use Modules\Offer\Http\Controllers\Api\OfferController;
 use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
 use Modules\Offer\Http\Controllers\Api\OfferReviewController;
@@ -29,6 +30,12 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
 
     // Demander une réservation ou une visite (décision 2026-11-19-contrat-reservations).
     Route::post('{offer}/bookings', [BookingController::class, 'store'])->can('book', 'offer')->middleware('throttle:20,1')->name('bookings.store');
+
+    // Le calendrier de son offre : un mois, un jour, bloquer et débloquer (décision 2026-11-19-contrat-calendrier-offre).
+    Route::get('{offer}/calendar', [OfferCalendarController::class, 'month'])->can('update', 'offer')->name('calendar.month');
+    Route::get('{offer}/calendar/{date}', [OfferCalendarController::class, 'day'])->can('update', 'offer')->where('date', '\d{4}-\d{2}-\d{2}')->name('calendar.day');
+    Route::put('{offer}/blocked-dates/{date}', [OfferCalendarController::class, 'block'])->can('update', 'offer')->where('date', '\d{4}-\d{2}-\d{2}')->name('blocked-dates.save');
+    Route::delete('{offer}/blocked-dates/{date}', [OfferCalendarController::class, 'unblock'])->can('update', 'offer')->where('date', '\d{4}-\d{2}-\d{2}')->name('blocked-dates.destroy');
 
     // Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
     Route::put('{offer}/favorite', [OfferFavoriteController::class, 'save'])->can('favorite', 'offer')->name('favorite.save');

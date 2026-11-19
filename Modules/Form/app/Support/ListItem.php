@@ -44,7 +44,7 @@ final class ListItem
 
     private ?Submission $deleteSubmission = null;
 
-    /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null}> */
+    /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null, link: string|null}> */
     private array $actions = [];
 
     /** @var array{label: string, list: string, filter: array<string, string>}|null */
@@ -149,10 +149,11 @@ final class ListItem
 
     /**
      * Un bouton sur la carte (décision 2026-11-19-contrat-reservations-logements-profil) :
-     * il envoie `$submission` (après `$confirm`, s'il y en a une), ou ouvre le
-     * formulaire `$form` lié à `$record`. Style : `primary`, `destructive` ou `default`.
+     * il envoie `$submission` (après `$confirm`, s'il y en a une), ouvre le
+     * formulaire `$form` lié à `$record`, ou ouvre l'écran de l'app `$link`
+     * (« /offers/12/calendar »). Style : `primary`, `destructive` ou `default`.
      */
-    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null): self
+    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null, ?string $link = null): self
     {
         $this->actions[] = [
             'label' => $label,
@@ -160,6 +161,7 @@ final class ListItem
             'confirm' => $confirm,
             'submission' => $submission,
             'form' => $form === null ? null : ['form' => $form, 'record' => (string) ($record ?? $this->id)],
+            'link' => $link,
         ];
 
         return $this;
@@ -223,13 +225,14 @@ final class ListItem
             /** Écran de l'app ouvert en touchant l'item ; `null` : aucun. */
             'link' => $this->link,
             'edit' => $this->edit,
-            /** Boutons de la carte : libellé, style, confirmation, et un envoi ou un formulaire à ouvrir (lié à `record`). */
+            /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [
                 'label' => $action['label'],
                 'style' => $action['style'],
                 'confirm' => $action['confirm'],
                 'submission' => $action['submission']?->toArray(),
                 'form' => $action['form'],
+                'link' => $action['link'],
             ], $this->actions),
             /** Pastille de couleur (un statut) : libellé et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune. */
             'tag' => $this->tag,

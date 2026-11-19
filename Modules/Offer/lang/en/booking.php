@@ -128,4 +128,25 @@ return [
         'refuse_submit' => 'Decline the request',
         'offer_status' => 'Status',
     ],
+    // Le calendrier d'une offre (décision 2026-11-19-contrat-calendrier-offre).
+    'calendar' => [
+        'title' => 'Calendar · :offer',
+        'button' => 'Calendar',
+        'block' => 'Block this day',
+        'block_confirm' => 'Block this day? It can no longer be requested.',
+        'blocked' => 'Day blocked.',
+        'unblock' => 'Unblock',
+        'unblocked' => 'Day unblocked.',
+        'block_accepted' => 'An accepted stay takes this day: it cannot be blocked.',
+        'block_past' => 'This day has passed.',
+        'empty_day' => 'No requests on this day.',
+        'legend' => [
+            'accepted' => 'Accepted stay',
+            'pending' => 'Pending request',
+            'conflict' => 'Overlap',
+            'blocked' => 'Blocked',
+            'visit_accepted' => 'Accepted visit',
+            'visit_pending' => 'Pending visit',
+        ],
+    ],
 ];

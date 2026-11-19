@@ -159,6 +159,8 @@ class OfferListing extends Listing
             ->edit(OfferForm::name())
             // « Voir » : sa fiche, brouillon compris (décision 2026-11-19-nuit-voir-editer-retirer).
             ->link('/offers/'.$record->getKey())
+            // Son calendrier : occupation, demandes, jours bloqués (décision 2026-11-19-contrat-calendrier-offre).
+            ->action(__('offer::booking.calendar.button'), link: '/offers/'.$record->getKey().'/calendar')
             ->delete(
                 __('offer::offer.list.remove'),
                 __('offer::offer.list.confirm'),

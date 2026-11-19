@@ -128,4 +128,25 @@ return [
         'refuse_submit' => 'Refuser la demande',
         'offer_status' => 'Statut',
     ],
+    // Le calendrier d'une offre (décision 2026-11-19-contrat-calendrier-offre).
+    'calendar' => [
+        'title' => 'Calendrier · :offer',
+        'button' => 'Calendrier',
+        'block' => 'Bloquer ce jour',
+        'block_confirm' => 'Bloquer ce jour ? Il ne pourra plus être demandé.',
+        'blocked' => 'Jour bloqué.',
+        'unblock' => 'Débloquer',
+        'unblocked' => 'Jour débloqué.',
+        'block_accepted' => 'Un séjour accepté occupe ce jour : il ne peut pas être bloqué.',
+        'block_past' => 'Ce jour est passé.',
+        'empty_day' => 'Aucune demande ce jour-là.',
+        'legend' => [
+            'accepted' => 'Séjour accepté',
+            'pending' => 'Demande en attente',
+            'conflict' => 'Chevauchement',
+            'blocked' => 'Bloqué',
+            'visit_accepted' => 'Visite acceptée',
+            'visit_pending' => 'Visite en attente',
+        ],
+    ],
 ];
