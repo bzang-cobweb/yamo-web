@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-etape-1-presentation.md
+
 # `2026-11-19` — Étape 1 du formulaire de logement sans titre
 
 - **Type** : décision

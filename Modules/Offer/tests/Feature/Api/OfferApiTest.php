@@ -161,7 +161,7 @@ class OfferApiTest extends TestCase
         $this->assertSame('center', $form['title_align']);
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
         // L'étape 1 sans titre (décision 2026-11-19-etape-1-sans-titre).
-        $this->assertSame([null, 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));
+        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
