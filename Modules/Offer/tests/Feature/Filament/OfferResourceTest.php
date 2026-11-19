@@ -218,7 +218,7 @@ class OfferResourceTest extends AuthFilamentTestCase
 
         // Les onglets, dans leur ordre (décision 2026-11-19-onglet-prix).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
-            ->assertSeeInOrder(['Général', 'Prix', 'Localisation', 'Accès', 'Caractéristiques', 'Règles', 'Informations', 'Photos']);
+            ->assertSeeInOrder(['Général', 'Localisation', 'Prix', 'Accès', 'Caractéristiques', 'Règles', 'Informations', 'Photos']);
 
         // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])

@@ -93,7 +93,7 @@ abstract class OfferForm
             ->components([
                 // Des onglets (décisions 2026-11-19-ombre-coeur-onglets-offre et
                 // 2026-11-19-onglets-localisation-informations), dans l'ordre des étapes de l'app :
-                // le général, le prix, la localisation, l'accès, les caractéristiques, les règles,
+                // le général, la localisation, le prix, l'accès, les caractéristiques, les règles,
                 // les informations, les photos (décision 2026-11-19-onglet-prix) ; les avis restent
                 // sous le formulaire.
                 Tabs::make('offer')
@@ -127,12 +127,6 @@ abstract class OfferForm
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
                             ]),
-                        // Le prix et ce qui l'accompagne (décision 2026-11-19-onglet-prix) ; pas d'onglet
-                        // pour un domaine sans prix.
-                        Tab::make(__('offer::offer.tabs.price'))
-                            ->columns(2)
-                            ->visible($domain->hasPrice() || $domain->priceAttributes() !== [])
-                            ->schema(self::price($domain)),
                         // Le pays aussi (décision 2026-11-19-pays-dans-localisation) : l'onglet est
                         // toujours là ; l'adresse, pour un domaine qui en a une.
                         Tab::make(__('offer::offer.tabs.location'))
@@ -173,6 +167,12 @@ abstract class OfferForm
                                     ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
                             ]),
+                        // Le prix et ce qui l'accompagne (décision 2026-11-19-onglet-prix) ; pas d'onglet
+                        // pour un domaine sans prix.
+                        Tab::make(__('offer::offer.tabs.price'))
+                            ->columns(2)
+                            ->visible($domain->hasPrice() || $domain->priceAttributes() !== [])
+                            ->schema(self::price($domain)),
                         // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
                         Tab::make(__('offer::offer.access'))
                             ->columns(2)
