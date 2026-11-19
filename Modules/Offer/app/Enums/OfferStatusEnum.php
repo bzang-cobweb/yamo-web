@@ -17,6 +17,19 @@ enum OfferStatusEnum: string
     }
 
     /**
+     * Ton de la pastille dans « Mes logements » (décision 2026-11-19-statut-carte-logement) :
+     * publiée verte, brouillon orange, archivée grise.
+     */
+    public function tone(): string
+    {
+        return match ($this) {
+            self::PUBLISHED => 'success',
+            self::DRAFT => 'warning',
+            self::ARCHIVED => 'neutral',
+        };
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function options(): array

@@ -493,7 +493,9 @@ class OfferApiTest extends TestCase
         $this->assertSame((string) $mine->getKey(), $data[0]['id']);
         $this->assertSame('Studio', $data[0]['title']);
         // Statut, détails et prix en gras ; le titre saisi en sous-titre s'il diffère.
-        $this->assertStringStartsWith('Publiée · ', $data[0]['highlight']);
+        // Le statut en pastille verte ; plus dans la ligne en gras (décision 2026-11-19-statut-carte-logement).
+        $this->assertSame(['label' => 'Publiée', 'tone' => 'success'], $data[0]['tag']);
+        $this->assertStringNotContainsString('Publiée', $data[0]['highlight']);
         $this->assertStringContainsString('900', $data[0]['highlight']);
         $this->assertSame("/v1/offers/{$mine->getKey()}", $data[0]['delete']['endpoint']);
         // « Voir » (sa fiche) et « Éditer » (le formulaire) (décision 2026-11-19-nuit-voir-editer-retirer).
@@ -511,9 +513,9 @@ class OfferApiTest extends TestCase
 
         $highlights = array_column($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()->json('data.items'), 'highlight', 'title');
 
-        $this->assertStringStartsWith("Publiée · Payé jusqu'au 30 juin 2027", $highlights['A']);
-        $this->assertStringStartsWith('Publiée · Paiement échu le 2 janvier 2026', $highlights['B']);
-        $this->assertStringNotContainsString('Expir', $highlights['C']);
+        $this->assertStringStartsWith("Payé jusqu'au 30 juin 2027", $highlights['A']);
+        $this->assertStringStartsWith('Paiement échu le 2 janvier 2026', $highlights['B']);
+        $this->assertStringNotContainsString('Expir', (string) $highlights['C']);
     }
 
     public function test_editing_prefills_and_updates_my_offer(): void

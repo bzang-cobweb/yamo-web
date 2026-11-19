@@ -106,9 +106,9 @@ class CountrySpaceTest extends TestCase
         // L'adresse saisie est créée dans le pays de l'offre.
         $this->assertTrue($offer->address->country->is($this->cameroon));
         // Format français, sans décimales ; espaces insécables ramenés à des espaces.
-        // Statut et prix en gras (décision 2026-11-19-item-titre-saisi-details).
+        // Le prix en gras ; le statut en pastille (décisions 2026-11-19-item-titre-saisi-details et 2026-11-19-statut-carte-logement).
         $highlight = preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $this->in($user, 'CM')->getJson('/api/v1/lists/offer.mine')->json('data.items.0.highlight'));
-        $this->assertSame('Publiée · 85 000 FCFA / mois', $highlight);
+        $this->assertSame('85 000 FCFA / mois', $highlight);
 
         // Au Sénégal : un autre espace, sans cette offre, qui y répond 404.
         $this->assertSame([], $this->in($user, 'SN')->getJson('/api/v1/lists/offer.mine')->json('data.items'));
