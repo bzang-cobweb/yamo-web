@@ -1,3 +1,5 @@
+Complétée par : 2026-11-19-repeater-icone-supprimer.md (supprimer par une icône sur le titre)
+
 # `2026-11-19` — Champ repeater : chaque groupe est une section repliable, fermée par défaut
 
 - **Type** : décision
