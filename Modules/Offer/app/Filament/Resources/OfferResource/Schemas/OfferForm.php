@@ -141,6 +141,13 @@ abstract class OfferForm
                                     ->required($domain->requiresAddress())
                                     ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
+                                // Indications propres à l'offre (décision 2026-11-19-description-adresse-offre).
+                                Textarea::make('address_description')
+                                    ->label(__('offer::offer.address_description'))
+                                    ->maxLength(500)
+                                    ->rows(2)
+                                    ->visible($domain->hasAddress())
+                                    ->columnSpanFull(),
                             ]),
                         // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
                         Tab::make(__('offer::offer.access'))

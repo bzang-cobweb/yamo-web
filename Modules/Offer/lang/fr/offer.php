@@ -86,4 +86,7 @@ return [
     'street_help' => 'Tapez au moins 3 caractères : les adresses connues sont proposées.',
     'zip' => 'Code postal',
     'city' => 'Ville',
+    // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
+    'address_description' => "Indications sur l'adresse",
+    'address_description_placeholder' => 'Ex. : derrière le marché, portail bleu',
 ];

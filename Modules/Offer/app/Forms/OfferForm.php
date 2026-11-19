@@ -96,6 +96,12 @@ class OfferForm extends Form
                 ->required($domain->requiresAddress())
                 ->maxLength(255)
                 ->rules(['required_with:street']),
+            // Indications propres à l'offre, l'adresse étant partagée (décision 2026-11-19-description-adresse-offre).
+            ! $domain->hasAddress() ? null : Field::textarea('address_description')
+                ->label(__('offer::offer.address_description'))
+                ->placeholder(__('offer::offer.address_description_placeholder'))
+                ->default($offer?->address_description)
+                ->maxLength(500),
             Field::select('status')
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())

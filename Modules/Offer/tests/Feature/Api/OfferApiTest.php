@@ -95,7 +95,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'address_description', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -162,7 +162,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['street', 'zip', 'city'],
+            ['street', 'zip', 'city', 'address_description'],
         ], array_column($steps, 'fields'));
 
         // « Suivant » : seule l'étape est vérifiée.
@@ -230,6 +230,24 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => '', 'city' => '']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['street', 'city']);
+    }
+
+    public function test_each_offer_has_its_own_address_description_on_a_shared_address(): void
+    {
+        $user = $this->member();
+
+        // Décision 2026-11-19-description-adresse-offre : l'adresse est partagée, l'indication non.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => 'Portail bleu, 2e étage']))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => '']))->assertNoContent();
+        [$first, $second] = Offer::query()->orderBy('id')->get()->all();
+
+        $this->assertSame($first->address_id, $second->address_id);
+        $this->assertSame('Portail bleu, 2e étage', $first->address_description);
+        $this->assertNull($second->address_description);
+        $this->assertSame('Portail bleu, 2e étage', array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$first->getKey()}")->json('data.fields'), 'default', 'name')['address_description']);
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => str_repeat('a', 501)]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('address_description');
     }
 
     public function test_street_suggestions_serve_only_street_zip_and_city_of_the_country(): void

@@ -32,6 +32,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int|null $country_id
  * @property int|null $category_id
  * @property int|null $address_id
+ * @property string|null $address_description indications sur l'adresse, propres à l'offre, non traduites
  * @property string $title
  * @property string|null $description
  * @property OfferStatusEnum $status
@@ -49,7 +50,7 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'address_description', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {

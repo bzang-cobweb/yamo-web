@@ -1,0 +1,21 @@
+# `2026-11-19` — Indications sur l'adresse, propres à l'offre
+
+- **Type** : décision
+- **Question posée** :
+  - demande : « rajouter une description optionnelle traduisible dans Address » ;
+  - après que j'ai signalé qu'une adresse est partagée : « ajouter plutôt le champ address_description dans l'offre pour permettre à la même adresse d'avoir plusieurs descriptions. correct ? » ;
+  - puis, sur ma proposition : « yes but address_description is not translatable ».
+- **Réponse** : un champ sur l'offre, non traduit.
+- **Ce qui est retenu** :
+  - une colonne `offers.address_description` : facultative, 500 caractères au plus, non traduite ;
+  - **app** : à l'étape « Adresse » du formulaire, après la ville (« Indications sur l'adresse », exemple « derrière le marché, portail bleu ») ;
+  - **back-office** : dans l'onglet « Annonce », sous l'adresse ;
+  - **fiche** : affichée sous la ville ;
+  - l'adresse partagée (`Address`) n'est pas modifiée : deux offres à la même adresse ont chacune leur indication ;
+  - un envoi sans ce champ garde l'indication actuelle ; un champ vide la retire.
+- **Motif** : une adresse est un enregistrement partagé ; une description posée dessus serait commune à toutes les offres de cet endroit.
+- **Portée** : `Offer`, `OfferForm` (app et back-office), `OfferService`, `OfferDetailResource`, `RentalDomain::formSteps()`, fiche de l'app.
+- **Corollaires** :
+  - la rue n'est jamais affichée, mais une indication peut situer le lieu presque aussi précisément ; le propriétaire l'écrit en connaissance de cause ;
+  - le texte s'affiche tel que saisi, dans la langue où il a été écrit.
+- **Tranché par** : humain

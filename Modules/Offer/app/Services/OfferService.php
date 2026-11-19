@@ -131,6 +131,10 @@ class OfferService
             'description' => $this->translations($offer?->getTranslations('description') ?? [], $locale, $data['description'] ?? null),
             'category_id' => $data['category_id'] ?? null,
             'address_id' => $domain->hasAddress() ? $this->addressId($data, $country, $offer) : null,
+            // Sans le champ envoyé (ancien envoi, back-office), l'indication actuelle reste.
+            'address_description' => ! $domain->hasAddress() ? null : (array_key_exists('address_description', $data)
+                ? (filled($data['address_description']) ? trim((string) $data['address_description']) : null)
+                : $offer?->address_description),
             'status' => $data['status'],
             'price' => $price,
             'currency' => $price === null ? null : $country?->currency,

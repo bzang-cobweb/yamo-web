@@ -72,6 +72,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('Loyer', $data['price']['label']);
         $this->assertSame('250 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
         $this->assertSame('Douala', $data['location']);
+        $this->assertNull($data['address_description']);
         $this->assertCount(2, $data['photos']);
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);

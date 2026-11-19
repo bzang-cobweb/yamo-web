@@ -2850,6 +2850,13 @@
                         ],
                         "description": "La ville ; jamais la rue."
                     },
+                    "address_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Indications sur l'adresse \u00e9crites par le propri\u00e9taire, ou `null`."
+                    },
                     "photos": {
                         "type": "array",
                         "description": "Toutes les photos, dans l'ordre, sur l'h\u00f4te de la requ\u00eate.",
@@ -3063,6 +3070,7 @@
                     "title",
                     "price",
                     "location",
+                    "address_description",
                     "photos",
                     "description",
                     "facts",

@@ -86,4 +86,7 @@ return [
     'street_help' => 'Type at least 3 characters: known addresses are suggested.',
     'zip' => 'Postal code',
     'city' => 'City',
+    // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
+    'address_description' => 'Directions to the address',
+    'address_description_placeholder' => 'E.g. behind the market, blue gate',
 ];

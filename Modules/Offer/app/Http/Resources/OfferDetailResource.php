@@ -25,7 +25,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address_description: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -44,6 +44,8 @@ class OfferDetailResource extends JsonResource
             ],
             /** La ville ; jamais la rue. */
             'location' => $offer->address?->city,
+            /** Indications sur l'adresse écrites par le propriétaire, ou `null`. */
+            'address_description' => $offer->address_description,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
