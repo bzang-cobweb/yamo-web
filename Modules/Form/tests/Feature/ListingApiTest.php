@@ -41,6 +41,7 @@ class ListingApiTest extends TestCase
                 'empty' => null,
                 'create' => null,
                 'search' => null,
+                'filters' => [],
                 'next_cursor' => null,
                 'items' => [[
                     'id' => (string) $user->getKey(),

@@ -1,0 +1,30 @@
+# `2026-11-19` — Contrat « filtres de la vitrine », validé
+
+- **Type** : décision
+- **Question posée** : valider le contrat `specs/2026-11-19-filtres-vitrine.md` et ses critères.
+- **Réponse** : « Approved ».
+- **Ce qui est retenu** :
+  - les critères :
+    - ville ;
+    - loyer min et max (un seul filtre au badge) ;
+    - type (plusieurs) ;
+    - meublé (Tous / Meublé / Non meublé) ;
+    - chambres au moins ;
+    - disponible dès le ;
+  - l'app :
+    - un lien « Filtres » sous la recherche, à droite, avec un badge du nombre de filtres actifs ;
+    - un écran de filtres décrit par le serveur ;
+    - les filtres sont gardés tant que l'app est ouverte ;
+  - le serveur :
+    - une liste déclare ses filtres (`Listing::filters()`) ; les filtres propres au domaine viennent de `Domain::filters()` ;
+    - un filtre invalide ou inconnu est ignoré ;
+  - la recherche, le défilement infini et les vedettes respectent les filtres.
+- **Motif** : la demande de l'humain ; trois critères pour retenir un filtre : il tranche une décision, porte sur une donnée structurée, et est renseigné sur la plupart des offres.
+- **Portée** : modules Form et Offer, vitrine de l'app.
+- **Corollaires** : hors périmètre :
+  - filtres gardés d'une session à l'autre ;
+  - alertes ;
+  - tri au choix ;
+  - carte ;
+  - filtres sur « Mes logements » et « Mes favoris ».
+- **Tranché par** : humain

@@ -22,6 +22,11 @@ return [
         'stepOf' => 'Step :current of :total',
     ],
     'list' => [
+        // Filtres d'une liste (décision 2026-11-19-contrat-filtres-vitrine).
+        'filters' => 'Filters',
+        'applyFilters' => 'Show offers',
+        'clearFilters' => 'Clear filters',
+        'noFilterResults' => 'No offer matches these filters.',
         // Cœur de favori sur une photo (décision 2026-11-19-contrat-vedette-favoris).
         'addFavorite' => 'Add to favorites',
         'removeFavorite' => 'Remove from favorites',

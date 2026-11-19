@@ -2231,6 +2231,11 @@
                         "type": "null",
                         "description": "Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignor\u00e9."
                     },
+                    "filters": {
+                        "type": "array",
+                        "description": "Filtres propos\u00e9s, en champs de formulaire (`?filter[nom]=valeur`) ; vide : liste sans filtres.",
+                        "items": {}
+                    },
                     "next_cursor": {
                         "type": [
                             "string",
@@ -2411,6 +2416,7 @@
                     "empty",
                     "create",
                     "search",
+                    "filters",
                     "next_cursor",
                     "items"
                 ],

@@ -43,4 +43,13 @@ return [
         'place' => 'Address and category',
         'listing' => 'The listing',
     ],
+    // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
+    'filters' => [
+        'any' => 'All',
+        'furnished' => 'Furnished',
+        'unfurnished' => 'Unfurnished',
+        'bedrooms' => 'Bedrooms, at least',
+        'available_from' => 'Free on',
+        'available_from_help' => 'Homes available on this date or earlier.',
+    ],
 ];

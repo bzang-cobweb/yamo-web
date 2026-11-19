@@ -43,4 +43,13 @@ return [
         'place' => 'Adresse et catégorie',
         'listing' => "L'annonce",
     ],
+    // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
+    'filters' => [
+        'any' => 'Tous',
+        'furnished' => 'Meublé',
+        'unfurnished' => 'Non meublé',
+        'bedrooms' => 'Chambres, au moins',
+        'available_from' => 'Libre le',
+        'available_from_help' => 'Les logements disponibles à cette date ou avant.',
+    ],
 ];

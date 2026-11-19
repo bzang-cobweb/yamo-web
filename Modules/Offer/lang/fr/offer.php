@@ -77,4 +77,10 @@ return [
     'tabs' => [
         'listing' => 'Annonce',
     ],
+    // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
+    'filters' => [
+        'city' => 'Ville',
+        'price_min' => 'Loyer minimum',
+        'price_max' => 'Loyer maximum',
+    ],
 ];

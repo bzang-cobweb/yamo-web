@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Domains;
 
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Form\Support\Field;
 use Modules\Offer\Models\Offer;
 
@@ -131,6 +132,49 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.place'), 'fields' => ['address_id', 'category_id']],
             ['title' => __('offer::rental.steps.listing'), 'fields' => ['title', 'description', 'status']],
         ];
+    }
+
+    /**
+     * Type (plusieurs), meublé, chambres au moins, disponible dès le (décision
+     * 2026-11-19-contrat-filtres-vitrine).
+     */
+    public function filters(): array
+    {
+        return [
+            Field::checkboxGroup('property_type')
+                ->label(__('offer::rental.property_type'))
+                ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all()),
+            Field::segmented('furnished')
+                ->label(__('offer::rental.furnished'))
+                ->options(['any' => __('offer::rental.filters.any'), 'true' => __('offer::rental.filters.furnished'), 'false' => __('offer::rental.filters.unfurnished')])
+                ->default('any'),
+            Field::select('bedrooms')
+                ->label(__('offer::rental.filters.bedrooms'))
+                ->options(collect([1, 2, 3, 4])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
+            Field::date('available_from')
+                ->label(__('offer::rental.filters.available_from'))
+                ->help(__('offer::rental.filters.available_from_help')),
+        ];
+    }
+
+    public function applyFilters(Builder $query, array $filters): void
+    {
+        if (isset($filters['property_type'])) {
+            $query->whereIn('details->property_type', (array) $filters['property_type']);
+        }
+        // « Tous » ne filtre rien.
+        if (in_array($filters['furnished'] ?? 'any', ['true', 'false'], true)) {
+            $query->where('details->furnished', $filters['furnished'] === 'true');
+        }
+        if (isset($filters['bedrooms'])) {
+            $query->where('details->bedrooms', '>=', (int) $filters['bedrooms']);
+        }
+        // Libre à cette date : disponible avant ou ce jour-là, ou sans date (libre tout de suite).
+        if (isset($filters['available_from'])) {
+            $query->where(fn (Builder $dates) => $dates
+                ->whereNull('details->available_from')
+                ->orWhere('details->available_from', '<=', (string) $filters['available_from']));
+        }
     }
 
     public function accessAttributes(): array

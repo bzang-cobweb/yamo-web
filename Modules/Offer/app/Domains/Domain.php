@@ -3,6 +3,7 @@
 namespace Modules\Offer\Domains;
 
 use App\Support\Currency;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
 use Modules\Form\Support\Field;
 use Modules\Offer\Models\Offer;
@@ -184,6 +185,25 @@ abstract class Domain
     {
         return [];
     }
+
+    /**
+     * Les filtres propres au domaine dans la vitrine (décision
+     * 2026-11-19-contrat-filtres-vitrine), en champs ; aucun par défaut.
+     *
+     * @return list<Field>
+     */
+    public function filters(): array
+    {
+        return [];
+    }
+
+    /**
+     * Restreint `$query` (des offres) aux valeurs de ces filtres, déjà validées.
+     *
+     * @param  Builder<Offer>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    public function applyFilters(Builder $query, array $filters): void {}
 
     /**
      * Attributs qui règlent l'accès à l'offre (« Disponible dès le ») : dans le

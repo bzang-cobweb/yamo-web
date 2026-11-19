@@ -5,6 +5,7 @@ namespace Modules\Form\Http\Resources;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 
 /**
@@ -16,13 +17,15 @@ use Modules\Form\Support\Listing;
 class ListingResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, search: string|null, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, favorite: array{active: bool, endpoint: string}|null, link: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
+     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, search: string|null, filters: list<array<string, mixed>>, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, favorite: array{active: bool, endpoint: string}|null, link: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
      */
     public function toArray(Request $request): array
     {
         $cursor = $request->query('cursor');
         $search = $request->query('search');
-        $page = $this->resource->page(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null);
+        $rawFilters = $request->query('filter');
+        $filters = $this->resource->validFilters(is_array($rawFilters) ? $rawFilters : []);
+        $page = $this->resource->page(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null, $filters);
 
         return [
             'name' => $this->resource->key(),
@@ -33,10 +36,12 @@ class ListingResource extends JsonResource
             'create' => $this->resource->create(),
             /** Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignoré. */
             'search' => $this->resource->searchPlaceholder(),
+            /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`) ; vide : liste sans filtres. */
+            'filters' => array_map(fn (Field $field): array => $field->toArray(), $this->resource->filters()),
             /** Curseur de la page suivante, à renvoyer en `?cursor=` ; `null` : plus rien après. */
             'next_cursor' => $page->nextCursor()?->encode(),
             /** Items de la page : `image` est la photo affichée au-dessus du titre ; `edit` ouvre le formulaire lié à l'enregistrement (`?record=`), `delete` décrit le retrait. */
-            'items' => collect($this->resource->pinnedItems(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null))
+            'items' => collect($this->resource->pinnedItems(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null, $filters))
                 // Les épinglés en tête de la première page (offres en vedette), puis la page.
                 ->concat($page->getCollection())
                 ->map(fn (Model $record): array => $this->resource->item($record)->toArray())->values()->all(),

@@ -2,13 +2,16 @@
 
 namespace Modules\Offer\Lists;
 
+use App\Support\Currency;
 use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
+use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -115,6 +118,65 @@ class OfferBrowseListing extends Listing
             ->when($this->user !== null, fn (Builder $query) => $query->withFavoriteOf($this->user?->getAuthIdentifier()))
             ->where('country_id', CurrentCountry::require()->getKey())
             ->where('status', OfferStatusEnum::PUBLISHED);
+    }
+
+    /**
+     * Ville, loyer min et max, puis les filtres du domaine (décision
+     * 2026-11-19-contrat-filtres-vitrine).
+     */
+    public function filters(): array
+    {
+        $domain = app(DomainRegistry::class)->require();
+        $currency = (string) Currency::symbol(CurrentCountry::require()->currency);
+
+        return array_values(array_filter([
+            ! $domain->hasAddress() ? null : Field::select('city')
+                ->label(__('offer::offer.filters.city'))
+                ->options($this->cities()),
+            ! $domain->hasPrice() ? null : Field::number('price_min')
+                ->label(__('offer::offer.filters.price_min'))
+                ->suffix($currency)
+                ->rules(['min:0']),
+            ! $domain->hasPrice() ? null : Field::number('price_max')
+                ->label(__('offer::offer.filters.price_max'))
+                ->suffix($currency)
+                ->rules(['min:0']),
+            ...$domain->filters(),
+        ]));
+    }
+
+    /**
+     * Les villes des offres publiées du pays, par ordre alphabétique.
+     *
+     * @return array<string, string>
+     */
+    private function cities(): array
+    {
+        return Address::query()
+            ->whereIn('id', Offer::query()
+                ->select('address_id')
+                ->where('country_id', CurrentCountry::require()->getKey())
+                ->where('status', OfferStatusEnum::PUBLISHED))
+            ->whereNotNull('city')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city', 'city')
+            ->all();
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        if (isset($filters['city'])) {
+            $query->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city']));
+        }
+        if (isset($filters['price_min'])) {
+            $query->where('price', '>=', $filters['price_min']);
+        }
+        if (isset($filters['price_max'])) {
+            $query->where('price', '<=', $filters['price_max']);
+        }
+
+        app(DomainRegistry::class)->require()->applyFilters($query, $filters);
     }
 
     protected function search(Builder $query, string $term): void

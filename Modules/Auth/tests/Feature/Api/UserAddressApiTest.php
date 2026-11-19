@@ -71,6 +71,7 @@ class UserAddressApiTest extends TestCase
                 'empty' => "Aucune adresse pour l'instant.",
                 'create' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address'],
                 'search' => 'Rechercher une adresse…',
+                'filters' => [],
                 'next_cursor' => null,
                 'items' => [],
             ]]);

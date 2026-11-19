@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\Cursor;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use TypeError;
 use UnexpectedValueException;
@@ -78,18 +79,66 @@ abstract class Listing
      * curseur. Un curseur illisible ou qui ne correspond pas à l'ordre de la
      * liste sert la première page.
      *
+     * @param  array<string, mixed>  $filters  filtres validés (`validFilters()`)
      * @return CursorPaginator<int, Model>
      */
-    final public function page(?string $cursor = null, ?string $search = null): CursorPaginator
+    final public function page(?string $cursor = null, ?string $search = null, array $filters = []): CursorPaginator
     {
         // Nom de curseur absent de toute requête : seul `$cursor` compte.
         $name = 'listing_cursor';
 
         try {
-            return $this->filtered($search)->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
+            return $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
         } catch (UnexpectedValueException|TypeError) {
-            return $this->filtered($search)->cursorPaginate($this->perPage(), ['*'], $name);
+            return $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name);
         }
+    }
+
+    /**
+     * Les filtres proposés par la liste, en champs (décision
+     * 2026-11-19-contrat-filtres-vitrine) ; aucun par défaut. Les valeurs reçues
+     * passent par `validFilters()` avant `applyFilters()`.
+     *
+     * @return list<Field>
+     */
+    public function filters(): array
+    {
+        return [];
+    }
+
+    /**
+     * Restreint `$query` aux valeurs de filtres (déjà validées, jamais vides). Sans
+     * effet par défaut.
+     *
+     * @param  Builder<covariant Model>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    protected function applyFilters(Builder $query, array $filters): void {}
+
+    /**
+     * Les filtres reçus (`?filter[city]=Douala`) que la liste connaît, non vides et
+     * valides selon leur champ ; un filtre inconnu, vide ou invalide est ignoré.
+     *
+     * @param  array<array-key, mixed>  $raw
+     * @return array<string, mixed>
+     */
+    final public function validFilters(array $raw): array
+    {
+        $valid = [];
+
+        foreach ($this->filters() as $field) {
+            $value = $raw[$field->name] ?? null;
+
+            if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+
+            if (Validator::make([$field->name => $value], $field->validationRules())->passes()) {
+                $valid[$field->name] = $value;
+            }
+        }
+
+        return $valid;
     }
 
     /**
@@ -113,9 +162,10 @@ abstract class Listing
     /**
      * Les épinglés à afficher : sur la première page seulement, restreints à la recherche.
      *
+     * @param  array<string, mixed>  $filters  filtres validés (`validFilters()`)
      * @return list<Model>
      */
-    final public function pinnedItems(?string $cursor = null, ?string $search = null): array
+    final public function pinnedItems(?string $cursor = null, ?string $search = null, array $filters = []): array
     {
         $query = $this->pinned();
 
@@ -126,6 +176,9 @@ abstract class Listing
         $term = Str::squish((string) $search);
         if ($term !== '' && $this->searchPlaceholder() !== null) {
             $query->where(fn (Builder $group) => $this->search($group, $term));
+        }
+        if ($filters !== []) {
+            $query->where(fn (Builder $group) => $this->applyFilters($group, $filters));
         }
 
         return $query->limit($this->pinnedLimit())->get()->all();
@@ -164,16 +217,20 @@ abstract class Listing
      * La requête de la liste, restreinte à la recherche si la liste est
      * cherchable et que la recherche n'est pas vide.
      *
+     * @param  array<string, mixed>  $filters
      * @return Builder<covariant Model>|Relation<covariant Model, covariant Model, mixed>
      */
-    private function filtered(?string $search): Builder|Relation
+    private function filtered(?string $search, array $filters = []): Builder|Relation
     {
         $query = $this->query();
         $term = Str::squish((string) $search);
+        $builder = $query instanceof Relation ? $query->getQuery() : $query;
 
         if ($term !== '' && $this->searchPlaceholder() !== null) {
-            $builder = $query instanceof Relation ? $query->getQuery() : $query;
             $builder->where(fn (Builder $group) => $this->search($group, $term));
+        }
+        if ($filters !== []) {
+            $builder->where(fn (Builder $group) => $this->applyFilters($group, $filters));
         }
 
         return $query;
