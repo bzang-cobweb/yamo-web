@@ -99,7 +99,7 @@ class BookingNotificationsTest extends TestCase
 
         app()->setLocale('fr');
         $mail = (new BookingRequestReceived($booking))->toMail($booking->offer->user);
-        $this->assertSame('Nouvelle demande : Studio · meublé', mb_substr($mail->subject, 0, 34));
+        $this->assertSame('Nouvelle demande : '.$booking->offer->getTranslation('title', 'fr'), $mail->subject);
         $this->assertStringContainsString('Marie Curie demande un séjour du 3 mars 2027 au 6 mars 2027', $mail->introLines[0]);
         $this->assertSame('Message : Bonjour !', $mail->introLines[1]);
         $this->assertStringContainsString('« Réservations reçues »', $mail->introLines[2]);
@@ -156,9 +156,12 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame(['label' => 'Pending', 'tone' => 'warning'], $notification->data['tag']);
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
         $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
-        $this->assertSame([['label' => 'View the listing', 'link' => '/offers/'.$booking->offer_id]], $notification->data['links']);
+        $this->assertSame([], $notification->data['links']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);
-        $this->assertSame([['text' => 'Marie Curie', 'link' => '/members/'.$booking->user_id]], $notification->data['text_links']);
+        $this->assertSame([
+            ['text' => 'Marie Curie', 'link' => '/members/'.$booking->user_id],
+            ['text' => $booking->offer->getTranslation('title', 'en'), 'link' => '/offers/'.$booking->offer_id],
+        ], $notification->data['text_links']);
         $this->assertSame('Bonjour, je viens pour le travail.', $notification->data['message']);
         $this->assertNull($notification->read_at);
     }

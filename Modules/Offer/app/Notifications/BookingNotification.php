@@ -78,24 +78,28 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'offer_id' => $this->booking->offer_id,
             // Le nom du membre, dans le texte, ouvre sa page (décision 2026-11-19-page-membre).
             'text_links' => $this->textLinks(),
-            'links' => [
-                ['label' => __('offer::booking.notify.view_offer'), 'link' => '/offers/'.$this->booking->offer_id],
-            ],
+            // Plus de lien à part : le nom de l'offre, dans le texte, mène à l'annonce.
+            'links' => [],
         ];
     }
 
     /**
-     * Le nom du membre comme lien vers sa page, s'il figure dans le texte (une
-     * nouvelle demande, une annulation : le propriétaire lit le nom du membre).
+     * Les passages liés du texte (décision 2026-11-19-page-membre) : le nom du membre
+     * mène à sa page (une nouvelle demande, une annulation), le nom de l'offre à
+     * l'annonce. Chacun seulement s'il figure dans le texte.
      *
      * @return list<array{text: string, link: string}>
      */
     private function textLinks(): array
     {
-        $name = (string) $this->booking->user->full_name;
-        $body = __("offer::booking.notify.{$this->key()}.body", $this->replacements());
+        $replace = $this->replacements();
+        $body = __("offer::booking.notify.{$this->key()}.body", $replace);
+        $candidates = [
+            ['text' => $replace['guest'], 'link' => '/members/'.$this->booking->user_id],
+            ['text' => $replace['offer'], 'link' => '/offers/'.$this->booking->offer_id],
+        ];
 
-        return $name !== '' && str_contains($body, $name) ? [['text' => $name, 'link' => '/members/'.$this->booking->user_id]] : [];
+        return array_values(array_filter($candidates, fn (array $link): bool => $link['text'] !== '' && str_contains($body, $link['text'])));
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -130,7 +134,8 @@ abstract class BookingNotification extends Notification implements ShouldQueue
         return [
             'app' => (string) config('app.name'),
             'guest' => (string) $this->booking->user->full_name,
-            'offer' => app(DomainRegistry::class)->require()->itemTitle($offer) ?? (string) $offer->getTranslation('title', $locale),
+            // Le titre saisi par le propriétaire, pas le titre construit de la liste.
+            'offer' => (string) $offer->getTranslation('title', $locale),
             'period' => $this->booking->period($locale),
             'type' => __('offer::booking.notify.type_lower.'.$this->booking->type->value),
         ];

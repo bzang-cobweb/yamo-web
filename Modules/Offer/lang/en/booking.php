@@ -61,7 +61,6 @@ return [
     ],
     'notify' => [
         'title' => 'Request',
-        'view_offer' => 'View the listing',
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'requested' => [
