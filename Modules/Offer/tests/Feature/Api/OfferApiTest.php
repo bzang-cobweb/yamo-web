@@ -103,7 +103,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'photos'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'other_information', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -170,11 +170,13 @@ class OfferApiTest extends TestCase
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
         // L'étape 1 « Présentation » (décision 2026-11-19-etape-1-presentation), les photos en dernier
         // (décision 2026-11-19-contrat-champ-upload-photos).
-        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Adresse', 'Photos'], array_column($steps, 'title'));
+        // « Règles et informations » en 4e (décision 2026-11-19-contrat-regles-informations).
+        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles et informations', 'Adresse', 'Photos'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
+            ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'other_information'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],
         ], array_column($steps, 'fields'));
@@ -186,6 +188,30 @@ class OfferApiTest extends TestCase
             ->assertJsonMissingValidationErrors(['surface', 'rooms', 'price', 'street']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'title' => 'Studio'])->assertNoContent();
+    }
+
+    public function test_rules_and_information_are_optional_and_saved(): void
+    {
+        $user = $this->member();
+        // Décision 2026-11-19-contrat-regles-informations.
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        $this->assertSame('select', $fields['check_in_from']['type']);
+        $this->assertSame('06:00', array_key_first(array_column($fields['check_in_from']['options'], 'label', 'value')));
+        $this->assertSame(['field' => 'furnished', 'value' => 'true'], $fields['check_in_from']['visible_when']);
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, [
+            'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'],
+            'pets' => 'no', 'other_information' => "Clés chez le gardien.\nParking dans la cour.",
+        ]))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $this->assertSame('15:00', $offer->detail('check_in_from'));
+        $this->assertSame(21, $offer->detail('min_age'));
+        $this->assertSame(['fr' => "Clés chez le gardien.\nParking dans la cour."], $offer->detail('other_information'));
+
+        // Valeurs inconnues ou hors limites refusées ; tout le reste est facultatif.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['check_in_from' => '05:00', 'min_age' => '12', 'documents' => ['visa'], 'pets' => 'maybe']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['check_in_from', 'min_age', 'documents.0', 'pets']);
     }
 
     public function test_a_member_adds_a_home_with_its_attributes(): void

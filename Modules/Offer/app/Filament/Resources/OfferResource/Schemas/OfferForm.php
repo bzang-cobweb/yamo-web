@@ -47,6 +47,8 @@ abstract class OfferForm
         $fields = array_values(array_filter($domain->inputAttributes(), fn (Field $field): bool => match (true) {
             in_array($field->name, $domain->listingAttributes(), true) => $tab === 'listing',
             in_array($field->name, $domain->accessAttributes(), true) => $tab === 'access',
+            // Règles et informations (décision 2026-11-19-contrat-regles-informations).
+            in_array($field->name, [...$domain->ruleAttributes(), $domain->informationAttribute()], true) => $tab === 'rules',
             default => $tab === 'features',
         }));
 
@@ -76,7 +78,7 @@ abstract class OfferForm
             ->visible($domain->hasPrice());
         $names = array_map(fn (Field $field): string => $field->name, array_values(array_filter(
             $domain->inputAttributes(),
-            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes()], true),
+            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes(), ...$domain->ruleAttributes(), $domain->informationAttribute()], true),
         )));
         $at = array_search($domain->priceBeforeAttribute(), $names, true);
         $at = $at === false ? count($components) : $at;
@@ -182,6 +184,10 @@ abstract class OfferForm
                         Tab::make(__('offer::offer.attributes'))
                             ->columns(2)
                             ->schema(self::features($domain)),
+                        Tab::make(__('offer::offer.tabs.rules'))
+                            ->columns(2)
+                            ->schema(self::attributes($domain, 'rules'))
+                            ->visible($domain->ruleAttributes() !== [] || $domain->informationAttribute() !== null),
                         Tab::make(__('offer::offer.photos'))
                             ->schema([
                                 SpatieMediaLibraryFileUpload::make('photos')

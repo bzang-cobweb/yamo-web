@@ -252,6 +252,28 @@ abstract class Domain
     }
 
     /**
+     * Attributs qui sont des règles du logement (« Arrivée à partir de », « Âge
+     * minimum »…), décision 2026-11-19-contrat-regles-informations : la fiche les
+     * sert à part (`rules`), le back-office les range dans l'onglet « Règles ».
+     * Aucun par défaut.
+     *
+     * @return list<string>
+     */
+    public function ruleAttributes(): array
+    {
+        return [];
+    }
+
+    /**
+     * L'attribut texte libre des informations pratiques, servi à part par la fiche
+     * (`information`) et rangé avec les règles ; `null` : aucun.
+     */
+    public function informationAttribute(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Noms des attributs.
      *
      * @return list<string>

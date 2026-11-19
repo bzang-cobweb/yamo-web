@@ -25,7 +25,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, information: string|null, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -54,6 +54,10 @@ class OfferDetailResource extends JsonResource
             'description' => $offer->getTranslation('description', $locale) ?: null,
             /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
             'facts' => $this->facts($offer, $domain, $locale),
+            /** Règles du logement renseignées, lisibles (décision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine. */
+            'rules' => array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true))),
+            /** Autres informations pratiques, texte libre dans la langue demandée (retours à la ligne gardés), ou `null`. */
+            'information' => $this->information($offer, $domain, $locale),
             'published_at' => $offer->published_at?->toIso8601String(),
             /** Statut, servi au seul propriétaire. */
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
@@ -159,26 +163,51 @@ class OfferDetailResource extends JsonResource
             $facts['category_id'] = ['label' => __('offer::offer.category'), 'value' => $offer->category->path()];
         }
 
-        // Un montant prend le symbole de la devise de l'offre, sinon de son pays (« 5 000 FCFA / mois »).
-        $symbol = Currency::symbol($offer->currency ?? $offer->country?->currency, $locale);
-
-        foreach ($domain->attributes() as $field) {
-            $field->inCurrency($symbol);
-
-            // Un attribut masqué par sa condition (les charges d'un meublé) n'est pas affiché.
-            if (! $field->isVisibleFor($offer->details ?? [])) {
-                continue;
-            }
-            $value = $field->displayValue($offer->detail($field->name), $locale);
-
-            if ($value !== null) {
-                $facts[$field->name] = ['label' => (string) $field->getLabel(), 'value' => $value];
-            }
-        }
+        // Les attributs, sans les règles ni le texte libre, servis à part (décision 2026-11-19-contrat-regles-informations).
+        $apart = [...$domain->ruleAttributes(), $domain->informationAttribute()];
+        $facts = [...$facts, ...$this->displayed($offer, $domain, $locale, fn (string $name): bool => ! in_array($name, $apart, true))];
 
         // Celles que le domaine place en tête, puis les autres dans leur ordre.
         $leading = array_intersect_key(array_flip($domain->leadingFacts()), $facts);
 
         return array_values([...array_replace($leading, array_intersect_key($facts, $leading)), ...array_diff_key($facts, $leading)]);
+    }
+
+    /**
+     * Les attributs renseignés et visibles dont le nom passe `$keep`, lisibles, par nom.
+     *
+     * @param  callable(string): bool  $keep
+     * @return array<string, array{label: string, value: string}>
+     */
+    private function displayed(Offer $offer, Domain $domain, string $locale, callable $keep): array
+    {
+        // Un montant prend le symbole de la devise de l'offre, sinon de son pays (« 5 000 FCFA / mois »).
+        $symbol = Currency::symbol($offer->currency ?? $offer->country?->currency, $locale);
+        $values = [];
+
+        foreach ($domain->attributes() as $field) {
+            // Un attribut masqué par sa condition (les charges d'un meublé) n'est pas affiché.
+            if (! $keep($field->name) || ! $field->isVisibleFor($offer->details ?? [])) {
+                continue;
+            }
+            $value = $field->inCurrency($symbol)->displayValue($offer->detail($field->name), $locale);
+
+            if ($value !== null) {
+                $values[$field->name] = ['label' => (string) $field->getLabel(), 'value' => $value];
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * Le texte libre des informations pratiques, ou `null`.
+     */
+    private function information(Offer $offer, Domain $domain, string $locale): ?string
+    {
+        $name = $domain->informationAttribute();
+        $text = $name === null ? null : $offer->detailIn($name, $locale);
+
+        return is_string($text) && trim($text) !== '' ? $text : null;
     }
 }

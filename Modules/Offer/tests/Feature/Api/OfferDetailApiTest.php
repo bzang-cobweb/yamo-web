@@ -159,6 +159,29 @@ class OfferDetailApiTest extends TestCase
         $this->show(Offer::factory()->create(['status' => 'published']))->assertOk()->assertJsonPath('data.address', null);
     }
 
+    public function test_rules_and_information_are_served_apart_from_the_facts(): void
+    {
+        // Décision 2026-11-19-contrat-regles-informations.
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no', 'other_information' => ['fr' => "Clés chez le gardien.\nParking.", 'en' => 'Keys with the caretaker.']]]);
+
+        $data = $this->show($furnished)->assertOk()->json('data');
+        $this->assertSame([
+            ['label' => 'Arrivée à partir de', 'value' => '15:00'],
+            ['label' => 'Départ avant', 'value' => '11:00'],
+            ['label' => 'Âge minimum', 'value' => '21 ans'],
+            ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
+            ['label' => 'Animaux acceptés', 'value' => 'Non'],
+        ], $data['rules']);
+        $this->assertSame("Clés chez le gardien.\nParking.", $data['information']);
+        $this->assertSame('Keys with the caretaker.', $this->show($furnished, 'en')->json('data.information'));
+        $this->assertNotContains('Arrivée à partir de', array_column($data['facts'], 'label'));
+
+        // Les heures, pour un meublé seulement ; sans rien de renseigné : rien.
+        $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false, 'check_in_from' => '15:00']]);
+        $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
+        $this->assertNull($this->show($unfurnished)->json('data.information'));
+    }
+
     public function test_no_private_data_leaks(): void
     {
         $owner = User::factory()->create(['email' => 'proprio@example.test']);

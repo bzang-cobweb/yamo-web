@@ -79,6 +79,7 @@ return [
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
     'tabs' => [
         'listing' => 'Listing',
+        'rules' => 'Rules',
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [

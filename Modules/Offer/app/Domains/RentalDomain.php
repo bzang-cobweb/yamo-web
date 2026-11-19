@@ -90,6 +90,12 @@ class RentalDomain extends Domain
      * Équipements proposés (décision 2026-11-19-contrat-multiselect-intervalle-equipements) ;
      * leurs libellés sont dans `offer::rental.amenities`.
      */
+    /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
+    public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
+
+    /** Longueur maximale des autres informations. */
+    public const INFORMATION_MAX_LENGTH = 2000;
+
     public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
 
     /**
@@ -134,7 +140,62 @@ class RentalDomain extends Domain
                 // Un meublé se loue charges comprises : pas de charges.
                 ->visibleWhen('furnished', 'false')
                 ->rules(['min:0', 'max:100000']),
+            // Règles et informations pratiques, toutes facultatives (décision 2026-11-19-contrat-regles-informations).
+            // Les heures, pour un meublé seulement.
+            Field::select('check_in_from')
+                ->label(__('offer::rental.rules.check_in_from'))
+                ->options($this->hourOptions())
+                ->visibleWhen('furnished', 'true'),
+            Field::select('check_out_until')
+                ->label(__('offer::rental.rules.check_out_until'))
+                ->options($this->hourOptions())
+                ->visibleWhen('furnished', 'true'),
+            Field::number('min_age')
+                ->label(__('offer::rental.rules.min_age'))
+                ->suffix(__('offer::rental.rules.years'))
+                ->rules(['integer', 'min:16', 'max:99']),
+            Field::multiselect('documents')
+                ->label(__('offer::rental.rules.documents'))
+                ->options(collect(self::DOCUMENTS)->mapWithKeys(fn (string $document): array => [$document => __('offer::rental.rules.document_options.'.$document)])->all()),
+            // Oui / Non plutôt qu'un interrupteur : « non renseigné » n'est pas « non ».
+            ...array_map(fn (string $rule): Field => Field::select($rule)
+                ->label(__('offer::rental.rules.'.$rule))
+                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), ['pets', 'smoking', 'parties']),
+            Field::textarea('other_information')
+                ->label(__('offer::rental.rules.other_information'))
+                ->placeholder(__('offer::rental.rules.other_information_placeholder'))
+                ->translatable()
+                ->maxLength(self::INFORMATION_MAX_LENGTH),
         ];
+    }
+
+    /**
+     * « 06:00 », « 06:30 »… « 23:00 » : les heures d'arrivée et de départ proposées.
+     *
+     * @return array<string, string>
+     */
+    private function hourOptions(): array
+    {
+        $hours = [];
+        for ($minutes = 6 * 60; $minutes <= 23 * 60; $minutes += 30) {
+            $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+            $hours[$time] = $time;
+        }
+
+        return $hours;
+    }
+
+    /**
+     * Les règles, à part sur la fiche et dans l'onglet « Règles » du back-office.
+     */
+    public function ruleAttributes(): array
+    {
+        return ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties'];
+    }
+
+    public function informationAttribute(): ?string
+    {
+        return 'other_information';
     }
 
     /**
@@ -158,6 +219,8 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'furnished', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
+            // « Règles et informations » (décision 2026-11-19-contrat-regles-informations).
+            ['title' => __('offer::rental.steps.rules'), 'fields' => [...$this->ruleAttributes(), 'other_information']],
             ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'indication']],
             // Les photos en dernier (décision 2026-11-19-contrat-champ-upload-photos).
             ['title' => __('offer::rental.steps.photos'), 'fields' => ['photos']],

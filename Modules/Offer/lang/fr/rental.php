@@ -38,6 +38,7 @@ return [
     'price' => 'Loyer',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [
+        'rules' => 'Règles et informations',
         'photos' => 'Photos',
         'presentation' => 'Présentation',
         'price' => 'Prix et disponibilité',
@@ -70,5 +71,28 @@ return [
         'tv' => 'Télévision',
         'balcony' => 'Balcon / terrasse',
         'pool' => 'Piscine',
+    ],
+    // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
+    'rules' => [
+        'check_in_from' => 'Arrivée à partir de',
+        'check_out_until' => 'Départ avant',
+        'min_age' => 'Âge minimum',
+        'years' => 'ans',
+        'documents' => 'Documents demandés',
+        'document_options' => [
+            'id_card' => "Pièce d'identité",
+            'passport' => 'Passeport',
+            'residence_permit' => 'Titre de séjour',
+            'proof_of_income' => 'Justificatif de revenus',
+            'guarantor' => 'Garant',
+            'deposit' => 'Dépôt de garantie',
+        ],
+        'pets' => 'Animaux acceptés',
+        'smoking' => 'Fumeurs acceptés',
+        'parties' => 'Fêtes et événements autorisés',
+        'yes' => 'Oui',
+        'no' => 'Non',
+        'other_information' => 'Autres informations',
+        'other_information_placeholder' => 'Ex. : remise des clés, parking, règles de la maison…',
     ],
 ];

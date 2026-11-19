@@ -211,6 +211,15 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame(32, $offer->fresh()->detail('surface'));
+
+        // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->assertSee('Règles')
+            ->fillForm(['details.min_age' => '25', 'details.pets' => 'yes'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(25, $offer->fresh()->detail('min_age'));
+        $this->assertSame('yes', $offer->fresh()->detail('pets'));
         $this->assertSame('studio', $offer->fresh()->detail('property_type'));
     }
 
