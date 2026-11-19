@@ -38,7 +38,8 @@ return [
     'price' => 'Rent',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [
-        'rules' => 'Rules and information',
+        'rules' => 'Rules',
+        'informations' => 'Information',
         'photos' => 'Photos',
         'presentation' => 'Presentation',
         'price' => 'Price and availability',

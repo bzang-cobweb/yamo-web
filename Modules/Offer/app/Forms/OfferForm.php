@@ -114,6 +114,8 @@ class OfferForm extends Form
             // Les blocs d'informations, ajoutés et retirés par le propriétaire (décision 2026-11-19-contrat-offer-informations).
             Field::repeater('informations')
                 ->label(__('offer::offer.informations.label'))
+                // Le titre de l'étape « Informations » suffit (décision 2026-11-19-etape-informations).
+                ->hideLabel()
                 ->help(__('offer::offer.informations.help'))
                 ->addLabel(__('offer::offer.informations.add'))
                 ->maxItems(OfferInformation::MAX_PER_OFFER)

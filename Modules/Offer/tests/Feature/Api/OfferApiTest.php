@@ -170,13 +170,14 @@ class OfferApiTest extends TestCase
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
         // L'étape 1 « Présentation » (décision 2026-11-19-etape-1-presentation), les photos en dernier
         // (décision 2026-11-19-contrat-champ-upload-photos).
-        // « Règles et informations » en 4e (décision 2026-11-19-contrat-regles-informations).
-        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles et informations', 'Adresse', 'Photos'], array_column($steps, 'title'));
+        // « Règles » en 4e, puis « Informations » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
+        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles', 'Informations', 'Adresse', 'Photos'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'informations'],
+            ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties'],
+            ['informations'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],
         ], array_column($steps, 'fields'));
