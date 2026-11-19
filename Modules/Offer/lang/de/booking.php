@@ -13,6 +13,9 @@ return [
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht buchen.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',
     'already_answered' => 'Diese Anfrage wurde bereits beantwortet.',
+    'unavailable' => 'Diese Daten sind nicht verfügbar: Bitte wählen Sie andere Tage.',
+    'accept_unavailable' => 'Diese Daten überschneiden sich mit einem angenommenen Aufenthalt oder einem gesperrten Tag: Die Anfrage kann nicht angenommen werden.',
+    'overlap_refusal' => 'Diese Daten sind nicht mehr verfügbar.',
     'form' => [
         'stay_title' => 'Buchen',
         'visit_title' => 'Besichtigung anfragen',
@@ -118,6 +121,7 @@ return [
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'accept' => 'Annehmen',
         'accept_confirm' => 'Die Anfrage von :guest (:period) annehmen?',
+        'accept_overlaps' => '{1} Diese offene Anfrage überschneidet sich mit diesen Daten und wird abgelehnt: :requests.|[2,*] Diese :count offenen Anfragen überschneiden sich mit diesen Daten und werden abgelehnt: :requests.',
         'accepted_notice' => 'Anfrage angenommen.',
         'refuse' => 'Ablehnen',
         'refuse_title' => 'Anfrage ablehnen',

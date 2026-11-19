@@ -176,6 +176,16 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * Les jours bloqués par le propriétaire (décision 2026-11-19-contrat-calendrier-offre).
+     *
+     * @return HasMany<OfferBlockedDate, $this>
+     */
+    public function blockedDates(): HasMany
+    {
+        return $this->hasMany(OfferBlockedDate::class);
+    }
+
+    /**
      * Ses blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations).
      *
      * @return HasMany<OfferInformation, $this>

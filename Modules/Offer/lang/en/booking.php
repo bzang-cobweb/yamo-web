@@ -13,6 +13,9 @@ return [
     'own_offer' => 'You cannot book your own offer.',
     'not_cancellable' => 'This request can no longer be cancelled.',
     'already_answered' => 'This request has already been answered.',
+    'unavailable' => 'These dates are not available: please choose other days.',
+    'accept_unavailable' => 'These dates overlap an accepted stay or a blocked day: the request cannot be accepted.',
+    'overlap_refusal' => 'These dates are no longer available.',
     'form' => [
         'stay_title' => 'Book',
         'visit_title' => 'Request a visit',
@@ -118,6 +121,7 @@ return [
         'pending_count' => '{1} :count pending request|[2,*] :count pending requests',
         'accept' => 'Accept',
         'accept_confirm' => 'Accept the request from :guest (:period)?',
+        'accept_overlaps' => '{1} This pending request overlaps these dates and will be declined: :requests.|[2,*] These :count pending requests overlap these dates and will be declined: :requests.',
         'accepted_notice' => 'Request accepted.',
         'refuse' => 'Decline',
         'refuse_title' => 'Decline the request',

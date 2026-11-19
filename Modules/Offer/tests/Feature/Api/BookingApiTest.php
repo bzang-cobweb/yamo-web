@@ -250,7 +250,7 @@ class BookingApiTest extends TestCase
         $owner = $offer->user;
         $other = $this->home(true, $owner);
         $first = Booking::factory()->for($offer)->create(['message' => "Bonjour,\n je viens   pour le travail."]);
-        Booking::factory()->for($offer)->create(['message' => null]);
+        Booking::factory()->for($offer)->create(['message' => null, 'check_in' => today()->addDays(20), 'check_out' => today()->addDays(22)]);
         Booking::factory()->for($other)->status(BookingStatusEnum::REFUSED)->create();
 
         // Le compteur des demandes en attente, sur la carte du logement.

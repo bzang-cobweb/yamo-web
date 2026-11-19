@@ -4,6 +4,7 @@ namespace Modules\Offer\Services;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
@@ -23,6 +24,8 @@ use Modules\Offer\Models\Offer;
  */
 class BookingService
 {
+    public function __construct(private readonly OfferAvailability $availability) {}
+
     /**
      * Une demande validée par `OfferBookingForm` : séjour (arrivée, départ,
      * voyageurs) ou visite (date), selon le domaine.
@@ -40,6 +43,12 @@ class BookingService
         $guests = $type === BookingTypeEnum::STAY ? (int) ($data['guests'] ?? 1) : null;
 
         return DB::transaction(function () use ($user, $offer, $type, $checkIn, $checkOut, $days, $guests, $message, $unitPrice): Booking {
+            // Un jour bloqué ou une nuit déjà prise : refusé (décision 2026-11-19-contrat-calendrier-offre).
+            $this->lock($offer);
+            if ($this->availability->conflicts($offer, $type, $checkIn, $checkOut)) {
+                throw ValidationException::withMessages(['check_in' => __('offer::booking.unavailable')]);
+            }
+
             $booking = $offer->bookings()->create([
                 'user_id' => $user->getKey(),
                 'type' => $type,
@@ -64,16 +73,49 @@ class BookingService
     public function answer(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking
     {
         return DB::transaction(function () use ($booking, $accept, $refusalMessage): Booking {
-            $message = trim((string) $refusalMessage);
-            $booking->fill([
-                'status' => $accept ? BookingStatusEnum::ACCEPTED : BookingStatusEnum::REFUSED,
-                'refusal_message' => $accept || $message === '' ? null : $message,
-                'answered_at' => now(),
-            ])->save();
-            BookingAnswered::dispatch($booking);
+            if (! $accept) {
+                return $this->settle($booking, false, $refusalMessage);
+            }
+
+            // Accepter : jamais sur un jour bloqué ni sur un séjour déjà accepté ; les
+            // demandes en attente qui chevauchent sont refusées, leurs membres prévenus
+            // (décision 2026-11-19-contrat-calendrier-offre).
+            $this->lock($booking->offer);
+            if ($this->availability->conflicts($booking->offer, $booking->type, $booking->check_in, $booking->check_out, $booking->getKey())) {
+                throw ValidationException::withMessages(['answer' => __('offer::booking.accept_unavailable')]);
+            }
+            $this->settle($booking, true);
+            foreach ($this->availability->overlappingPending($booking) as $other) {
+                $this->settle($other, false, __('offer::booking.overlap_refusal', [], $other->user->preferredLocale()));
+            }
 
             return $booking;
         });
+    }
+
+    /**
+     * Enregistre la réponse et la notifie ; un refus peut porter un message.
+     */
+    private function settle(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking
+    {
+        $message = trim((string) $refusalMessage);
+        $booking->fill([
+            'status' => $accept ? BookingStatusEnum::ACCEPTED : BookingStatusEnum::REFUSED,
+            'refusal_message' => $accept || $message === '' ? null : $message,
+            'answered_at' => now(),
+        ])->save();
+        BookingAnswered::dispatch($booking);
+
+        return $booking;
+    }
+
+    /**
+     * Verrouille l'offre jusqu'à la fin de la transaction : deux demandes ou deux
+     * acceptations simultanées sur la même offre passent l'une après l'autre.
+     */
+    private function lock(Offer $offer): void
+    {
+        Offer::query()->withTrashed()->whereKey($offer->getKey())->lockForUpdate()->first();
     }
 
     /**

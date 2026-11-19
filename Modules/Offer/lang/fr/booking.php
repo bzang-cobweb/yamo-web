@@ -13,6 +13,9 @@ return [
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',
     'already_answered' => 'Cette demande a déjà une réponse.',
+    'unavailable' => "Ces dates ne sont pas disponibles : choisissez d'autres jours.",
+    'accept_unavailable' => 'Ces dates chevauchent un séjour accepté ou un jour bloqué : la demande ne peut pas être acceptée.',
+    'overlap_refusal' => 'Ces dates ne sont plus disponibles.',
     'form' => [
         'stay_title' => 'Réserver',
         'visit_title' => 'Demander une visite',
@@ -118,6 +121,7 @@ return [
         'pending_count' => '{1} :count demande en attente|[2,*] :count demandes en attente',
         'accept' => 'Accepter',
         'accept_confirm' => 'Accepter la demande de :guest (:period) ?',
+        'accept_overlaps' => '{1} Cette demande en attente chevauche ces dates et sera refusée : :requests.|[2,*] Ces :count demandes en attente chevauchent ces dates et seront refusées : :requests.',
         'accepted_notice' => 'Demande acceptée.',
         'refuse' => 'Refuser',
         'refuse_title' => 'Refuser la demande',

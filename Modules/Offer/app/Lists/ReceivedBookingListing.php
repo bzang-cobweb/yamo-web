@@ -16,6 +16,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Services\OfferAvailability;
 
 /**
  * « Réservations reçues » (décision 2026-11-19-contrat-reservations) : les demandes
@@ -83,10 +84,28 @@ class ReceivedBookingListing extends Listing
             ->action(
                 __('offer::booking.profile.accept'),
                 'primary',
-                __('offer::booking.profile.accept_confirm', ['guest' => (string) $record->user->full_name, 'period' => $record->period($locale)], $locale),
+                $this->acceptConfirm($record, $locale),
                 Submission::toRoute('api.v1.bookings.accept', SuccessAction::BACK, __('offer::booking.profile.accepted_notice'), parameters: ['booking' => $record->getKey()]),
             )
             ->action(__('offer::booking.profile.refuse'), 'destructive', form: BookingRefuseForm::name());
+    }
+
+    /**
+     * « Accepter la demande de Marie Curie (du 3 au 6 mars) ? », suivi des demandes
+     * en attente qui la chevauchent et seront refusées (décision
+     * 2026-11-19-contrat-calendrier-offre).
+     */
+    private function acceptConfirm(Booking $booking, string $locale): string
+    {
+        $confirm = __('offer::booking.profile.accept_confirm', ['guest' => (string) $booking->user->full_name, 'period' => $booking->period($locale)], $locale);
+        $others = app(OfferAvailability::class)->overlappingPending($booking);
+        if ($others->isEmpty()) {
+            return $confirm;
+        }
+
+        $names = $others->map(fn (Booking $other): string => $other->user->full_name.' ('.$other->period($locale).')')->implode(', ');
+
+        return $confirm.' '.trans_choice('offer::booking.profile.accept_overlaps', $others->count(), ['requests' => $names], $locale);
     }
 
     /**

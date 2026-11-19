@@ -114,6 +114,19 @@ class Booking extends Model
     }
 
     /**
+     * Les séjours qui occupent au moins une nuit de `[$from, $to[` : arrivée avant
+     * `$to` et départ après `$from` (le jour du départ est libre pour une arrivée).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeOverlapping(Builder $query, Carbon $from, Carbon $to): void
+    {
+        $query->where('type', BookingTypeEnum::STAY)
+            ->whereDate('check_in', '<', $to->toDateString())
+            ->whereDate('check_out', '>', $from->toDateString());
+    }
+
+    /**
      * Le nombre de jours d'un séjour (départ moins arrivée) ; `null` pour une visite.
      */
     public function days(): ?int
