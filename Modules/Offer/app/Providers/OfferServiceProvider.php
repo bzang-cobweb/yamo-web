@@ -9,6 +9,7 @@ use Modules\Form\Support\ListingRegistry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\BookingAnswerForm;
+use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Forms\OfferReviewForm;
@@ -86,6 +87,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         // la fiche, la réponse du propriétaire, et les deux listes du profil.
         $this->app->make(FormRegistry::class)->register(OfferBookingForm::class);
         $this->app->make(FormRegistry::class)->register(BookingAnswerForm::class);
+        $this->app->make(FormRegistry::class)->register(BookingRefuseForm::class);
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
         $this->app->make(ListingRegistry::class)->register(ReceivedBookingListing::class);
 

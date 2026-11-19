@@ -363,6 +363,40 @@
                 }
             }
         },
+        "/v1/bookings/{booking}/accept": {
+            "post": {
+                "operationId": "v1.bookings.accept",
+                "summary": "Accepter une demande en attente, sans formulaire (le bouton de sa carte)",
+                "tags": [
+                    "Booking"
+                ],
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "required": true,
+                        "description": "The booking ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/bookings/{booking}/cancel": {
             "post": {
                 "operationId": "v1.bookings.cancel",
@@ -2636,6 +2670,10 @@
                         "type": "null",
                         "description": "Bouton de cr\u00e9ation : libell\u00e9 et formulaire ouvert ; absent pour une liste en lecture seule."
                     },
+                    "footer": {
+                        "type": "null",
+                        "description": "Bouton de la barre fixe en bas : libell\u00e9, formulaire ou \u00e9cran de l'app ouvert ; `null` : aucun."
+                    },
                     "search": {
                         "type": "null",
                         "description": "Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignor\u00e9."
@@ -2752,6 +2790,37 @@
                                         "record"
                                     ]
                                 },
+                                "actions": {
+                                    "type": "array",
+                                    "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi ou un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`).",
+                                    "items": {}
+                                },
+                                "counter": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "Compteur de la carte : son libell\u00e9, la liste qu'il ouvre et les filtres d\u00e9j\u00e0 choisis ; `null` : aucun.",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "list": {
+                                            "type": "string"
+                                        },
+                                        "filter": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "list",
+                                        "filter"
+                                    ]
+                                },
                                 "delete": {
                                     "type": [
                                         "object",
@@ -2814,6 +2883,8 @@
                                 "favorite",
                                 "link",
                                 "edit",
+                                "actions",
+                                "counter",
                                 "delete"
                             ]
                         }
@@ -2824,6 +2895,7 @@
                     "title",
                     "empty",
                     "create",
+                    "footer",
                     "search",
                     "filters",
                     "next_cursor",

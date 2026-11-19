@@ -46,6 +46,16 @@ class BookingController
     }
 
     /**
+     * Accepter une demande en attente, sans formulaire (le bouton de sa carte).
+     */
+    public function accept(Booking $booking): Response
+    {
+        $this->bookings->answer($booking, true);
+
+        return response()->noContent();
+    }
+
+    /**
      * Annuler sa demande, en attente ou acceptée et pas encore commencée.
      */
     public function cancel(Booking $booking): Response

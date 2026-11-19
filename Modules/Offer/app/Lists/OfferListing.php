@@ -8,12 +8,16 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
+use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Forms\OfferForm;
+use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -24,6 +28,8 @@ use Modules\Offer\Models\Offer;
  */
 class OfferListing extends Listing
 {
+    use FiltersOffers;
+
     public static function name(): string
     {
         return 'offer.mine';
@@ -44,17 +50,55 @@ class OfferListing extends Listing
         return __('offer::offer.list.empty');
     }
 
-    public function create(): ?array
+    /**
+     * « Ajouter un logement » dans la barre fixe en bas, plus sous la recherche
+     * (décision 2026-11-19-contrat-reservations-logements-profil). Pas proposé à qui
+     * ne peut pas créer, ni au-delà d'une offre quand le domaine l'impose.
+     */
+    public function footer(): ?array
     {
         $domain = app(DomainRegistry::class)->require();
 
-        // Pas de création proposée à qui ne peut pas créer, ni au-delà d'une offre quand le domaine l'impose.
         if ($this->user === null || ! $this->user->can('create', Offer::class)
             || ($domain->onePerAccount() && Offer::query()->where('user_id', $this->user->getAuthIdentifier())->where('country_id', CurrentCountry::require()->getKey())->exists())) {
             return null;
         }
 
-        return ['label' => $domain->addLabel(), 'form' => OfferForm::name()];
+        return ['label' => $domain->addLabel(), 'form' => OfferForm::name(), 'link' => null];
+    }
+
+    /**
+     * Le statut de l'annonce, puis les filtres de l'accueil, parmi ses propres offres
+     * (décision 2026-11-19-contrat-reservations-logements-profil).
+     */
+    public function filters(): array
+    {
+        return [
+            Field::select('status')
+                ->label(__('offer::booking.profile.offer_status'))
+                ->options(OfferStatusEnum::options()),
+            ...$this->offerFilters($this->mine()),
+        ];
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        $this->applyOfferFilters($query, $filters);
+    }
+
+    /**
+     * Ses offres dans le pays courant.
+     *
+     * @return Builder<Offer>
+     */
+    private function mine(): Builder
+    {
+        return Offer::query()
+            ->where('user_id', $this->user?->getAuthIdentifier())
+            ->where('country_id', CurrentCountry::require()->getKey());
     }
 
     public function searchPlaceholder(): string
@@ -68,12 +112,12 @@ class OfferListing extends Listing
     public function query(): Builder
     {
         // Les siennes, dans le pays courant (décision 2026-11-18-espace-pays).
-        return Offer::query()
+        return $this->mine()
             ->with(['media', 'address'])
             // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
             ->withReviewSummary()
-            ->where('user_id', $this->user?->getAuthIdentifier())
-            ->where('country_id', CurrentCountry::require()->getKey())
+            // Les demandes en attente, pour le compteur de la carte.
+            ->withCount(['bookings as pending_bookings_count' => fn (Builder $bookings) => $bookings->where('status', BookingStatusEnum::PENDING)])
             ->orderBy('id');
     }
 
@@ -106,7 +150,7 @@ class OfferListing extends Listing
 
         // En sous-titre, le titre saisi ; en gras, « Publiée · 80 000 FCFA / mois »
         // (décision 2026-11-19-item-titre-saisi-details). La note, tant qu'elle est publiée.
-        return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
+        $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
             ->highlight(implode(' · ', array_filter([$record->status->label(), $expiration, ...$domain->itemDetails($record), $price])))
@@ -124,5 +168,15 @@ class OfferListing extends Listing
                     parameters: ['offer' => $record->getKey()],
                 ),
             );
+
+        // Ses demandes en attente : un compteur qui ouvre les demandes de ce logement
+        // (décision 2026-11-19-contrat-reservations-logements-profil).
+        $pending = (int) ($record->pending_bookings_count ?? 0);
+
+        return $pending === 0 ? $item : $item->counter(
+            trans_choice('offer::booking.profile.pending_count', $pending, ['count' => $pending]),
+            ReceivedBookingListing::name(),
+            ['offer' => (string) $record->getKey(), 'status' => 'pending'],
+        );
     }
 }

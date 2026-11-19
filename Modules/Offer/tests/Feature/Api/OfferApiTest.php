@@ -483,7 +483,9 @@ class OfferApiTest extends TestCase
 
         $data = $this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()
             ->assertJsonPath('data.title', 'Mes logements')
-            ->assertJsonPath('data.create', ['label' => 'Ajouter un logement', 'form' => 'offer.offer'])
+            // « Ajouter un logement » dans la barre du bas (décision 2026-11-19-contrat-reservations-logements-profil).
+            ->assertJsonPath('data.create', null)
+            ->assertJsonPath('data.footer', ['label' => 'Ajouter un logement', 'form' => 'offer.offer', 'link' => null])
             ->assertJsonPath('data.search', 'Rechercher par titre…')
             ->json('data.items');
 

@@ -38,5 +38,7 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
 // Répondre à une demande (le propriétaire), l'annuler (le membre) : décision 2026-11-19-contrat-reservations.
 Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/bookings')->name('v1.bookings.')->group(function () {
     Route::post('{booking}/answer', [BookingController::class, 'answer'])->can('answer', 'booking')->name('answer');
+    // Accepter d'un geste, depuis la carte de la demande (décision 2026-11-19-contrat-reservations-logements-profil).
+    Route::post('{booking}/accept', [BookingController::class, 'accept'])->can('answer', 'booking')->name('accept');
     Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->can('cancel', 'booking')->name('cancel');
 });

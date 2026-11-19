@@ -4,6 +4,7 @@ namespace Modules\Offer\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -85,6 +86,31 @@ class Booking extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Les regroupements de statuts des filtres : à venir, en attente, passées. */
+    public const STATUS_GROUPS = ['upcoming', 'pending', 'past'];
+
+    /**
+     * Restreint à un regroupement de statuts (décision
+     * 2026-11-19-contrat-reservations-logements-profil) : `upcoming` (acceptées, pas
+     * terminées), `pending` (en attente), `past` (refusées, annulées, ou terminées).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeInStatusGroup(Builder $query, string $group): void
+    {
+        $today = today()->toDateString();
+        $end = 'coalesce(check_out, check_in)';
+
+        match ($group) {
+            'upcoming' => $query->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} >= ?", [$today]),
+            'pending' => $query->where('status', BookingStatusEnum::PENDING),
+            'past' => $query->where(fn (Builder $past) => $past
+                ->whereIn('status', [BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED])
+                ->orWhere(fn (Builder $done) => $done->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} < ?", [$today]))),
+            default => null,
+        };
     }
 
     /**

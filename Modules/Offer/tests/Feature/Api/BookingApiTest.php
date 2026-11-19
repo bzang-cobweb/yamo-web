@@ -14,6 +14,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequestAccepted;
 use Modules\Offer\Notifications\BookingRequestCancelled;
 use Modules\Offer\Notifications\BookingRequestReceived;
 use Modules\Offer\Notifications\BookingRequestRefused;
@@ -178,14 +179,19 @@ class BookingApiTest extends TestCase
         // « Réservations reçues » n'est plus un lien du menu : elle s'ouvre depuis chaque logement
         // (décision 2026-11-19-contrat-reservations-logements-profil).
         $this->assertNotContains('offer.bookings.received', array_column($this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
+        // Sur la carte : « Accepter » (confirmation, envoi) et « Refuser » (formulaire du refus).
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
-        $this->assertSame(['form' => 'offer.booking.answer', 'record' => (string) $booking->getKey()], $item['edit']);
         $this->assertStringStartsWith('En attente · 135', (string) $item['highlight']);
+        [$accept, $refuse] = $item['actions'];
+        $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
+        $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);
+        $this->assertSame(['POST', "/v1/bookings/{$booking->getKey()}/accept"], [$accept['submission']['method'], $accept['submission']['endpoint']]);
+        $this->assertSame(['Refuser', 'destructive', ['form' => 'offer.booking.refuse', 'record' => (string) $booking->getKey()]], [$refuse['label'], $refuse['style'], $refuse['form']]);
 
-        // Le formulaire : la demande à lire, puis la réponse.
-        $fields = array_column($this->asUser($owner)->getJson('/api/v1/forms/offer.booking.answer?record='.$booking->getKey())->assertOk()->json('data.fields'), null, 'name');
-        $this->assertTrue($fields['guest']['readonly']);
-        $this->assertSame(['accept', 'refuse'], array_column($fields['answer']['options'], 'value'));
+        // Le formulaire du refus : « refuser » déjà choisi, un message facultatif.
+        $fields = array_column($this->asUser($owner)->getJson('/api/v1/forms/offer.booking.refuse?record='.$booking->getKey())->assertOk()->json('data.fields'), null, 'name');
+        $this->assertSame(['hidden', 'refuse'], [$fields['answer']['type'], $fields['answer']['default']]);
+        $this->assertFalse($fields['refusal_message']['required']);
 
         // Un autre que le propriétaire : 404.
         $this->asUser($guest)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertNotFound();
@@ -196,9 +202,10 @@ class BookingApiTest extends TestCase
         Notification::assertSentTo($guest, BookingRequestRefused::class,
             fn (BookingRequestRefused $notification, array $channels): bool => $channels === ['database', 'mail', SmsChannel::class]);
 
-        // Plus en attente : plus de réponse possible, plus de « Répondre ».
+        // Plus en attente : plus de réponse possible, plus de boutons.
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertForbidden();
-        $this->assertNull($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.edit'));
+        $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/accept")->assertForbidden();
+        $this->assertSame([], $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.actions'));
     }
 
     public function test_the_guest_follows_and_cancels_their_bookings(): void
@@ -232,5 +239,70 @@ class BookingApiTest extends TestCase
 
         // Ni e-mail ni SMS : l'onglet « Notifications » seulement (décision 2026-11-19-contrat-centre-notifications).
         Notification::assertSentTo($owner, BookingRequestReceived::class, fn (BookingRequestReceived $notification, array $channels): bool => $channels === ['database']);
+    }
+
+    public function test_accepting_from_the_card_and_the_counter_of_each_home(): void
+    {
+        // Décision 2026-11-19-contrat-reservations-logements-profil.
+        $offer = $this->home(true);
+        $owner = $offer->user;
+        $other = $this->home(true, $owner);
+        $first = Booking::factory()->for($offer)->create();
+        Booking::factory()->for($offer)->create();
+        Booking::factory()->for($other)->status(BookingStatusEnum::REFUSED)->create();
+
+        // Le compteur des demandes en attente, sur la carte du logement.
+        $items = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id');
+        $this->assertSame([
+            'label' => '2 demandes en attente',
+            'list' => 'offer.bookings.received',
+            'filter' => ['offer' => (string) $offer->getKey(), 'status' => 'pending'],
+        ], $items[(string) $offer->getKey()]['counter']);
+        $this->assertNull($items[(string) $other->getKey()]['counter']);
+
+        // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
+        $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
+        $this->assertStringStartsWith('Demandes · ', $requests['title']);
+        $this->assertCount(2, $requests['items']);
+
+        // Accepter d'un geste ; un autre que le propriétaire : 404.
+        $this->asUser($this->member())->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNotFound();
+        $this->asUser($owner)->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNoContent();
+        $this->assertSame(BookingStatusEnum::ACCEPTED, $first->fresh()->status);
+        Notification::assertSentTo($first->user, BookingRequestAccepted::class);
+        $this->assertSame('1 demande en attente', collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id')[(string) $offer->getKey()]['counter']['label']);
+    }
+
+    public function test_my_bookings_are_filtered_by_status_city_and_type_with_a_search_button(): void
+    {
+        $guest = $this->member();
+        $pending = Booking::factory()->for($this->home(true), 'offer')->for($guest)->create();
+        $upcoming = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::ACCEPTED)->create();
+        $refused = Booking::factory()->for($this->home(false), 'offer')->for($guest)->visit()->status(BookingStatusEnum::REFUSED)->create();
+        $ids = fn (string $query = ''): array => array_column($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings'.$query)->json('data.items'), 'id');
+
+        $data = $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data');
+        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/'], $data['footer']);
+        $this->assertSame(['status', 'city', 'type'], array_column($data['filters'], 'name'));
+        $this->assertSame(['any', 'upcoming', 'pending', 'past'], array_column($data['filters'][0]['options'], 'value'));
+
+        $this->assertSame([(string) $pending->getKey()], $ids('?filter[status]=pending'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=upcoming'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=past'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[type]=visit'));
+        $this->assertCount(3, $ids('?filter[status]=any'));
+    }
+
+    public function test_my_homes_are_filtered_like_the_home_plus_their_status(): void
+    {
+        $owner = $this->member();
+        $draft = $this->home(true, $owner);
+        $draft->update(['status' => 'draft']);
+        $this->home(true, $owner);
+
+        $data = $this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data');
+        $this->assertSame('status', $data['filters'][0]['name']);
+        $this->assertContains('price', array_column($data['filters'], 'name'));
+        $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status]=draft')->json('data.items'), 'id'));
     }
 }

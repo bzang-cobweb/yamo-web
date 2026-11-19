@@ -108,7 +108,7 @@ class DomainTest extends TestCase
         $user = $this->member();
 
         $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Moi', 'status' => 'published', 'photos' => [$this->pendingUpload($user)]])->assertNoContent();
-        $this->assertNull($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.create'));
+        $this->assertNull($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.footer'));
         $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Encore moi', 'status' => 'published', 'photos' => [$this->pendingUpload($user)]])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['title']);

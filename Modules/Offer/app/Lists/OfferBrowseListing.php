@@ -2,20 +2,16 @@
 
 namespace Modules\Offer\Lists;
 
-use App\Support\Currency;
 use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
-use Modules\Location\Models\Address;
-use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferAddress;
 
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
@@ -27,6 +23,8 @@ use Modules\Offer\Models\OfferAddress;
  */
 class OfferBrowseListing extends Listing
 {
+    use FiltersOffers;
+
     public static function name(): string
     {
         return 'offer.browse';
@@ -121,58 +119,16 @@ class OfferBrowseListing extends Listing
 
     /**
      * Ville, loyer (intervalle), puis les filtres du domaine (décision
-     * 2026-11-19-contrat-filtres-vitrine).
+     * 2026-11-19-contrat-filtres-vitrine), parmi les offres que les visiteurs voient.
      */
     public function filters(): array
     {
-        $domain = app(DomainRegistry::class)->require();
-        $currency = (string) Currency::symbol(CurrentCountry::require()->currency);
-
-        return array_values(array_filter([
-            ! $domain->hasAddress() ? null : Field::select('city')
-                ->label(__('offer::offer.filters.city'))
-                ->options($this->cities()),
-            // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
-            ! $domain->hasPrice() ? null : Field::range('price')
-                ->label($domain->priceLabel())
-                ->suffix($currency)
-                ->rules(['min:0']),
-            ...$domain->filters(),
-        ]));
-    }
-
-    /**
-     * Les villes des offres publiées du pays, par ordre alphabétique.
-     *
-     * @return array<string, string>
-     */
-    private function cities(): array
-    {
-        return Address::query()
-            ->whereIn('id', OfferAddress::query()
-                ->select('address_id')
-                ->whereHas('offer', fn (Builder $offer) => $offer->visibleToOthers()))
-            ->whereNotNull('city')
-            ->distinct()
-            ->orderBy('city')
-            ->pluck('city', 'city')
-            ->all();
+        return $this->offerFilters(Offer::query()->visibleToOthers());
     }
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        if (isset($filters['city'])) {
-            $query->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city']));
-        }
-        [$min, $max] = array_values((array) ($filters['price'] ?? [])) + [null, null];
-        if (is_numeric($min)) {
-            $query->where('price', '>=', $min);
-        }
-        if (is_numeric($max)) {
-            $query->where('price', '<=', $max);
-        }
-
-        app(DomainRegistry::class)->require()->applyFilters($query, $filters);
+        $this->applyOfferFilters($query, $filters);
     }
 
     protected function search(Builder $query, string $term): void
