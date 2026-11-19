@@ -2,10 +2,12 @@
 
 namespace Modules\Auth\Forms;
 
+use App\Models\Setting;
 use Collator;
 use Illuminate\Support\Facades\App;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Rules\MinimumAge;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -22,6 +24,28 @@ class PersonalInfoForm extends Form
 {
     /** Date de naissance la plus ancienne acceptée (aussi par le back-office). */
     public const BIRTH_DATE_MIN = '1900-01-01';
+
+    /**
+     * La date de naissance, ici comme à l'inscription. Facultative, sauf si un âge
+     * minimum est réglé (décision 2026-11-19-age-minimum) : alors obligatoire, et elle
+     * doit donner au moins cet âge, rappelé sous le champ.
+     */
+    public static function birthDateField(): Field
+    {
+        $minimumAge = Setting::minimumAge();
+        $rules = ['after_or_equal:'.self::BIRTH_DATE_MIN, 'before_or_equal:today'];
+
+        if ($minimumAge !== null) {
+            $rules[] = new MinimumAge($minimumAge);
+        }
+
+        // `required` à faux, la règle devient `nullable`.
+        return Field::date('birth_date')
+            ->label(__('auth::user.birth_date'))
+            ->help($minimumAge === null ? null : __('auth::form.birth_date.help', ['age' => $minimumAge]))
+            ->required($minimumAge !== null)
+            ->rules($rules);
+    }
 
     public static function name(): string
     {
@@ -48,11 +72,7 @@ class PersonalInfoForm extends Form
                 ->options(GenderEnum::options())
                 ->default($user?->gender?->value)
                 ->required(),
-            // Facultative : `required` à faux, la règle devient `nullable`.
-            Field::date('birth_date')
-                ->label(__('auth::user.birth_date'))
-                ->default($user?->birth_date?->format('Y-m-d'))
-                ->rules(['after_or_equal:'.self::BIRTH_DATE_MIN, 'before_or_equal:today']),
+            self::birthDateField()->default($user?->birth_date?->format('Y-m-d')),
             Field::select('country_id')
                 ->label(__('auth::user.country'))
                 ->options(self::countryOptions())

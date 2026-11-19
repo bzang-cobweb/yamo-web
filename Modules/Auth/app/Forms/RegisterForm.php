@@ -42,10 +42,8 @@ class RegisterForm extends Form
                 ->label(__('auth::user.gender'))
                 ->options(GenderEnum::options())
                 ->required(),
-            // Facultative, mêmes bornes que dans les informations personnelles.
-            Field::date('birth_date')
-                ->label(__('auth::user.birth_date'))
-                ->rules(['after_or_equal:'.PersonalInfoForm::BIRTH_DATE_MIN, 'before_or_equal:today']),
+            // La même que dans les informations personnelles (âge minimum compris).
+            PersonalInfoForm::birthDateField(),
             Field::textarea('description')->label(__('auth::user.description')),
             ...$this->contactFields(),
             Field::password('password')

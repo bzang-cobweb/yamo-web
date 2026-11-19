@@ -8,6 +8,7 @@ use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -50,6 +51,17 @@ class SettingResource extends AbstractResource
                         Toggle::make('payment_required')
                             ->label(__('settings.payment_required'))
                             ->helperText(__('settings.help.payment_required')),
+                    ]),
+                // Décision 2026-11-19-age-minimum.
+                Section::make(__('settings.sections.users'))
+                    ->schema([
+                        TextInput::make('minimum_age')
+                            ->label(__('settings.minimum_age'))
+                            ->helperText(__('settings.help.minimum_age'))
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(120)
+                            ->suffix(__('settings.years')),
                     ]),
             ]);
     }

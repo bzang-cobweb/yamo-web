@@ -60,4 +60,10 @@ return [
         'last_super_admin' => 'Sie sind der letzte Super-Administrator: Ernennen Sie einen anderen, bevor Sie Ihr Konto löschen.',
         'purged' => ':count Konto/Konten endgültig gelöscht.',
     ],
+
+    // Âge minimum (décision 2026-11-19-age-minimum).
+    'birth_date' => [
+        'too_young' => 'Sie müssen mindestens :age Jahre alt sein.',
+        'help' => 'Mindestens :age Jahre.',
+    ],
 ];

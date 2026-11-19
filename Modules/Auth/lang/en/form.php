@@ -60,4 +60,10 @@ return [
         'last_super_admin' => 'You are the last super administrator: appoint another one before deleting your account.',
         'purged' => ':count account(s) purged.',
     ],
+
+    // Âge minimum (décision 2026-11-19-age-minimum).
+    'birth_date' => [
+        'too_young' => 'You must be at least :age years old.',
+        'help' => 'At least :age years old.',
+    ],
 ];
