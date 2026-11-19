@@ -2996,22 +2996,8 @@
                     "description": {},
                     "facts": {
                         "type": "array",
-                        "description": "Caract\u00e9ristiques lisibles : la cat\u00e9gorie, puis les attributs renseign\u00e9s du domaine.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "label": {
-                                    "type": "string"
-                                },
-                                "value": {
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "label",
-                                "value"
-                            ]
-                        }
+                        "description": "Caract\u00e9ristiques lisibles : celles que le domaine place en t\u00eate (`leadingFacts`), puis la cat\u00e9gorie, la ville et les attributs renseign\u00e9s du domaine.",
+                        "items": {}
                     },
                     "published_at": {
                         "type": [

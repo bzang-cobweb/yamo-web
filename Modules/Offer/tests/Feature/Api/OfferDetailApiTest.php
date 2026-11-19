@@ -77,10 +77,12 @@ class OfferDetailApiTest extends TestCase
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);
         $this->assertNull($data['status']);
+        // Type, meublé, ville, catégorie en tête (décision 2026-11-19-fiche-offre-ordre).
         $this->assertSame([
-            ['label' => 'Catégorie', 'value' => 'Location longue durée'],
             ['label' => 'Type de logement', 'value' => 'Appartement'],
             ['label' => 'Meublé', 'value' => 'Non'],
+            ['label' => 'Ville', 'value' => 'Douala'],
+            ['label' => 'Catégorie', 'value' => 'Location longue durée'],
             ['label' => 'Surface', 'value' => '85 m²'],
             ['label' => 'Pièces', 'value' => '3,5'],
             ['label' => 'Chambres', 'value' => '2'],

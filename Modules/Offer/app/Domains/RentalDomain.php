@@ -142,6 +142,14 @@ class RentalDomain extends Domain
      * la présentation (type, meublé, catégorie, titre, description), les
      * caractéristiques, le prix et la disponibilité (avec le statut), l'adresse, puis les photos.
      */
+    /**
+     * Type, meublé, ville, catégorie en tête de la fiche (décision 2026-11-19-fiche-offre-ordre).
+     */
+    public function leadingFacts(): array
+    {
+        return ['property_type', 'furnished', 'city', 'category_id'];
+    }
+
     public function formSteps(): array
     {
         return [

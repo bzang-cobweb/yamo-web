@@ -174,6 +174,19 @@ abstract class Domain
     }
 
     /**
+     * Les caractéristiques en tête de la fiche, dans l'ordre (décision
+     * 2026-11-19-fiche-offre-ordre) : noms d'attributs du domaine, `city` (la ville)
+     * ou `category_id` (la catégorie). Les autres suivent dans leur ordre habituel.
+     * Aucune par défaut.
+     *
+     * @return list<string>
+     */
+    public function leadingFacts(): array
+    {
+        return [];
+    }
+
+    /**
      * Les étapes du formulaire de l'app (décision
      * 2026-11-19-contrat-formulaire-etapes-symbole-devise) : titre traduit (ou `null`, sans titre) et noms
      * des champs, attributs du domaine et champs communs (`COMMON_FIELDS`). Aucune

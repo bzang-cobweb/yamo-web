@@ -10,6 +10,8 @@ return [
         'photoPosition' => ':current / :total',
         'details' => 'Caractéristiques',
         'description' => 'Description',
+        // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
+        'address' => 'Adresse',
         // Avis (décision 2026-11-19-contrat-avis-offres).
         'reviews' => 'Avis',
         'noReviews' => 'Aucun avis pour le moment.',

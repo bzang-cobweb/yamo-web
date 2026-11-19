@@ -49,7 +49,7 @@ class OfferDetailResource extends JsonResource
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
-            /** Caractéristiques lisibles : la catégorie, puis les attributs renseignés du domaine. */
+            /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
             'facts' => $this->facts($offer, $domain, $locale),
             'published_at' => $offer->published_at?->toIso8601String(),
             /** Statut, servi au seul propriétaire. */
@@ -140,7 +140,14 @@ class OfferDetailResource extends JsonResource
      */
     private function facts(Offer $offer, Domain $domain, string $locale): array
     {
-        $facts = $offer->category === null ? [] : [['label' => __('offer::offer.category'), 'value' => $offer->category->path()]];
+        // Par nom : la catégorie, la ville (décision 2026-11-19-fiche-offre-ordre), puis les attributs.
+        $facts = [];
+        if ($offer->category !== null) {
+            $facts['category_id'] = ['label' => __('offer::offer.category'), 'value' => $offer->category->path()];
+        }
+        if ($domain->hasAddress() && filled($offer->address?->city)) {
+            $facts['city'] = ['label' => __('offer::offer.city'), 'value' => (string) $offer->address->city];
+        }
 
         // Un montant prend le symbole de la devise de l'offre, sinon de son pays (« 5 000 FCFA / mois »).
         $symbol = Currency::symbol($offer->currency ?? $offer->country?->currency, $locale);
@@ -155,10 +162,13 @@ class OfferDetailResource extends JsonResource
             $value = $field->displayValue($offer->detail($field->name), $locale);
 
             if ($value !== null) {
-                $facts[] = ['label' => (string) $field->getLabel(), 'value' => $value];
+                $facts[$field->name] = ['label' => (string) $field->getLabel(), 'value' => $value];
             }
         }
 
-        return $facts;
+        // Celles que le domaine place en tête, puis les autres dans leur ordre.
+        $leading = array_intersect_key(array_flip($domain->leadingFacts()), $facts);
+
+        return array_values([...array_replace($leading, array_intersect_key($facts, $leading)), ...array_diff_key($facts, $leading)]);
     }
 }
