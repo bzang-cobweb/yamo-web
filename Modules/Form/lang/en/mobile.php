@@ -11,6 +11,11 @@ return [
         'showPassword' => 'Show password',
         'hidePassword' => 'Hide password',
         'clearDate' => 'Clear',
+        // Grille de mois d'un champ date (décision 2026-11-19-contrat-calendrier-offre).
+        'previousMonth' => 'Previous month',
+        'nextMonth' => 'Next month',
+        'closeCalendar' => 'Close',
+        'chooseStartFirst' => 'Choose the arrival first.',
         'search' => 'Search…',
         'retry' => 'Try again',
         'next' => 'Next',
