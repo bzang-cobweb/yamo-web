@@ -62,3 +62,35 @@ Demande : « détail offre : dans le footer fixe afficher le prix et le bouton d
 - E-mail et SMS partent aux bons destinataires, dans leur langue, seulement vers une adresse ou un numéro présent.
 - Le back-office liste les réservations sans pouvoir les modifier.
 - Suites web et app vertes, tsc propre, OpenAPI à jour, parcours vu au simulateur, QA indépendante.
+
+## Ce que j'ai décidé seul
+
+- **Pas de total estimé en direct sous les dates** : un formulaire décrit par Laravel ne calcule rien dans l'app, et le message de succès est fixe. Sous la date de départ : le prix par jour et « le total figure dans « Mes réservations » une fois la demande envoyée » ; le total est calculé et figé par le serveur à l'envoi, affiché dans les deux listes.
+- **Bornes du calendrier servies par Laravel** (`Field::dateRange()`, décision 2026-11-19-bornes-des-dates) : le calendrier de l'app s'arrêtait à aujourd'hui, ce qui rendait la réservation impossible. Corrigé pour toutes les dates : naissance jusqu'à aujourd'hui (ou l'âge minimum), réservation d'aujourd'hui à un an, « Disponible dès le » et « Libre le » sans borne.
+- **« Réservations reçues »** n'apparaît qu'à qui a une offre dans le pays courant : `ProfileMenuLinks` passe désormais le compte à la condition d'un lien.
+- **Notifications** : e-mail seulement si l'adresse est vérifiée, SMS seulement si le numéro l'est ; envoyés après l'enregistrement.
+- **Réponse du propriétaire** : un formulaire (la demande en lecture, puis Accepter / Refuser et un message de refus facultatif) ; **annulation** : le bouton de retrait de l'item, avec confirmation.
+- Un envoi limité à 20 demandes par minute et par compte.
+
+## Ce qui a été fait
+
+- Web 1295e05 :
+  - table `bookings`, modèle `Booking`, statuts et types en enums, fabrique ;
+  - `Domain::bookingType()` (logement : meublé → séjour, non meublé → visite) ; règle `book` d'`OfferPolicy`, `BookingPolicy` (`cancel`, `answer`, back-office en lecture) ;
+  - formulaires `offer.booking` et `offer.booking.answer`, routes `POST /v1/offers/{offer}/bookings`, `/v1/bookings/{booking}/answer|cancel`, `BookingService`, `BookingNotifier`, `BookingMail` ;
+  - listes « Mes réservations » et « Réservations reçues », liens du menu ;
+  - fiche : `booking` (bouton) ; ressource Filament `BookingResource` (liste, fiche) ;
+  - textes fr, en, de ; tests (`BookingApiTest`, `BookingResourceTest`) ; OpenAPI.
+- Web 8fef5bf : bornes des dates. Mobile 0b740cc : barre fixe de la fiche (prix + bouton, prix retiré sous le titre), route `/offers/[id]/book`, calendrier borné ; bcea8a6 : test du calendrier réparé.
+- Simulateur : demande d'un séjour envoyée (3 jours × 25 000 = 75 000 FCFA), e-mail « Nouvelle demande » reçu par le propriétaire (Mailpit), demande vue dans « Mes réservations » avec « Annuler la demande ».
+- Suites : serveur 542 verts, app 255 verts (47 suites), tsc propre. QA indépendante : NO-GO (suite du calendrier non exécutée), corrigé, puis GO.
+
+## Ce que je n'ai pas vérifié
+
+- Le côté propriétaire dans l'app (« Réservations reçues », formulaire de réponse) et l'annulation au simulateur : couverts par les tests de l'API, pas vus à l'écran (il faudrait se connecter à un autre compte, avec un code par e-mail).
+- Un visiteur non connecté : le bouton mène à la connexion ; le retour sur la fiche après connexion n'est ni testé ni vu.
+- L'envoi réel d'un SMS (l'expéditeur local écrit dans le journal) ; la ressource du back-office dans un vrai navigateur (tests Livewire seulement).
+
+## Ce qui reste en suspens
+
+- Rien de demandé. À décider plus tard si besoin : prévenir dans l'app (pastille, notifications push), bloquer les dates acceptées, rappeler une demande restée sans réponse.
