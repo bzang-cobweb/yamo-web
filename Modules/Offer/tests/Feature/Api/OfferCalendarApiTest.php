@@ -13,8 +13,6 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestRefused;
 use Tests\TestCase;
 
 /**
