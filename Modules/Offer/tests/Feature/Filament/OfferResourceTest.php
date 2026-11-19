@@ -81,7 +81,8 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'title.fr' => 'Maison avec jardin',
                 'title.en' => 'House with a garden',
                 'price' => '2400',
-                'address_id' => $address->getKey(),
+                'offerAddress.address_id' => $address->getKey(),
+                'offerAddress.indication' => 'Portail vert',
                 'category_id' => (string) OfferCategory::query()->where('slug', 'long-term')->value('id'),
                 'details.property_type' => 'house',
                 'details.surface' => '120',
@@ -97,6 +98,8 @@ class OfferResourceTest extends AuthFilamentTestCase
         $this->assertSame(5.5, $offer->detail('rooms'));
         $this->assertSame('CHF', $offer->currency);
         $this->assertNotNull($offer->published_at);
+        $this->assertTrue($offer->address->is($address));
+        $this->assertSame('Portail vert', $offer->offerAddress->indication);
     }
 
     public function test_an_admin_features_an_offer_until_a_date_and_filters_featured_ones(): void
@@ -104,9 +107,9 @@ class OfferResourceTest extends AuthFilamentTestCase
         $admin = User::factory()->create();
         $admin->assignRole(RoleEnum::ADMIN);
         $this->actingAs($admin);
-        $offer = Offer::factory()->create([
+        $offer = Offer::factory()->at(Address::factory()->create())->create([
             'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
-            'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio'],
+            'details' => ['property_type' => 'studio'],
         ]);
         $other = Offer::factory()->create(['status' => 'published']);
 
@@ -133,7 +136,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'status' => 'draft',
                 'title.fr' => 'X',
                 'price' => '1000',
-                'address_id' => Address::factory()->create()->getKey(),
+                'offerAddress.address_id' => Address::factory()->create()->getKey(),
                 'details.property_type' => 'castle',
                 'details.surface' => '-5',
                 'details.rooms' => '2',
@@ -152,7 +155,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'status' => 'draft',
                 'title.en' => 'Only English',
                 'price' => '1000',
-                'address_id' => Address::factory()->create()->getKey(),
+                'offerAddress.address_id' => Address::factory()->create()->getKey(),
                 'details.property_type' => 'studio',
                 'details.surface' => '20',
                 'details.rooms' => '1',
@@ -187,22 +190,22 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'status' => 'draft',
                 'title.fr' => 'Studio',
                 'price' => '1000',
-                'address_id' => $elsewhere->getKey(),
+                'offerAddress.address_id' => $elsewhere->getKey(),
                 'details.property_type' => 'studio',
                 'details.surface' => '20',
                 'details.rooms' => '1',
             ])
             ->call('create')
-            ->assertHasFormErrors(['address_id']);
+            ->assertHasFormErrors(['offerAddress.address_id']);
     }
 
     public function test_editing_keeps_the_attributes(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
-        $offer = Offer::factory()->create(['price' => '1000', 'currency' => 'CHF', 'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio', 'surface' => 30, 'rooms' => 1]]);
+        $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'currency' => 'CHF', 'details' => ['property_type' => 'studio', 'surface' => 30, 'rooms' => 1]]);
 
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
-            ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr')])
+            ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr'), 'offerAddress.indication' => 'Portail bleu'])
             ->fillForm(['details.surface' => '32'])
             ->call('save')
             ->assertHasNoFormErrors();

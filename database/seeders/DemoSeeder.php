@@ -130,10 +130,9 @@ class DemoSeeder extends Seeder
         $categories = OfferCategory::query()->pluck('id', 'slug');
 
         foreach (self::OFFERS as $index => [$fr, $en, $category, $type, $furnished, $surface, $rooms, $bedrooms, $price, $charges]) {
-            Offer::query()->create([
+            $offer = Offer::query()->create([
                 'user_id' => $member->getKey(),
                 'country_id' => $cameroon->getKey(),
-                'address_id' => $addresses[$index % count($addresses)],
                 'category_id' => $categories[$category] ?? null,
                 'title' => ['fr' => $fr, 'en' => $en],
                 'description' => [
@@ -159,6 +158,7 @@ class DemoSeeder extends Seeder
                     'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
                 ],
             ]);
+            $offer->offerAddress()->create(['address_id' => $addresses[$index % count($addresses)]]);
         }
     }
 

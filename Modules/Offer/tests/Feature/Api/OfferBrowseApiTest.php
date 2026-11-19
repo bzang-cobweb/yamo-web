@@ -37,7 +37,7 @@ class OfferBrowseApiTest extends TestCase
     public function test_a_visitor_sees_the_published_offers_of_the_country_newest_first(): void
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
-        $older = Offer::factory()->create(['title' => ['fr' => 'Studio à Akwa', 'en' => 'Studio in Akwa'], 'status' => 'published', 'price' => '25000', 'currency' => 'XAF', 'address_id' => $douala->getKey()]);
+        $older = Offer::factory()->at($douala)->create(['title' => ['fr' => 'Studio à Akwa', 'en' => 'Studio in Akwa'], 'status' => 'published', 'price' => '25000', 'currency' => 'XAF']);
         $newer = Offer::factory()->create(['title' => ['fr' => 'Maison à Bastos'], 'status' => 'published']);
         Offer::factory()->create(['status' => 'draft']);
         Offer::factory()->create(['status' => 'archived']);
@@ -70,8 +70,8 @@ class OfferBrowseApiTest extends TestCase
     public function test_a_home_is_titled_by_its_type_furnished_and_city(): void
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
-        $house = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'house', 'furnished' => true, 'bedrooms' => 3]]);
-        $studio = Offer::factory()->create(['status' => 'published', 'address_id' => $douala->getKey(), 'details' => ['property_type' => 'studio', 'furnished' => false]]);
+        $house = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'house', 'furnished' => true, 'bedrooms' => 3]]);
+        $studio = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'furnished' => false]]);
         $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'furnished' => true]]);
 
         $fr = array_column($this->browse()->json('data.items'), 'title', 'id');

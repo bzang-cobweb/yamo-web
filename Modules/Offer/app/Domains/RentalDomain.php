@@ -157,7 +157,7 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'furnished', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
-            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'address_description']],
+            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'indication']],
             // Les photos en dernier (décision 2026-11-19-contrat-champ-upload-photos).
             ['title' => __('offer::rental.steps.photos'), 'fields' => ['photos']],
         ];

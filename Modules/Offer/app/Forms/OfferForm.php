@@ -14,6 +14,7 @@ use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Services\OfferPhotoService;
 
@@ -97,12 +98,12 @@ class OfferForm extends Form
                 ->required($domain->requiresAddress())
                 ->maxLength(255)
                 ->rules(['required_with:street']),
-            // Indications propres à l'offre, l'adresse étant partagée (décision 2026-11-19-description-adresse-offre).
-            ! $domain->hasAddress() ? null : Field::textarea('address_description')
-                ->label(__('offer::offer.address_description'))
-                ->placeholder(__('offer::offer.address_description_placeholder'))
-                ->default($offer?->address_description)
-                ->maxLength(500),
+            // L'indication propre à l'offre, l'adresse étant partagée (décision 2026-11-19-contrat-adresse-offre-table).
+            ! $domain->hasAddress() ? null : Field::textarea('indication')
+                ->label(__('offer::offer.indication'))
+                ->placeholder(__('offer::offer.indication_placeholder'))
+                ->default($offer?->offerAddress?->indication)
+                ->maxLength(OfferAddress::INDICATION_MAX_LENGTH),
             Field::select('status')
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())

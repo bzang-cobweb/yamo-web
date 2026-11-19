@@ -10,6 +10,7 @@ use Modules\Location\Models\Country;
 use Modules\Location\Services\AddressService;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferAddress;
 
 /**
  * Créer, modifier, retirer une offre selon le domaine actif (décision
@@ -28,11 +29,14 @@ class OfferService
             throw ValidationException::withMessages(['title' => __('offer::offer.one_per_account')]);
         }
 
-        return Offer::query()->create([
+        $offer = Offer::query()->create([
             'user_id' => $user->getKey(),
             'country_id' => $country->getKey(),
             ...$this->columns($domain, $data, $country, $locale ?? $user->preferredLocale()),
         ]);
+        $this->syncAddress($offer, $domain, $data, $country);
+
+        return $offer;
     }
 
     /**
@@ -41,6 +45,7 @@ class OfferService
     public function update(Offer $offer, Domain $domain, array $data, ?string $locale = null): Offer
     {
         $offer->fill($this->columns($domain, $data, $offer->country, $locale ?? $offer->user->preferredLocale(), $offer))->save();
+        $this->syncAddress($offer, $domain, $data, $offer->country);
 
         return $offer->refresh();
     }
@@ -84,6 +89,34 @@ class OfferService
     }
 
     /**
+     * L'adresse de l'offre et son indication, dans `offer_addresses` (décision
+     * 2026-11-19-contrat-adresse-offre-table). Sans adresse, la ligne est retirée,
+     * indication comprise. Sans le champ `indication` envoyé (ancien envoi),
+     * l'indication actuelle reste ; un champ vide la retire.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function syncAddress(Offer $offer, Domain $domain, array $data, ?Country $country): void
+    {
+        $current = $offer->offerAddress;
+        $addressId = $domain->hasAddress() ? $this->addressId($data, $country, $current) : null;
+
+        if ($addressId === null) {
+            $current?->delete();
+            $offer->unsetRelation('offerAddress');
+
+            return;
+        }
+
+        $indication = array_key_exists('indication', $data)
+            ? (filled($data['indication']) ? trim((string) $data['indication']) : null)
+            : $current?->indication;
+
+        $offer->setRelation('offerAddress', $offer->offerAddress()->updateOrCreate([], ['address_id' => $addressId, 'indication' => $indication]));
+        $offer->unsetRelation('address');
+    }
+
+    /**
      * L'adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche) : une
      * adresse de même empreinte dans le pays est reprise, sinon elle est créée ;
      * rien n'est ajouté au carnet du compte. Sans rue ni ville saisies : aucune
@@ -91,10 +124,10 @@ class OfferService
      *
      * @param  array<string, mixed>  $data
      */
-    private function addressId(array $data, ?Country $country, ?Offer $offer): ?int
+    private function addressId(array $data, ?Country $country, ?OfferAddress $current): ?int
     {
         if (! array_key_exists('street', $data) && ! array_key_exists('city', $data)) {
-            return $offer?->address_id;
+            return $current?->address_id;
         }
 
         $street = trim((string) ($data['street'] ?? ''));
@@ -130,11 +163,6 @@ class OfferService
             'title' => $this->translations($offer?->getTranslations('title') ?? [], $locale, $data['title']),
             'description' => $this->translations($offer?->getTranslations('description') ?? [], $locale, $data['description'] ?? null),
             'category_id' => $data['category_id'] ?? null,
-            'address_id' => $domain->hasAddress() ? $this->addressId($data, $country, $offer) : null,
-            // Sans le champ envoyé (ancien envoi, back-office), l'indication actuelle reste.
-            'address_description' => ! $domain->hasAddress() ? null : (array_key_exists('address_description', $data)
-                ? (filled($data['address_description']) ? trim((string) $data['address_description']) : null)
-                : $offer?->address_description),
             'status' => $data['status'],
             'price' => $price,
             'currency' => $price === null ? null : $country?->currency,

@@ -4,6 +4,7 @@ namespace Modules\Offer\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Auth\Models\User;
+use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
@@ -28,5 +29,19 @@ class OfferFactory extends Factory
             'currency' => null,
             'details' => [],
         ];
+    }
+
+    /**
+     * À une adresse, avec son indication (décision 2026-11-19-contrat-adresse-offre-table).
+     * Une fabrique d'adresses donne une adresse nouvelle à chaque offre.
+     *
+     * @param  Address|Factory<Address>  $address
+     */
+    public function at(Address|Factory $address, ?string $indication = null): static
+    {
+        return $this->afterCreating(fn (Offer $offer) => $offer->offerAddress()->create([
+            'address_id' => ($address instanceof Address ? $address : $address->create())->getKey(),
+            'indication' => $indication,
+        ]));
     }
 }

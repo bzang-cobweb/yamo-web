@@ -32,9 +32,9 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
 
     private function offer(): Offer
     {
-        return Offer::factory()->create([
+        return Offer::factory()->at(Address::factory()->create())->create([
             'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
-            'address_id' => Address::factory()->create()->getKey(), 'details' => ['property_type' => 'studio'],
+            'details' => ['property_type' => 'studio'],
         ]);
     }
 

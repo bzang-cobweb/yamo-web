@@ -44,13 +44,12 @@ class OfferDetailApiTest extends TestCase
 
     private function home(array $overrides = []): Offer
     {
-        return Offer::factory()->create([
+        return Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['street' => 'Rue Njo-Njo 12', 'city' => 'Douala']))->create([
             'title' => ['fr' => 'Appartement 3 pièces à Bonapriso', 'en' => '3-room flat in Bonapriso'],
             'description' => ['fr' => 'Proche des commerces.', 'en' => 'Close to shops.'],
             'status' => 'published',
             'price' => '250000',
             'currency' => 'XAF',
-            'address_id' => Address::factory()->for($this->cameroon)->create(['street' => 'Rue Njo-Njo 12', 'city' => 'Douala'])->getKey(),
             'category_id' => OfferCategory::query()->where('slug', 'long-term')->value('id'),
             'published_at' => '2026-11-18 10:00:00',
             'details' => ['property_type' => 'apartment', 'furnished' => false, 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'available_from' => '2026-12-01', 'charges' => 15000],
@@ -72,7 +71,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('Loyer', $data['price']['label']);
         $this->assertSame('250 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
         $this->assertSame('Douala', $data['location']);
-        $this->assertNull($data['address_description']);
+        $this->assertNull($data['indication']);
         $this->assertCount(2, $data['photos']);
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);

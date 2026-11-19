@@ -15,6 +15,7 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 use Tests\TestCase;
 
@@ -102,7 +103,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'address_description', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'photos'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -174,7 +175,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['street', 'zip', 'city', 'address_description'],
+            ['street', 'zip', 'city', 'indication'],
             ['photos'],
         ], array_column($steps, 'fields'));
 
@@ -230,10 +231,10 @@ class OfferApiTest extends TestCase
 
         // Décision 2026-11-19-contrat-adresse-offre-recherche : même empreinte (casse, espaces), même adresse.
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => '  rue du lac 4 ', 'city' => 'GENÈVE']))->assertNoContent();
-        $this->assertSame($existing->getKey(), Offer::query()->latest('id')->value('address_id'));
+        $this->assertTrue(Offer::query()->latest('id')->first()->address->is($existing));
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => 'Chemin Neuf 1', 'zip' => '', 'city' => 'Nyon']))->assertNoContent();
-        $created = Address::query()->whereKey(Offer::query()->latest('id')->value('address_id'))->sole();
+        $created = Offer::query()->latest('id')->first()->address;
         $this->assertSame(['Chemin Neuf 1', '', 'Nyon'], [$created->street, $created->zip, $created->city]);
         $this->assertSame(2, Address::query()->count());
         // Le carnet du compte n'est ni lu ni rempli.
@@ -245,22 +246,52 @@ class OfferApiTest extends TestCase
             ->assertJsonValidationErrors(['street', 'city']);
     }
 
-    public function test_each_offer_has_its_own_address_description_on_a_shared_address(): void
+    public function test_each_offer_has_its_own_indication_on_a_shared_address(): void
     {
         $user = $this->member();
 
-        // Décision 2026-11-19-description-adresse-offre : l'adresse est partagée, l'indication non.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => 'Portail bleu, 2e étage']))->assertNoContent();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => '']))->assertNoContent();
-        [$first, $second] = Offer::query()->orderBy('id')->get()->all();
+        // Décision 2026-11-19-contrat-adresse-offre-table : l'adresse est partagée, l'indication non.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['indication' => ' Portail bleu, 2e étage ']))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['indication' => '']))->assertNoContent();
+        [$first, $second] = Offer::query()->with('offerAddress')->orderBy('id')->get()->all();
 
-        $this->assertSame($first->address_id, $second->address_id);
-        $this->assertSame('Portail bleu, 2e étage', $first->address_description);
-        $this->assertNull($second->address_description);
-        $this->assertSame('Portail bleu, 2e étage', array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$first->getKey()}")->json('data.fields'), 'default', 'name')['address_description']);
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['address_description' => str_repeat('a', 501)]))
+        $this->assertSame($first->offerAddress->address_id, $second->offerAddress->address_id);
+        $this->assertSame(1, Address::query()->count());
+        $this->assertSame('Portail bleu, 2e étage', $first->offerAddress->indication);
+        $this->assertNull($second->offerAddress->indication);
+        $this->assertSame('Portail bleu, 2e étage', array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$first->getKey()}")->json('data.fields'), 'default', 'name')['indication']);
+        $this->assertSame('Portail bleu, 2e étage', $this->getJson("/api/v1/offers/{$first->getKey()}")->json('data.indication'));
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['indication' => str_repeat('a', 501)]))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('address_description');
+            ->assertJsonValidationErrors('indication');
+    }
+
+    public function test_editing_moves_the_offer_address_keeps_or_clears_the_indication(): void
+    {
+        $user = $this->member();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['indication' => 'Portail bleu']))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $shared = $offer->address;
+        $input = $this->input($user);
+        unset($input['indication']);
+
+        // Sans le champ envoyé : l'indication reste ; une autre adresse : la ligne la suit, l'ancienne adresse est intacte.
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", [...$input, 'street' => 'Chemin Neuf 1', 'city' => 'Nyon'])->assertNoContent();
+        $offer->refresh();
+        $this->assertSame('Chemin Neuf 1', $offer->address->street);
+        $this->assertSame('Portail bleu', $offer->offerAddress->indication);
+        $this->assertSame(1, OfferAddress::query()->count());
+        $this->assertNotNull($shared->fresh());
+
+        // Un champ vide retire l'indication (les photos déjà enregistrées sont renvoyées).
+        $photos = $offer->getMedia(Offer::PHOTOS)->pluck('uuid')->all();
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", [...$input, 'photos' => $photos, 'indication' => ''])->assertNoContent();
+        $this->assertNull($offer->offerAddress()->value('indication'));
+
+        // Supprimer l'adresse retire la ligne, pas l'offre.
+        $offer->fresh()->address->delete();
+        $this->assertSame(0, OfferAddress::query()->count());
+        $this->assertNotNull($offer->fresh());
     }
 
     public function test_street_suggestions_serve_only_street_zip_and_city_of_the_country(): void

@@ -11,6 +11,7 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
@@ -25,6 +26,7 @@ use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 
 /**
@@ -127,25 +129,30 @@ abstract class OfferForm
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
-                                Select::make('address_id')
-                                    ->label(__('offer::offer.address'))
-                                    // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
-                                    ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('country_id')), fn ($query) => $query->where('country_id', $get('country_id'))))
-                                    ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                                        if (filled($value) && filled($get('country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('country_id')) {
-                                            $fail(__('offer::offer.address_country'));
-                                        }
-                                    })
-                                    ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
-                                    ->searchable(['street', 'zip', 'city'])
-                                    ->required($domain->requiresAddress())
-                                    ->visible($domain->hasAddress())
-                                    ->columnSpanFull(),
-                                // Indications propres à l'offre (décision 2026-11-19-description-adresse-offre).
-                                Textarea::make('address_description')
-                                    ->label(__('offer::offer.address_description'))
-                                    ->maxLength(500)
-                                    ->rows(2)
+                                // L'adresse et son indication, dans `offer_addresses` (décision
+                                // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
+                                // n'est pas créée, ou elle est retirée.
+                                Group::make([
+                                    Select::make('address_id')
+                                        ->label(__('offer::offer.address'))
+                                        // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
+                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
+                                        ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
+                                                $fail(__('offer::offer.address_country'));
+                                            }
+                                        })
+                                        ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
+                                        ->searchable(['street', 'zip', 'city'])
+                                        ->required($domain->requiresAddress())
+                                        ->columnSpanFull(),
+                                    Textarea::make('indication')
+                                        ->label(__('offer::offer.indication'))
+                                        ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
+                                        ->rows(2)
+                                        ->columnSpanFull(),
+                                ])
+                                    ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
                                     ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
                             ]),

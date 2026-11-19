@@ -16,6 +16,7 @@ use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferAddress;
 
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
@@ -150,10 +151,11 @@ class OfferBrowseListing extends Listing
     private function cities(): array
     {
         return Address::query()
-            ->whereIn('id', Offer::query()
+            ->whereIn('id', OfferAddress::query()
                 ->select('address_id')
-                ->where('country_id', CurrentCountry::require()->getKey())
-                ->where('status', OfferStatusEnum::PUBLISHED))
+                ->whereHas('offer', fn (Builder $offer) => $offer
+                    ->where('country_id', CurrentCountry::require()->getKey())
+                    ->where('status', OfferStatusEnum::PUBLISHED)))
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')

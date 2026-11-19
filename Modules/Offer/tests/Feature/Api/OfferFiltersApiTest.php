@@ -32,9 +32,8 @@ class OfferFiltersApiTest extends TestCase
      */
     private function home(string $city, int $price, array $details, array $overrides = []): Offer
     {
-        return Offer::factory()->create([
+        return Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => $city]))->create([
             'status' => 'published', 'price' => (string) $price, 'currency' => 'XAF',
-            'address_id' => Address::factory()->for($this->cameroon)->create(['city' => $city])->getKey(),
             'details' => $details,
             ...$overrides,
         ]);
@@ -52,7 +51,7 @@ class OfferFiltersApiTest extends TestCase
     {
         $this->home('Yaoundé', 1000, ['property_type' => 'studio']);
         $this->home('Douala', 1000, ['property_type' => 'house']);
-        Offer::factory()->create(['status' => 'draft', 'address_id' => Address::factory()->for($this->cameroon)->create(['city' => 'Kribi'])->getKey()]);
+        Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Kribi']))->create(['status' => 'draft']);
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
@@ -117,7 +116,7 @@ class OfferFiltersApiTest extends TestCase
     {
         $featuredInYaounde = $this->home('Yaoundé', 1000, ['property_type' => 'studio'], ['featured_until' => now()->addDay()]);
         $featuredInDouala = $this->home('Douala', 1000, ['property_type' => 'studio'], ['featured_until' => now()->addDays(2)]);
-        Offer::factory()->count(22)->sequence(fn () => ['address_id' => Address::factory()->for($this->cameroon)->create(['city' => 'Douala'])->getKey()])->create(['status' => 'published']);
+        Offer::factory()->count(22)->at(Address::factory()->for($this->cameroon)->state(['city' => 'Douala']))->create(['status' => 'published']);
 
         $first = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala')->json('data');
         $second = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala&cursor='.urlencode($first['next_cursor']))->json('data');

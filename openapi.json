@@ -3050,7 +3050,7 @@
                         ],
                         "description": "La ville ; jamais la rue."
                     },
-                    "address_description": {
+                    "indication": {
                         "type": [
                             "string",
                             "null"
@@ -3256,7 +3256,7 @@
                     "title",
                     "price",
                     "location",
-                    "address_description",
+                    "indication",
                     "photos",
                     "description",
                     "facts",

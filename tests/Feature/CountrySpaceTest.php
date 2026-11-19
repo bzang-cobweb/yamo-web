@@ -146,7 +146,10 @@ class CountrySpaceTest extends TestCase
 
     public function test_existing_offers_get_the_country_of_their_address(): void
     {
+        // Le lien vers l'adresse est revenu dans `offers` le temps de rejouer la migration du pays.
+        $addresses = require module_path('Offer', 'database/migrations/2026_11_29_110000_create_offer_addresses_table.php');
         $migration = require module_path('Offer', 'database/migrations/2026_11_24_110000_add_country_to_offers.php');
+        $addresses->down();
         $migration->down();
         $user = User::factory()->create();
         $address = Address::factory()->for($this->senegal)->create();
@@ -156,9 +159,12 @@ class CountrySpaceTest extends TestCase
         ]);
 
         $migration->up();
+        $addresses->up();
 
         // Avec l'adresse : son pays ; sans adresse et plusieurs pays actifs : aucun.
         $this->assertSame([$this->senegal->getKey(), null], DB::table('offers')->orderBy('id')->pluck('country_id')->map(fn ($id) => $id === null ? null : (int) $id)->all());
+        // Le lien vers l'adresse est recopié dans `offer_addresses`.
+        $this->assertSame([(int) $address->getKey()], DB::table('offer_addresses')->pluck('address_id')->map(fn ($id) => (int) $id)->all());
     }
 
     public function test_currencies_come_from_icu(): void

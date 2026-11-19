@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -31,8 +33,6 @@ use Spatie\Translatable\HasTranslations;
  * @property int $user_id
  * @property int|null $country_id
  * @property int|null $category_id
- * @property int|null $address_id
- * @property string|null $address_description indications sur l'adresse, propres à l'offre, non traduites
  * @property string $title
  * @property string|null $description
  * @property OfferStatusEnum $status
@@ -46,11 +46,12 @@ use Spatie\Translatable\HasTranslations;
  * @property-read User $user
  * @property-read Country|null $country
  * @property-read OfferCategory|null $category
- * @property-read Address|null $address
+ * @property-read OfferAddress|null $offerAddress l'adresse et son indication (décision 2026-11-19-contrat-adresse-offre-table)
+ * @property-read Address|null $address l'adresse partagée, à travers `offerAddress`
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'category_id', 'address_id', 'address_description', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
+#[Fillable(['user_id', 'country_id', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'paid_until'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -128,11 +129,23 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * @return BelongsTo<Address, $this>
+     * Son adresse et l'indication propre à l'offre (décision 2026-11-19-contrat-adresse-offre-table).
+     *
+     * @return HasOne<OfferAddress, $this>
      */
-    public function address(): BelongsTo
+    public function offerAddress(): HasOne
     {
-        return $this->belongsTo(Address::class);
+        return $this->hasOne(OfferAddress::class);
+    }
+
+    /**
+     * L'adresse partagée du pays, à travers `offerAddress`.
+     *
+     * @return HasOneThrough<Address, OfferAddress, $this>
+     */
+    public function address(): HasOneThrough
+    {
+        return $this->hasOneThrough(Address::class, OfferAddress::class, 'offer_id', 'id', 'id', 'address_id');
     }
 
     /**
