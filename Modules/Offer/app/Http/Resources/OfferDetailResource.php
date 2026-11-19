@@ -118,7 +118,8 @@ class OfferDetailResource extends JsonResource
     }
 
     /**
-     * « Rue du Lac 4, 1200 Genève » ; sans adresse, `null`.
+     * « Rue du Lac 4, 1200 Genève, Suisse », le pays toujours, dans la langue de la
+     * requête (décision 2026-11-19-fiche-localisation-accordeon) ; sans adresse, `null`.
      */
     private function address(Offer $offer): ?string
     {
@@ -128,7 +129,7 @@ class OfferDetailResource extends JsonResource
             return null;
         }
 
-        return implode(', ', array_filter([trim((string) $address->street), trim($address->zip.' '.$address->city)], fn (string $part): bool => $part !== '')) ?: null;
+        return implode(', ', array_filter([trim((string) $address->street), $address->subtitle()], fn (string $part): bool => $part !== '')) ?: null;
     }
 
     /**

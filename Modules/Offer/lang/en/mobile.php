@@ -14,7 +14,7 @@ return [
         'location' => 'Location',
         // Avis (décision 2026-11-19-contrat-avis-offres).
         // Liste complète des avis (décision 2026-11-19-nuit-tous-les-avis).
-        'allReviews' => 'See all :count reviews',
+        'allReviews' => 'See all reviews',
         'reviews' => 'Reviews',
         'noReviews' => 'No reviews yet.',
         'writeReview' => 'Write a review',

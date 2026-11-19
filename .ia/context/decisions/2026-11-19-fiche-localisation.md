@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-fiche-localisation-accordeon.md
+
 Remplace en partie : 2026-11-18-fiche-offre.md et 2026-11-19-fiche-offre-ordre.md (la rue est désormais servie ; le bloc « Adresse » devient « Localisation »).
 
 # `2026-11-19` — Fiche d'une offre : bloc « Localisation » avec l'adresse complète et l'indication

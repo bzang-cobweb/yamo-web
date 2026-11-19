@@ -72,7 +72,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('250 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
         $this->assertSame('Douala', $data['location']);
         // L'adresse complète, rue comprise, même sans connexion (décision 2026-11-19-fiche-localisation).
-        $this->assertSame('Rue Njo-Njo 12, '.trim($offer->address->zip.' Douala'), $data['address']);
+        $this->assertSame('Rue Njo-Njo 12, '.trim($offer->address->zip.' Douala').', '.$this->cameroon->getTranslation('name', 'fr'), $data['address']);
         $this->assertNull($data['indication']);
         $this->assertCount(2, $data['photos']);
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
@@ -155,7 +155,7 @@ class OfferDetailApiTest extends TestCase
         $offer = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']), 'Portail bleu')->create(['status' => 'published']);
 
         $this->show($offer)->assertOk()
-            ->assertJsonPath('data.address', 'Rue du Lac 4, 1200 Genève')
+            ->assertJsonPath('data.address', 'Rue du Lac 4, 1200 Genève, '.$this->cameroon->getTranslation('name', 'fr'))
             ->assertJsonPath('data.indication', 'Portail bleu');
         $this->show(Offer::factory()->create(['status' => 'published']))->assertOk()->assertJsonPath('data.address', null);
     }

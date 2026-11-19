@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-fiche-localisation-accordeon.md
+
 # `2026-11-19` — Tous les avis d'une offre (mode nuit)
 
 - **Type** : décision
