@@ -51,7 +51,7 @@ return [
     ],
     'preferences' => [
         'title' => 'Préférences',
-        'locale_help' => "Langue de l'application et des e-mails.",
+        'locale_help' => "Langue de l'application.",
     ],
     'delete_account' => [
         'title' => 'Supprimer mon compte',

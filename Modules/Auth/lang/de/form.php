@@ -51,7 +51,7 @@ return [
     ],
     'preferences' => [
         'title' => 'Einstellungen',
-        'locale_help' => 'Sprache der App und der E-Mails.',
+        'locale_help' => 'Sprache der App.',
     ],
     'delete_account' => [
         'title' => 'Mein Konto löschen',

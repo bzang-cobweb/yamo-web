@@ -63,7 +63,7 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.title', 'Préférences')
             ->assertJsonPath('data.subtitle', null)
-            ->assertJsonPath('data.fields.0.help', "Langue de l'application et des e-mails.");
+            ->assertJsonPath('data.fields.0.help', "Langue de l'application.");
     }
 
     public function test_a_guest_asking_for_a_private_form_gets_a_translated_401(): void
