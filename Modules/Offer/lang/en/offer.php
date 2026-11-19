@@ -80,6 +80,8 @@ return [
     'tabs' => [
         'listing' => 'Listing',
         'rules' => 'Rules',
+        'informations' => 'Information',
+        'location' => 'Location',
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [

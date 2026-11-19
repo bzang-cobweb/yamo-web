@@ -216,6 +216,10 @@ class OfferResourceTest extends AuthFilamentTestCase
 
         $this->assertSame(32, $offer->fresh()->detail('surface'));
 
+        // Les onglets, dans l'ordre des étapes de l'app (décision 2026-11-19-onglets-localisation-informations).
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->assertSeeInOrder(['Annonce', 'Accès', 'Caractéristiques', 'Règles', 'Informations', 'Localisation', 'Photos']);
+
         // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSee('Règles')

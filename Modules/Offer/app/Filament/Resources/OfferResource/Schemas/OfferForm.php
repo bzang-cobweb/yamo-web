@@ -95,8 +95,10 @@ abstract class OfferForm
         return $schema
             ->columns(2)
             ->components([
-                // Des onglets (décision 2026-11-19-ombre-coeur-onglets-offre) : l'annonce, l'accès,
-                // les caractéristiques du domaine, les photos ; les avis restent sous le formulaire.
+                // Des onglets (décisions 2026-11-19-ombre-coeur-onglets-offre et
+                // 2026-11-19-onglets-localisation-informations), dans l'ordre des étapes de l'app :
+                // l'annonce, l'accès, les caractéristiques, les règles, les informations, la
+                // localisation, les photos ; les avis restent sous le formulaire.
                 Tabs::make('offer')
                     ->columnSpanFull()
                     ->persistTabInQueryString()
@@ -134,34 +136,6 @@ abstract class OfferForm
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
-                                // L'adresse et son indication, dans `offer_addresses` (décision
-                                // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
-                                // n'est pas créée, ou elle est retirée.
-                                Group::make([
-                                    Select::make('address_id')
-                                        ->label(__('offer::offer.address'))
-                                        // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
-                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
-                                        ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
-                                                $fail(__('offer::offer.address_country'));
-                                            }
-                                        })
-                                        ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
-                                        ->searchable(['street', 'zip', 'city'])
-                                        ->required($domain->requiresAddress())
-                                        ->columnSpanFull(),
-                                    // Traduite : un onglet par langue (décision 2026-11-19-indication-traduisible).
-                                    TranslatableTabs::make(fn (string $locale): array => [
-                                        Textarea::make("indication.{$locale}")
-                                            ->label(__('offer::offer.indication'))
-                                            ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
-                                            ->rows(2),
-                                    ], 'indication')->columnSpanFull(),
-                                ])
-                                    ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
-                                    ->visible($domain->hasAddress())
-                                    ->columnSpanFull(),
                             ]),
                         // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
                         Tab::make(__('offer::offer.access'))
@@ -189,13 +163,17 @@ abstract class OfferForm
                         Tab::make(__('offer::offer.attributes'))
                             ->columns(2)
                             ->schema(self::features($domain)),
+                        // Un domaine sans règles n'a pas cet onglet.
                         Tab::make(__('offer::offer.tabs.rules'))
                             ->columns(2)
+                            ->visible($domain->ruleAttributes() !== [])
+                            ->schema(self::attributes($domain, 'rules')),
+                        // Décision 2026-11-19-onglets-localisation-informations.
+                        Tab::make(__('offer::offer.tabs.informations'))
                             ->schema([
-                                ...self::attributes($domain, 'rules'),
                                 // Les blocs d'informations, réordonnables (décision 2026-11-19-contrat-offer-informations).
                                 Repeater::make('informations')
-                                    ->label(__('offer::offer.informations.label'))
+                                    ->hiddenLabel()
                                     ->helperText(__('offer::offer.informations.help'))
                                     ->relationship()
                                     ->orderColumn('position')
@@ -218,6 +196,38 @@ abstract class OfferForm
                                                 ->rows(3),
                                         ], 'information'),
                                     ])
+                                    ->columnSpanFull(),
+                            ]),
+                        // L'adresse et son indication (décision 2026-11-19-onglets-localisation-informations).
+                        Tab::make(__('offer::offer.tabs.location'))
+                            ->visible($domain->hasAddress())
+                            ->schema([
+                                // L'adresse et son indication, dans `offer_addresses` (décision
+                                // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
+                                // n'est pas créée, ou elle est retirée.
+                                Group::make([
+                                    Select::make('address_id')
+                                        ->label(__('offer::offer.address'))
+                                        // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
+                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
+                                        ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
+                                                $fail(__('offer::offer.address_country'));
+                                            }
+                                        })
+                                        ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
+                                        ->searchable(['street', 'zip', 'city'])
+                                        ->required($domain->requiresAddress())
+                                        ->columnSpanFull(),
+                                    // Traduite : un onglet par langue (décision 2026-11-19-indication-traduisible).
+                                    TranslatableTabs::make(fn (string $locale): array => [
+                                        Textarea::make("indication.{$locale}")
+                                            ->label(__('offer::offer.indication'))
+                                            ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
+                                            ->rows(2),
+                                    ], 'indication')->columnSpanFull(),
+                                ])
+                                    ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
                                     ->columnSpanFull(),
                             ]),
                         Tab::make(__('offer::offer.photos'))
