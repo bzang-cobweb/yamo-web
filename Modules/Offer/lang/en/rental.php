@@ -92,7 +92,5 @@ return [
         'parties' => 'Parties and events allowed',
         'yes' => 'Yes',
         'no' => 'No',
-        'other_information' => 'Other information',
-        'other_information_placeholder' => 'E.g. key handover, parking, house rules…',
     ],
 ];

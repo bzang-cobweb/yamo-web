@@ -219,6 +219,20 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->call('save')
             ->assertHasNoFormErrors();
         $this->assertSame(25, $offer->fresh()->detail('min_age'));
+
+        // Les blocs d'informations, par langue (décision 2026-11-19-contrat-offer-informations).
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->fillForm(['informations' => [
+                ['title' => ['fr' => 'Arrivée', 'en' => 'Arrival'], 'description' => ['fr' => 'Clés chez le gardien.', 'en' => 'Keys with the caretaker.']],
+                ['title' => ['fr' => 'Parking'], 'description' => ['fr' => 'Dans la cour.']],
+            ]])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $informations = $offer->fresh()->informations;
+        $this->assertSame(['Arrivée', 'Parking'], $informations->map(fn ($information) => $information->getTranslation('title', 'fr'))->all());
+        $this->assertSame('Arrival', $informations[0]->getTranslation('title', 'en'));
+        // Le back-office numérote à partir de 1 ; seul l'ordre compte.
+        $this->assertSame([1, 2], $informations->pluck('position')->all());
         $this->assertSame('yes', $offer->fresh()->detail('pets'));
         $this->assertSame('studio', $offer->fresh()->detail('property_type'));
     }

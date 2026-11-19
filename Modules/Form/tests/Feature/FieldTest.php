@@ -41,6 +41,10 @@ class FieldTest extends TestCase
                     Field::code('otp'),
                     Field::rating('stars'),
                     Field::upload('pictures')->accept(['image/jpeg'])->maxSize(500)->maxFiles(3),
+                    Field::repeater('notes')->maxItems(2)->addLabel('Ajouter')->fields([
+                        Field::hidden('id'),
+                        Field::text('title')->required()->maxLength(5),
+                    ]),
                     Field::multiselect('colors')->options(['red' => 'Rouge', 'blue' => 'Bleu']),
                     Field::range('budget')->rules(['min:0']),
                     Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
@@ -161,12 +165,30 @@ class FieldTest extends TestCase
             'suffix' => null,
             'suffix_when' => null,
             'upload' => null,
+            'repeater' => null,
             'default' => null,
             'options' => [
                 ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],
                 ['value' => 'vd', 'label' => 'Vaud', 'hint' => null, 'parent' => null],
             ],
         ], $city);
+    }
+
+    public function test_a_repeater_validates_each_item_and_its_maximum(): void
+    {
+        // Décision 2026-11-19-contrat-offer-informations.
+        $this->assertNotContains('notes', $this->errors($this->valid()));
+        $this->assertSame([], array_values(array_filter($this->errors([...$this->valid(), 'notes' => [['title' => 'Un'], ['id' => '7', 'title' => 'Deux']]]), fn (string $key): bool => str_starts_with($key, 'notes'))));
+
+        $errors = $this->errors([...$this->valid(), 'notes' => [['title' => ''], ['title' => 'Beaucoup trop long'], ['title' => 'Trois']]]);
+        $this->assertContains('notes', $errors);
+        $this->assertContains('notes.0.title', $errors);
+        $this->assertContains('notes.1.title', $errors);
+
+        $notes = collect($this->form()->fields())->firstWhere('name', 'notes')->toArray();
+        $this->assertSame(2, $notes['repeater']['max_items']);
+        $this->assertSame('Ajouter', $notes['repeater']['add_label']);
+        $this->assertSame(['id', 'title'], array_column($notes['repeater']['fields'], 'name'));
     }
 
     public function test_a_field_hidden_by_its_condition_is_neither_required_nor_kept(): void

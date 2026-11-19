@@ -93,4 +93,13 @@ return [
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
     'indication' => 'Directions to the address',
     'indication_placeholder' => 'E.g. behind the market, blue gate',
+    // Blocs d'informations (décision 2026-11-19-contrat-offer-informations).
+    'informations' => [
+        'label' => 'Information',
+        'add' => 'Add information',
+        'title' => 'Title',
+        'title_placeholder' => 'E.g. Arrival, Parking, Pets',
+        'description' => 'Description',
+        'help' => 'Practical information blocks, each with a title: arrival, parking, house rules…',
+    ],
 ];

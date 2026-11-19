@@ -92,7 +92,5 @@ return [
         'parties' => 'Fêtes et événements autorisés',
         'yes' => 'Oui',
         'no' => 'Non',
-        'other_information' => 'Autres informations',
-        'other_information_placeholder' => 'Ex. : remise des clés, parking, règles de la maison…',
     ],
 ];

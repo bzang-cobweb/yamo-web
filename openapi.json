@@ -2634,12 +2634,28 @@
                         "description": "R\u00e8gles du logement renseign\u00e9es, lisibles (d\u00e9cision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine.",
                         "items": {}
                     },
-                    "information": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Autres informations pratiques, texte libre dans la langue demand\u00e9e (retours \u00e0 la ligne gard\u00e9s), ou `null`."
+                    "informations": {
+                        "type": "array",
+                        "description": "Blocs d'informations, dans l'ordre (d\u00e9cision 2026-11-19-contrat-offer-informations) : titre et description dans la langue demand\u00e9e, retours \u00e0 la ligne gard\u00e9s.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "description"
+                            ]
+                        }
                     },
                     "published_at": {
                         "type": [
@@ -2859,7 +2875,7 @@
                     "description",
                     "facts",
                     "rules",
-                    "information",
+                    "informations",
                     "published_at",
                     "status",
                     "reviews",
@@ -3154,12 +3170,35 @@
                             null
                         ]
                     },
-                    "other_information": {
+                    "informations": {
                         "type": [
-                            "string",
+                            "array",
                             "null"
                         ],
-                        "maxLength": 2000
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "maxLength": 2000
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "description"
+                            ]
+                        },
+                        "maxItems": 10
                     },
                     "photos": {
                         "type": "array",

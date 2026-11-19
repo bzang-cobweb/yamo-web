@@ -16,6 +16,7 @@ use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Services\OfferPhotoService;
 
 /**
@@ -110,6 +111,30 @@ class OfferForm extends Form
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
                 ->required(),
             ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
+            // Les blocs d'informations, ajoutés et retirés par le propriétaire (décision 2026-11-19-contrat-offer-informations).
+            Field::repeater('informations')
+                ->label(__('offer::offer.informations.label'))
+                ->help(__('offer::offer.informations.help'))
+                ->addLabel(__('offer::offer.informations.add'))
+                ->maxItems(OfferInformation::MAX_PER_OFFER)
+                ->fields([
+                    // L'identifiant d'un bloc enregistré : ses autres langues sont gardées.
+                    Field::hidden('id'),
+                    Field::text('title')
+                        ->label(__('offer::offer.informations.title'))
+                        ->placeholder(__('offer::offer.informations.title_placeholder'))
+                        ->required()
+                        ->maxLength(OfferInformation::TITLE_MAX_LENGTH),
+                    Field::textarea('description')
+                        ->label(__('offer::offer.informations.description'))
+                        ->required()
+                        ->maxLength(OfferInformation::DESCRIPTION_MAX_LENGTH),
+                ])
+                ->default($offer === null ? [] : $offer->informations->map(fn (OfferInformation $information): array => [
+                    'id' => (string) $information->getKey(),
+                    'title' => (string) $information->getTranslation('title', $this->locale()),
+                    'description' => (string) $information->getTranslation('description', $this->locale()),
+                ])->values()->all()),
             // Les photos, au moins une (décision 2026-11-19-contrat-champ-upload-photos).
             Field::upload('photos')
                 ->label(__('offer::offer.photos'))

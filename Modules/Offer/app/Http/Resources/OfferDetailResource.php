@@ -12,6 +12,7 @@ use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -25,7 +26,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, information: string|null, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string}|null, favorite: array{active: bool, endpoint: string}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -36,7 +37,7 @@ class OfferDetailResource extends JsonResource
         $address = $this->address($offer);
         $facts = $this->facts($offer, $domain, $locale);
         $rules = array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)));
-        $information = $this->information($offer, $domain, $locale);
+        $informations = $this->informations($offer, $locale);
         $reviews = $this->reviews($offer, $request);
 
         return [
@@ -61,8 +62,8 @@ class OfferDetailResource extends JsonResource
             'facts' => $facts,
             /** Règles du logement renseignées, lisibles (décision 2026-11-19-contrat-regles-informations), dans l'ordre du domaine. */
             'rules' => $rules,
-            /** Autres informations pratiques, texte libre dans la langue demandée (retours à la ligne gardés), ou `null`. */
-            'information' => $information,
+            /** Blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations) : titre et description dans la langue demandée, retours à la ligne gardés. */
+            'informations' => $informations,
             'published_at' => $offer->published_at?->toIso8601String(),
             /** Statut, servi au seul propriétaire. */
             'status' => $owner ? ['value' => $offer->status->value, 'label' => $offer->status->label()] : null,
@@ -72,8 +73,9 @@ class OfferDetailResource extends JsonResource
             'sections' => $this->sections([
                 'location' => $address !== null,
                 'facts' => $facts !== [],
-                'rules' => $rules !== [] || $information !== null,
+                'rules' => $rules !== [],
                 'reviews' => $reviews !== null,
+                'informations' => $informations !== [],
             ]),
             /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
             'favorite' => $this->favorite($offer, $request),
@@ -176,7 +178,7 @@ class OfferDetailResource extends JsonResource
         }
 
         // Les attributs, sans les règles ni le texte libre, servis à part (décision 2026-11-19-contrat-regles-informations).
-        $apart = [...$domain->ruleAttributes(), $domain->informationAttribute()];
+        $apart = $domain->ruleAttributes();
         $facts = [...$facts, ...$this->displayed($offer, $domain, $locale, fn (string $name): bool => ! in_array($name, $apart, true))];
 
         // Celles que le domaine place en tête, puis les autres dans leur ordre.
@@ -213,17 +215,6 @@ class OfferDetailResource extends JsonResource
     }
 
     /**
-     * Le texte libre des informations pratiques, ou `null`.
-     */
-    private function information(Offer $offer, Domain $domain, string $locale): ?string
-    {
-        $name = $domain->informationAttribute();
-        $text = $name === null ? null : $offer->detailIn($name, $locale);
-
-        return is_string($text) && trim($text) !== '' ? $text : null;
-    }
-
-    /**
      * Les sections de la fiche (décision 2026-11-19-sections-fiche-laravel) : dans
      * l'ordre de `offer.sections`, celles qui ont un contenu, ouvertes ou non ; si
      * aucune n'est ouverte, la première l'est.
@@ -246,5 +237,26 @@ class OfferDetailResource extends JsonResource
         }
 
         return $sections;
+    }
+
+    /**
+     * Les blocs d'informations, dans l'ordre, dans la langue `$locale`.
+     *
+     * @return list<array{id: string, title: string, description: string}>
+     */
+    private function informations(Offer $offer, string $locale): array
+    {
+        $informations = [];
+
+        foreach ($offer->informations as $information) {
+            /** @var OfferInformation $information */
+            $informations[] = [
+                'id' => (string) $information->getKey(),
+                'title' => (string) $information->getTranslation('title', $locale),
+                'description' => (string) $information->getTranslation('description', $locale),
+            ];
+        }
+
+        return $informations;
     }
 }

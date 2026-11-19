@@ -21,13 +21,16 @@ return [
      * Sections repliables de la fiche d'une offre, dans l'ordre, et ouvertes ou non à
      * l'arrivée (décision 2026-11-19-sections-fiche-laravel) : `location` (adresse et
      * indication), `facts` (caractéristiques), `rules` (règles et autres informations),
-     * `reviews` (avis). Une section sans contenu n'est pas servie ; si aucune des
-     * sections servies n'est ouverte, la première l'est.
+     * `reviews` (avis), `informations` (un bloc d'informations par section, décision
+     * 2026-11-19-contrat-offer-informations ; l'état vaut pour chacun). Une section
+     * sans contenu n'est pas servie ; si aucune des sections servies n'est ouverte,
+     * la première l'est.
      */
     'sections' => [
         'location' => true,
         'facts' => false,
         'rules' => false,
         'reviews' => false,
+        'informations' => false,
     ],
 ];

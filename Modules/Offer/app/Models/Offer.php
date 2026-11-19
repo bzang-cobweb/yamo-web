@@ -7,6 +7,7 @@ use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -50,6 +51,7 @@ use Spatie\Translatable\HasTranslations;
  * @property-read OfferCategory|null $category
  * @property-read OfferAddress|null $offerAddress l'adresse et son indication (décision 2026-11-19-contrat-adresse-offre-table)
  * @property-read Address|null $address l'adresse partagée, à travers `offerAddress`
+ * @property-read Collection<int, OfferInformation> $informations
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
@@ -148,6 +150,16 @@ class Offer extends Model implements HasMedia
     public function address(): HasOneThrough
     {
         return $this->hasOneThrough(Address::class, OfferAddress::class, 'offer_id', 'id', 'id', 'address_id');
+    }
+
+    /**
+     * Ses blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations).
+     *
+     * @return HasMany<OfferInformation, $this>
+     */
+    public function informations(): HasMany
+    {
+        return $this->hasMany(OfferInformation::class)->orderBy('position')->orderBy('id');
     }
 
     /**

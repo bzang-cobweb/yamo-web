@@ -14,6 +14,7 @@ use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferInformation;
 use Tests\TestCase;
 
 /**
@@ -162,7 +163,7 @@ class OfferDetailApiTest extends TestCase
     public function test_rules_and_information_are_served_apart_from_the_facts(): void
     {
         // Décision 2026-11-19-contrat-regles-informations.
-        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no', 'other_information' => ['fr' => "Clés chez le gardien.\nParking.", 'en' => 'Keys with the caretaker.']]]);
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
@@ -172,14 +173,11 @@ class OfferDetailApiTest extends TestCase
             ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
             ['label' => 'Animaux acceptés', 'value' => 'Non'],
         ], $data['rules']);
-        $this->assertSame("Clés chez le gardien.\nParking.", $data['information']);
-        $this->assertSame('Keys with the caretaker.', $this->show($furnished, 'en')->json('data.information'));
         $this->assertNotContains('Arrivée à partir de', array_column($data['facts'], 'label'));
 
         // Les heures, pour un meublé seulement ; sans rien de renseigné : rien.
         $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false, 'check_in_from' => '15:00']]);
         $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
-        $this->assertNull($this->show($unfurnished)->json('data.information'));
     }
 
     public function test_sections_come_from_the_configuration(): void
@@ -208,6 +206,21 @@ class OfferDetailApiTest extends TestCase
             ['key' => 'facts', 'open' => true],
             ['key' => 'rules', 'open' => false],
         ], $this->show($withoutAddress)->json('data.sections'));
+    }
+
+    public function test_information_blocks_are_served_in_order_and_language_as_last_sections(): void
+    {
+        // Décision 2026-11-19-contrat-offer-informations.
+        $offer = $this->home();
+        OfferInformation::factory()->for($offer)->create(['title' => ['fr' => 'Parking', 'en' => 'Parking'], 'description' => ['fr' => 'Dans la cour.'], 'position' => 1]);
+        OfferInformation::factory()->for($offer)->create(['title' => ['fr' => 'Arrivée', 'en' => 'Arrival'], 'description' => ['fr' => "Clés chez le gardien.\nAppeler.", 'en' => 'Keys with the caretaker.'], 'position' => 0]);
+
+        $data = $this->show($offer)->assertOk()->json('data');
+        $this->assertSame([['Arrivée', "Clés chez le gardien.\nAppeler."], ['Parking', 'Dans la cour.']], array_map(fn (array $information): array => [$information['title'], $information['description']], $data['informations']));
+        $this->assertSame('Arrival', $this->show($offer, 'en')->json('data.informations.0.title'));
+        // Après les avis, fermées par défaut.
+        $this->assertSame(['key' => 'informations', 'open' => false], end($data['sections']));
+        $this->assertSame([], $this->show($this->home())->json('data.informations'));
     }
 
     public function test_no_private_data_leaks(): void

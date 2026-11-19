@@ -95,9 +95,6 @@ class RentalDomain extends Domain
     /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
     public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
 
-    /** Longueur maximale des autres informations. */
-    public const INFORMATION_MAX_LENGTH = 2000;
-
     /**
      * @return array<string, string>
      */
@@ -161,11 +158,6 @@ class RentalDomain extends Domain
             ...array_map(fn (string $rule): Field => Field::select($rule)
                 ->label(__('offer::rental.rules.'.$rule))
                 ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), ['pets', 'smoking', 'parties']),
-            Field::textarea('other_information')
-                ->label(__('offer::rental.rules.other_information'))
-                ->placeholder(__('offer::rental.rules.other_information_placeholder'))
-                ->translatable()
-                ->maxLength(self::INFORMATION_MAX_LENGTH),
         ];
     }
 
@@ -193,11 +185,6 @@ class RentalDomain extends Domain
         return ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties'];
     }
 
-    public function informationAttribute(): ?string
-    {
-        return 'other_information';
-    }
-
     /**
      * Cinq étapes dans l'app (décisions 2026-11-19-etapes-formulaire-ordre-final et 2026-11-19-contrat-champ-upload-photos) :
      * la présentation (type, meublé, catégorie, titre, description), les
@@ -220,7 +207,7 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
             // « Règles et informations » (décision 2026-11-19-contrat-regles-informations).
-            ['title' => __('offer::rental.steps.rules'), 'fields' => [...$this->ruleAttributes(), 'other_information']],
+            ['title' => __('offer::rental.steps.rules'), 'fields' => [...$this->ruleAttributes(), 'informations']],
             ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'indication']],
             // Les photos en dernier (décision 2026-11-19-contrat-champ-upload-photos).
             ['title' => __('offer::rental.steps.photos'), 'fields' => ['photos']],

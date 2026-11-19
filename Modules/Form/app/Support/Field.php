@@ -90,6 +90,18 @@ final class Field
     /** @var array<string, string> */
     private array $files = [];
 
+    /**
+     * Liste de groupes (`repeater()`) : les sous-champs d'un groupe, le nombre
+     * maximal de groupes et le libellé du bouton d'ajout.
+     *
+     * @var list<Field>
+     */
+    private array $itemFields = [];
+
+    private int $maxItems = 10;
+
+    private ?string $addLabel = null;
+
     /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
     private bool $withoutContactDetails = false;
 
@@ -308,6 +320,63 @@ final class Field
     {
         if ($this->type !== FieldType::UPLOAD) {
             throw new LogicException("Champ « {$this->name} » : réservé à un champ de fichiers.");
+        }
+    }
+
+    /**
+     * Une liste de groupes de sous-champs (décision 2026-11-19-contrat-offer-informations) :
+     * l'utilisateur ajoute un groupe, le remplit, en retire un. La valeur est la liste
+     * ordonnée des groupes (`[{title: …, description: …}, …]`) ; chaque sous-champ est
+     * validé pour chaque groupe. Un sous-champ `hidden` porte un identifiant gardé tel quel.
+     */
+    public static function repeater(string $name): self
+    {
+        return new self($name, FieldType::REPEATER);
+    }
+
+    /**
+     * Les sous-champs d'un groupe, dans l'ordre d'affichage.
+     *
+     * @param  list<Field>  $fields
+     */
+    public function fields(array $fields): self
+    {
+        $this->assertRepeater();
+        $this->itemFields = array_values($fields);
+
+        return $this;
+    }
+
+    /** Nombre maximal de groupes. */
+    public function maxItems(int $count): self
+    {
+        $this->assertRepeater();
+        $this->maxItems = max(1, $count);
+
+        return $this;
+    }
+
+    /** Libellé du bouton d'ajout (« Ajouter une information »). */
+    public function addLabel(string $label): self
+    {
+        $this->assertRepeater();
+        $this->addLabel = $label;
+
+        return $this;
+    }
+
+    /**
+     * @return list<Field>
+     */
+    public function getItemFields(): array
+    {
+        return $this->itemFields;
+    }
+
+    private function assertRepeater(): void
+    {
+        if ($this->type !== FieldType::REPEATER) {
+            throw new LogicException("Champ « {$this->name} » : réservé à une liste de groupes.");
         }
     }
 
@@ -587,6 +656,19 @@ final class Field
             ];
         }
 
+        if ($this->type === FieldType::REPEATER) {
+            $rules = [$this->name => [...$presence, 'array', 'max:'.$this->maxItems, ...$this->rules]];
+
+            // Chaque sous-champ, pour chaque groupe (`informations.*.title`).
+            foreach ($this->itemFields as $field) {
+                foreach ($field->validationRules() as $key => $fieldRules) {
+                    $rules[$this->name.'.*.'.$key] = $fieldRules;
+                }
+            }
+
+            return $rules;
+        }
+
         if ($this->type === FieldType::RANGE) {
             return [
                 // Deux bornes, la seconde au moins égale à la première quand les deux sont données.
@@ -780,7 +862,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -811,6 +893,12 @@ final class Field
                 'max_size_kb' => $this->maxSizeKb,
                 'max_files' => $this->maxFiles,
                 'files' => collect($this->files)->map(fn (string $url, string|int $id): array => ['id' => (string) $id, 'url' => $url])->values()->all(),
+            ],
+            /** Liste de groupes (`repeater`) : sous-champs d'un groupe, nombre maximal, libellé du bouton d'ajout ; `null` pour un autre type. */
+            'repeater' => $this->type !== FieldType::REPEATER ? null : [
+                'fields' => array_map(fn (Field $field): array => $field->toArray(), $this->itemFields),
+                'max_items' => $this->maxItems,
+                'add_label' => $this->addLabel,
             ],
             'default' => $this->initialValue(),
             'options' => collect($this->options)

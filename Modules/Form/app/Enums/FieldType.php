@@ -43,6 +43,13 @@ enum FieldType: string
     case UPLOAD = 'upload';
 
     /**
+     * Une liste de groupes de sous-champs que l'utilisateur ajoute et retire
+     * (décision 2026-11-19-contrat-offer-informations) : la valeur est la liste
+     * ordonnée des groupes, chacun un objet sous-champ => valeur ; voir `Field::repeater()`.
+     */
+    case REPEATER = 'repeater';
+
+    /**
      * Le champ propose une liste d'options.
      */
     public function hasOptions(): bool
@@ -70,7 +77,7 @@ enum FieldType: string
             self::PHONE => ['string', 'phone'],
             self::CODE => ['string', 'digits:6'],
             self::RATING => ['integer', 'between:1,5'],
-            self::UPLOAD => ['array'],
+            self::UPLOAD, self::REPEATER => ['array'],
         };
     }
 }

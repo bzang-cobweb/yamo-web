@@ -17,7 +17,7 @@ use Modules\Offer\Models\Offer;
 abstract class Domain
 {
     /** Champs communs à toutes les offres : un attribut ne peut pas porter ces noms. */
-    public const COMMON_FIELDS = ['title', 'description', 'category_id', 'price', 'currency', 'address_id', 'indication', 'street', 'zip', 'city', 'status'];
+    public const COMMON_FIELDS = ['title', 'description', 'category_id', 'price', 'currency', 'address_id', 'indication', 'informations', 'street', 'zip', 'city', 'status'];
 
     /**
      * Clé du domaine, celle de `config('offer.domain')`.
@@ -262,15 +262,6 @@ abstract class Domain
     public function ruleAttributes(): array
     {
         return [];
-    }
-
-    /**
-     * L'attribut texte libre des informations pratiques, servi à part par la fiche
-     * (`information`) et rangé avec les règles ; `null` : aucun.
-     */
-    public function informationAttribute(): ?string
-    {
-        return null;
     }
 
     /**

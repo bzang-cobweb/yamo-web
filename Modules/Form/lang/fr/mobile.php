@@ -31,6 +31,9 @@ return [
         'uploadMoveLeft' => "Avancer d'une place",
         'uploadMoveRight' => "Reculer d'une place",
         'uploadRemove' => 'Retirer',
+        // Liste de groupes (décision 2026-11-19-contrat-offer-informations).
+        'repeaterRemove' => 'Retirer ce bloc',
+        'repeaterAdd' => 'Ajouter',
         'uploadSending' => 'Envoi…',
         'uploadWrongType' => 'Format non accepté.',
         'uploadTooLarge' => 'Fichier trop lourd : :max au plus.',

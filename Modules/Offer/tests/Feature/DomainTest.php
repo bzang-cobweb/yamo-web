@@ -89,7 +89,8 @@ class DomainTest extends TestCase
         // Pas d'adresse dans une boutique ; ses propres attributs.
         $this->assertArrayNotHasKey('address_id', $fields);
         // Les attributs du domaine, puis les photos, communes à tous (décision 2026-11-19-contrat-champ-upload-photos).
-        $this->assertSame(['size', 'stock', 'photos'], array_slice(array_keys($fields), -3));
+        // Puis les blocs d'informations, communs aussi (décision 2026-11-19-contrat-offer-informations).
+        $this->assertSame(['size', 'stock', 'informations', 'photos'], array_slice(array_keys($fields), -4));
         $this->assertSame('Mes articles', $this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.title'));
 
         $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'T-shirt', 'status' => 'draft', 'price' => '20', 'size' => 'XXL', 'stock' => '-1'])

@@ -6,6 +6,7 @@ use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
 use Closure;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -28,6 +29,7 @@ use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Models\OfferInformation;
 
 /**
  * Formulaire d'une offre dans le back-office : champs communs, attributs du
@@ -48,7 +50,7 @@ abstract class OfferForm
             in_array($field->name, $domain->listingAttributes(), true) => $tab === 'listing',
             in_array($field->name, $domain->accessAttributes(), true) => $tab === 'access',
             // Règles et informations (décision 2026-11-19-contrat-regles-informations).
-            in_array($field->name, [...$domain->ruleAttributes(), $domain->informationAttribute()], true) => $tab === 'rules',
+            in_array($field->name, $domain->ruleAttributes(), true) => $tab === 'rules',
             default => $tab === 'features',
         }));
 
@@ -78,7 +80,7 @@ abstract class OfferForm
             ->visible($domain->hasPrice());
         $names = array_map(fn (Field $field): string => $field->name, array_values(array_filter(
             $domain->inputAttributes(),
-            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes(), ...$domain->ruleAttributes(), $domain->informationAttribute()], true),
+            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes(), ...$domain->ruleAttributes()], true),
         )));
         $at = array_search($domain->priceBeforeAttribute(), $names, true);
         $at = $at === false ? count($components) : $at;
@@ -186,8 +188,35 @@ abstract class OfferForm
                             ->schema(self::features($domain)),
                         Tab::make(__('offer::offer.tabs.rules'))
                             ->columns(2)
-                            ->schema(self::attributes($domain, 'rules'))
-                            ->visible($domain->ruleAttributes() !== [] || $domain->informationAttribute() !== null),
+                            ->schema([
+                                ...self::attributes($domain, 'rules'),
+                                // Les blocs d'informations, réordonnables (décision 2026-11-19-contrat-offer-informations).
+                                Repeater::make('informations')
+                                    ->label(__('offer::offer.informations.label'))
+                                    ->helperText(__('offer::offer.informations.help'))
+                                    ->relationship()
+                                    ->orderColumn('position')
+                                    // Aucun bloc vide d'office : les blocs sont facultatifs.
+                                    ->defaultItems(0)
+                                    ->maxItems(OfferInformation::MAX_PER_OFFER)
+                                    ->addActionLabel(__('offer::offer.informations.add'))
+                                    ->itemLabel(fn (array $state): ?string => $state['title'][Locales::default()] ?? null)
+                                    ->collapsible()
+                                    ->schema([
+                                        TranslatableTabs::make(fn (string $locale): array => [
+                                            TextInput::make("title.{$locale}")
+                                                ->label(__('offer::offer.informations.title'))
+                                                ->required($locale === Locales::default())
+                                                ->maxLength(OfferInformation::TITLE_MAX_LENGTH),
+                                            Textarea::make("description.{$locale}")
+                                                ->label(__('offer::offer.informations.description'))
+                                                ->required($locale === Locales::default())
+                                                ->maxLength(OfferInformation::DESCRIPTION_MAX_LENGTH)
+                                                ->rows(3),
+                                        ], 'information'),
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
                         Tab::make(__('offer::offer.photos'))
                             ->schema([
                                 SpatieMediaLibraryFileUpload::make('photos')

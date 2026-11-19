@@ -11,6 +11,7 @@ use Modules\Location\Services\AddressService;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
+use Modules\Offer\Models\OfferInformation;
 
 /**
  * Créer, modifier, retirer une offre selon le domaine actif (décision
@@ -35,6 +36,7 @@ class OfferService
             ...$this->columns($domain, $data, $country, $locale ?? $user->preferredLocale()),
         ]);
         $this->syncAddress($offer, $domain, $data, $country);
+        $this->syncInformations($offer, $data, $locale ?? $user->preferredLocale());
 
         return $offer;
     }
@@ -46,6 +48,7 @@ class OfferService
     {
         $offer->fill($this->columns($domain, $data, $offer->country, $locale ?? $offer->user->preferredLocale(), $offer))->save();
         $this->syncAddress($offer, $domain, $data, $offer->country);
+        $this->syncInformations($offer, $data, $locale ?? $offer->user->preferredLocale());
 
         return $offer->refresh();
     }
@@ -86,6 +89,41 @@ class OfferService
         $translations[$locale] = $value;
 
         return array_filter($translations, fn (mixed $text): bool => filled($text));
+    }
+
+    /**
+     * Les blocs d'informations (décision 2026-11-19-contrat-offer-informations), dans
+     * l'ordre envoyé : un bloc connu (`id`) est mis à jour dans la langue `$locale`,
+     * ses autres langues gardées ; un nouveau est créé ; un bloc absent est retiré.
+     * Sans le champ envoyé (ancien envoi), rien ne change.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function syncInformations(Offer $offer, array $data, string $locale): void
+    {
+        if (! array_key_exists('informations', $data)) {
+            return;
+        }
+
+        $existing = $offer->informations()->get()->keyBy(fn (OfferInformation $information): string => (string) $information->getKey());
+        $kept = [];
+
+        // Les données validées gardent l'indice de chaque bloc, pas toujours leur ordre.
+        $items = (array) $data['informations'];
+        ksort($items);
+
+        foreach (array_values($items) as $position => $item) {
+            $item = (array) $item;
+            $information = $existing->get((string) ($item['id'] ?? '')) ?? new OfferInformation(['offer_id' => $offer->getKey()]);
+            $information->setTranslation('title', $locale, trim((string) $item['title']));
+            $information->setTranslation('description', $locale, trim((string) $item['description']));
+            $information->position = $position;
+            $information->save();
+            $kept[] = $information->getKey();
+        }
+
+        $offer->informations()->whereNotIn('id', $kept)->delete();
+        $offer->unsetRelation('informations');
     }
 
     /**
