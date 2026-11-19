@@ -130,4 +130,19 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame('+237690000008', $this->sms->messages[0]['to']);
         $this->assertStringContainsString('est acceptée', $this->sms->messages[0]['message']);
     }
+
+    public function test_a_request_lands_in_the_owner_notifications_tab_in_their_language(): void
+    {
+        // Décision 2026-11-19-contrat-centre-notifications : toujours, même sans e-mail ni SMS.
+        $booking = $this->booking(owner: ['locale' => 'en', 'email_verified_at' => null]);
+        $owner = $booking->offer->user;
+
+        app(BookingService::class)->request($booking->user, $booking->offer, ['check_in' => today()->addDay()->toDateString(), 'check_out' => today()->addDays(2)->toDateString(), 'guests' => 1]);
+
+        $notification = $owner->notifications()->sole();
+        $this->assertSame('New request', $notification->data['title']);
+        $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
+        $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
+        $this->assertNull($notification->read_at);
+    }
 }

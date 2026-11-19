@@ -2,5 +2,6 @@
     "Auth": true,
     "Form": true,
     "Location": true,
-    "Offer": true
+    "Offer": true,
+    "Notification": true
 }

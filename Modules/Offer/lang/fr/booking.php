@@ -60,21 +60,25 @@ return [
         'greeting' => 'Bonjour :name,',
         'salutation' => "L'équipe :app",
         'requested' => [
+            'title' => 'Nouvelle demande',
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [
+            'title' => 'Demande acceptée',
             'subject' => 'Demande acceptée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est acceptée.',
             'sms' => ':app : votre demande pour « :offer » (:period) est acceptée.',
         ],
         'refused' => [
+            'title' => 'Demande refusée',
             'subject' => 'Demande refusée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est refusée.',
             'sms' => ':app : votre demande pour « :offer » (:period) est refusée.',
         ],
         'cancelled' => [
+            'title' => 'Demande annulée',
             'subject' => 'Demande annulée : :offer',
             'body' => ':guest a annulé sa demande pour « :offer » (:period).',
             'sms' => ':app : :guest a annulé sa demande pour « :offer » (:period).',

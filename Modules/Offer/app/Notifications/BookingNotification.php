@@ -8,13 +8,17 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Lists\BookingListing;
+use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 
 /**
  * Une étape d'une demande, notifiée à l'autre partie (décision
  * 2026-11-19-notifications-reservations) : mise en file, envoyée après
- * l'enregistrement, sur les canaux que le destinataire peut recevoir
- * (`User::notificationChannels()`), dans sa langue (`HasLocalePreference`).
+ * l'enregistrement, toujours dans l'onglet « Notifications » de l'app (canal
+ * `database`, décision 2026-11-19-contrat-centre-notifications), et sur les
+ * canaux que le destinataire peut recevoir (`User::notificationChannels()`),
+ * dans sa langue (`HasLocalePreference`).
  * Les textes sont dans `offer::booking.notify.<clé>` (fr, en, de).
  */
 abstract class BookingNotification extends Notification implements ShouldQueue
@@ -44,7 +48,24 @@ abstract class BookingNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return $notifiable instanceof User ? $notifiable->notificationChannels() : [];
+        return $notifiable instanceof User ? ['database', ...$notifiable->notificationChannels()] : [];
+    }
+
+    /**
+     * Dans l'onglet « Notifications » : un titre, un texte, l'écran à ouvrir (la
+     * liste où retrouver la demande). Textes figés dans la langue du destinataire.
+     *
+     * @return array{title: string, body: string, link: string}
+     */
+    public function toArray(object $notifiable): array
+    {
+        $list = $this->section() === 'received' ? ReceivedBookingListing::name() : BookingListing::name();
+
+        return [
+            'title' => __("offer::booking.notify.{$this->key()}.title"),
+            'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
+            'link' => '/profile/lists/'.$list,
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

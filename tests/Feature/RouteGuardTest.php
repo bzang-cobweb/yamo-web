@@ -27,6 +27,11 @@ class RouteGuardTest extends TestCase
         'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
         'api/v1/offers/{offer}' => "publique : fiche d'une offre ; policy `show` appelée dans le contrôleur avec le compte facultatif (Sanctum)",
         'api/v1/countries' => "publique : pays actifs proposés à l'entrée de l'app, aucune donnée de compte",
+        // Module Notification (décision 2026-11-19-contrat-centre-notifications) : ses propres notifications.
+        'api/v1/notifications' => 'ses notifications seulement (relation `notifications` du compte) : gardée par auth:sanctum',
+        'api/v1/notifications/unread-count' => 'le nombre de ses notifications non lues : gardée par auth:sanctum',
+        'api/v1/notifications/read' => 'marque lues ses seules notifications : gardée par auth:sanctum',
+        'api/v1/notifications/{notification}/read' => "cherchée parmi ses seules notifications (404 sinon) : gardée par auth:sanctum",
     ];
 
     public function test_every_controller_route_is_guarded(): void

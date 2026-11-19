@@ -956,6 +956,133 @@
                 "security": []
             }
         },
+        "/v1/notifications": {
+            "get": {
+                "operationId": "v1.notifications.index",
+                "summary": "Ses notifications, la plus r\u00e9cente en t\u00eate, par pages",
+                "tags": [
+                    "Notification"
+                ],
+                "parameters": [
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Curseur de la page voulue, tel que servi dans `next_cursor` ; absent : premi\u00e8re page.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`NotificationPageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationPageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/unread-count": {
+            "get": {
+                "operationId": "v1.notifications.unread-count",
+                "summary": "Le nombre de ses notifications non lues",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "unread": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "unread"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/read": {
+            "post": {
+                "operationId": "v1.notifications.read-all",
+                "summary": "Marquer toutes ses notifications comme lues",
+                "tags": [
+                    "Notification"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/{notification}/read": {
+            "post": {
+                "operationId": "v1.notifications.read",
+                "summary": "Marquer une de ses notifications comme lue",
+                "tags": [
+                    "Notification"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/offers/{offer}": {
             "get": {
                 "operationId": "v1.offers.show",
@@ -2746,6 +2873,64 @@
                     "password"
                 ],
                 "title": "LoginRequest"
+            },
+            "NotificationPageResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "body": {
+                                    "type": "string"
+                                },
+                                "link": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                                },
+                                "read": {
+                                    "type": "boolean"
+                                },
+                                "created_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Date ISO 8601."
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "title",
+                                "body",
+                                "link",
+                                "read",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    "next_cursor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "items",
+                    "next_cursor"
+                ],
+                "title": "NotificationPageResource"
             },
             "OfferBookingRequest": {
                 "type": "object",
