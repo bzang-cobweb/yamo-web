@@ -13,10 +13,14 @@ use Modules\Offer\Models\Booking;
  */
 final class BookingFilters
 {
-    public static function status(): Field
+    /**
+     * Le champ du filtre ; `$name` et `$label` le distinguent d'un autre statut de la
+     * même liste (« Mes logements » a déjà le statut de l'annonce).
+     */
+    public static function status(string $name = 'status', ?string $label = null): Field
     {
-        return Field::segmented('status')
-            ->label(__('offer::booking.profile.filter_status'))
+        return Field::segmented($name)
+            ->label($label ?? __('offer::booking.profile.filter_status'))
             ->options([
                 'any' => __('offer::booking.profile.filter_any'),
                 ...collect(Booking::STATUS_GROUPS)->mapWithKeys(fn (string $group): array => [$group => __('offer::booking.profile.filter_'.$group)])->all(),
@@ -28,12 +32,23 @@ final class BookingFilters
      * @param  Builder<Booking>  $query
      * @param  array<string, mixed>  $filters
      */
-    public static function applyStatus(Builder $query, array $filters): void
+    public static function applyStatus(Builder $query, array $filters, string $name = 'status'): void
     {
-        $group = $filters['status'] ?? 'any';
-
-        if (is_string($group) && in_array($group, Booking::STATUS_GROUPS, true)) {
+        $group = self::group($filters, $name);
+        if ($group !== null) {
             $query->inStatusGroup($group);
         }
+    }
+
+    /**
+     * Le regroupement choisi (`upcoming`, `pending`, `past`), ou `null` pour « Tous ».
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public static function group(array $filters, string $name = 'status'): ?string
+    {
+        $group = $filters[$name] ?? 'any';
+
+        return is_string($group) && in_array($group, Booking::STATUS_GROUPS, true) ? $group : null;
     }
 }

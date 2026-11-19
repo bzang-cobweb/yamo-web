@@ -311,4 +311,25 @@ class BookingApiTest extends TestCase
         $this->assertContains('price', array_column($data['filters'], 'name'));
         $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status]=draft')->json('data.items'), 'id'));
     }
+
+    public function test_my_homes_are_filtered_by_the_status_of_their_requests(): void
+    {
+        $owner = $this->member();
+        $pending = $this->home(true, $owner);
+        $upcoming = $this->home(true, $owner);
+        $quiet = $this->home(true, $owner);
+        Booking::factory()->for($pending)->create();
+        Booking::factory()->for($upcoming)->status(BookingStatusEnum::ACCEPTED)->create();
+        Booking::factory()->for($quiet)->status(BookingStatusEnum::REFUSED)->create();
+        $ids = fn (string $group): array => collect($this->asUser($owner)->getJson("/api/v1/lists/offer.mine?filter[booking_status]={$group}")->json('data.items'))->pluck('id')->sort()->values()->all();
+
+        $filter = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'booking_status');
+        $this->assertSame('Statut de la demande', $filter['label']);
+        $this->assertSame(['any', 'upcoming', 'pending', 'past'], array_column($filter['options'], 'value'));
+
+        $this->assertSame([(string) $pending->getKey()], $ids('pending'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('upcoming'));
+        $this->assertSame([(string) $quiet->getKey()], $ids('past'));
+        $this->assertCount(3, $ids('any'));
+    }
 }

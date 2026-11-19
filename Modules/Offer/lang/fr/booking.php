@@ -127,6 +127,7 @@ return [
         'refuse_title' => 'Refuser la demande',
         'refuse_submit' => 'Refuser la demande',
         'offer_status' => 'Statut',
+        'filter_booking_status' => 'Statut de la demande',
     ],
     // Le calendrier d'une offre (décision 2026-11-19-contrat-calendrier-offre).
     'calendar' => [
