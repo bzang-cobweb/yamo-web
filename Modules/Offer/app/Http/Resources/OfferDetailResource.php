@@ -76,16 +76,10 @@ class OfferDetailResource extends JsonResource
         $mine = $user === null ? null : $offer->reviews()->where('user_id', $user->getAuthIdentifier())->first();
         $latest = [];
 
+        // Même forme que la liste complète (`OfferReviewResource`).
         foreach ($offer->reviews()->with('user')->latest('updated_at')->latest('id')->limit(5)->get() as $review) {
             /** @var OfferReview $review */
-            $latest[] = [
-                'id' => (string) $review->getKey(),
-                /** Le prénom de l'auteur seulement. */
-                'author' => (string) ($review->user->first_name ?: $review->user->name),
-                'rating' => $review->rating,
-                'comment' => $review->comment,
-                'created_at' => $review->created_at?->toIso8601String(),
-            ];
+            $latest[] = (new OfferReviewResource($review))->toArray($request);
         }
 
         return [

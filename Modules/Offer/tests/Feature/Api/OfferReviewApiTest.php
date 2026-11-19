@@ -192,4 +192,38 @@ class OfferReviewApiTest extends TestCase
             ['average' => 1, 'count' => 1, 'latest' => 1],
         ));
     }
+
+    public function test_all_reviews_of_a_published_offer_are_listed_by_pages_newest_first(): void
+    {
+        // Décision 2026-11-19-nuit-tous-les-avis.
+        $offer = Offer::factory()->create(['status' => 'published']);
+        foreach (range(1, 23) as $index) {
+            OfferReview::factory()->for($offer)->for(User::factory()->create(['first_name' => "Auteur {$index}"]))
+                ->create(['rating' => 4, 'comment' => "Avis {$index}", 'updated_at' => now()->subMinutes(100 - $index)]);
+        }
+
+        $first = $this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}/reviews")->assertOk()->json('data');
+        $this->assertCount(20, $first['items']);
+        $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at'], array_keys($first['items'][0]));
+        $this->assertSame(['Auteur 23', 'Avis 23'], [$first['items'][0]['author'], $first['items'][0]['comment']]);
+        $this->assertNotNull($first['next_cursor']);
+
+        $second = $this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}/reviews?cursor={$first['next_cursor']}")->assertOk()->json('data');
+        $this->assertSame(['Avis 3', 'Avis 2', 'Avis 1'], array_column($second['items'], 'comment'));
+        $this->assertNull($second['next_cursor']);
+
+        // Les 5 de la fiche ont la même forme que la liste.
+        $latest = $this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.reviews.latest');
+        $this->assertSame($first['items'][0], $latest[0]);
+    }
+
+    public function test_an_offer_that_is_not_published_has_no_review_list(): void
+    {
+        $draft = Offer::factory()->create(['status' => 'draft']);
+        OfferReview::factory()->for($draft)->create();
+
+        $this->api(null, 'GET', "/api/v1/offers/{$draft->getKey()}/reviews")->assertNotFound();
+        // Même pour son propriétaire, qui voit pourtant la fiche de son brouillon.
+        $this->api($draft->user, 'GET', "/api/v1/offers/{$draft->getKey()}/reviews")->assertNotFound();
+    }
 }

@@ -13,6 +13,8 @@ return [
         // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
         'address' => 'Address',
         // Avis (décision 2026-11-19-contrat-avis-offres).
+        // Liste complète des avis (décision 2026-11-19-nuit-tous-les-avis).
+        'allReviews' => 'See all :count reviews',
         'reviews' => 'Reviews',
         'noReviews' => 'No reviews yet.',
         'writeReview' => 'Write a review',

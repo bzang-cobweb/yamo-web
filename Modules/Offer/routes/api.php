@@ -14,6 +14,8 @@ use Modules\Offer\Models\Offer;
 // Fiche d'une offre, ouverte sans connexion (décision 2026-11-18-fiche-offre) :
 // l'autorisation (policy `show`, compte facultatif) est faite dans le contrôleur.
 Route::middleware(RequireOfferDomain::class)->get('v1/offers/{offer}', [OfferController::class, 'show'])->name('v1.offers.show');
+// Tous ses avis, par pages, ouverts sans connexion comme la fiche (décision 2026-11-19-nuit-tous-les-avis).
+Route::middleware([RequireOfferDomain::class, 'throttle:60,1'])->get('v1/offers/{offer}/reviews', [OfferReviewController::class, 'index'])->name('v1.offers.reviews.index');
 
 Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offers')->name('v1.offers.')->group(function () {
     Route::post('/', [OfferController::class, 'store'])->can('create', Offer::class)->name('store');

@@ -1000,6 +1000,77 @@
                 }
             }
         },
+        "/v1/offers/{offer}/reviews": {
+            "get": {
+                "operationId": "v1.offers.reviews.index",
+                "summary": "Tous les avis d'une offre publi\u00e9e, du plus r\u00e9cent au plus ancien, par pages\n(d\u00e9cision 2026-11-19-nuit-tous-les-avis). Ouvert sans connexion, avec les\nr\u00e8gles de la fiche ; une offre non publi\u00e9e n'a pas d'avis : 404",
+                "tags": [
+                    "OfferReview"
+                ],
+                "parameters": [
+                    {
+                        "name": "offer",
+                        "in": "path",
+                        "required": true,
+                        "description": "The offer ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "in": "query",
+                        "description": "Curseur de la page voulue, tel que servi dans `next_cursor` ; absent : premi\u00e8re page.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`OfferReviewPageResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/OfferReviewPageResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                },
+                "security": []
+            }
+        },
         "/v1/offers/{offer}/review": {
             "put": {
                 "operationId": "v1.offers.review.save",
@@ -3195,6 +3266,57 @@
                     "favorite"
                 ],
                 "title": "OfferDetailResource"
+            },
+            "OfferReviewPageResource": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "author": {
+                                    "type": "string",
+                                    "description": "Le pr\u00e9nom de l'auteur seulement."
+                                },
+                                "rating": {
+                                    "type": "integer"
+                                },
+                                "comment": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "author",
+                                "rating",
+                                "comment",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    "next_cursor": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Curseur de la page suivante, ou `null` \u00e0 la derni\u00e8re."
+                    }
+                },
+                "required": [
+                    "items",
+                    "next_cursor"
+                ],
+                "title": "OfferReviewPageResource"
             },
             "OfferReviewRequest": {
                 "type": "object",
