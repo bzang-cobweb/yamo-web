@@ -231,12 +231,14 @@ abstract class Domain
     }
 
     /**
-     * Dans l'onglet « Caractéristiques » du back-office, le prix se place avant cet
-     * attribut ; `null` : à la fin.
+     * Les attributs qui accompagnent le prix dans l'onglet « Général » du back-office,
+     * juste après lui (décision 2026-11-19-prix-dans-general) ; aucun par défaut.
+     *
+     * @return list<string>
      */
-    public function priceBeforeAttribute(): ?string
+    public function priceAttributes(): array
     {
-        return null;
+        return [];
     }
 
     /**

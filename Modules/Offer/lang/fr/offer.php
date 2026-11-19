@@ -78,7 +78,7 @@ return [
     'reviews' => 'Avis',
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
     'tabs' => [
-        'listing' => 'Annonce',
+        'listing' => 'Général',
         'rules' => 'Règles',
         'informations' => 'Informations',
         'location' => 'Localisation',

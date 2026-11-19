@@ -110,7 +110,10 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         }
         $this->assertLessThan($position('category_id'), $position('details.property_type'));
         $this->assertLessThan($position('category_id'), $position('details.furnished'));
+        // Le loyer puis les charges dans « Général », après la catégorie et avant les
+        // caractéristiques (décision 2026-11-19-prix-dans-general).
+        $this->assertLessThan($position('price'), $position('category_id'));
         $this->assertLessThan($position('details.charges'), $position('price'));
-        $this->assertLessThan($position('price'), $position('details.bedrooms'));
+        $this->assertLessThan($position('details.bedrooms'), $position('details.charges'));
     }
 }

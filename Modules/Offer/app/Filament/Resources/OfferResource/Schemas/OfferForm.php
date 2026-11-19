@@ -38,9 +38,10 @@ use Modules\Offer\Models\OfferInformation;
 abstract class OfferForm
 {
     /**
-     * Les attributs du domaine d'un onglet : `listing` (« Annonce »), `access`
-     * (« Accès ») ou `features` (« Caractéristiques », tous les autres) ; un
-     * attribut traduisible a un onglet par langue.
+     * Les attributs du domaine d'un onglet : `listing` (« Général »), `price` (dans
+     * « Général », après le prix), `access` (« Accès »), `rules` (« Règles ») ou
+     * `features` (« Caractéristiques », tous les autres) ; un attribut traduisible a
+     * un onglet par langue.
      *
      * @return list<Component>
      */
@@ -48,6 +49,7 @@ abstract class OfferForm
     {
         $fields = array_values(array_filter($domain->inputAttributes(), fn (Field $field): bool => match (true) {
             in_array($field->name, $domain->listingAttributes(), true) => $tab === 'listing',
+            in_array($field->name, $domain->priceAttributes(), true) => $tab === 'price',
             in_array($field->name, $domain->accessAttributes(), true) => $tab === 'access',
             // Règles et informations (décision 2026-11-19-contrat-regles-informations).
             in_array($field->name, $domain->ruleAttributes(), true) => $tab === 'rules',
@@ -63,29 +65,23 @@ abstract class OfferForm
     }
 
     /**
-     * L'onglet « Caractéristiques » : les attributs, avec le prix avant l'attribut
-     * que désigne le domaine (« Loyer » avant « Charges mensuelles »), sinon à la fin.
+     * Le prix (libellé du domaine, « Loyer ») puis les attributs qui l'accompagnent
+     * (« Charges mensuelles »), dans « Général » (décision 2026-11-19-prix-dans-general).
      *
      * @return list<Component>
      */
-    private static function features(Domain $domain): array
+    private static function price(Domain $domain): array
     {
-        $components = self::attributes($domain, 'features');
-        $price = TextInput::make('price')
-            ->label($domain->priceLabel())
-            ->helperText(__('offer::offer.price_currency_help'))
-            ->numeric()
-            ->minValue(0)
-            ->required($domain->requiresPrice())
-            ->visible($domain->hasPrice());
-        $names = array_map(fn (Field $field): string => $field->name, array_values(array_filter(
-            $domain->inputAttributes(),
-            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes(), ...$domain->ruleAttributes()], true),
-        )));
-        $at = array_search($domain->priceBeforeAttribute(), $names, true);
-        $at = $at === false ? count($components) : $at;
-
-        return [...array_slice($components, 0, $at), $price, ...array_slice($components, $at)];
+        return [
+            TextInput::make('price')
+                ->label($domain->priceLabel())
+                ->helperText(__('offer::offer.price_currency_help'))
+                ->numeric()
+                ->minValue(0)
+                ->required($domain->requiresPrice())
+                ->visible($domain->hasPrice()),
+            ...self::attributes($domain, 'price'),
+        ];
     }
 
     public static function configure(Schema $schema): Schema
@@ -97,7 +93,7 @@ abstract class OfferForm
             ->components([
                 // Des onglets (décisions 2026-11-19-ombre-coeur-onglets-offre et
                 // 2026-11-19-onglets-localisation-informations), dans l'ordre des étapes de l'app :
-                // l'annonce, l'accès, les caractéristiques, les règles, les informations, la
+                // le général (avec le prix), l'accès, les caractéristiques, les règles, les informations, la
                 // localisation, les photos ; les avis restent sous le formulaire.
                 Tabs::make('offer')
                     ->columnSpanFull()
@@ -129,6 +125,7 @@ abstract class OfferForm
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
+                                ...self::price($domain),
                             ]),
                         // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
                         Tab::make(__('offer::offer.access'))
@@ -155,7 +152,7 @@ abstract class OfferForm
                             ]),
                         Tab::make(__('offer::offer.attributes'))
                             ->columns(2)
-                            ->schema(self::features($domain)),
+                            ->schema(self::attributes($domain, 'features')),
                         // Un domaine sans règles n'a pas cet onglet.
                         Tab::make(__('offer::offer.tabs.rules'))
                             ->columns(2)
