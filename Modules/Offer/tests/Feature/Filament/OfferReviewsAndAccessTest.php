@@ -116,4 +116,16 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         $this->assertLessThan($position('details.charges'), $position('price'));
         $this->assertLessThan($position('details.bedrooms'), $position('details.charges'));
     }
+
+    public function test_the_country_is_marked_required_even_when_it_is_the_only_one(): void
+    {
+        // Décision 2026-11-19-pays-obligatoire-visible : un seul pays actif, la liste est
+        // pré-remplie sans être désactivée, et son astérisque reste visible.
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
+        $offer = $this->offer();
+        Country::query()->whereKeyNot($offer->country_id)->update(['active' => false]);
+        $html = (string) $this->get(OfferResource::getUrl('edit', ['record' => $offer]))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/Pays\s*<sup class="fi-fo-field-label-required-mark">\*<\/sup>/', $html);
+    }
 }

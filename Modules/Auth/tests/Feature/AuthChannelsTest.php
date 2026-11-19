@@ -237,9 +237,17 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::CREATE_USERS);
         $switzerland = Country::query()->where('code', 'CH')->value('id');
 
+        // Verrouillée sans être désactivée (décision 2026-11-19-pays-obligatoire-visible) : pré-remplie,
+        // et seul le pays actif est accepté.
+        $inactive = Country::factory()->inactive()->create(['code' => 'FR']);
         Livewire::test(CreateUser::class)
-            ->assertFormFieldDisabled('country_id')
-            ->assertFormFieldDisabled('phone_country_id')
+            ->assertFormFieldEnabled('country_id')
+            ->assertSchemaStateSet(['country_id' => $switzerland, 'phone_country_id' => $switzerland])
+            ->fillForm(['name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Martin', 'gender' => 'male', 'email' => 'paul@example.com', 'password' => 'Secret-password-1', 'country_id' => $inactive->getKey()])
+            ->call('create')
+            ->assertHasFormErrors(['country_id']);
+
+        Livewire::test(CreateUser::class)
             ->assertSchemaStateSet(['country_id' => $switzerland, 'phone_country_id' => $switzerland])
             ->fillForm(['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'gender' => 'female', 'email' => 'marie@example.com', 'phone' => '079 123 45 67', 'password' => 'Secret-password-1'])
             ->call('create')
