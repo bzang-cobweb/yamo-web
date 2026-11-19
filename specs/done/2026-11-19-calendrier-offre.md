@@ -98,3 +98,58 @@ La liste « Demandes · <logement> » reste : elle sert à traiter les demandes 
 - Annulation d'un séjour accepté par le propriétaire.
 - Prix variables selon les jours, synchronisation avec des calendriers externes (iCal, Airbnb).
 - Bloquer une période en un geste (seulement jour par jour ici).
+
+## Ce que j'ai décidé seul
+
+- **La règle de disponibilité a un seul domicile**, `OfferAvailability`. Un séjour occupe ses nuits, de l'arrivée à la veille du départ : on peut arriver le jour où un autre part. Les visites n'occupent rien, seuls les jours bloqués les empêchent.
+- **Les refus d'office** gardent un motif standard (« Ces dates ne sont plus disponibles »), dans la langue du membre concerné.
+- **Accepter, demander et bloquer** prennent tous trois un verrou sur l'offre, dans une transaction (`BookingService::lock`).
+- **Le panneau d'un jour** réutilise les cartes de « Demandes reçues » (`ReceivedBookingListing::item`), avec leurs boutons Accepter / Refuser.
+- **Bloquer ou débloquer** est décrit comme une action de carte (libellé, confirmation, envoi). L'app n'en connaît pas les routes.
+- **`ListItem::action()` accepte un `link`**, qui ouvre un écran de l'app. Le bouton « Calendrier » s'en sert, et `ITEM_LINK` admet désormais un sous-chemin (`/offers/12/calendar`).
+- **Le champ date reçoit `calendar`** (`unavailable`, `after`) plutôt qu'un nouveau type : les deux champs `check_in` et `check_out` restent, et l'API de réservation ne change pas. Le départ lit la valeur de l'arrivée (`afterValue`, transmis par le formulaire).
+- **Composants partagés** : `MonthGrid` (grille de mois), `ItemActionButtons` et `useItemActions` (boutons de carte et leur geste, désormais aussi dans les listes du profil), `TONE_COLORS` (exporté par `StatusTag`).
+- **Erreurs d'une action de carte** : l'app affiche le message de l'API (« Ces dates chevauchent… ») au lieu de « erreur inconnue », dans les listes comme dans le panneau du jour.
+- **Les jours passés** restent touchables, pour l'historique, mais sans « Bloquer ».
+- **Navigation dans les mois** : douze mois en arrière, et jusqu'à l'horizon des réservations en avant (`Booking::MAX_DAYS`).
+- **Le panneau du jour** (une fenêtre native) se ferme quand un autre écran s'ouvre par-dessus. Le mois se recharge au retour sur l'écran.
+- **Le test existant** « accepter depuis la carte » plaçait deux demandes aux mêmes dates : la seconde a été déplacée, puisqu'accepter la première la refuserait désormais.
+
+## Ce qui a été fait
+
+- **web**, 6 commits (`7e915cc`, `cfe9e95`, `7c890e2`, `a101013`, `7c6b6b9`, puis celui de clôture) :
+  - la table `offer_blocked_dates` ;
+  - `OfferAvailability`, et la règle de chevauchement dans `BookingService` ;
+  - `OfferCalendar` et `OfferCalendarController` : le mois, le jour, bloquer et débloquer ;
+  - le bouton « Calendrier » sur la carte ;
+  - la confirmation d'Accepter qui nomme les demandes chevauchantes ;
+  - `Field::calendar()` et le formulaire de réservation ;
+  - les textes fr, en et de ;
+  - l'OpenAPI ;
+  - les tests `BookingAvailabilityTest` (5) et `OfferCalendarApiTest` (4). Suite complète : 568 tests verts.
+- **mobile**, commit `2454709` :
+  - l'écran `OfferCalendarScreen` et la route `/offers/[id]/calendar` ;
+  - `MonthGrid` et `CalendarDateField` ;
+  - les boutons de carte partagés ;
+  - les tests `OfferCalendarScreen` (3) et `CalendarDateField` (3). Suite complète : 51 suites et 276 tests verts ; tsc et eslint propres.
+- **Simulateur iOS**, sur des données temporaires supprimées ensuite :
+  - les états de la grille (accepté, en attente, chevauchement, bloqué, passé) ;
+  - le panneau du jour avec les cartes et le message cité ;
+  - le refus d'une acceptation chevauchante, avec son message affiché ;
+  - le blocage d'un jour après confirmation ;
+  - le bouton « Calendrier » de « Mes logements » ;
+  - la grille de réservation : arrivée avec les jours pris et bloqués grisés, puis départ limité au premier jour pris.
+- **QA indépendante** : GO, 0 bloquant (`.ia/runs/2026-11-19-calendrier-offre/qa.md`). Son premier point mineur est corrigé : bloquer prend le même verrou qu'accepter.
+
+## Ce que je n'ai pas vérifié
+
+- **Android** : ni la grille, ni le glissement, ni le panneau.
+- **Le glissement horizontal** pour changer de mois, au simulateur : seules les flèches ont été touchées.
+- **La concurrence réelle** : deux acceptations ou un blocage simultanés n'ont pas été exercés en parallèle. Le verrou est applicatif (`lockForUpdate`) : aucune contrainte en base n'empêche deux séjours acceptés qui se chevauchent si l'on écrit en base hors de `BookingService`.
+- **L'e-mail et le SMS** des refus d'office : seule la notification est vérifiée par les tests.
+- **Les textes en et de** : pas relus par un locuteur.
+
+## Ce qui reste en suspens
+
+- **La confirmation d'Accepter** ne prévient pas quand la demande chevauche un séjour déjà accepté : le serveur refuse ensuite, avec un message clair. On pourrait masquer « Accepter » sur ces cartes.
+- **Hors périmètre** (voir plus haut) : créneaux de visite, annulation par le propriétaire, blocage d'une période en un geste.

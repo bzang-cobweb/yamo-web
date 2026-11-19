@@ -94,6 +94,28 @@ class BookingService
     }
 
     /**
+     * Bloquer un jour que n'occupe aucun séjour accepté, sous le même verrou que
+     * l'acceptation : un blocage et une acceptation simultanés passent l'un après
+     * l'autre (décision 2026-11-19-contrat-calendrier-offre). Déjà bloqué : rien à faire.
+     */
+    public function block(Offer $offer, Carbon $day): void
+    {
+        DB::transaction(function () use ($offer, $day): void {
+            $this->lock($offer);
+            $occupied = $offer->bookings()
+                ->where('status', BookingStatusEnum::ACCEPTED)
+                ->overlapping($day, $day->copy()->addDay())
+                ->exists();
+            if ($occupied) {
+                throw ValidationException::withMessages(['date' => __('offer::booking.calendar.block_accepted')]);
+            }
+            if (! $offer->blockedDates()->whereDate('date', $day->toDateString())->exists()) {
+                $offer->blockedDates()->create(['date' => $day->toDateString()]);
+            }
+        });
+    }
+
+    /**
      * Enregistre la réponse et la notifie ; un refus peut porter un message.
      */
     private function settle(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking

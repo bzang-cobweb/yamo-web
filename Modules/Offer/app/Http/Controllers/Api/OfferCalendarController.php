@@ -2,15 +2,14 @@
 
 namespace Modules\Offer\Http\Controllers\Api;
 
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
-use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Services\BookingService;
 use Modules\Offer\Services\OfferCalendar;
 
 /**
@@ -20,7 +19,7 @@ use Modules\Offer\Services\OfferCalendar;
  */
 class OfferCalendarController
 {
-    public function __construct(private readonly OfferCalendar $calendar) {}
+    public function __construct(private readonly OfferCalendar $calendar, private readonly BookingService $bookings) {}
 
     /**
      * Un mois (`month=AAAA-MM`, le mois courant par défaut) : l'état de chaque jour.
@@ -54,21 +53,7 @@ class OfferCalendarController
         if ($day->lessThan(today())) {
             throw ValidationException::withMessages(['date' => __('offer::booking.calendar.block_past')]);
         }
-        $occupied = $offer->bookings()
-            ->where('status', BookingStatusEnum::ACCEPTED)
-            ->overlapping($day, $day->copy()->addDay())
-            ->exists();
-        if ($occupied) {
-            throw ValidationException::withMessages(['date' => __('offer::booking.calendar.block_accepted')]);
-        }
-
-        // Déjà bloqué : rien à faire (deux envois simultanés : l'index unique garde un seul jour).
-        if (! $offer->blockedDates()->whereDate('date', $day->toDateString())->exists()) {
-            try {
-                $offer->blockedDates()->create(['date' => $day->toDateString()]);
-            } catch (UniqueConstraintViolationException) {
-            }
-        }
+        $this->bookings->block($offer, $day);
 
         return response()->noContent();
     }
