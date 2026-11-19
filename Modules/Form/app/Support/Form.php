@@ -72,6 +72,18 @@ abstract class Form
     }
 
     /**
+     * Alignement du titre du formulaire et des titres d'étape dans l'app (décision
+     * 2026-11-19-alignement-titre-formulaire) : `start` (à gauche, par défaut) ou
+     * `center`. Le sous-titre suit le titre.
+     *
+     * @return 'start'|'center'
+     */
+    public function titleAlign(): string
+    {
+        return 'start';
+    }
+
+    /**
      * Sous-titre affiché sous le titre, traduit ; aucun par défaut.
      */
     public function subtitle(): ?string

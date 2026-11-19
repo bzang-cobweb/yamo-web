@@ -165,6 +165,14 @@ class OfferForm extends Form
         ));
     }
 
+    /**
+     * Titres d'étape centrés (décision 2026-11-19-alignement-titre-formulaire).
+     */
+    public function titleAlign(): string
+    {
+        return 'center';
+    }
+
     public function title(): string
     {
         return __('offer::offer.form.'.($this->offer === null ? 'create_title' : 'edit_title'), ['label' => $this->domain()->label()]);

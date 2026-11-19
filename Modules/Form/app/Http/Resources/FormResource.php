@@ -16,7 +16,7 @@ use Modules\Form\Support\Step;
 class FormResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string|null, subtitle: string|null, fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
+     * @return array{name: string, title: string|null, subtitle: string|null, title_align: 'start'|'center', fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
      */
     public function toArray(Request $request): array
     {
@@ -24,6 +24,8 @@ class FormResource extends JsonResource
             'name' => $this->resource->key(),
             'title' => $this->resource->title(),
             'subtitle' => $this->resource->subtitle(),
+            /** Alignement du titre, du sous-titre et des titres d'étape : `start` ou `center`. */
+            'title_align' => $this->resource->titleAlign(),
             'fields' => array_map(fn (Field $field): array => $field->toArray(), $this->resource->fields()),
             /** Étapes (titre, noms des champs) ; vide pour un formulaire d'un seul tenant. */
             'steps' => array_map(fn (Step $step): array => $step->toArray(), $this->resource->steps()),

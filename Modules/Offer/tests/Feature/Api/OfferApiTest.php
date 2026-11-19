@@ -155,7 +155,10 @@ class OfferApiTest extends TestCase
         UserAddress::factory()->for($user)->create();
 
         // Décision 2026-11-19-contrat-formulaire-etapes-symbole-devise.
-        $steps = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
+        $form = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data');
+        $steps = $form['steps'];
+        // Titres centrés (décision 2026-11-19-alignement-titre-formulaire).
+        $this->assertSame('center', $form['title_align']);
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
         // L'étape 1 sans titre (décision 2026-11-19-etape-1-sans-titre).
         $this->assertSame([null, 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));

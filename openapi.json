@@ -2275,6 +2275,11 @@
                     "subtitle": {
                         "type": "null"
                     },
+                    "title_align": {
+                        "type": "string",
+                        "description": "Alignement du titre, du sous-titre et des titres d'\u00e9tape : `start` ou `center`.",
+                        "const": "start"
+                    },
                     "fields": {
                         "type": "array",
                         "items": {}
@@ -2301,6 +2306,7 @@
                     "name",
                     "title",
                     "subtitle",
+                    "title_align",
                     "fields",
                     "steps",
                     "submit"
