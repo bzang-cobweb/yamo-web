@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-19-contrat-adresse-offre-table.md
+
 # `2026-11-19` — Indications sur l'adresse, propres à l'offre
 
 - **Type** : décision
