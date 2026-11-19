@@ -181,7 +181,9 @@ class BookingApiTest extends TestCase
         $this->assertNotContains('offer.bookings.received', array_column($this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
         // Sur la carte : « Accepter » (confirmation, envoi) et « Refuser » (formulaire du refus).
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
-        $this->assertStringStartsWith('En attente · 135', (string) $item['highlight']);
+        // Le statut en pastille orange ; le total en gras.
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $item['tag']);
+        $this->assertStringStartsWith('135', (string) $item['highlight']);
         [$accept, $refuse] = $item['actions'];
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
         $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);

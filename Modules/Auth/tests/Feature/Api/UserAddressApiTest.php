@@ -98,6 +98,7 @@ class UserAddressApiTest extends TestCase
             'link' => null,
             'edit' => ['form' => 'auth.address', 'record' => (string) $mine->getKey()],
             'actions' => [],
+            'tag' => null,
             'counter' => null,
             'delete' => [
                 'label' => 'Retirer',

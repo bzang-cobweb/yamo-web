@@ -47,6 +47,9 @@ final class ListItem
     /** @var array{label: string, list: string, filter: array<string, string>}|null */
     private ?array $counter = null;
 
+    /** @var array{label: string, tone: string}|null */
+    private ?array $tag = null;
+
     private function __construct(
         public readonly string $id,
         public readonly string $title,
@@ -148,6 +151,18 @@ final class ListItem
     }
 
     /**
+     * Une pastille de couleur sur la carte (un statut : « En attente », « Acceptée »),
+     * décision 2026-11-19-contrat-reservations-logements-profil. Ton : `warning`
+     * (orange), `success` (vert), `danger` (rouge) ou `neutral` (gris).
+     */
+    public function tag(string $label, string $tone = 'neutral'): self
+    {
+        $this->tag = ['label' => $label, 'tone' => $tone];
+
+        return $this;
+    }
+
+    /**
      * Un compteur sur la carte (« 2 demandes en attente ») qui ouvre la liste `$list`
      * avec ces filtres déjà choisis ; rien sans compteur.
      *
@@ -199,6 +214,8 @@ final class ListItem
                 'submission' => $action['submission']?->toArray(),
                 'form' => $action['form'],
             ], $this->actions),
+            /** Pastille de couleur (un statut) : libellé et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune. */
+            'tag' => $this->tag,
             /** Compteur de la carte : son libellé, la liste qu'il ouvre et les filtres déjà choisis ; `null` : aucun. */
             'counter' => $this->counter,
             'delete' => $this->deleteSubmission === null ? null : [

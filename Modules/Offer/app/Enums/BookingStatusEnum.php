@@ -20,6 +20,19 @@ enum BookingStatusEnum: string
     }
 
     /**
+     * Ton de la pastille dans l'app (décision 2026-11-19-contrat-reservations-logements-profil) :
+     * en attente orange, acceptée verte, refusée et annulée grises.
+     */
+    public function tone(): string
+    {
+        return match ($this) {
+            self::PENDING => 'warning',
+            self::ACCEPTED => 'success',
+            self::REFUSED, self::CANCELLED => 'neutral',
+        };
+    }
+
+    /**
      * Couleur du statut au back-office.
      */
     public function color(): string

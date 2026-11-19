@@ -2795,6 +2795,25 @@
                                     "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi ou un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`).",
                                     "items": {}
                                 },
+                                "tag": {
+                                    "type": [
+                                        "object",
+                                        "null"
+                                    ],
+                                    "description": "Pastille de couleur (un statut) : libell\u00e9 et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune.",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "tone": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "tone"
+                                    ]
+                                },
                                 "counter": {
                                     "type": [
                                         "object",
@@ -2884,6 +2903,7 @@
                                 "link",
                                 "edit",
                                 "actions",
+                                "tag",
                                 "counter",
                                 "delete"
                             ]

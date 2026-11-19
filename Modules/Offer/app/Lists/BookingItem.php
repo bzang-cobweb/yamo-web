@@ -10,7 +10,7 @@ use Modules\Offer\Models\Booking;
 /**
  * Une demande dans une liste (« Mes réservations », « Réservations reçues ») : la
  * photo et le titre de l'offre ; en dessous, le membre (pour le propriétaire), les
- * dates et les voyageurs ; en gras, le statut et le total.
+ * dates et les voyageurs ; le statut en pastille de couleur ; en gras, le total.
  */
 final class BookingItem
 {
@@ -27,6 +27,8 @@ final class BookingItem
 
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
-            ->highlight(implode(' · ', array_filter([$booking->status->label(), $booking->formattedTotal($locale)])));
+            // Le statut en pastille de couleur ; en gras, le total.
+            ->tag($booking->status->label(), $booking->status->tone())
+            ->highlight($booking->formattedTotal($locale));
     }
 }

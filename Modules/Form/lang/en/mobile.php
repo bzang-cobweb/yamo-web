@@ -52,7 +52,7 @@ return [
         // Actions d'un item avec un écran et un formulaire (décision 2026-11-19-nuit-voir-editer-retirer).
         'view' => 'View',
         'edit' => 'Edit',
-        'noFilterResults' => 'No offer matches these filters.',
+        'noFilterResults' => 'No results match these filters.',
         // Cœur de favori sur une photo (décision 2026-11-19-contrat-vedette-favoris).
         'addFavorite' => 'Add to favorites',
         'removeFavorite' => 'Remove from favorites',
