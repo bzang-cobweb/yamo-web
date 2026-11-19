@@ -249,8 +249,8 @@ class BookingApiTest extends TestCase
         $offer = $this->home(true);
         $owner = $offer->user;
         $other = $this->home(true, $owner);
-        $first = Booking::factory()->for($offer)->create();
-        Booking::factory()->for($offer)->create();
+        $first = Booking::factory()->for($offer)->create(['message' => "Bonjour,\n je viens   pour le travail."]);
+        Booking::factory()->for($offer)->create(['message' => null]);
         Booking::factory()->for($other)->status(BookingStatusEnum::REFUSED)->create();
 
         // Le compteur des demandes en attente, sur la carte du logement.
@@ -266,6 +266,10 @@ class BookingApiTest extends TestCase
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
         $this->assertStringStartsWith('Demandes · ', $requests['title']);
         $this->assertCount(2, $requests['items']);
+        // Le message du membre, cité sur sa carte (décision 2026-11-19-message-sur-les-demandes-recues).
+        $quotes = collect($requests['items'])->pluck('quote', 'id');
+        $this->assertSame('Bonjour, je viens pour le travail.', $quotes[(string) $first->getKey()]);
+        $this->assertSame([null], $quotes->except((string) $first->getKey())->values()->all());
 
         // Accepter d'un geste ; un autre que le propriétaire : 404.
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNotFound();

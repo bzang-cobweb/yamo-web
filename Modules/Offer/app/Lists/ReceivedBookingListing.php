@@ -68,7 +68,10 @@ class ReceivedBookingListing extends Listing
     {
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
-        $item = BookingItem::make($record, $locale, withGuest: true)->link('/offers/'.$record->offer_id);
+        // Le message du membre, cité sur la carte (décision 2026-11-19-message-sur-les-demandes-recues).
+        $item = BookingItem::make($record, $locale, withGuest: true)
+            ->quote($record->message)
+            ->link('/offers/'.$record->offer_id);
 
         if (! $record->isAwaitingAnswer()) {
             return $item;

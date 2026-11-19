@@ -2743,6 +2743,13 @@
                                     ],
                                     "description": "Phrase mise en avant, affich\u00e9e en gras sur sa ligne ; `null` sans."
                                 },
+                                "quote": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Message cit\u00e9 sur la carte, sous le sous-titre ; `null` sans."
+                                },
                                 "favorite": {
                                     "type": [
                                         "object",
@@ -2899,6 +2906,7 @@
                                 "image",
                                 "rating",
                                 "highlight",
+                                "quote",
                                 "favorite",
                                 "link",
                                 "edit",

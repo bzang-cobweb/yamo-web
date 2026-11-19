@@ -5,8 +5,8 @@ namespace Modules\Form\Support;
 use Illuminate\Support\Str;
 
 /**
- * Un item d'une liste (`Listing`) : titre, sous-titre, photo, note et phrase mise
- * en avant, et ce que l'app peut en
+ * Un item d'une liste (`Listing`) : titre, sous-titre, photo, note, phrase mise
+ * en avant et message cité, et ce que l'app peut en
  * faire : l'ouvrir dans un formulaire lié à l'enregistrement (`edit`), le retirer
  * après confirmation (`delete`, envoi décrit comme celui d'un formulaire).
  */
@@ -25,6 +25,9 @@ final class ListItem
 
     /** Phrase mise en avant, sur sa ligne et en gras ; aucune par défaut. */
     private ?string $highlight = null;
+
+    /** Message cité sur la carte (celui d'un membre) ; aucun par défaut. */
+    private ?string $quote = null;
 
     /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
     private ?bool $favoriteActive = null;
@@ -93,6 +96,18 @@ final class ListItem
     {
         $text = $text === null ? '' : trim((string) preg_replace('/\s+/u', ' ', $text));
         $this->highlight = $text === '' ? null : Str::limit($text, $limit, '…');
+
+        return $this;
+    }
+
+    /**
+     * Un message saisi par un utilisateur, cité sur la carte sous le sous-titre (le
+     * message d'un membre avec sa demande) ; tronqué à `$limit` caractères.
+     */
+    public function quote(?string $text, int $limit = 300): self
+    {
+        $text = $text === null ? '' : trim((string) preg_replace('/\s+/u', ' ', $text));
+        $this->quote = $text === '' ? null : Str::limit($text, $limit, '…');
 
         return $this;
     }
@@ -201,6 +216,8 @@ final class ListItem
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
             /** Phrase mise en avant, affichée en gras sur sa ligne ; `null` sans. */
             'highlight' => $this->highlight,
+            /** Message cité sur la carte, sous le sous-titre ; `null` sans. */
+            'quote' => $this->quote,
             /** Cœur de favori : plein si `active` ; PUT sur `endpoint` ajoute, DELETE retire ; `null` : pas de cœur. */
             'favorite' => $this->favoriteEndpoint === null ? null : ['active' => (bool) $this->favoriteActive, 'endpoint' => $this->favoriteEndpoint],
             /** Écran de l'app ouvert en touchant l'item ; `null` : aucun. */

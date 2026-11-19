@@ -51,6 +51,7 @@ class ListingApiTest extends TestCase
                     'image' => null,
                     'rating' => null,
                     'highlight' => null,
+                    'quote' => null,
                     'favorite' => null,
                     'link' => null,
                     'edit' => null,
