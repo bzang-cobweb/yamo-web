@@ -73,4 +73,8 @@ return [
     'paid_until' => 'Paid until',
     'paid_help' => 'Empty: not paid. At launch everything is free; later, an unpaid offer will no longer be visible.',
     'reviews' => 'Reviews',
+    // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
+    'tabs' => [
+        'listing' => 'Listing',
+    ],
 ];

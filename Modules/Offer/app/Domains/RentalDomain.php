@@ -85,16 +85,6 @@ class RentalDomain extends Domain
         ];
     }
 
-    /**
-     * Plus d'une chambre : leur nombre, avant le prix (« 3 chambres »).
-     */
-    public function itemDetails(Offer $offer): array
-    {
-        $bedrooms = (int) $offer->detail('bedrooms');
-
-        return $bedrooms > 1 ? [trans_choice('offer::rental.bedrooms_count', $bedrooms, ['count' => $bedrooms])] : [];
-    }
-
     public function attributes(): array
     {
         return [

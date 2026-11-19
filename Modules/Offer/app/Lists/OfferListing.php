@@ -96,7 +96,7 @@ class OfferListing extends Listing
         $typed = (string) $record->getTranslation('title', $locale);
         $title = $domain->itemTitle($record) ?? $typed;
 
-        // En sous-titre, le titre saisi ; en gras, « Publiée · 3 chambres · 80 000 FCFA / mois »
+        // En sous-titre, le titre saisi ; en gras, « Publiée · 80 000 FCFA / mois »
         // (décision 2026-11-19-item-titre-saisi-details). La note, tant qu'elle est publiée.
         return ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))

@@ -85,8 +85,8 @@ class OfferBrowseApiTest extends TestCase
         $studio->update(['price' => '80000', 'currency' => 'XAF']);
         $items = $this->browse()->json('data.items');
         $highlights = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($items, 'highlight', 'id'));
-        // Plus d'une chambre : leur nombre avant le prix ; une seule ou aucune : rien.
-        $this->assertSame('3 chambres · 45 000 FCFA / jour', $highlights[(string) $house->getKey()]);
+        // Le prix seul : plus de nombre de chambres (décision 2026-11-19-ombre-coeur-onglets-offre).
+        $this->assertSame('45 000 FCFA / jour', $highlights[(string) $house->getKey()]);
         $this->assertSame('80 000 FCFA / mois', $highlights[(string) $studio->getKey()]);
         // Le titre saisi, en sous-titre (décision 2026-11-19-item-titre-saisi-details).
         $this->assertSame($house->getTranslation('title', 'fr'), array_column($items, 'subtitle', 'id')[(string) $house->getKey()]);

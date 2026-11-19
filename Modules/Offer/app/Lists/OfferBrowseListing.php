@@ -136,7 +136,7 @@ class OfferBrowseListing extends Listing
 
         // Titre construit par le domaine (« Studio · meublé · Douala »), sinon le titre saisi ;
         // en sous-titre, le titre saisi ; en gras, les détails puis le prix
-        // (« 3 chambres · 80 000 FCFA / mois », décision 2026-11-19-item-titre-saisi-details).
+        // (« 80 000 FCFA / mois », décisions 2026-11-19-item-titre-saisi-details et 2026-11-19-ombre-coeur-onglets-offre).
         $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)

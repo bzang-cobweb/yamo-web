@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-19-ombre-coeur-onglets-offre.md (plus de nombre de chambres dans les listes)
 # `2026-11-18` — Logement : unité du prix dans le formulaire ; nombre de chambres avant le prix
 
 - **Type** : décision

@@ -11,7 +11,8 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
@@ -60,96 +61,99 @@ abstract class OfferForm
         return $schema
             ->columns(2)
             ->components([
-                Section::make()
-                    ->columns(2)
+                // Des onglets (décision 2026-11-19-ombre-coeur-onglets-offre) : l'annonce, l'accès,
+                // les caractéristiques du domaine, les photos ; les avis restent sous le formulaire.
+                Tabs::make('offer')
                     ->columnSpanFull()
-                    ->schema([
-                        Select::make('user_id')
-                            ->label(__('offer::offer.owner'))
-                            ->relationship('user', 'name')
-                            ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
-                            ->searchable(['name', 'first_name', 'last_name', 'email'])
-                            ->required(),
-                        // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
-                        SingleCountry::lock(Select::make('country_id')
-                            ->label(__('offer::offer.country'))
-                            ->live()
-                            ->options(fn (): array => Country::options())
-                            ->searchable()
-                            ->required()),
-                        // Traduits : un onglet par langue ; seule la langue par défaut est obligatoire.
-                        TranslatableTabs::make(fn (string $locale): array => [
-                            TextInput::make("title.{$locale}")
-                                ->label(__('offer::offer.title_field'))
-                                ->required($locale === Locales::default())
-                                ->maxLength(255),
-                            Textarea::make("description.{$locale}")
-                                ->label(__('offer::offer.description'))
-                                ->maxLength(Field::TEXTAREA_MAX_LENGTH)
-                                ->rows(4),
-                        ], 'texts')->columnSpanFull(),
-                        Select::make('category_id')
-                            ->label(__('offer::offer.category'))
-                            ->options(fn (): array => OfferCategory::options()),
-                        TextInput::make('price')
-                            ->label($domain->priceLabel())
-                            ->helperText(__('offer::offer.price_currency_help'))
-                            ->numeric()
-                            ->minValue(0)
-                            ->required($domain->requiresPrice())
-                            ->visible($domain->hasPrice()),
-                        Select::make('address_id')
-                            ->label(__('offer::offer.address'))
-                            // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
-                            ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('country_id')), fn ($query) => $query->where('country_id', $get('country_id'))))
-                            ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                                if (filled($value) && filled($get('country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('country_id')) {
-                                    $fail(__('offer::offer.address_country'));
-                                }
-                            })
-                            ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
-                            ->searchable(['street', 'zip', 'city'])
-                            ->required($domain->requiresAddress())
-                            ->visible($domain->hasAddress())
-                            ->columnSpanFull(),
-                    ]),
-                // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
-                Section::make(__('offer::offer.access'))
-                    ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([
-                        Select::make('status')
-                            ->label(__('offer::offer.status'))
-                            ->options(OfferStatusEnum::options())
-                            ->default(OfferStatusEnum::DRAFT->value)
-                            ->required(),
-                        // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
-                        DateTimePicker::make('featured_until')
-                            ->label(__('offer::offer.featured_until'))
-                            ->helperText(__('offer::offer.featured_help'))
-                            ->native(false)
-                            ->seconds(false),
-                        ...self::attributes($domain, access: true),
-                        DateTimePicker::make('paid_until')
-                            ->label(__('offer::offer.paid_until'))
-                            ->helperText(__('offer::offer.paid_help'))
-                            ->native(false)
-                            ->seconds(false),
-                    ]),
-                Section::make(__('offer::offer.attributes'))
-                    ->columns(2)
-                    ->columnSpanFull()
-                    ->schema(self::attributes($domain)),
-                Section::make(__('offer::offer.photos'))
-                    ->columnSpanFull()
-                    ->schema([
-                        SpatieMediaLibraryFileUpload::make('photos')
-                            ->hiddenLabel()
-                            ->collection(Offer::PHOTOS)
-                            ->multiple()
-                            ->reorderable()
-                            ->image()
-                            ->maxFiles(20),
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        Tab::make(__('offer::offer.tabs.listing'))
+                            ->columns(2)
+                            ->schema([
+                                Select::make('user_id')
+                                    ->label(__('offer::offer.owner'))
+                                    ->relationship('user', 'name')
+                                    ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
+                                    ->searchable(['name', 'first_name', 'last_name', 'email'])
+                                    ->required(),
+                                // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
+                                SingleCountry::lock(Select::make('country_id')
+                                    ->label(__('offer::offer.country'))
+                                    ->live()
+                                    ->options(fn (): array => Country::options())
+                                    ->searchable()
+                                    ->required()),
+                                // Traduits : un onglet par langue ; seule la langue par défaut est obligatoire.
+                                TranslatableTabs::make(fn (string $locale): array => [
+                                    TextInput::make("title.{$locale}")
+                                        ->label(__('offer::offer.title_field'))
+                                        ->required($locale === Locales::default())
+                                        ->maxLength(255),
+                                    Textarea::make("description.{$locale}")
+                                        ->label(__('offer::offer.description'))
+                                        ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                                        ->rows(4),
+                                ], 'texts')->columnSpanFull(),
+                                Select::make('category_id')
+                                    ->label(__('offer::offer.category'))
+                                    ->options(fn (): array => OfferCategory::options()),
+                                TextInput::make('price')
+                                    ->label($domain->priceLabel())
+                                    ->helperText(__('offer::offer.price_currency_help'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->required($domain->requiresPrice())
+                                    ->visible($domain->hasPrice()),
+                                Select::make('address_id')
+                                    ->label(__('offer::offer.address'))
+                                    // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
+                                    ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('country_id')), fn ($query) => $query->where('country_id', $get('country_id'))))
+                                    ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                        if (filled($value) && filled($get('country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('country_id')) {
+                                            $fail(__('offer::offer.address_country'));
+                                        }
+                                    })
+                                    ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
+                                    ->searchable(['street', 'zip', 'city'])
+                                    ->required($domain->requiresAddress())
+                                    ->visible($domain->hasAddress())
+                                    ->columnSpanFull(),
+                            ]),
+                        // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
+                        Tab::make(__('offer::offer.access'))
+                            ->columns(2)
+                            ->schema([
+                                Select::make('status')
+                                    ->label(__('offer::offer.status'))
+                                    ->options(OfferStatusEnum::options())
+                                    ->default(OfferStatusEnum::DRAFT->value)
+                                    ->required(),
+                                // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
+                                DateTimePicker::make('featured_until')
+                                    ->label(__('offer::offer.featured_until'))
+                                    ->helperText(__('offer::offer.featured_help'))
+                                    ->native(false)
+                                    ->seconds(false),
+                                ...self::attributes($domain, access: true),
+                                DateTimePicker::make('paid_until')
+                                    ->label(__('offer::offer.paid_until'))
+                                    ->helperText(__('offer::offer.paid_help'))
+                                    ->native(false)
+                                    ->seconds(false),
+                            ]),
+                        Tab::make(__('offer::offer.attributes'))
+                            ->columns(2)
+                            ->schema(self::attributes($domain)),
+                        Tab::make(__('offer::offer.photos'))
+                            ->schema([
+                                SpatieMediaLibraryFileUpload::make('photos')
+                                    ->hiddenLabel()
+                                    ->collection(Offer::PHOTOS)
+                                    ->multiple()
+                                    ->reorderable()
+                                    ->image()
+                                    ->maxFiles(20),
+                            ]),
                     ]),
             ]);
     }

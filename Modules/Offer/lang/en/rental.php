@@ -27,7 +27,6 @@ return [
         'month' => 'month',
     ],
     // Sous-titre des listes : le nombre de chambres, s'il y en a plus d'une.
-    'bedrooms_count' => ':count bedroom|:count bedrooms',
     'furnished' => 'Furnished',
     'surface' => 'Area',
     'rooms' => 'Rooms',

@@ -73,4 +73,8 @@ return [
     'paid_until' => "Payée jusqu'au",
     'paid_help' => 'Vide : pas payée. Au lancement tout est gratuit ; plus tard, une offre non payée ne sera plus visible.',
     'reviews' => 'Avis',
+    // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
+    'tabs' => [
+        'listing' => 'Annonce',
+    ],
 ];
