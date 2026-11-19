@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-contrat-paiement-visibilite-avis.md
+
 Remplace en partie : 2026-11-19-fiche-localisation.md (le pays s'ajoute à l'adresse) et 2026-11-19-nuit-tous-les-avis.md (bouton dès deux avis).
 
 # `2026-11-19` — Fiche d'une offre : pays dans l'adresse, séparateur, « Voir tous les avis », sections repliables

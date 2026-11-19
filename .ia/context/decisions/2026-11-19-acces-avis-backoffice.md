@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-contrat-paiement-visibilite-avis.md
+
 Remplacée en partie par : 2026-11-19-fond-blanc-filtres.md (la phrase de l'item n'a plus la couleur primaire)
 # `2026-11-19` — Avis en onglet de l'offre, section « Accès », date « Payée jusqu'au », retouches de l'item de liste
 

@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-contrat-paiement-visibilite-avis.md
+
 Remplacée en partie par : 2026-11-19-fiche-localisation.md (la rue est servie ; bloc « Localisation »)
 
 # `2026-11-18` — Fiche détaillée d'une offre, décrite par le serveur
