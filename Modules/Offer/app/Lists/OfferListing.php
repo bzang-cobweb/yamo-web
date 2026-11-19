@@ -78,7 +78,7 @@ class OfferListing extends Listing
                 ->label(__('offer::booking.profile.offer_status'))
                 ->options(OfferStatusEnum::options()),
             // Les logements qui ont au moins une demande dans ce statut : à venir, en attente, passée.
-            BookingFilters::status('booking_status', __('offer::booking.profile.filter_booking_status')),
+            BookingFilters::statusSelect('booking_status', __('offer::booking.profile.filter_booking_status')),
             ...$this->offerFilters($this->mine()),
         ];
     }

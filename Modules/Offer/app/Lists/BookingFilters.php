@@ -29,6 +29,17 @@ final class BookingFilters
     }
 
     /**
+     * Le même filtre en liste déroulante, sans « Tous » (vide : toutes) : pour une liste
+     * où il côtoie d'autres listes déroulantes (« Mes logements »).
+     */
+    public static function statusSelect(string $name, string $label): Field
+    {
+        return Field::select($name)
+            ->label($label)
+            ->options(collect(Booking::STATUS_GROUPS)->mapWithKeys(fn (string $group): array => [$group => __('offer::booking.profile.filter_'.$group)])->all());
+    }
+
+    /**
      * @param  Builder<Booking>  $query
      * @param  array<string, mixed>  $filters
      */

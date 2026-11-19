@@ -325,11 +325,12 @@ class BookingApiTest extends TestCase
 
         $filter = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'booking_status');
         $this->assertSame('Demande', $filter['label']);
-        $this->assertSame(['any', 'upcoming', 'pending', 'past'], array_column($filter['options'], 'value'));
+        $this->assertSame('select', $filter['type']);
+        $this->assertSame(['upcoming', 'pending', 'past'], array_column($filter['options'], 'value'));
 
         $this->assertSame([(string) $pending->getKey()], $ids('pending'));
         $this->assertSame([(string) $upcoming->getKey()], $ids('upcoming'));
         $this->assertSame([(string) $quiet->getKey()], $ids('past'));
-        $this->assertCount(3, $ids('any'));
+        $this->assertCount(3, $ids(''));
     }
 }
