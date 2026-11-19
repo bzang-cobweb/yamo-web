@@ -101,6 +101,34 @@ class OfferApiTest extends TestCase
         $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['category_id']['options'], 'label'));
         $this->assertCount(1, $fields['address_id']['options']);
         $this->assertSame('draft', $fields['status']['default']);
+        // Les charges : un montant mensuel dans la devise du pays.
+        $this->assertSame('CHF / mois', $fields['charges']['suffix']);
+    }
+
+    public function test_the_app_form_comes_in_the_4_steps_of_the_domain(): void
+    {
+        $user = $this->member();
+        UserAddress::factory()->for($user)->create();
+
+        // Décision 2026-11-19-contrat-formulaire-etapes-symbole-devise.
+        $steps = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
+        $this->assertSame(['Le logement', 'Prix et disponibilité', 'Adresse et catégorie', "L'annonce"], array_column($steps, 'title'));
+        $this->assertSame([
+            ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms'],
+            ['price', 'charges', 'available_from'],
+            ['address_id', 'category_id'],
+            ['title', 'description', 'status'],
+        ], array_column($steps, 'fields'));
+
+        // « Suivant » : seule l'étape est vérifiée.
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'castle'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['property_type', 'surface', 'rooms'])
+            ->assertJsonMissingValidationErrors(['title', 'price', 'address_id']);
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'surface' => '30', 'rooms' => '1'])->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/4', ['title' => 'Studio, tél 699 12 34 56', 'status' => 'draft'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('title');
     }
 
     public function test_a_member_adds_a_home_with_its_attributes(): void

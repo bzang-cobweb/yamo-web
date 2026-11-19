@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Filament\Resources\CountryResource\Tables;
 
+use App\Support\Currency;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
@@ -36,6 +37,9 @@ abstract class CountryTable
                     ->searchable(),
                 TextColumn::make('currency')
                     ->label(__('location::country.currency'))
+                    // Le code saisi, et le symbole que lit une personne : « XAF (FCFA) »
+                    // (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
+                    ->formatStateUsing(fn (?string $state): ?string => $state === null ? null : (($symbol = Currency::symbol($state)) === $state ? $state : $state.' ('.$symbol.')'))
                     ->sortable(),
                 TextColumn::make('regions_count')
                     ->label(__('location::country.regions_count'))

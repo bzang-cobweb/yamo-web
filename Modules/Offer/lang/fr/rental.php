@@ -37,4 +37,11 @@ return [
     'charges' => 'Charges mensuelles',
     'charges_help' => 'En plus du loyer.',
     'price' => 'Loyer',
+    // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
+    'steps' => [
+        'home' => 'Le logement',
+        'price' => 'Prix et disponibilité',
+        'place' => 'Adresse et catégorie',
+        'listing' => "L'annonce",
+    ],
 ];

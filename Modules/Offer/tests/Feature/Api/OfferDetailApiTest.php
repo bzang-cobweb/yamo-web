@@ -84,7 +84,8 @@ class OfferDetailApiTest extends TestCase
             ['label' => 'Pièces', 'value' => '3,5'],
             ['label' => 'Chambres', 'value' => '2'],
             ['label' => 'Disponible dès le', 'value' => '1 décembre 2026'],
-            ['label' => 'Charges mensuelles', 'value' => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', '15 000')],
+            // Un montant, avec le symbole de la devise (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
+            ['label' => 'Charges mensuelles', 'value' => '15 000 FCFA / mois'],
         ], array_map(fn (array $fact): array => ['label' => $fact['label'], 'value' => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $fact['value'])], $data['facts']));
         // La rue n'est jamais servie.
         $this->assertStringNotContainsString('Njo-Njo', $response->getContent());

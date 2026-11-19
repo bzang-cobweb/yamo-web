@@ -122,7 +122,23 @@ class RentalDomain extends Domain
             Field::number('charges')
                 ->label(__('offer::rental.charges'))
                 ->help(__('offer::rental.charges_help'))
+                // Un montant mensuel : « FCFA / mois », la devise venant de qui l'affiche.
+                ->money(__('offer::rental.price_units.month'))
                 ->rules(['min:0', 'max:100000']),
+        ];
+    }
+
+    /**
+     * Quatre étapes dans l'app : le logement, le prix et la disponibilité,
+     * l'adresse et la catégorie, puis l'annonce.
+     */
+    public function formSteps(): array
+    {
+        return [
+            ['title' => __('offer::rental.steps.home'), 'fields' => ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms']],
+            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from']],
+            ['title' => __('offer::rental.steps.place'), 'fields' => ['address_id', 'category_id']],
+            ['title' => __('offer::rental.steps.listing'), 'fields' => ['title', 'description', 'status']],
         ];
     }
 

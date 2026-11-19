@@ -10,6 +10,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Number;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -51,7 +52,7 @@ abstract class OfferTable
                     ->sortable(),
                 TextColumn::make('price')
                     ->label(__('offer::offer.price'))
-                    ->state(fn (Offer $record): ?string => $record->price === null ? null : $record->price.' '.$record->currency)
+                    ->state(fn (Offer $record): ?string => $record->price === null ? null : Number::currency((float) $record->price, (string) $record->currency, app()->getLocale()))
                     ->sortable(),
                 TextColumn::make('category.name')
                     ->label(__('offer::offer.category'))

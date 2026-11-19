@@ -139,6 +139,27 @@ class TranslationTest extends AuthFilamentTestCase
         $this->assertSame(['fr' => 'Appartement'], $offer->fresh()->getTranslations('title'));
     }
 
+    public function test_a_domain_without_steps_keeps_a_single_page_form(): void
+    {
+        $this->assertSame([], $this->asUser($this->member('fr'))->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps'));
+    }
+
+    public function test_declared_steps_keep_every_field_and_drop_empty_ones(): void
+    {
+        app(DomainRegistry::class)->register(TestStepsDomain::class);
+        config(['offer.domain' => 'test.steps']);
+
+        $steps = $this->asUser($this->member('fr'))->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
+
+        // L'étape qui ne cite que le prix (absent de ce domaine) disparaît.
+        $this->assertSame(['La note', "L'annonce"], array_column($steps, 'title'));
+        $this->assertSame(['note'], $steps[0]['fields']);
+        // Les champs qu'aucune étape ne cite rejoignent la dernière.
+        $this->assertSame('title', $steps[1]['fields'][0]);
+        $this->assertContains('description', $steps[1]['fields']);
+        $this->assertContains('status', $steps[1]['fields']);
+    }
+
     public function test_only_texts_can_be_translatable(): void
     {
         $this->expectException(LogicException::class);
@@ -194,5 +215,23 @@ class TestNotesDomain extends Domain
     public function hasPrice(): bool
     {
         return false;
+    }
+}
+
+/** Domaine de test : des étapes, dont une sans champ présent. */
+class TestStepsDomain extends TestNotesDomain
+{
+    public static function key(): string
+    {
+        return 'test.steps';
+    }
+
+    public function formSteps(): array
+    {
+        return [
+            ['title' => 'La note', 'fields' => ['note', 'price']],
+            ['title' => 'Le prix', 'fields' => ['price']],
+            ['title' => "L'annonce", 'fields' => ['title']],
+        ];
     }
 }

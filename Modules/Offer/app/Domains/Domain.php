@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Domains;
 
+use App\Support\Currency;
 use Illuminate\Support\Number;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
@@ -173,6 +174,19 @@ abstract class Domain
     }
 
     /**
+     * Les étapes du formulaire de l'app (décision
+     * 2026-11-19-contrat-formulaire-etapes-symbole-devise) : titre traduit et noms
+     * des champs, attributs du domaine et champs communs (`COMMON_FIELDS`). Aucune
+     * par défaut : un formulaire d'un seul tenant.
+     *
+     * @return list<array{title: string, fields: list<string>}>
+     */
+    public function formSteps(): array
+    {
+        return [];
+    }
+
+    /**
      * Noms des attributs.
      *
      * @return list<string>
@@ -184,14 +198,17 @@ abstract class Domain
 
     /**
      * Les attributs, tels qu'on les saisit : un texte libre y refuse les
-     * coordonnées (décision 2026-11-19-contrat-annonces-sans-coordonnees).
+     * coordonnées (décision 2026-11-19-contrat-annonces-sans-coordonnees) ; un
+     * montant prend le symbole de la devise `$currency` (code ISO), s'il est connu.
      *
      * @return list<Field>
      */
-    final public function inputAttributes(): array
+    final public function inputAttributes(?string $currency = null): array
     {
+        $symbol = Currency::symbol($currency);
+
         return array_map(
-            fn (Field $field): Field => in_array($field->type, [FieldType::TEXT, FieldType::TEXTAREA], true) ? $field->withoutContactDetails() : $field,
+            fn (Field $field): Field => (in_array($field->type, [FieldType::TEXT, FieldType::TEXTAREA], true) ? $field->withoutContactDetails() : $field)->inCurrency($symbol),
             $this->attributes(),
         );
     }

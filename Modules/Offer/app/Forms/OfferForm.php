@@ -2,11 +2,13 @@
 
 namespace Modules\Offer\Forms;
 
+use App\Support\Currency;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
+use Modules\Form\Support\Step;
 use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\Domain;
@@ -73,7 +75,7 @@ class OfferForm extends Form
                 ->label(__('offer::offer.category'))
                 ->options($categories)
                 ->default($offer?->category_id === null ? null : (string) $offer->category_id),
-            ! $domain->hasPrice() ? null : $this->price($domain, (string) CurrentCountry::require()->currency)
+            ! $domain->hasPrice() ? null : $this->price($domain, (string) Currency::symbol(CurrentCountry::require()->currency))
                 ->default($offer?->price)
                 ->required($domain->requiresPrice())
                 ->rules(['min:0', 'max:100000000']),
@@ -88,13 +90,14 @@ class OfferForm extends Form
                 ->options(OfferStatusEnum::options())
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
                 ->required(),
-            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes()),
+            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
         ]));
     }
 
     /**
-     * Le prix, avec sa devise et son unité ; l'unité peut suivre un autre champ
-     * (« XAF / jour » si meublé, décision 2026-11-18-unite-prix-chambres).
+     * Le prix, avec le symbole de sa devise et son unité ; l'unité peut suivre un
+     * autre champ (« FCFA / jour » si meublé, décisions 2026-11-18-unite-prix-chambres
+     * et 2026-11-19-contrat-formulaire-etapes-symbole-devise).
      */
     private function price(Domain $domain, string $currency): Field
     {
@@ -108,6 +111,41 @@ class OfferForm extends Form
         return $field
             ->suffix($currency.' / '.$unit['default'])
             ->suffixWhen($unit['field'], array_map(fn (string $value): string => $currency.' / '.$value, $unit['units']));
+    }
+
+    /**
+     * Les étapes déclarées par le domaine (décision
+     * 2026-11-19-contrat-formulaire-etapes-symbole-devise), réduites aux champs
+     * présents ; un champ qu'aucune étape ne cite rejoint la dernière. Sans étapes
+     * déclarées, le formulaire reste d'un seul tenant.
+     *
+     * @return list<Step>
+     */
+    public function steps(): array
+    {
+        $declared = $this->domain()->formSteps();
+
+        if ($declared === []) {
+            return [];
+        }
+
+        $present = array_map(fn (Field $field): string => $field->name, $this->fields());
+        $steps = [];
+        $placed = [];
+
+        foreach ($declared as $step) {
+            $names = array_values(array_intersect($step['fields'], $present));
+            $placed = [...$placed, ...$names];
+            $steps[] = ['title' => $step['title'], 'fields' => $names];
+        }
+
+        $last = count($steps) - 1;
+        $steps[$last]['fields'] = [...$steps[$last]['fields'], ...array_values(array_diff($present, $placed))];
+
+        return array_values(array_map(
+            fn (array $step): Step => Step::make($step['title'], $step['fields']),
+            array_filter($steps, fn (array $step): bool => $step['fields'] !== []),
+        ));
     }
 
     public function title(): string

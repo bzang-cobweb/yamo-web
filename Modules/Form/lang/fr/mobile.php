@@ -17,6 +17,8 @@ return [
         'previous' => 'Précédent',
         // Champ note en étoiles, lu par l'accessibilité.
         'ratingValue' => ':value sur 5',
+        // Unité d'un champ, dans sa ligne d'aide (« En m² »).
+        'unit' => 'En :unit',
         'stepOf' => 'Étape :current sur :total',
     ],
     'list' => [

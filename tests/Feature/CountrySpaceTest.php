@@ -88,7 +88,8 @@ class CountrySpaceTest extends TestCase
 
         $fields = array_column($this->in($user, 'CM')->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
         $this->assertSame('Loyer', $fields['price']['label']);
-        $this->assertSame('XAF / mois', $fields['price']['suffix']);
+        // Le symbole local de la devise, pas son code (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
+        $this->assertSame('FCFA / mois', $fields['price']['suffix']);
         $this->assertSame([(string) $address], array_column($fields['address_id']['options'], 'value'));
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [

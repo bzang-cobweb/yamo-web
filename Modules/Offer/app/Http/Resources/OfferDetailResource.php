@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Http\Resources;
 
+use App\Support\Currency;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -120,7 +121,11 @@ class OfferDetailResource extends JsonResource
     {
         $facts = $offer->category === null ? [] : [['label' => __('offer::offer.category'), 'value' => $offer->category->path()]];
 
+        // Un montant prend le symbole de la devise de l'offre, sinon de son pays (« 5 000 FCFA / mois »).
+        $symbol = Currency::symbol($offer->currency ?? $offer->country?->currency, $locale);
+
         foreach ($domain->attributes() as $field) {
+            $field->inCurrency($symbol);
             $value = $field->displayValue($offer->detail($field->name), $locale);
 
             if ($value !== null) {

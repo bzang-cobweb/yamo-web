@@ -51,7 +51,7 @@ final class Field
 
     /**
      * Unité qui suit la valeur d'un autre champ (décision 2026-11-18-unite-prix-chambres) :
-     * `{field: 'furnished', suffixes: {'true': 'XAF / jour', 'false': 'XAF / mois'}}`.
+     * `{field: 'furnished', suffixes: {'true': 'FCFA / jour', 'false': 'FCFA / mois'}}`.
      *
      * @var array{field: string, suffixes: array<string, string>}|null
      */
@@ -59,6 +59,11 @@ final class Field
 
     /** Texte rangé par langue (décision 2026-11-18-offres-multilingues-categories-arbre). */
     private bool $translatable = false;
+
+    /** Montant dans une devise (`money()`) : son unité de temps éventuelle (« mois »). */
+    private bool $money = false;
+
+    private ?string $moneyPer = null;
 
     /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
     private bool $withoutContactDetails = false;
@@ -417,6 +422,33 @@ final class Field
     public function isTranslatable(): bool
     {
         return $this->translatable;
+    }
+
+    /**
+     * Un montant, dans une devise que le champ ne connaît pas (celle du pays ou de
+     * l'offre) ; `$per` : son unité de temps (« mois »). Qui connaît la devise
+     * l'ajoute avec `inCurrency()` : l'unité devient « FCFA / mois » (décision
+     * 2026-11-19-contrat-formulaire-etapes-symbole-devise).
+     */
+    public function money(?string $per = null): self
+    {
+        $this->money = true;
+        $this->moneyPer = $per;
+
+        return $this;
+    }
+
+    /**
+     * L'unité d'un montant (`money()`) dans la devise de symbole `$symbol` ; sans
+     * effet sur un autre champ, ou sans symbole.
+     */
+    public function inCurrency(?string $symbol): self
+    {
+        if ($this->money && filled($symbol)) {
+            $this->suffix = $this->moneyPer === null ? $symbol : $symbol.' / '.$this->moneyPer;
+        }
+
+        return $this;
     }
 
     /**
