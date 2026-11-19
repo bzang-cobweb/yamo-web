@@ -104,7 +104,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'documents', 'pets', 'smoking', 'parties', 'informations', 'photos'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -177,7 +177,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['documents', 'pets', 'smoking', 'parties'],
+            ['pets', 'smoking', 'parties', 'documents'],
             ['informations'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],

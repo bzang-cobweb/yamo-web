@@ -172,8 +172,8 @@ class OfferDetailApiTest extends TestCase
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
-            ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
             ['label' => 'Animaux acceptés', 'value' => 'Non'],
+            ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
         ], $data['rules']);
         $this->assertNotContains('Animaux acceptés', array_column($data['facts'], 'label'));
         $this->assertNotContains('15:00', array_column([...$data['facts'], ...$data['rules']], 'value'));

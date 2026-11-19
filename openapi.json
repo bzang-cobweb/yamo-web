@@ -3070,23 +3070,6 @@
                         "minimum": 0,
                         "maximum": 100000
                     },
-                    "documents": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "type": "string",
-                            "enum": [
-                                "id_card",
-                                "passport",
-                                "residence_permit",
-                                "proof_of_income",
-                                "guarantor",
-                                "deposit"
-                            ]
-                        }
-                    },
                     "pets": {
                         "type": [
                             "string",
@@ -3119,6 +3102,23 @@
                             "no",
                             null
                         ]
+                    },
+                    "documents": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "id_card",
+                                "passport",
+                                "residence_permit",
+                                "proof_of_income",
+                                "guarantor",
+                                "deposit"
+                            ]
+                        }
                     },
                     "informations": {
                         "type": [

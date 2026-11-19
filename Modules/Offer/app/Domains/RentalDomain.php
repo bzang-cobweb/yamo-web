@@ -141,13 +141,14 @@ class RentalDomain extends Domain
             // d'arrivée et de départ n'y sont plus : un bloc d'informations les dit (décision
             // 2026-11-19-arrivee-depart-en-informations). Pas d'âge minimum propre à l'offre : celui
             // de l'application vaut pour toutes (décision 2026-11-19-age-minimum-de-l-app).
-            Field::multiselect('documents')
-                ->label(__('offer::rental.rules.documents'))
-                ->options(collect(self::DOCUMENTS)->mapWithKeys(fn (string $document): array => [$document => __('offer::rental.rules.document_options.'.$document)])->all()),
             // Oui / Non plutôt qu'un interrupteur : « non renseigné » n'est pas « non ».
             ...array_map(fn (string $rule): Field => Field::select($rule)
                 ->label(__('offer::rental.rules.'.$rule))
                 ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), ['pets', 'smoking', 'parties']),
+            // Les documents en dernier (décision 2026-11-19-documents-en-dernier).
+            Field::multiselect('documents')
+                ->label(__('offer::rental.rules.documents'))
+                ->options(collect(self::DOCUMENTS)->mapWithKeys(fn (string $document): array => [$document => __('offer::rental.rules.document_options.'.$document)])->all()),
         ];
     }
 
@@ -156,7 +157,7 @@ class RentalDomain extends Domain
      */
     public function ruleAttributes(): array
     {
-        return ['documents', 'pets', 'smoking', 'parties'];
+        return ['pets', 'smoking', 'parties', 'documents'];
     }
 
     /**
