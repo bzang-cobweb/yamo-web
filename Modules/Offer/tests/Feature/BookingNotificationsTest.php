@@ -158,6 +158,7 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
         $this->assertSame([['label' => 'View the listing', 'link' => '/offers/'.$booking->offer_id]], $notification->data['links']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);
+        $this->assertSame([['text' => 'Marie Curie', 'link' => '/members/'.$booking->user_id]], $notification->data['text_links']);
         $this->assertSame('Bonjour, je viens pour le travail.', $notification->data['message']);
         $this->assertNull($notification->read_at);
     }

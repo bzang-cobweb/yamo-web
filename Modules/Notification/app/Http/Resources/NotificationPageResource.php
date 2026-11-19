@@ -16,7 +16,7 @@ use Illuminate\Pagination\CursorPaginator;
 class NotificationPageResource extends JsonResource
 {
     /**
-     * @return array{items: list<array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, message: string|null, link: string|null, links: list<array{label: string, link: string}>, read: bool, created_at: string|null}>, next_cursor: string|null}
+     * @return array{items: list<array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, read: bool, created_at: string|null}>, next_cursor: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -37,6 +37,8 @@ class NotificationPageResource extends JsonResource
                 'link' => $this->link($data),
                 /** Liens en plus, sous le texte (« Voir l'annonce » → `/offers/12`). */
                 'links' => $this->links($data),
+                /** Passages du texte qui ouvrent un écran (« Paul Etoa » → `/members/37`). */
+                'text_links' => $this->textLinks($data),
                 'read' => $notification->read_at !== null,
                 /** Date ISO 8601. */
                 'created_at' => $this->date($notification),
@@ -88,6 +90,23 @@ class NotificationPageResource extends JsonResource
         foreach (is_array($data['links'] ?? null) ? $data['links'] : [] as $link) {
             if (is_array($link) && is_string($link['label'] ?? null) && is_string($link['link'] ?? null)) {
                 $links[] = ['label' => (string) $link['label'], 'link' => (string) $link['link']];
+            }
+        }
+
+        return $links;
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     * @return list<array{text: string, link: string}>
+     */
+    private function textLinks(array $data): array
+    {
+        $links = [];
+
+        foreach (is_array($data['text_links'] ?? null) ? $data['text_links'] : [] as $link) {
+            if (is_array($link) && is_string($link['text'] ?? null) && is_string($link['link'] ?? null)) {
+                $links[] = ['text' => (string) $link['text'], 'link' => (string) $link['link']];
             }
         }
 

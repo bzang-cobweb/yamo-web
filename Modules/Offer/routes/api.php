@@ -6,6 +6,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Offer\Http\Controllers\Api\BookingController;
+use Modules\Offer\Http\Controllers\Api\MemberController;
 use Modules\Offer\Http\Controllers\Api\OfferCalendarController;
 use Modules\Offer\Http\Controllers\Api\OfferController;
 use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
@@ -41,6 +42,12 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     Route::put('{offer}/favorite', [OfferFavoriteController::class, 'save'])->can('favorite', 'offer')->name('favorite.save');
     Route::delete('{offer}/favorite', [OfferFavoriteController::class, 'destroy'])->can('favorite', 'offer')->name('favorite.destroy');
 });
+
+// La page publique d'un membre, pour un compte connecté (décision 2026-11-19-page-membre).
+Route::middleware(['auth:sanctum', RequireOfferDomain::class, 'throttle:60,1'])
+    ->get('v1/members/{member}', [MemberController::class, 'show'])
+    ->whereNumber('member')
+    ->name('v1.members.show');
 
 // Répondre à une demande (le propriétaire), l'annuler (le membre) : décision 2026-11-19-contrat-reservations.
 Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/bookings')->name('v1.bookings.')->group(function () {

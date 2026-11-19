@@ -29,7 +29,7 @@ class NotificationApiTest extends TestCase
         $notification = $user->notifications()->create([
             'id' => (string) Str::uuid(),
             'type' => 'Test',
-            'data' => ['title' => $title, 'tag' => ['label' => 'En attente', 'tone' => 'warning'], 'body' => "Texte de {$title}", 'message' => $title === 'Récente' ? 'Bonjour !' : null, 'link' => '/profile/lists/offer.bookings', 'links' => [['label' => "Voir l'annonce", 'link' => '/offers/7'], ['label' => 'Incomplet']]],
+            'data' => ['title' => $title, 'tag' => ['label' => 'En attente', 'tone' => 'warning'], 'body' => "Texte de {$title}", 'message' => $title === 'Récente' ? 'Bonjour !' : null, 'link' => '/profile/lists/offer.bookings', 'links' => [['label' => "Voir l'annonce", 'link' => '/offers/7'], ['label' => 'Incomplet']], 'text_links' => [['text' => 'Paul', 'link' => '/members/3'], ['text' => 'Sans lien']]],
             'read_at' => $readAt,
         ]);
         if ($createdAt !== null) {
@@ -54,6 +54,7 @@ class NotificationApiTest extends TestCase
         $this->assertSame('/profile/lists/offer.bookings', $items[0]['link']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $items[0]['tag']);
         $this->assertSame('Bonjour !', $items[0]['message']);
+        $this->assertSame([['text' => 'Paul', 'link' => '/members/3']], $items[0]['text_links']);
         $this->assertNull($items[1]['message']);
         $this->assertSame([['label' => "Voir l'annonce", 'link' => '/offers/7']], $items[0]['links']);
     }

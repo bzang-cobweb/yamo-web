@@ -943,6 +943,146 @@
                 }
             }
         },
+        "/v1/members/{member}": {
+            "get": {
+                "operationId": "v1.members.show",
+                "summary": "Sa photo, son nom, \u00ab Membre depuis \u00bb, sa pr\u00e9sentation, sa ville et ses s\u00e9jours",
+                "tags": [
+                    "Member"
+                ],
+                "parameters": [
+                    {
+                        "name": "member",
+                        "in": "path",
+                        "required": true,
+                        "description": "The member ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "title": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "initials": {
+                                                    "type": "string"
+                                                },
+                                                "photo": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "since": {
+                                                    "type": "string"
+                                                },
+                                                "description": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "facts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "value": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "value"
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "value": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "value"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "title",
+                                                "name",
+                                                "initials",
+                                                "photo",
+                                                "since",
+                                                "description",
+                                                "facts"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/messages": {
             "get": {
                 "operationId": "v1.messages.index",
@@ -3660,6 +3800,25 @@
                                         ]
                                     }
                                 },
+                                "text_links": {
+                                    "type": "array",
+                                    "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {
+                                                "type": "string"
+                                            },
+                                            "link": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "text",
+                                            "link"
+                                        ]
+                                    }
+                                },
                                 "read": {
                                     "type": "boolean"
                                 },
@@ -3679,6 +3838,7 @@
                                 "message",
                                 "link",
                                 "links",
+                                "text_links",
                                 "read",
                                 "created_at"
                             ]

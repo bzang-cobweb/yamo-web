@@ -63,7 +63,7 @@ abstract class BookingNotification extends Notification implements ShouldQueue
      * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
      * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, body: string, message: string|null, link: string, offer_id: int, links: list<array{label: string, link: string}>}
+     * @return array{title: string, tag: array{label: string, tone: string}, body: string, message: string|null, link: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -76,10 +76,26 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'message' => $this->note(),
             'link' => '/profile/lists/'.$list,
             'offer_id' => $this->booking->offer_id,
+            // Le nom du membre, dans le texte, ouvre sa page (décision 2026-11-19-page-membre).
+            'text_links' => $this->textLinks(),
             'links' => [
                 ['label' => __('offer::booking.notify.view_offer'), 'link' => '/offers/'.$this->booking->offer_id],
             ],
         ];
+    }
+
+    /**
+     * Le nom du membre comme lien vers sa page, s'il figure dans le texte (une
+     * nouvelle demande, une annulation : le propriétaire lit le nom du membre).
+     *
+     * @return list<array{text: string, link: string}>
+     */
+    private function textLinks(): array
+    {
+        $name = (string) $this->booking->user->full_name;
+        $body = __("offer::booking.notify.{$this->key()}.body", $this->replacements());
+
+        return $name !== '' && str_contains($body, $name) ? [['text' => $name, 'link' => '/members/'.$this->booking->user_id]] : [];
     }
 
     public function toMail(object $notifiable): MailMessage
