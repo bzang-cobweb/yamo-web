@@ -60,6 +60,7 @@ return [
         'search' => 'Search an offer…',
     ],
     'notify' => [
+        'handle' => 'Handle the request',
         'title' => 'Request',
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',

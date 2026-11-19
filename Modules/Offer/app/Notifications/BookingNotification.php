@@ -79,7 +79,8 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'message' => $this->note(),
             'link' => '/profile/lists/'.$list,
             // Le bouton de la page de la notification : la liste où retrouver la demande.
-            'link_label' => __('offer::booking.list.'.$this->section()),
+            // Le propriétaire traite la demande ; le membre retrouve ses réservations.
+            'link_label' => $this->section() === 'received' ? __('offer::booking.notify.handle') : __('offer::booking.list.mine'),
             'offer_id' => $this->booking->offer_id,
             // Le nom du membre, dans le texte, ouvre sa page (décision 2026-11-19-page-membre).
             'text_links' => $this->textLinks(),
