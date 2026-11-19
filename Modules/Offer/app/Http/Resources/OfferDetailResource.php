@@ -235,7 +235,8 @@ class OfferDetailResource extends JsonResource
             if (! $keep($field->name) || ! $field->isVisibleFor($offer->details ?? [])) {
                 continue;
             }
-            $value = $field->inCurrency($symbol)->displayValue($offer->detail($field->name), $locale);
+            // Sans « / mois » : le libellé le dit (« Charges mensuelles », décision 2026-11-19-charges-sans-par-mois).
+            $value = $field->inCurrency($symbol, withPer: false)->displayValue($offer->detail($field->name), $locale);
 
             if ($value !== null) {
                 $values[$field->name] = ['label' => (string) $field->getLabel(), 'value' => $value];

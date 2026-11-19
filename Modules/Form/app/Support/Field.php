@@ -765,12 +765,14 @@ final class Field
 
     /**
      * L'unité d'un montant (`money()`) dans la devise de symbole `$symbol` ; sans
-     * effet sur un autre champ, ou sans symbole.
+     * effet sur un autre champ, ou sans symbole. `$withPer` à faux : le symbole seul,
+     * pour un affichage dont le libellé dit déjà la période (« Charges mensuelles »,
+     * décision 2026-11-19-charges-sans-par-mois).
      */
-    public function inCurrency(?string $symbol): self
+    public function inCurrency(?string $symbol, bool $withPer = true): self
     {
         if ($this->money && filled($symbol)) {
-            $this->suffix = $this->moneyPer === null ? $symbol : $symbol.' / '.$this->moneyPer;
+            $this->suffix = $this->moneyPer === null || ! $withPer ? $symbol : $symbol.' / '.$this->moneyPer;
         }
 
         return $this;
