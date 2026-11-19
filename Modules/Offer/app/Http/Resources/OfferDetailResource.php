@@ -315,8 +315,6 @@ class OfferDetailResource extends JsonResource
      */
     private function indication(Offer $offer, string $locale): ?string
     {
-        $text = (string) $offer->offerAddress?->getTranslation('indication', $locale);
-
-        return $text === '' ? null : $text;
+        return $offer->indication($locale);
     }
 }

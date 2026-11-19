@@ -30,7 +30,7 @@ class OfferCalendar
     public const PAST_MONTHS = 12;
 
     /**
-     * @return array{title: string, heading: string, address: string|null, description: string|null, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
+     * @return array{title: string, heading: string, address: string|null, indication: string|null, month: string, label: string, previous: string|null, next: string|null, weekdays: list<string>, offset: int, days: list<array{date: string, day: int, state: string, dot: string|null}>, legend: list<array{kind: string, tone: string, label: string}>}
      */
     public function month(Offer $offer, Carbon $month, string $locale): array
     {
@@ -79,8 +79,8 @@ class OfferCalendar
             'heading' => $this->offerTitle($offer, $locale),
             /** Son adresse sous le titre (« Rue Njo-Njo, Bonapriso, 00237 Douala, Cameroun »), ou `null`. */
             'address' => $this->offerAddress($offer, $locale),
-            /** Sa description sous l'adresse, ou `null`. */
-            'description' => $this->offerDescription($offer, $locale),
+            /** Les indications de l'adresse, dessous (« Portail vert, 2e étage »), ou `null`. */
+            'indication' => $offer->indication($locale),
             'month' => (string) $from->format('Y-m'),
             'label' => ucfirst($from->copy()->locale($locale)->isoFormat('MMMM YYYY')),
             'previous' => $from->greaterThan($current->copy()->subMonths(self::PAST_MONTHS)) ? (string) $from->copy()->subMonth()->format('Y-m') : null,
@@ -217,13 +217,6 @@ class OfferCalendar
     private function offerTitle(Offer $offer, string $locale): string
     {
         return (string) $offer->getTranslation('title', $locale);
-    }
-
-    private function offerDescription(Offer $offer, string $locale): ?string
-    {
-        $description = trim((string) $offer->getTranslation('description', $locale));
-
-        return $description === '' ? null : $description;
     }
 
     private function offerAddress(Offer $offer, string $locale): ?string

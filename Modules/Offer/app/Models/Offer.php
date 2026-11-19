@@ -192,6 +192,17 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * Les indications pour trouver l'adresse (« Portail vert, 2e étage »), dans la
+     * langue `$locale` ; sans indication, `null`. Sert la fiche et le calendrier.
+     */
+    public function indication(string $locale): ?string
+    {
+        $text = trim((string) $this->offerAddress?->getTranslation('indication', $locale));
+
+        return $text === '' ? null : $text;
+    }
+
+    /**
      * Les jours bloqués par le propriétaire (décision 2026-11-19-contrat-calendrier-offre).
      *
      * @return HasMany<OfferBlockedDate, $this>
