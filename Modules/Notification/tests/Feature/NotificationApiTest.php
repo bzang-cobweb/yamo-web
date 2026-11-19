@@ -29,7 +29,7 @@ class NotificationApiTest extends TestCase
         $notification = $user->notifications()->create([
             'id' => (string) Str::uuid(),
             'type' => 'Test',
-            'data' => ['title' => $title, 'tag' => ['label' => 'En attente', 'tone' => 'warning'], 'body' => "Texte de {$title}", 'message' => $title === 'Récente' ? 'Bonjour !' : null, 'link' => '/profile/lists/offer.bookings', 'links' => [['label' => "Voir l'annonce", 'link' => '/offers/7'], ['label' => 'Incomplet']], 'text_links' => [['text' => 'Paul', 'link' => '/members/3'], ['text' => 'Sans lien']]],
+            'data' => ['title' => $title, 'tag' => ['label' => 'En attente', 'tone' => 'warning'], 'body' => "Texte de {$title}", 'message' => $title === 'Récente' ? 'Bonjour !' : null, 'link' => '/profile/lists/offer.bookings', 'links' => [['label' => "Voir l'annonce", 'link' => '/offers/7'], ['label' => 'Incomplet']], 'text_links' => [['text' => 'Paul', 'link' => '/members/3'], ['text' => 'Sans lien']], 'link_label' => 'Mes réservations'],
             'read_at' => $readAt,
         ]);
         if ($createdAt !== null) {
@@ -110,5 +110,20 @@ class NotificationApiTest extends TestCase
 
         $this->assertModelMissing($old);
         $this->assertModelExists($kept);
+    }
+
+    public function test_one_notification_for_its_page_and_never_another_account_s(): void
+    {
+        $user = User::factory()->create();
+        $mine = $this->notify($user, 'La mienne');
+        $other = $this->notify(User::factory()->create(), 'Pas la mienne');
+
+        $this->asUser($user)->getJson("/api/v1/notifications/{$mine->getKey()}")
+            ->assertOk()
+            ->assertJsonPath('data.title', 'La mienne')
+            ->assertJsonPath('data.link_label', 'Mes réservations')
+            ->assertJsonPath('data.text_links', [['text' => 'Paul', 'link' => '/members/3']])
+            ->assertJsonPath('data.read', false);
+        $this->asUser($user)->getJson("/api/v1/notifications/{$other->getKey()}")->assertNotFound();
     }
 }

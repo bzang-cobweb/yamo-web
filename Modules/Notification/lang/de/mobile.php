@@ -9,6 +9,9 @@ return [
     ],
     'notifications' => [
         'title' => 'Benachrichtigungen',
+        // La page d'une notification et son bouton, à défaut du libellé servi.
+        'detail' => 'Benachrichtigung',
+        'open' => 'Öffnen',
         'markAllRead' => 'Alle als gelesen markieren',
         'empty' => 'Noch keine Benachrichtigungen.',
         'unread' => 'Ungelesen',

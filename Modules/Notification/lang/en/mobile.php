@@ -9,6 +9,9 @@ return [
     ],
     'notifications' => [
         'title' => 'Notifications',
+        // La page d'une notification et son bouton, à défaut du libellé servi.
+        'detail' => 'Notification',
+        'open' => 'Open',
         'markAllRead' => 'Mark all as read',
         'empty' => 'No notifications yet.',
         'unread' => 'Unread',

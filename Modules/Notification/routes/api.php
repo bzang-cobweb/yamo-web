@@ -11,5 +11,6 @@ Route::middleware('auth:sanctum')->prefix('v1/notifications')->name('v1.notifica
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
     Route::post('read', [NotificationController::class, 'readAll'])->name('read-all');
+    Route::get('{notification}', [NotificationController::class, 'show'])->whereUuid('notification')->name('show');
     Route::post('{notification}/read', [NotificationController::class, 'read'])->whereUuid('notification')->name('read');
 });

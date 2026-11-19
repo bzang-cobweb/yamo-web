@@ -63,7 +63,7 @@ abstract class BookingNotification extends Notification implements ShouldQueue
      * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
      * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, body: string, message: string|null, link: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, tag: array{label: string, tone: string}, body: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -75,6 +75,8 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
             'message' => $this->note(),
             'link' => '/profile/lists/'.$list,
+            // Le bouton de la page de la notification : la liste où retrouver la demande.
+            'link_label' => __('offer::booking.list.'.$this->section()),
             'offer_id' => $this->booking->offer_id,
             // Le nom du membre, dans le texte, ouvre sa page (décision 2026-11-19-page-membre).
             'text_links' => $this->textLinks(),

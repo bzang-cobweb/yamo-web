@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Auth\Models\User;
 use Modules\Notification\Http\Resources\NotificationPageResource;
+use Modules\Notification\Http\Resources\NotificationResource;
 
 /**
  * Les notifications de l'app du compte connecté (décision
@@ -36,6 +37,14 @@ class NotificationController
     public function unreadCount(Request $request): JsonResponse
     {
         return response()->json(['data' => ['unread' => $this->user($request)->unreadNotifications()->count()]]);
+    }
+
+    /**
+     * Une de ses notifications, pour sa page (404 pour une autre).
+     */
+    public function show(Request $request, string $notification): NotificationResource
+    {
+        return new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail());
     }
 
     /**

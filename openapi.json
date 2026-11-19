@@ -1230,6 +1230,48 @@
                 }
             }
         },
+        "/v1/notifications/{notification}": {
+            "get": {
+                "operationId": "v1.notifications.show",
+                "summary": "Une de ses notifications, pour sa page (404 pour une autre)",
+                "tags": [
+                    "Notification"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`NotificationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/notifications/{notification}/read": {
             "post": {
                 "operationId": "v1.notifications.read",
@@ -3819,6 +3861,13 @@
                                         ]
                                     }
                                 },
+                                "link_label": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                                },
                                 "read": {
                                     "type": "boolean"
                                 },
@@ -3839,6 +3888,7 @@
                                 "link",
                                 "links",
                                 "text_links",
+                                "link_label",
                                 "read",
                                 "created_at"
                             ]
@@ -3856,6 +3906,122 @@
                     "next_cursor"
                 ],
                 "title": "NotificationPageResource"
+            },
+            "NotificationResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "tag": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Statut en pastille sous le titre (\u00ab En attente \u00bb, ton `warning`), ou `null`.",
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "tone": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "label",
+                            "tone"
+                        ]
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                    },
+                    "link": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                    },
+                    "links": {
+                        "type": "array",
+                        "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "link": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "label",
+                                "link"
+                            ]
+                        }
+                    },
+                    "text_links": {
+                        "type": "array",
+                        "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string"
+                                },
+                                "link": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "text",
+                                "link"
+                            ]
+                        }
+                    },
+                    "link_label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Date ISO 8601."
+                    }
+                },
+                "required": [
+                    "id",
+                    "title",
+                    "tag",
+                    "body",
+                    "message",
+                    "link",
+                    "links",
+                    "text_links",
+                    "link_label",
+                    "read",
+                    "created_at"
+                ],
+                "title": "NotificationResource"
             },
             "OfferBookingRequest": {
                 "type": "object",
