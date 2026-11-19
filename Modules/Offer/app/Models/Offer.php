@@ -247,13 +247,15 @@ class Offer extends Model implements HasMedia
 
     /**
      * Valeur d'un attribut du domaine dans une langue : la sienne, sinon la langue
-     * par défaut, sinon une autre. Un attribut non traduit est rendu tel quel.
+     * par défaut, sinon une autre. Un attribut non traduit est rendu tel quel, une
+     * liste aussi (les équipements choisis) : seules les traductions sont rangées
+     * par langue.
      */
     public function detailIn(string $name, string $locale): mixed
     {
         $value = $this->detail($name);
 
-        if (! is_array($value)) {
+        if (! is_array($value) || array_is_list($value)) {
             return $value;
         }
 

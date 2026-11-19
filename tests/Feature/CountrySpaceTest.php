@@ -154,8 +154,8 @@ class CountrySpaceTest extends TestCase
         $user = User::factory()->create();
         $address = Address::factory()->for($this->senegal)->create();
         DB::table('offers')->insert([
-            ['user_id' => $user->getKey(), 'address_id' => $address->getKey(), 'title' => '{"fr":"A"}', 'status' => 'draft', 'details' => '[]'],
-            ['user_id' => $user->getKey(), 'address_id' => null, 'title' => '{"fr":"B"}', 'status' => 'draft', 'details' => '[]'],
+            ['user_id' => $user->getKey(), 'address_id' => $address->getKey(), 'address_description' => 'Portail bleu', 'title' => '{"fr":"A"}', 'status' => 'draft', 'details' => '[]'],
+            ['user_id' => $user->getKey(), 'address_id' => null, 'address_description' => null, 'title' => '{"fr":"B"}', 'status' => 'draft', 'details' => '[]'],
         ]);
 
         $migration->up();
@@ -164,7 +164,12 @@ class CountrySpaceTest extends TestCase
         // Avec l'adresse : son pays ; sans adresse et plusieurs pays actifs : aucun.
         $this->assertSame([$this->senegal->getKey(), null], DB::table('offers')->orderBy('id')->pluck('country_id')->map(fn ($id) => $id === null ? null : (int) $id)->all());
         // Le lien vers l'adresse est recopié dans `offer_addresses`.
-        $this->assertSame([(int) $address->getKey()], DB::table('offer_addresses')->pluck('address_id')->map(fn ($id) => (int) $id)->all());
+        $this->assertSame([[(int) $address->getKey(), 'Portail bleu']], DB::table('offer_addresses')->get()->map(fn (object $row): array => [(int) $row->address_id, $row->indication])->all());
+
+        // Et le retour arrière les remet dans `offers`.
+        $addresses->down();
+        $this->assertSame([[(int) $address->getKey(), 'Portail bleu'], [null, null]], DB::table('offers')->orderBy('id')->get()->map(fn (object $row): array => [$row->address_id === null ? null : (int) $row->address_id, $row->address_description])->all());
+        $addresses->up();
     }
 
     public function test_currencies_come_from_icu(): void

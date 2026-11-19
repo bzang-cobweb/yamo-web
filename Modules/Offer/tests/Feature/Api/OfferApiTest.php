@@ -352,7 +352,7 @@ class OfferApiTest extends TestCase
     public function test_editing_prefills_and_updates_my_offer(): void
     {
         $user = $this->member();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['wifi', 'parking']]))->assertNoContent();
         $offer = Offer::query()->sole();
 
         $fields = array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->assertOk()
@@ -360,6 +360,8 @@ class OfferApiTest extends TestCase
             ->json('data.fields'), 'default', 'name');
         $this->assertSame('Appartement lumineux', $fields['title']);
         $this->assertSame('apartment', $fields['property_type']);
+        // Les équipements choisis, tous cochés (une liste n'est pas une traduction).
+        $this->assertSame(['wifi', 'parking'], $fields['amenities']);
         // L'adresse de l'offre, préremplie.
         $this->assertSame(['Rue du Lac 4', '1200', 'Genève'], [$fields['street'], $fields['zip'], $fields['city']]);
 

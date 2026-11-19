@@ -57,3 +57,32 @@ l'`indication` propre à l'offre (« derrière le marché, portail bleu »).
 1. Retirer aussi `offers.address_id` (défaut : **oui**, le lien vit dans
    `offer_addresses`). Alternative : le garder et dupliquer le lien.
 2. Nom de la clé servie et du champ : `indication` (défaut).
+
+---
+
+## Ce que j'ai décidé seul
+
+- `Offer::address` devient une relation « à travers » `OfferAddress` (lecture seule) ; l'écriture passe par `offerAddress`. Les lectures existantes (villes, filtre, titre, fiche) n'ont pas changé.
+- La migration lit les lignes avant de modifier les tables : sous SQLite (tests), modifier `offers` reconstruit la table, et la suppression en cascade aurait vidé `offer_addresses`.
+- Supprimer une `Address` supprime la ligne `offer_addresses` (cascade), pas l'offre — comme l'ancien `nullOnDelete`.
+- Back-office : un groupe Filament lié à `offerAddress`, créé seulement si une adresse est choisie, retiré si on la vide.
+- `address_id` reste dans `Domain::COMMON_FIELDS` (aucun attribut ne peut porter ce nom, le formulaire Filament l'utilise).
+- Fabrique `Offer::factory()->at($adresse, $indication)` pour les tests.
+
+## Ce qui a été fait
+
+- Web 1bde6c7 : migration `2026_11_29_110000_create_offer_addresses_table` (recopie, retour arrière), modèle `OfferAddress` + fabrique, `Offer::offerAddress()` / `address()`, `OfferService::syncAddress`, champ `indication` (app, back-office, fiche), liste des villes, `DemoSeeder`, traductions, OpenAPI, tests (indication partagée/propre, garder/vider, déplacer, cascade, Filament).
+- Mobile 69494f4 : type et fiche lisent `indication`.
+- Migration exécutée en local : 21 offres, 21 lignes recopiées.
+- Test de migration complété après la QA : recopie de l'indication et retour arrière.
+- Suites : serveur 501 verts ; app 233 verts (QA), tsc et lint propres. QA indépendante : GO (`.ia/runs/2026-11-19-adresse-offre-table/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+
+- Le formulaire Filament dans un vrai navigateur (couvert par les tests Livewire seulement).
+- La saisie de l'indication dans l'app au simulateur (couverte par les tests d'API) ; la fiche, elle, a été vue.
+- La migration sur une base de production (MySQL local seulement).
+
+## Ce qui reste en suspens
+
+- Une ancienne version de l'app n'affiche plus l'indication sur la fiche et son envoi `address_description` est ignoré (accepté par la décision).
