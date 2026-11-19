@@ -90,7 +90,7 @@ class RentalDomain extends Domain
      * Équipements proposés (décision 2026-11-19-contrat-multiselect-intervalle-equipements) ;
      * leurs libellés sont dans `offer::rental.amenities`.
      */
-    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'tv', 'balcony', 'pool'];
+    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
 
     /**
      * @return array<string, string>

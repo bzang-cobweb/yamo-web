@@ -65,6 +65,7 @@ return [
         'security' => 'Gardien / sécurité',
         'equipped_kitchen' => 'Cuisine équipée',
         'washing_machine' => 'Lave-linge',
+        'iron' => 'Fer à repasser',
         'tv' => 'Télévision',
         'balcony' => 'Balcon / terrasse',
         'pool' => 'Piscine',

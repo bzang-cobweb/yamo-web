@@ -116,7 +116,7 @@ class OfferApiTest extends TestCase
         // Décision 2026-11-19-contrat-multiselect-intervalle-equipements.
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
         $this->assertSame('multiselect', $fields['amenities']['type']);
-        $this->assertCount(12, $fields['amenities']['options']);
+        $this->assertCount(13, $fields['amenities']['options']);
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['spa']]))
             ->assertUnprocessable()

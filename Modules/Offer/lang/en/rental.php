@@ -65,6 +65,7 @@ return [
         'security' => 'Guard / security',
         'equipped_kitchen' => 'Equipped kitchen',
         'washing_machine' => 'Washing machine',
+        'iron' => 'Iron',
         'tv' => 'Television',
         'balcony' => 'Balcony / terrace',
         'pool' => 'Swimming pool',
