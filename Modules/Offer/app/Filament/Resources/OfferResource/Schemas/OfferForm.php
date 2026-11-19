@@ -34,17 +34,19 @@ use Modules\Offer\Models\OfferCategory;
 abstract class OfferForm
 {
     /**
-     * Les attributs du domaine, ceux de l'accès (`$access`) ou les autres ; un
+     * Les attributs du domaine d'un onglet : `listing` (« Annonce »), `access`
+     * (« Accès ») ou `features` (« Caractéristiques », tous les autres) ; un
      * attribut traduisible a un onglet par langue.
      *
      * @return list<Component>
      */
-    private static function attributes(Domain $domain, bool $access = false): array
+    private static function attributes(Domain $domain, string $tab): array
     {
-        $fields = array_values(array_filter(
-            $domain->inputAttributes(),
-            fn (Field $field): bool => in_array($field->name, $domain->accessAttributes(), true) === $access,
-        ));
+        $fields = array_values(array_filter($domain->inputAttributes(), fn (Field $field): bool => match (true) {
+            in_array($field->name, $domain->listingAttributes(), true) => $tab === 'listing',
+            in_array($field->name, $domain->accessAttributes(), true) => $tab === 'access',
+            default => $tab === 'features',
+        }));
 
         return array_map(fn (Field $field): Component => $field->isTranslatable()
             ? TranslatableTabs::make(fn (string $locale): array => [
@@ -52,6 +54,32 @@ abstract class OfferForm
                     ->required($field->isRequired() && $locale === Locales::default()),
             ], "details-{$field->name}")->columnSpanFull()
             : FieldComponent::component($field, 'details.'.$field->name), $fields);
+    }
+
+    /**
+     * L'onglet « Caractéristiques » : les attributs, avec le prix avant l'attribut
+     * que désigne le domaine (« Loyer » avant « Charges mensuelles »), sinon à la fin.
+     *
+     * @return list<Component>
+     */
+    private static function features(Domain $domain): array
+    {
+        $components = self::attributes($domain, 'features');
+        $price = TextInput::make('price')
+            ->label($domain->priceLabel())
+            ->helperText(__('offer::offer.price_currency_help'))
+            ->numeric()
+            ->minValue(0)
+            ->required($domain->requiresPrice())
+            ->visible($domain->hasPrice());
+        $names = array_map(fn (Field $field): string => $field->name, array_values(array_filter(
+            $domain->inputAttributes(),
+            fn (Field $field): bool => ! in_array($field->name, [...$domain->listingAttributes(), ...$domain->accessAttributes()], true),
+        )));
+        $at = array_search($domain->priceBeforeAttribute(), $names, true);
+        $at = $at === false ? count($components) : $at;
+
+        return [...array_slice($components, 0, $at), $price, ...array_slice($components, $at)];
     }
 
     public static function configure(Schema $schema): Schema
@@ -94,16 +122,11 @@ abstract class OfferForm
                                         ->maxLength(Field::TEXTAREA_MAX_LENGTH)
                                         ->rows(4),
                                 ], 'texts')->columnSpanFull(),
+                                // Les attributs de l'annonce (type, meublé), avant la catégorie.
+                                ...self::attributes($domain, 'listing'),
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
-                                TextInput::make('price')
-                                    ->label($domain->priceLabel())
-                                    ->helperText(__('offer::offer.price_currency_help'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->required($domain->requiresPrice())
-                                    ->visible($domain->hasPrice()),
                                 Select::make('address_id')
                                     ->label(__('offer::offer.address'))
                                     // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
@@ -134,7 +157,7 @@ abstract class OfferForm
                                     ->helperText(__('offer::offer.featured_help'))
                                     ->native(false)
                                     ->seconds(false),
-                                ...self::attributes($domain, access: true),
+                                ...self::attributes($domain, 'access'),
                                 DateTimePicker::make('paid_until')
                                     ->label(__('offer::offer.paid_until'))
                                     ->helperText(__('offer::offer.paid_help'))
@@ -143,7 +166,7 @@ abstract class OfferForm
                             ]),
                         Tab::make(__('offer::offer.attributes'))
                             ->columns(2)
-                            ->schema(self::attributes($domain)),
+                            ->schema(self::features($domain)),
                         Tab::make(__('offer::offer.photos'))
                             ->schema([
                                 SpatieMediaLibraryFileUpload::make('photos')

@@ -206,6 +206,27 @@ abstract class Domain
     public function applyFilters(Builder $query, array $filters): void {}
 
     /**
+     * Attributs placés dans l'onglet « Annonce » du back-office, avant la catégorie
+     * (décision 2026-11-19-backoffice-loyer-type-annonce). Aucun par défaut : tous
+     * vont dans « Caractéristiques ».
+     *
+     * @return list<string>
+     */
+    public function listingAttributes(): array
+    {
+        return [];
+    }
+
+    /**
+     * Dans l'onglet « Caractéristiques » du back-office, le prix se place avant cet
+     * attribut ; `null` : à la fin.
+     */
+    public function priceBeforeAttribute(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Attributs qui règlent l'accès à l'offre (« Disponible dès le ») : dans le
      * back-office, ils rejoignent la section « Accès » (décision
      * 2026-11-19-acces-avis-backoffice). Aucun par défaut.

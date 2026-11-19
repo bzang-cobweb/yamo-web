@@ -203,6 +203,20 @@ class RentalDomain extends Domain
         }
     }
 
+    /**
+     * Back-office : type et meublé dans « Annonce » ; le loyer avant les charges
+     * (décision 2026-11-19-backoffice-loyer-type-annonce).
+     */
+    public function listingAttributes(): array
+    {
+        return ['property_type', 'furnished'];
+    }
+
+    public function priceBeforeAttribute(): ?string
+    {
+        return 'charges';
+    }
+
     public function accessAttributes(): array
     {
         return ['available_from'];
