@@ -104,7 +104,7 @@ class OfferBrowseApiTest extends TestCase
 
         $this->assertSame([20, 6], [count($first['items']), count($second['items'])]);
         $this->assertNull($second['next_cursor']);
-        $this->assertSame(['id', 'title', 'subtitle', 'image', 'rating', 'highlight', 'favorite', 'link', 'edit', 'delete'], array_keys($first['items'][0]));
+        $this->assertSame(['id', 'title', 'subtitle', 'image', 'rating', 'highlight', 'favorite', 'link', 'edit', 'actions', 'counter', 'delete'], array_keys($first['items'][0]));
     }
 
     public function test_an_offer_shows_its_first_photo_and_none_without(): void

@@ -175,10 +175,9 @@ class BookingApiTest extends TestCase
         $booking = Booking::factory()->for($offer)->for($guest)->create();
         $owner = $offer->user;
 
-        // « Réservations reçues » : dans le menu de qui a des offres, avec « Répondre ».
-        $menu = $this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data');
-        $this->assertContains('offer.bookings.received', array_column($menu, 'list'));
-        $this->assertNotContains('offer.bookings.received', array_column($this->asUser($guest)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
+        // « Réservations reçues » n'est plus un lien du menu : elle s'ouvre depuis chaque logement
+        // (décision 2026-11-19-contrat-reservations-logements-profil).
+        $this->assertNotContains('offer.bookings.received', array_column($this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
         $this->assertSame(['form' => 'offer.booking.answer', 'record' => (string) $booking->getKey()], $item['edit']);
         $this->assertStringStartsWith('En attente · 135', (string) $item['highlight']);

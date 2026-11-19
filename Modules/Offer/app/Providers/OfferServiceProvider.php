@@ -3,11 +3,9 @@
 namespace Modules\Offer\Providers;
 
 use Illuminate\Support\Facades\Gate;
-use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
-use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\BookingAnswerForm;
@@ -91,29 +89,30 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
         $this->app->make(ListingRegistry::class)->register(ReceivedBookingListing::class);
 
-        // « Mes logements » (libellé du domaine), après les liens d'Auth.
-        $this->app->make(ProfileMenuLinks::class)->addList(
-            'offers',
-            fn (): string => $domains->require()->mineLabel(),
-            fn (): ?string => OfferListing::isAvailable() ? OfferListing::name() : null,
-        );
-        $this->app->make(ProfileMenuLinks::class)->addList(
-            'favorites',
-            fn (): string => __('offer::offer.favorites.title'),
-            fn (): ?string => OfferFavoritesListing::isAvailable() ? OfferFavoritesListing::name() : null,
-        );
-        $this->app->make(ProfileMenuLinks::class)->addList(
+        // Le menu du profil en groupes (décision 2026-11-19-contrat-reservations-logements-profil) :
+        // « Voyageur » (ses réservations, ses favoris), puis « Hôte » (ses logements). Les demandes
+        // reçues ne sont plus un lien du menu : elles s'ouvrent depuis chaque logement.
+        $links = $this->app->make(ProfileMenuLinks::class);
+        $links->addGroup('traveler', fn (): string => __('offer::offer.profile_groups.traveler'), 20);
+        $links->addGroup('host', fn (): string => __('offer::offer.profile_groups.host'), 30);
+        $links->addList(
             'bookings',
             fn (): string => __('offer::booking.list.mine'),
             fn (): ?string => BookingListing::isAvailable() ? BookingListing::name() : null,
+            group: 'traveler',
         );
-        // Pour qui a des offres dans le pays courant.
-        $this->app->make(ProfileMenuLinks::class)->addList(
-            'bookings_received',
-            fn (): string => __('offer::booking.list.received'),
-            fn (): ?string => ReceivedBookingListing::isAvailable() ? ReceivedBookingListing::name() : null,
-            fn (User $user): bool => Offer::query()->withTrashed()->where('user_id', $user->getKey())
-                ->where('country_id', CurrentCountry::require()->getKey())->exists(),
+        $links->addList(
+            'favorites',
+            fn (): string => __('offer::offer.favorites.title'),
+            fn (): ?string => OfferFavoritesListing::isAvailable() ? OfferFavoritesListing::name() : null,
+            group: 'traveler',
+        );
+        // « Mes logements » (libellé du domaine).
+        $links->addList(
+            'offers',
+            fn (): string => $domains->require()->mineLabel(),
+            fn (): ?string => OfferListing::isAvailable() ? OfferListing::name() : null,
+            group: 'host',
         );
     }
 }

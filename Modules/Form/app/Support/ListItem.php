@@ -41,6 +41,12 @@ final class ListItem
 
     private ?Submission $deleteSubmission = null;
 
+    /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null}> */
+    private array $actions = [];
+
+    /** @var array{label: string, list: string, filter: array<string, string>}|null */
+    private ?array $counter = null;
+
     private function __construct(
         public readonly string $id,
         public readonly string $title,
@@ -124,6 +130,37 @@ final class ListItem
     }
 
     /**
+     * Un bouton sur la carte (décision 2026-11-19-contrat-reservations-logements-profil) :
+     * il envoie `$submission` (après `$confirm`, s'il y en a une), ou ouvre le
+     * formulaire `$form` lié à `$record`. Style : `primary`, `destructive` ou `default`.
+     */
+    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null): self
+    {
+        $this->actions[] = [
+            'label' => $label,
+            'style' => $style,
+            'confirm' => $confirm,
+            'submission' => $submission,
+            'form' => $form === null ? null : ['form' => $form, 'record' => (string) ($record ?? $this->id)],
+        ];
+
+        return $this;
+    }
+
+    /**
+     * Un compteur sur la carte (« 2 demandes en attente ») qui ouvre la liste `$list`
+     * avec ces filtres déjà choisis ; rien sans compteur.
+     *
+     * @param  array<string, string>  $filter
+     */
+    public function counter(string $label, string $list, array $filter = []): self
+    {
+        $this->counter = ['label' => $label, 'list' => $list, 'filter' => $filter];
+
+        return $this;
+    }
+
+    /**
      * Bouton de retrait : libellé, question de confirmation, et envoi.
      */
     public function delete(string $label, string $confirm, Submission $submission): self
@@ -154,6 +191,16 @@ final class ListItem
             /** Écran de l'app ouvert en touchant l'item ; `null` : aucun. */
             'link' => $this->link,
             'edit' => $this->edit,
+            /** Boutons de la carte : libellé, style, confirmation, et un envoi ou un formulaire à ouvrir (lié à `record`). */
+            'actions' => array_map(fn (array $action): array => [
+                'label' => $action['label'],
+                'style' => $action['style'],
+                'confirm' => $action['confirm'],
+                'submission' => $action['submission']?->toArray(),
+                'form' => $action['form'],
+            ], $this->actions),
+            /** Compteur de la carte : son libellé, la liste qu'il ouvre et les filtres déjà choisis ; `null` : aucun. */
+            'counter' => $this->counter,
             'delete' => $this->deleteSubmission === null ? null : [
                 'label' => (string) $this->deleteLabel,
                 'confirm' => (string) $this->deleteConfirm,

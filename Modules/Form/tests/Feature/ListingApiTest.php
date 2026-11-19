@@ -40,6 +40,7 @@ class ListingApiTest extends TestCase
                 'title' => 'Cartes',
                 'empty' => null,
                 'create' => null,
+                'footer' => null,
                 'search' => null,
                 'filters' => [],
                 'next_cursor' => null,
@@ -53,6 +54,8 @@ class ListingApiTest extends TestCase
                     'favorite' => null,
                     'link' => null,
                     'edit' => null,
+                    'actions' => [],
+                    'counter' => null,
                     'delete' => [
                         'label' => 'Retirer', 'confirm' => 'Sûr ?', 'method' => 'DELETE', 'endpoint' => "/v1/test/cards/{$user->getKey()}",
                         'destructive' => true, 'success' => ['action' => 'back', 'message' => 'Retirée.'],

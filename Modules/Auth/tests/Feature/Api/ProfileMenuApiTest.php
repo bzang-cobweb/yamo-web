@@ -46,7 +46,8 @@ class ProfileMenuApiTest extends TestCase
             array_column($menu, 'form'),
         );
         // Un lien vers une liste n'a pas de `form` : une version de l'app sans listes l'ignore.
-        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'auth.addresses'], $menu[5]);
+        // Dans le groupe « Compte » (décision 2026-11-19-contrat-reservations-logements-profil).
+        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'auth.addresses', 'group' => ['key' => 'account', 'label' => 'Compte']], $menu[5]);
     }
 
     public function test_a_disabled_channel_removes_its_link(): void

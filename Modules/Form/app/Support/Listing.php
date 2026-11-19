@@ -256,6 +256,29 @@ abstract class Listing
     }
 
     /**
+     * Le bouton de la barre fixe en bas de la liste (décision
+     * 2026-11-19-contrat-reservations-logements-profil) : son libellé, et le
+     * formulaire qu'il ouvre ou l'écran de l'app (`/`) ; aucun par défaut.
+     *
+     * @return array{label: string, form: string|null, link: string|null}|null
+     */
+    public function footer(): ?array
+    {
+        return null;
+    }
+
+    /**
+     * Le titre selon les filtres choisis (« Demandes · Studio meublé ») ; le titre
+     * par défaut.
+     *
+     * @param  array<string, mixed>  $filters  filtres validés
+     */
+    public function titleFor(array $filters): string
+    {
+        return $this->title();
+    }
+
+    /**
      * La liste est-elle proposée ? Indisponible, elle répond comme une liste
      * inconnue (404). Disponible par défaut.
      */

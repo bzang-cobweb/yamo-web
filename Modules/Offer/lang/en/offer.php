@@ -123,4 +123,9 @@ return [
     ],
     // Bouton de la barre fixe de sa propre offre (décision 2026-11-19-fiche-bouton-modifier).
     'edit' => 'Edit',
+    // Groupes du menu du profil (décision 2026-11-19-contrat-reservations-logements-profil).
+    'profile_groups' => [
+        'traveler' => 'Traveller',
+        'host' => 'Host',
+    ],
 ];

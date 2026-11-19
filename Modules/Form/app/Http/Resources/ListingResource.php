@@ -17,7 +17,7 @@ use Modules\Form\Support\Listing;
 class ListingResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, search: string|null, filters: list<array<string, mixed>>, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, favorite: array{active: bool, endpoint: string}|null, link: string|null, edit: array{form: string, record: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
+     * @return array{name: string, title: string, empty: string|null, create: array{label: string, form: string}|null, footer: array{label: string, form: string|null, link: string|null}|null, search: string|null, filters: list<array<string, mixed>>, next_cursor: string|null, items: list<array{id: string, title: string, subtitle: string|null, image: string|null, rating: array{average: float, count: int}|null, highlight: string|null, favorite: array{active: bool, endpoint: string}|null, link: string|null, edit: array{form: string, record: string}|null, actions: list<array{label: string, style: string, confirm: string|null, submission: array<string, mixed>|null, form: array{form: string, record: string}|null}>, counter: array{label: string, list: string, filter: array<string, string>}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: 'profile'|'sign-out'|'back', message: string}}|null}>}
      */
     public function toArray(Request $request): array
     {
@@ -29,11 +29,13 @@ class ListingResource extends JsonResource
 
         return [
             'name' => $this->resource->key(),
-            'title' => $this->resource->title(),
+            'title' => $this->resource->titleFor($filters),
             /** Texte affiché quand la liste est vide. */
             'empty' => $this->resource->emptyText(),
             /** Bouton de création : libellé et formulaire ouvert ; absent pour une liste en lecture seule. */
             'create' => $this->resource->create(),
+            /** Bouton de la barre fixe en bas : libellé, formulaire ou écran de l'app ouvert ; `null` : aucun. */
+            'footer' => $this->resource->footer(),
             /** Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignoré. */
             'search' => $this->resource->searchPlaceholder(),
             /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`) ; vide : liste sans filtres. */

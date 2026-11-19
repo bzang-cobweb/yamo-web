@@ -34,19 +34,25 @@ class ProfileMenuService
      * Chaque lien porte soit `form`, soit `list` : une version de l'app qui ne
      * connaît pas les listes ignore un lien sans `form`.
      *
-     * @return Collection<int, array{key: string, label: string, form?: string, list?: string}>
+     * @return Collection<int, array{key: string, label: string, form?: string, list?: string, group: array{key: string, label: string}}>
      */
     public function for(User $user): Collection
     {
+        $links = app(ProfileMenuLinks::class);
+
         return collect(self::MENU)
             ->filter(fn (ProfileMenuKey $key): bool => $key->isAvailable())
             ->map(fn (ProfileMenuKey $key): array => [
                 'key' => $key->value,
                 'label' => $key->labelFor($user),
                 ...($key->form() !== null ? ['form' => $key->form()] : ['list' => $key->list()]),
+                // Les liens d'Auth : le groupe « Compte » (décision 2026-11-19-contrat-reservations-logements-profil).
+                'group' => $links->group(ProfileMenuLinks::ACCOUNT),
             ])
             // Puis les liens des autres modules (`ProfileMenuLinks`).
-            ->concat(app(ProfileMenuLinks::class)->for($user))
+            ->concat($links->for($user))
+            // Rangés par groupe, dans l'ordre déclaré ; l'ordre d'inscription dans chaque groupe.
+            ->sortBy(fn (array $link, int $index): array => [$links->order($link['group']['key']), $index])
             ->values();
     }
 }

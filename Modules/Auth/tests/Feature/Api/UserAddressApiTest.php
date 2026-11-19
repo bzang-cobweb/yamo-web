@@ -70,6 +70,7 @@ class UserAddressApiTest extends TestCase
                 'title' => 'Mes adresses',
                 'empty' => "Aucune adresse pour l'instant.",
                 'create' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address'],
+                'footer' => null,
                 'search' => 'Rechercher une adresse…',
                 'filters' => [],
                 'next_cursor' => null,
@@ -96,6 +97,8 @@ class UserAddressApiTest extends TestCase
             'favorite' => null,
             'link' => null,
             'edit' => ['form' => 'auth.address', 'record' => (string) $mine->getKey()],
+            'actions' => [],
+            'counter' => null,
             'delete' => [
                 'label' => 'Retirer',
                 'confirm' => 'Retirer cette adresse ?',

@@ -63,6 +63,9 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(Permission::class, PermissionPolicy::class);
         Gate::policy(UserAddress::class, UserAddressPolicy::class);
 
+        // Le groupe « Compte » du menu du profil, en tête (décision 2026-11-19-contrat-reservations-logements-profil).
+        $this->app->make(ProfileMenuLinks::class)->addGroup(ProfileMenuLinks::ACCOUNT, fn (): string => __('auth::navigation.profile_groups.account'), 10);
+
         // Formulaires servis à l'app mobile (module Form).
         $registry = $this->app->make(FormRegistry::class);
         $registry->register(LoginForm::class);
