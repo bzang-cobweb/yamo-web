@@ -8,6 +8,7 @@ return [
     'recipient' => 'Empfänger',
     'indication' => 'Wegbeschreibung',
     'indication_placeholder' => 'Z. B. hinter dem Markt, blaues Tor',
+    'street_help' => 'Geben Sie mindestens 3 Zeichen ein: Bekannte Adressen werden vorgeschlagen.',
     'detach' => 'Entfernen',
     'form' => [
         'create_title' => 'Adresse hinzufügen',

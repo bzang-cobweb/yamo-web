@@ -8,6 +8,7 @@ return [
     'recipient' => 'Recipient',
     'indication' => 'Directions to the address',
     'indication_placeholder' => 'E.g. behind the market, blue gate',
+    'street_help' => 'Type at least 3 characters: known addresses are suggested.',
     'detach' => 'Remove',
     'form' => [
         'create_title' => 'Add an address',

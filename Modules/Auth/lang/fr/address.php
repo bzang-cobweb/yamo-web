@@ -8,6 +8,7 @@ return [
     'recipient' => 'Destinataire',
     'indication' => "Indications sur l'adresse",
     'indication_placeholder' => 'Ex. : derrière le marché, portail bleu',
+    'street_help' => 'Tapez au moins 3 caractères : les adresses connues sont proposées.',
     'detach' => 'Retirer',
     'form' => [
         'create_title' => 'Ajouter une adresse',

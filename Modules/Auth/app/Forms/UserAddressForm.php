@@ -16,10 +16,9 @@ use Modules\Location\Support\CurrentCountry;
  * en ajouter une (`POST /api/v1/auth/me/addresses`), ou liée à l'une de ses
  * adresses (`?record=12`, une `UserAddress`) pour la modifier
  * (`PATCH …/addresses/12`). Destinataire (genre, prénom, nom, préremplis depuis
- * le compte à l'ajout), puis pays, rue, NPA et ville obligatoires, et des
- * indications facultatives. Latitude,
- * longitude et suggestions de rue sont réservées au back-office : une adresse
- * créée depuis l'app n'a pas de coordonnées (décisions
+ * le compte à l'ajout), puis pays, rue (avec suggestions), NPA et ville
+ * obligatoires, et des indications facultatives. Latitude et longitude sont
+ * réservées au back-office : une adresse créée depuis l'app n'a pas de coordonnées (décisions
  * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
  * 2026-11-18-adresse-app-simplifiee).
  */
@@ -77,8 +76,12 @@ class UserAddressForm extends Form
                 ->options([(string) $country->getKey() => $country->label()])
                 ->default((string) $country->getKey())
                 ->required(),
+            // La rue propose les adresses connues du pays, comme pour une offre ; en choisir
+            // une remplit le NPA et la ville (décision 2026-11-19-carnet-adresses-recherche).
             Field::text('street')
                 ->label(__('location::address.street'))
+                ->help(__('auth::address.street_help'))
+                ->suggestions('api.v1.addresses.suggestions')
                 ->default($address?->street)
                 ->required()
                 ->maxLength(255),

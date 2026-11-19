@@ -11,8 +11,8 @@ use Tests\TestCase;
 
 /**
  * « Mes adresses » dans l'app : la liste, le formulaire (vide ou lié à une
- * `UserAddress`) et les envois qu'ils décrivent ; ni coordonnées ni suggestions,
- * réservées au back-office ; la liste est servie par pages de 20 (décisions
+ * `UserAddress`) et les envois qu'ils décrivent ; pas de coordonnées, réservées au back-office ; la rue propose les adresses connues ;
+ * la liste est servie par pages de 20 (décisions
  * 2026-11-18-contrat-liste-infinie-role-admin, 2026-11-18-adresses-liste-generique,
  * 2026-11-18-adresse-du-compte-modele et 2026-11-18-adresse-app-simplifiee).
  */
@@ -213,7 +213,7 @@ class UserAddressApiTest extends TestCase
         $this->assertSame($expected, array_merge(...$pages));
     }
 
-    public function test_the_empty_form_starts_with_the_account_as_recipient_without_coordinates_or_suggestions(): void
+    public function test_the_empty_form_starts_with_the_account_as_recipient_without_coordinates_with_street_suggestions(): void
     {
         $user = User::factory()->create(['gender' => 'male', 'first_name' => 'Paul', 'last_name' => 'Martin']);
 
@@ -228,12 +228,12 @@ class UserAddressApiTest extends TestCase
             ->json('data.fields');
 
         $fields = array_column($data, null, 'name');
-        // Latitude et longitude sont réservées au back-office ; le carnet n'a pas de suggestions
-        // (seule l'adresse d'une offre en a, décision 2026-11-19-contrat-adresse-offre-recherche).
+        // Latitude et longitude sont réservées au back-office ; la rue propose les adresses
+        // connues, comme pour une offre (décision 2026-11-19-carnet-adresses-recherche).
         $this->assertSame(['gender', 'first_name', 'last_name', 'country_id', 'street', 'zip', 'city', 'indication'], array_keys($fields));
         $this->assertSame(['textarea', false, null], [$fields['indication']['type'], $fields['indication']['required'], $fields['indication']['default']]);
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
-        $this->assertNull($fields['street']['suggestions']);
+        $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);
     }
 
     public function test_the_form_for_one_of_its_addresses_is_prefilled_and_sent_to_its_route(): void
