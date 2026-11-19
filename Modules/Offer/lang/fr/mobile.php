@@ -11,7 +11,7 @@ return [
         'details' => 'Caractéristiques',
         'description' => 'Description',
         // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
-        'address' => 'Adresse',
+        'location' => 'Localisation',
         // Avis (décision 2026-11-19-contrat-avis-offres).
         // Liste complète des avis (décision 2026-11-19-nuit-tous-les-avis).
         'allReviews' => 'Voir les :count avis',

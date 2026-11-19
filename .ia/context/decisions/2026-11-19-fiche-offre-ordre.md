@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-19-fiche-localisation.md (la rue est servie ; bloc « Localisation »)
+
 # `2026-11-19` — Fiche d'une offre : prix sans libellé, ordre des blocs et des caractéristiques
 
 - **Type** : décision

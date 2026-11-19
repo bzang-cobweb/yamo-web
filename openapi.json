@@ -3050,12 +3050,19 @@
                         ],
                         "description": "La ville ; jamais la rue."
                     },
-                    "indication": {
+                    "address": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "description": "Indications sur l'adresse \u00e9crites par le propri\u00e9taire, ou `null`."
+                    },
+                    "indication": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "L'indication propre \u00e0 l'offre (d\u00e9cision 2026-11-19-contrat-adresse-offre-table)."
                     },
                     "photos": {
                         "type": "array",
@@ -3256,6 +3263,7 @@
                     "title",
                     "price",
                     "location",
+                    "address",
                     "indication",
                     "photos",
                     "description",

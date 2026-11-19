@@ -57,7 +57,7 @@ class OfferDetailApiTest extends TestCase
         ]);
     }
 
-    public function test_a_visitor_sees_the_detail_described_by_the_server_without_the_street(): void
+    public function test_a_visitor_sees_the_detail_described_by_the_server_with_the_full_address(): void
     {
         Storage::fake('public');
         $offer = $this->home();
@@ -71,6 +71,8 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('Loyer', $data['price']['label']);
         $this->assertSame('250 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $data['price']['value']));
         $this->assertSame('Douala', $data['location']);
+        // L'adresse complète, rue comprise, même sans connexion (décision 2026-11-19-fiche-localisation).
+        $this->assertSame('Rue Njo-Njo 12, '.trim($offer->address->zip.' Douala'), $data['address']);
         $this->assertNull($data['indication']);
         $this->assertCount(2, $data['photos']);
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
@@ -89,8 +91,6 @@ class OfferDetailApiTest extends TestCase
             // Un montant, avec le symbole de la devise (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
             ['label' => 'Charges mensuelles', 'value' => '15 000 FCFA / mois'],
         ], array_map(fn (array $fact): array => ['label' => $fact['label'], 'value' => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $fact['value'])], $data['facts']));
-        // La rue n'est jamais servie.
-        $this->assertStringNotContainsString('Njo-Njo', $response->getContent());
         $this->assertArrayNotHasKey('user_id', $data);
     }
 
@@ -150,6 +150,16 @@ class OfferDetailApiTest extends TestCase
             ->getJson("/api/v1/offers/{$archived->getKey()}")->assertOk()->assertJsonPath('data.status.value', 'archived');
     }
 
+    public function test_the_address_line_has_the_zip_and_the_indication_is_served(): void
+    {
+        $offer = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']), 'Portail bleu')->create(['status' => 'published']);
+
+        $this->show($offer)->assertOk()
+            ->assertJsonPath('data.address', 'Rue du Lac 4, 1200 Genève')
+            ->assertJsonPath('data.indication', 'Portail bleu');
+        $this->show(Offer::factory()->create(['status' => 'published']))->assertOk()->assertJsonPath('data.address', null);
+    }
+
     public function test_no_private_data_leaks(): void
     {
         $owner = User::factory()->create(['email' => 'proprio@example.test']);
@@ -158,7 +168,7 @@ class OfferDetailApiTest extends TestCase
 
         $content = $this->show($offer)->assertOk()->getContent();
 
-        foreach (['proprio@example.test', '4.0510564', '9.7678687', 'Njo-Njo', 'user_id', 'latitude'] as $private) {
+        foreach (['proprio@example.test', '4.0510564', '9.7678687', 'user_id', 'latitude'] as $private) {
             $this->assertStringNotContainsString($private, $content);
         }
     }
