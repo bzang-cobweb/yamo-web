@@ -17,13 +17,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Database\Factories\UserFactory;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Notifications\Channels\SmsChannel;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Support\AuthChannels;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Spatie\Image\Enums\Fit;
@@ -185,6 +188,29 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function preferredLocale(): string
     {
         return $this->locale;
+    }
+
+    /**
+     * Les canaux sur lesquels le compte reçoit les notifications (décision
+     * 2026-11-19-notifications-reservations) : l'e-mail et le SMS ouverts par
+     * l'application (`auth.channels`), si son adresse ou son numéro est vérifié.
+     *
+     * @return list<string>
+     */
+    public function notificationChannels(): array
+    {
+        return array_values(array_filter([
+            AuthChannels::email() && $this->email !== null && $this->email_verified_at !== null ? 'mail' : null,
+            AuthChannels::phone() && $this->phone !== null && $this->phone_verified_at !== null ? SmsChannel::class : null,
+        ]));
+    }
+
+    /**
+     * Le numéro du canal SMS : vérifié seulement.
+     */
+    public function routeNotificationForSms(Notification $notification): ?string
+    {
+        return $this->phone_verified_at !== null ? $this->phone : null;
     }
 
     public function canAccessPanel(Panel $panel): bool

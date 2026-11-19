@@ -3,19 +3,20 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
-use Modules\Auth\Sms\SmsSender;
-use Modules\Auth\Tests\Concerns\FakeSmsSender;
+use Modules\Auth\Notifications\Channels\SmsChannel;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
-use Modules\Offer\Mail\BookingMail;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequestCancelled;
+use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequestRefused;
 use Tests\TestCase;
 
 /**
@@ -27,8 +28,6 @@ class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private FakeSmsSender $sms;
-
     private int $phones = 0;
 
     protected function setUp(): void
@@ -38,9 +37,8 @@ class BookingApiTest extends TestCase
         config(['offer.domain' => 'rental']);
         Country::factory()->create(['code' => 'CM', 'currency' => 'XAF']);
         $this->seed(OfferDatabaseSeeder::class);
-        Mail::fake();
-        $this->sms = new FakeSmsSender;
-        $this->app->instance(SmsSender::class, $this->sms);
+        // Qui est prévenu, de quoi, sur quels canaux ; l'envoi réel est testé dans BookingNotificationsTest.
+        Notification::fake();
     }
 
     private function member(array $attributes = []): User
@@ -124,13 +122,10 @@ class BookingApiTest extends TestCase
         $this->assertSame(2, $booking->guests);
         $this->assertSame('Bonjour !', $booking->message);
 
-        Mail::assertSent(BookingMail::class, fn (BookingMail $mail): bool => $mail->hasTo($offer->user->email)
-            && str_starts_with($mail->subjectLine, 'Nouvelle demande')
-            && str_contains($mail->body, 'Marie Curie demande un séjour')
-            && $mail->note === 'Bonjour !');
-        $this->assertCount(1, $this->sms->messages);
-        $this->assertSame($offer->user->phone, $this->sms->messages[0]['to']);
-        $this->assertStringContainsString('Marie Curie demande un séjour', $this->sms->messages[0]['message']);
+        // Le propriétaire, par e-mail et SMS (adresse et numéro vérifiés).
+        Notification::assertSentTo($offer->user, BookingRequestReceived::class,
+            fn (BookingRequestReceived $notification, array $channels): bool => $notification->booking->is($booking) && $channels === ['mail', SmsChannel::class]);
+        Notification::assertCount(1);
     }
 
     public function test_invalid_requests_are_refused(): void
@@ -194,8 +189,8 @@ class BookingApiTest extends TestCase
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'refuse', 'refusal_message' => 'Déjà loué.'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::REFUSED, $booking->fresh()->status);
         $this->assertSame('Déjà loué.', $booking->fresh()->refusal_message);
-        Mail::assertSent(BookingMail::class, fn (BookingMail $mail): bool => $mail->hasTo($guest->email) && $mail->note === 'Déjà loué.' && str_contains($mail->subjectLine, 'refusée'));
-        $this->assertStringContainsString('est refusée', end($this->sms->messages)['message']);
+        Notification::assertSentTo($guest, BookingRequestRefused::class,
+            fn (BookingRequestRefused $notification, array $channels): bool => $channels === ['mail', SmsChannel::class]);
 
         // Plus en attente : plus de réponse possible, plus de « Répondre ».
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertForbidden();
@@ -218,7 +213,7 @@ class BookingApiTest extends TestCase
         $cancel = $items[(string) $pending->getKey()]['delete'];
         $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::CANCELLED, $pending->fresh()->status);
-        Mail::assertSent(BookingMail::class, fn (BookingMail $mail): bool => $mail->hasTo($pending->offer->user->email) && str_contains($mail->subjectLine, 'annulée'));
+        Notification::assertSentTo($pending->offer->user, BookingRequestCancelled::class);
 
         $this->asUser($guest)->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertForbidden();
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertNotFound();
@@ -231,7 +226,6 @@ class BookingApiTest extends TestCase
 
         $this->asUser($this->member())->postJson("/api/v1/offers/{$offer->getKey()}/bookings", $this->stay())->assertNoContent();
 
-        Mail::assertNothingSent();
-        $this->assertSame([], $this->sms->messages);
+        Notification::assertNothingSent();
     }
 }

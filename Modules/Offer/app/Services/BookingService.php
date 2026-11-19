@@ -8,18 +8,21 @@ use Modules\Auth\Models\User;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
+use Modules\Offer\Events\BookingAnswered;
+use Modules\Offer\Events\BookingCancelled;
+use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
 /**
  * La règle des demandes (décision 2026-11-19-contrat-reservations) : le membre
  * demande (le prix est figé à l'envoi), le propriétaire accepte ou refuse, le
- * membre annule ; chaque étape prévient l'autre partie.
+ * membre annule. Chaque étape est un événement (`BookingRequested`, `BookingAnswered`,
+ * `BookingCancelled`) ; les notifications en découlent (décision
+ * 2026-11-19-notifications-reservations).
  */
 class BookingService
 {
-    public function __construct(private readonly BookingNotifier $notifier) {}
-
     /**
      * Une demande validée par `OfferBookingForm` : séjour (arrivée, départ,
      * voyageurs) ou visite (date), selon le domaine.
@@ -49,7 +52,7 @@ class BookingService
                 'currency' => $unitPrice === null ? null : ($offer->currency ?? $offer->country?->currency),
                 'status' => BookingStatusEnum::PENDING,
             ]);
-            $this->notifier->notify($booking, BookingNotifier::REQUESTED);
+            BookingRequested::dispatch($booking);
 
             return $booking;
         });
@@ -67,7 +70,7 @@ class BookingService
                 'refusal_message' => $accept || $message === '' ? null : $message,
                 'answered_at' => now(),
             ])->save();
-            $this->notifier->notify($booking, $accept ? BookingNotifier::ACCEPTED : BookingNotifier::REFUSED);
+            BookingAnswered::dispatch($booking);
 
             return $booking;
         });
@@ -80,7 +83,7 @@ class BookingService
     {
         return DB::transaction(function () use ($booking): Booking {
             $booking->fill(['status' => BookingStatusEnum::CANCELLED, 'cancelled_at' => now()])->save();
-            $this->notifier->notify($booking, BookingNotifier::CANCELLED);
+            BookingCancelled::dispatch($booking);
 
             return $booking;
         });

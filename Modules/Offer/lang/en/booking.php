@@ -57,6 +57,8 @@ return [
         'search' => 'Search an offer…',
     ],
     'notify' => [
+        'greeting' => 'Hello :name,',
+        'salutation' => 'The :app team',
         'requested' => [
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
