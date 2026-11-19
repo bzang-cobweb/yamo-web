@@ -114,6 +114,7 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame('Calendrier', $data['title']);
         $this->assertSame($offer->getTranslation('title', 'fr'), $data['heading']);
         $this->assertSame($offer->fullAddress(), $data['address']);
+        $this->assertSame(trim((string) $offer->getTranslation('description', 'fr')) ?: null, $data['description']);
         $this->assertSame(today()->daysInMonth, count($data['days']));
         $this->assertSame(today()->startOfMonth()->dayOfWeekIso - 1, $data['offset']);
         $this->assertCount(7, $data['weekdays']);

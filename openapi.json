@@ -1325,6 +1325,13 @@
                                                     ],
                                                     "description": "Son adresse sous le titre (\u00ab Rue Njo-Njo, Bonapriso, 00237 Douala, Cameroun \u00bb), ou `null`."
                                                 },
+                                                "description": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Sa description sous l'adresse, ou `null`."
+                                                },
                                                 "month": {
                                                     "type": "string"
                                                 },
@@ -1403,6 +1410,7 @@
                                                 "title",
                                                 "heading",
                                                 "address",
+                                                "description",
                                                 "month",
                                                 "label",
                                                 "previous",
