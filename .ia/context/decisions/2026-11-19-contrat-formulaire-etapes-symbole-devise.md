@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-19-etapes-formulaire-reordonnees.md (le contenu des étapes)
 # `2026-11-19` — Formulaire de logement par étapes, unités dans l'aide, symbole de devise : validé
 
 - **Type** : décision

@@ -40,8 +40,8 @@ return [
     'steps' => [
         'home' => 'The home',
         'price' => 'Price and availability',
-        'place' => 'Address and category',
-        'listing' => 'The listing',
+        'place' => 'Address',
+        'features' => 'Features',
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [

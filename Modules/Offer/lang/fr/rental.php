@@ -40,8 +40,8 @@ return [
     'steps' => [
         'home' => 'Le logement',
         'price' => 'Prix et disponibilité',
-        'place' => 'Adresse et catégorie',
-        'listing' => "L'annonce",
+        'place' => 'Adresse',
+        'features' => 'Caractéristiques',
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [

@@ -156,21 +156,22 @@ class OfferApiTest extends TestCase
 
         // Décision 2026-11-19-contrat-formulaire-etapes-symbole-devise.
         $steps = $this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.steps');
-        $this->assertSame(['Le logement', 'Prix et disponibilité', 'Adresse et catégorie', "L'annonce"], array_column($steps, 'title'));
+        // Décision 2026-11-19-etapes-formulaire-reordonnees.
+        $this->assertSame(['Le logement', 'Prix et disponibilité', 'Adresse', 'Caractéristiques'], array_column($steps, 'title'));
         $this->assertSame([
-            ['property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'amenities'],
+            ['property_type', 'furnished', 'category_id', 'title', 'description', 'status'],
             ['price', 'charges', 'available_from'],
-            ['street', 'zip', 'city', 'category_id'],
-            ['title', 'description', 'status'],
+            ['street', 'zip', 'city'],
+            ['surface', 'rooms', 'bedrooms', 'amenities'],
         ], array_column($steps, 'fields'));
 
         // « Suivant » : seule l'étape est vérifiée.
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'castle'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['property_type'])
-            ->assertJsonMissingValidationErrors(['surface', 'rooms', 'title', 'price', 'street']);
+            ->assertJsonValidationErrors(['property_type', 'title'])
+            ->assertJsonMissingValidationErrors(['surface', 'rooms', 'price', 'street']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
-        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio'])->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'title' => 'Studio', 'status' => 'draft'])->assertNoContent();
     }
 
     public function test_a_member_adds_a_home_with_its_attributes(): void
