@@ -121,4 +121,6 @@ return [
         'rules' => 'Règles',
         'reviews' => 'Avis',
     ],
+    // Bouton de la barre fixe de sa propre offre (décision 2026-11-19-fiche-bouton-modifier).
+    'edit' => 'Modifier',
 ];

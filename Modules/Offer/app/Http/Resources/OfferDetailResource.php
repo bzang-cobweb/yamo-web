@@ -13,6 +13,7 @@ use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\OfferBookingForm;
+use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
@@ -82,6 +83,8 @@ class OfferDetailResource extends JsonResource
             'sections' => $this->sections($address, $this->indication($offer, $locale), $facts, $rules, $informations, $reviews !== null),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
+            /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */
+            'edit' => $owner && $request->user('sanctum')?->can('update', $offer) ? ['label' => (string) __('offer::offer.edit'), 'form' => OfferForm::name()] : null,
             /** Cœur de favori d'un membre connecté : plein si `active` ; PUT/DELETE sur `endpoint` ; `null` pour un visiteur, sa propre offre ou une offre non publiée. */
             'favorite' => $this->favorite($offer, $request),
         ];

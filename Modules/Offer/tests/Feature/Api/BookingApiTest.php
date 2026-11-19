@@ -85,7 +85,12 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.booking', ['type' => 'stay', 'label' => 'Réserver', 'form' => 'offer.booking']);
         $this->asUser($this->member())->getJson("/api/v1/offers/{$unfurnished->getKey()}")
             ->assertJsonPath('data.booking', ['type' => 'visit', 'label' => 'Demander une visite', 'form' => 'offer.booking']);
-        $this->asUser($furnished->user)->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.booking', null);
+        // Son auteur : pas de réservation, mais « Modifier » (décision 2026-11-19-fiche-bouton-modifier).
+        $this->asUser($furnished->user)->getJson("/api/v1/offers/{$furnished->getKey()}")
+            ->assertJsonPath('data.booking', null)
+            ->assertJsonPath('data.edit', ['label' => 'Modifier', 'form' => 'offer.offer']);
+        $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.edit', null);
+        $this->withHeaders(['X-Country' => 'CM'])->getJson("/api/v1/offers/{$unfurnished->getKey()}")->assertJsonPath('data.edit', null);
     }
 
     public function test_the_form_asks_dates_and_guests_for_a_stay_and_a_date_for_a_visit(): void

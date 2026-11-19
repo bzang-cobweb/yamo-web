@@ -3283,6 +3283,26 @@
                             "form"
                         ]
                     },
+                    "edit": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Bouton de la barre fixe pour son auteur (d\u00e9cision 2026-11-19-fiche-bouton-modifier) : \u00ab Modifier \u00bb et le formulaire de l'offre, \u00e0 ouvrir li\u00e9 \u00e0 elle ; `null` pour les autres.",
+                        "properties": {
+                            "label": {
+                                "type": "string"
+                            },
+                            "form": {
+                                "type": "string",
+                                "const": "offer.offer"
+                            }
+                        },
+                        "required": [
+                            "label",
+                            "form"
+                        ]
+                    },
                     "favorite": {
                         "type": [
                             "object",
@@ -3320,6 +3340,7 @@
                     "reviews",
                     "sections",
                     "booking",
+                    "edit",
                     "favorite"
                 ],
                 "title": "OfferDetailResource"
