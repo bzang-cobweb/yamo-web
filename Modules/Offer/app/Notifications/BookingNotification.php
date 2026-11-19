@@ -77,7 +77,11 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'actor_id' => (int) $this->actor()->getKey(),
             'summary' => __("offer::booking.notify.{$this->key()}.summary", $this->replacements()),
             'message' => $this->note(),
-            'link' => '/profile/lists/'.$list,
+            // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
+            // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
+            'link' => $this->section() === 'received'
+                ? '/offers/'.$this->booking->offer_id.'/calendar?month='.$this->booking->check_in->format('Y-m')
+                : '/profile/lists/'.$list,
             // Le bouton de la page de la notification : la liste où retrouver la demande.
             // Le propriétaire traite la demande ; le membre retrouve ses réservations.
             'link_label' => $this->section() === 'received' ? __('offer::booking.notify.handle') : __('offer::booking.list.mine'),

@@ -155,7 +155,7 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame('Home request', $notification->data['title']);
         $this->assertSame(['label' => 'Pending', 'tone' => 'warning'], $notification->data['tag']);
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
-        $this->assertSame('/profile/lists/offer.bookings.received', $notification->data['link']);
+        $this->assertSame('/offers/'.$booking->offer_id.'/calendar?month='.today()->addDay()->format('Y-m'), $notification->data['link']);
         $this->assertSame([], $notification->data['links']);
         $this->assertSame('Handle the request', $notification->data['link_label']);
         $this->assertSame($booking->user_id, $notification->data['actor_id']);
