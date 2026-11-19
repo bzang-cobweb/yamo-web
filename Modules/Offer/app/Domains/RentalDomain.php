@@ -251,7 +251,7 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Les charges, après le loyer, dans « Général » (décision 2026-11-19-prix-dans-general).
+     * Les charges, après le loyer, dans l'onglet « Prix » (décision 2026-11-19-onglet-prix).
      */
     public function priceAttributes(): array
     {

@@ -231,8 +231,8 @@ abstract class Domain
     }
 
     /**
-     * Les attributs qui accompagnent le prix dans l'onglet « Général » du back-office,
-     * juste après lui (décision 2026-11-19-prix-dans-general) ; aucun par défaut.
+     * Les attributs qui accompagnent le prix dans l'onglet « Prix » du back-office,
+     * juste après lui (décision 2026-11-19-onglet-prix) ; aucun par défaut.
      *
      * @return list<string>
      */

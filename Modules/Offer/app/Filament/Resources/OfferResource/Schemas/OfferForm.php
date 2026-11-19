@@ -38,8 +38,8 @@ use Modules\Offer\Models\OfferInformation;
 abstract class OfferForm
 {
     /**
-     * Les attributs du domaine d'un onglet : `listing` (« Général »), `price` (dans
-     * « Général », après le prix), `access` (« Accès »), `rules` (« Règles ») ou
+     * Les attributs du domaine d'un onglet : `listing` (« Général »), `price` (onglet
+     * « Prix », après le prix), `access` (« Accès »), `rules` (« Règles ») ou
      * `features` (« Caractéristiques », tous les autres) ; un attribut traduisible a
      * un onglet par langue.
      *
@@ -66,7 +66,7 @@ abstract class OfferForm
 
     /**
      * Le prix (libellé du domaine, « Loyer ») puis les attributs qui l'accompagnent
-     * (« Charges mensuelles »), dans « Général » (décision 2026-11-19-prix-dans-general).
+     * (« Charges mensuelles »), dans l'onglet « Prix » (décision 2026-11-19-onglet-prix).
      *
      * @return list<Component>
      */
@@ -93,8 +93,9 @@ abstract class OfferForm
             ->components([
                 // Des onglets (décisions 2026-11-19-ombre-coeur-onglets-offre et
                 // 2026-11-19-onglets-localisation-informations), dans l'ordre des étapes de l'app :
-                // le général (avec le prix), l'accès, les caractéristiques, les règles, les informations, la
-                // localisation, les photos ; les avis restent sous le formulaire.
+                // le général, le prix, la localisation, l'accès, les caractéristiques, les règles,
+                // les informations, les photos (décision 2026-11-19-onglet-prix) ; les avis restent
+                // sous le formulaire.
                 Tabs::make('offer')
                     ->columnSpanFull()
                     ->persistTabInQueryString()
@@ -125,7 +126,52 @@ abstract class OfferForm
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
                                     ->options(fn (): array => OfferCategory::options()),
-                                ...self::price($domain),
+                            ]),
+                        // Le prix et ce qui l'accompagne (décision 2026-11-19-onglet-prix) ; pas d'onglet
+                        // pour un domaine sans prix.
+                        Tab::make(__('offer::offer.tabs.price'))
+                            ->columns(2)
+                            ->visible($domain->hasPrice() || $domain->priceAttributes() !== [])
+                            ->schema(self::price($domain)),
+                        // Le pays aussi (décision 2026-11-19-pays-dans-localisation) : l'onglet est
+                        // toujours là ; l'adresse, pour un domaine qui en a une.
+                        Tab::make(__('offer::offer.tabs.location'))
+                            ->schema([
+                                // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
+                                SingleCountry::lock(Select::make('country_id')
+                                    ->label(__('offer::offer.country'))
+                                    ->live()
+                                    ->options(fn (): array => Country::options())
+                                    ->searchable()
+                                    ->required()),
+                                // L'adresse et son indication, dans `offer_addresses` (décision
+                                // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
+                                // n'est pas créée, ou elle est retirée.
+                                Group::make([
+                                    Select::make('address_id')
+                                        ->label(__('offer::offer.address'))
+                                        // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
+                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
+                                        ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
+                                                $fail(__('offer::offer.address_country'));
+                                            }
+                                        })
+                                        ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
+                                        ->searchable(['street', 'zip', 'city'])
+                                        ->required($domain->requiresAddress())
+                                        ->columnSpanFull(),
+                                    // Traduite : un onglet par langue (décision 2026-11-19-indication-traduisible).
+                                    TranslatableTabs::make(fn (string $locale): array => [
+                                        Textarea::make("indication.{$locale}")
+                                            ->label(__('offer::offer.indication'))
+                                            ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
+                                            ->rows(2),
+                                    ], 'indication')->columnSpanFull(),
+                                ])
+                                    ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
+                                    ->visible($domain->hasAddress())
+                                    ->columnSpanFull(),
                             ]),
                         // L'accès à l'offre : statut, vedette, disponibilité, paiement (décision 2026-11-19-acces-avis-backoffice).
                         Tab::make(__('offer::offer.access'))
@@ -189,46 +235,6 @@ abstract class OfferForm
                                     ->columnSpanFull(),
                             ]),
                         // L'adresse et son indication (décision 2026-11-19-onglets-localisation-informations).
-                        // Le pays aussi (décision 2026-11-19-pays-dans-localisation) : l'onglet est
-                        // toujours là ; l'adresse, pour un domaine qui en a une.
-                        Tab::make(__('offer::offer.tabs.location'))
-                            ->schema([
-                                // L'espace de l'offre (décision 2026-11-18-espace-pays) ; verrouillé s'il n'y a qu'un pays.
-                                SingleCountry::lock(Select::make('country_id')
-                                    ->label(__('offer::offer.country'))
-                                    ->live()
-                                    ->options(fn (): array => Country::options())
-                                    ->searchable()
-                                    ->required()),
-                                // L'adresse et son indication, dans `offer_addresses` (décision
-                                // 2026-11-19-contrat-adresse-offre-table) : sans adresse choisie, la ligne
-                                // n'est pas créée, ou elle est retirée.
-                                Group::make([
-                                    Select::make('address_id')
-                                        ->label(__('offer::offer.address'))
-                                        // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
-                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
-                                        ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
-                                                $fail(__('offer::offer.address_country'));
-                                            }
-                                        })
-                                        ->getOptionLabelFromRecordUsing(fn (Address $address): string => $address->street.', '.$address->zip.' '.$address->city)
-                                        ->searchable(['street', 'zip', 'city'])
-                                        ->required($domain->requiresAddress())
-                                        ->columnSpanFull(),
-                                    // Traduite : un onglet par langue (décision 2026-11-19-indication-traduisible).
-                                    TranslatableTabs::make(fn (string $locale): array => [
-                                        Textarea::make("indication.{$locale}")
-                                            ->label(__('offer::offer.indication'))
-                                            ->maxLength(OfferAddress::INDICATION_MAX_LENGTH)
-                                            ->rows(2),
-                                    ], 'indication')->columnSpanFull(),
-                                ])
-                                    ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
-                                    ->visible($domain->hasAddress())
-                                    ->columnSpanFull(),
-                            ]),
                         Tab::make(__('offer::offer.photos'))
                             ->schema([
                                 SpatieMediaLibraryFileUpload::make('photos')
