@@ -464,6 +464,111 @@
                 "security": []
             }
         },
+        "/v1/forms/{form}/uploads/{field}": {
+            "post": {
+                "operationId": "v1.forms.uploads.store",
+                "summary": "Envoyer un fichier pour le champ `{field}` (de type `upload`), avant\nd'enregistrer le formulaire (d\u00e9cision 2026-11-19-contrat-champ-upload-photos).\nLe fichier (`file`, multipart) est valid\u00e9 selon les r\u00e8gles du champ : types,\ntaille. Il est gard\u00e9 24 h au nom du compte ; son identifiant se met dans la\nvaleur du champ. 404 si le champ n'existe pas ou n'est pas un champ de fichiers",
+                "tags": [
+                    "FormUpload"
+                ],
+                "parameters": [
+                    {
+                        "name": "form",
+                        "in": "path",
+                        "required": true,
+                        "description": "The form ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "field",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/Form"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "file": {
+                                                "type": "string",
+                                                "format": "binary",
+                                                "contentMediaType": "application/octet-stream"
+                                            }
+                                        },
+                                        "required": [
+                                            "file"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`FormUploadResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormUploadResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/v1/lists/{list}": {
             "get": {
                 "operationId": "v1.lists.show",
@@ -817,14 +922,14 @@
                     "204": {
                         "description": "No content"
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -2263,6 +2368,11 @@
                 ],
                 "title": "ForgotPasswordRequest"
             },
+            "Form": {
+                "type": "object",
+                "description": "Un formulaire d\u00e9crit par le serveur : l'app mobile affiche ses champs, et la\nFormRequest de l'action qui le re\u00e7oit valide avec `rules()` \u2014 une seule source.\n\nChaque formulaire est d\u00e9clar\u00e9 dans le module qui le poss\u00e8de et inscrit au\nregistre (`FormRegistry::register()`).",
+                "title": "Form"
+            },
             "FormResource": {
                 "type": "object",
                 "properties": {
@@ -2282,6 +2392,7 @@
                     },
                     "fields": {
                         "type": "array",
+                        "description": "Un champ de fichiers re\u00e7oit l'adresse o\u00f9 envoyer chaque fichier (relative \u00e0 l'API).",
                         "items": {}
                     },
                     "steps": {
@@ -2312,6 +2423,18 @@
                     "submit"
                 ],
                 "title": "FormResource"
+            },
+            "FormUploadResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ],
+                "title": "FormUploadResource"
             },
             "GenderEnum": {
                 "type": "string",

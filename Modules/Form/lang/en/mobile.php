@@ -25,6 +25,16 @@ return [
         'rangeMax' => 'Max',
         'rangeOrder' => 'The maximum must be at least the minimum.',
         'stepOf' => 'Step :current of :total',
+        // Champ de fichiers (décision 2026-11-19-contrat-champ-upload-photos).
+        'uploadAdd' => "Add photos",
+        'uploadMain' => "Main",
+        'uploadMakeMain' => "Move to first",
+        'uploadRemove' => "Remove",
+        'uploadSending' => "Sending…",
+        'uploadWrongType' => "Format not accepted.",
+        'uploadTooLarge' => "File too large: :max at most.",
+        'uploadTooMany' => "At most :max files.",
+        'uploadFailed' => "Sending failed. Try again.",
     ],
     'list' => [
         // Filtres d'une liste (décision 2026-11-19-contrat-filtres-vitrine).

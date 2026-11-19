@@ -138,9 +138,9 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Quatre étapes dans l'app (décision 2026-11-19-etapes-formulaire-ordre-final) :
+     * Cinq étapes dans l'app (décisions 2026-11-19-etapes-formulaire-ordre-final et 2026-11-19-contrat-champ-upload-photos) :
      * la présentation (type, meublé, catégorie, titre, description), les
-     * caractéristiques, le prix et la disponibilité (avec le statut), puis l'adresse.
+     * caractéristiques, le prix et la disponibilité (avec le statut), l'adresse, puis les photos.
      */
     public function formSteps(): array
     {
@@ -150,6 +150,8 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
             ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'address_description']],
+            // Les photos en dernier (décision 2026-11-19-contrat-champ-upload-photos).
+            ['title' => __('offer::rental.steps.photos'), 'fields' => ['photos']],
         ];
     }
 

@@ -40,6 +40,7 @@ class FieldTest extends TestCase
                     Field::phone('mobile')->options(['CH' => ['label' => 'Suisse', 'hint' => '+41'], 'FR' => ['label' => 'France', 'hint' => '+33']]),
                     Field::code('otp'),
                     Field::rating('stars'),
+                    Field::upload('pictures')->accept(['image/jpeg'])->maxSize(500)->maxFiles(3),
                     Field::multiselect('colors')->options(['red' => 'Rouge', 'blue' => 'Bleu']),
                     Field::range('budget')->rules(['min:0']),
                     Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
@@ -158,6 +159,7 @@ class FieldTest extends TestCase
             'max_length' => null,
             'suffix' => null,
             'suffix_when' => null,
+            'upload' => null,
             'default' => null,
             'options' => [
                 ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],

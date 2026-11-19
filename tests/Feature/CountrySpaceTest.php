@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Form\Models\FormUpload;
+use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Support\Currencies;
@@ -20,7 +23,7 @@ use Tests\TestCase;
  */
 class CountrySpaceTest extends TestCase
 {
-    use RefreshDatabase;
+    use MakesFormUploads, RefreshDatabase;
 
     private Country $cameroon;
 
@@ -29,6 +32,8 @@ class CountrySpaceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake(FormUpload::DISK);
+        Storage::fake('public');
 
         config(['offer.domain' => 'rental']);
         $this->cameroon = Country::factory()->create(['code' => 'CM', 'name' => ['fr' => 'Cameroun', 'en' => 'Cameroon'], 'native_name' => 'Cameroun', 'currency' => 'XAF']);
@@ -92,7 +97,7 @@ class CountrySpaceTest extends TestCase
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [
             'title' => 'Studio à Bonanza', 'status' => 'published', 'price' => '85000', 'street' => 'Rue Njo-Njo', 'city' => 'Douala',
-            'property_type' => 'studio', 'surface' => '25', 'rooms' => '1',
+            'property_type' => 'studio', 'surface' => '25', 'rooms' => '1', 'photos' => [$this->pendingUpload($user)],
         ])->assertNoContent();
 
         $offer = Offer::query()->sole();

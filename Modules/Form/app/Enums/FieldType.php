@@ -36,6 +36,11 @@ enum FieldType: string
     case RANGE = 'range';
     /** Note en étoiles, entier de 1 à 5 (décision 2026-11-19-contrat-avis-offres). */
     case RATING = 'rating';
+    /**
+     * Fichiers envoyés un à un avant l'enregistrement (décision 2026-11-19-contrat-champ-upload-photos) :
+     * la valeur est la liste ordonnée de leurs identifiants ; voir `Field::upload()`.
+     */
+    case UPLOAD = 'upload';
 
     /**
      * Le champ propose une liste d'options.
@@ -65,6 +70,7 @@ enum FieldType: string
             self::PHONE => ['string', 'phone'],
             self::CODE => ['string', 'digits:6'],
             self::RATING => ['integer', 'between:1,5'],
+            self::UPLOAD => ['array'],
         };
     }
 }

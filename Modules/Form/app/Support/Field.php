@@ -5,11 +5,13 @@ namespace Modules\Form\Support;
 use App\Support\Locales;
 use Closure;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
+use Modules\Form\Models\FormUpload;
 use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Rules\OptionBelongsToParent;
 
@@ -69,6 +71,21 @@ final class Field
 
     /** Suggestions pendant la saisie : point d'API relatif (`/v1/…`), ou aucune. */
     private ?string $suggestions = null;
+
+    /**
+     * Fichiers (`upload()`) : types MIME acceptés, taille maximale d'un fichier (Ko),
+     * nombre maximal de fichiers, et fichiers déjà enregistrés (identifiant => adresse).
+     *
+     * @var list<string>
+     */
+    private array $accept = [];
+
+    private int $maxSizeKb = 10240;
+
+    private int $maxFiles = 1;
+
+    /** @var array<string, string> */
+    private array $files = [];
 
     /** Texte refusé s'il contient une coordonnée (`withoutContactDetails()`). */
     private bool $withoutContactDetails = false;
@@ -202,6 +219,93 @@ final class Field
     public static function rating(string $name): self
     {
         return new self($name, FieldType::RATING);
+    }
+
+    /**
+     * Fichiers (décision 2026-11-19-contrat-champ-upload-photos) : l'app envoie
+     * chaque fichier dès qu'il est choisi (`POST /api/v1/forms/{form}/uploads/{champ}`),
+     * validé par `fileRules()`, et reçoit son identifiant ; la valeur du champ est la
+     * liste ordonnée des identifiants, fichiers déjà enregistrés (`files()`) compris.
+     * Types acceptés, taille et nombre maximal sont déclarés ici et servis à l'app.
+     */
+    public static function upload(string $name): self
+    {
+        return new self($name, FieldType::UPLOAD);
+    }
+
+    /**
+     * Types MIME acceptés (`image/jpeg`…).
+     *
+     * @param  list<string>  $mimeTypes
+     */
+    public function accept(array $mimeTypes): self
+    {
+        $this->assertUpload();
+        $this->accept = array_values($mimeTypes);
+
+        return $this;
+    }
+
+    /** Taille maximale d'un fichier, en Ko. */
+    public function maxSize(int $kilobytes): self
+    {
+        $this->assertUpload();
+        $this->maxSizeKb = $kilobytes;
+
+        return $this;
+    }
+
+    /** Nombre maximal de fichiers (1 : un seul). */
+    public function maxFiles(int $count): self
+    {
+        $this->assertUpload();
+        $this->maxFiles = max(1, $count);
+
+        return $this;
+    }
+
+    /**
+     * Les fichiers déjà enregistrés, dans l'ordre : identifiant => adresse. Ils sont
+     * la valeur initiale du champ, et leurs identifiants sont acceptés à l'envoi.
+     *
+     * @param  array<string, string>  $files
+     */
+    public function files(array $files): self
+    {
+        $this->assertUpload();
+        $this->files = $files;
+        $this->default = array_map('strval', array_keys($files));
+
+        return $this;
+    }
+
+    /**
+     * Règles d'un fichier envoyé pour ce champ : type, taille ; une image démesurée
+     * à décoder est refusée.
+     *
+     * @return list<mixed>
+     */
+    public function fileRules(): array
+    {
+        $this->assertUpload();
+        $images = $this->accept !== [] && array_filter($this->accept, fn (string $type): bool => ! str_starts_with($type, 'image/')) === [];
+
+        return [
+            // Un seul message par refus : le premier qui s'applique.
+            'bail',
+            'required',
+            'file',
+            ...($this->accept === [] ? [] : ['mimetypes:'.implode(',', $this->accept)]),
+            'max:'.$this->maxSizeKb,
+            ...($images ? ['dimensions:max_width=10000,max_height=10000'] : []),
+        ];
+    }
+
+    private function assertUpload(): void
+    {
+        if ($this->type !== FieldType::UPLOAD) {
+            throw new LogicException("Champ « {$this->name} » : réservé à un champ de fichiers.");
+        }
     }
 
     public static function switch(string $name): self
@@ -453,6 +557,21 @@ final class Field
             ];
         }
 
+        if ($this->type === FieldType::UPLOAD) {
+            $known = array_map('strval', array_keys($this->files));
+            $field = $this->name;
+
+            return [
+                $this->name => [...$presence, 'array', 'max:'.$this->maxFiles, ...$this->rules],
+                // Un fichier déjà enregistré, ou envoyé pour ce champ par le compte de la requête.
+                $this->name.'.*' => ['string', 'distinct', function (string $attribute, mixed $value, Closure $fail) use ($known, $field): void {
+                    if (! in_array($value, $known, true) && ! FormUpload::isPendingFor((string) $value, Auth::id(), $field)) {
+                        $fail('form::validation.upload_unknown')->translate();
+                    }
+                }],
+            ];
+        }
+
         if ($this->type === FieldType::RANGE) {
             return [
                 // Deux bornes, la seconde au moins égale à la première quand les deux sont données.
@@ -646,7 +765,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -669,6 +788,13 @@ final class Field
             'suffix' => $this->suffix,
             /** Unité qui suit la valeur d'un autre champ (`suffixes` : valeur => unité) ; `suffix` à défaut. */
             'suffix_when' => $this->suffixWhen,
+            /** Fichiers (`upload`) : types acceptés, taille maximale (Ko), nombre maximal, adresse d'envoi, fichiers déjà enregistrés ; `null` pour un autre type. */
+            'upload' => $this->type !== FieldType::UPLOAD ? null : [
+                'accept' => $this->accept,
+                'max_size_kb' => $this->maxSizeKb,
+                'max_files' => $this->maxFiles,
+                'files' => collect($this->files)->map(fn (string $url, string|int $id): array => ['id' => (string) $id, 'url' => $url])->values()->all(),
+            ],
             'default' => $this->initialValue(),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [

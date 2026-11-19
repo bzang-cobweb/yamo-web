@@ -21,6 +21,7 @@ return [
     'status' => 'Status',
     'published_at' => 'Published on',
     'photos' => 'Photos',
+    'photos_help' => 'The first one is the main photo. JPEG, PNG or WebP.',
     'attributes' => 'Features',
     'statuses' => [
         'draft' => 'Draft',

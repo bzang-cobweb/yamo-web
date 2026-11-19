@@ -16,7 +16,7 @@ use Modules\Form\Support\Step;
 class FormResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string|null, subtitle: string|null, title_align: 'start'|'center', fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
+     * @return array{name: string, title: string|null, subtitle: string|null, title_align: 'start'|'center', fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, upload: array{accept: list<string>, max_size_kb: int, max_files: int, endpoint: string, files: list<array{id: string, url: string}>}|null, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
      */
     public function toArray(Request $request): array
     {
@@ -26,11 +26,26 @@ class FormResource extends JsonResource
             'subtitle' => $this->resource->subtitle(),
             /** Alignement du titre, du sous-titre et des titres d'étape : `start` ou `center`. */
             'title_align' => $this->resource->titleAlign(),
-            'fields' => array_map(fn (Field $field): array => $field->toArray(), $this->resource->fields()),
+            // Un champ de fichiers reçoit l'adresse où envoyer chaque fichier (relative à l'API).
+            'fields' => array_map(fn (Field $field): array => $this->field($field), $this->resource->fields()),
             /** Étapes (titre, noms des champs) ; vide pour un formulaire d'un seul tenant. */
             'steps' => array_map(fn (Step $step): array => $step->toArray(), $this->resource->steps()),
             /** Libellé du bouton ; pour un formulaire que l'app envoie sans le connaître, aussi `method`, `endpoint` (relatif à l'API), `destructive` et `success`. */
             'submit' => ['label' => $this->resource->submitLabel(), ...($this->resource->submission()?->toArray() ?? [])],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function field(Field $field): array
+    {
+        $data = $field->toArray();
+
+        if (is_array($data['upload'])) {
+            $data['upload']['endpoint'] = '/v1/forms/'.rawurlencode($this->resource->key()).'/uploads/'.rawurlencode($field->name);
+        }
+
+        return $data;
     }
 }

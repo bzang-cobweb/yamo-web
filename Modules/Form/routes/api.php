@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Form\Http\Controllers\Api\FormController;
 use Modules\Form\Http\Controllers\Api\FormStepController;
+use Modules\Form\Http\Controllers\Api\FormUploadController;
 use Modules\Form\Http\Controllers\Api\ListingController;
 
 // Routes d'API du module Form (préfixe `api`, noms `api.`). `{form}` est résolu
@@ -18,6 +19,13 @@ Route::post('v1/forms/{form}/steps/{step}', [FormStepController::class, 'validat
     ->can('viewForm', 'form')
     ->middleware('throttle:30,1')
     ->name('v1.forms.steps.validate');
+
+// Fichiers d'un champ `upload`, envoyés un à un avant l'enregistrement (décision
+// 2026-11-19-contrat-champ-upload-photos) : réservé à un compte connecté.
+Route::post('v1/forms/{form}/uploads/{field}', [FormUploadController::class, 'store'])
+    ->middleware(['auth:sanctum', 'throttle:60,1'])
+    ->can('viewForm', 'form')
+    ->name('v1.forms.uploads.store');
 
 // Listes affichées par l'app (décision 2026-11-18-adresses-liste-generique).
 // `{list}` est résolu par le registre (inconnue : 404) ; capacité `viewList`.

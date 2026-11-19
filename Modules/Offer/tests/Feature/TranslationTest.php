@@ -5,6 +5,7 @@ namespace Modules\Offer\Tests\Feature;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use LogicException;
 use Modules\Auth\Enums\PermissionEnum;
@@ -12,7 +13,9 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
+use Modules\Form\Models\FormUpload;
 use Modules\Form\Support\Field;
+use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
@@ -26,11 +29,13 @@ use Modules\Offer\Models\Offer;
  */
 class TranslationTest extends AuthFilamentTestCase
 {
-    use RefreshDatabase;
+    use MakesFormUploads, RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake(FormUpload::DISK);
+        Storage::fake('public');
 
         app(DomainRegistry::class)->register(TestNotesDomain::class);
         config(['offer.domain' => 'test.notes']);
@@ -59,7 +64,7 @@ class TranslationTest extends AuthFilamentTestCase
     public function test_texts_are_saved_in_the_account_language_and_read_with_a_fallback(): void
     {
         $english = $this->member('en');
-        $this->asUser($english)->postJson('/api/v1/offers', ['title' => 'Bright flat', 'description' => 'Near the lake.', 'status' => 'draft', 'note' => 'Quiet street'])->assertNoContent();
+        $this->asUser($english)->postJson('/api/v1/offers', ['title' => 'Bright flat', 'description' => 'Near the lake.', 'status' => 'draft', 'note' => 'Quiet street', 'photos' => [$this->pendingUpload($english)]])->assertNoContent();
 
         $offer = Offer::query()->sole();
         $this->assertSame(['en' => 'Bright flat'], $offer->getTranslations('title'));
@@ -79,12 +84,12 @@ class TranslationTest extends AuthFilamentTestCase
         $french = $this->member('fr');
         $offer = Offer::factory()->for($french)->create(['title' => ['fr' => 'Appartement', 'en' => 'Flat'], 'details' => ['note' => ['fr' => 'Calme', 'en' => 'Quiet']]]);
 
-        $this->asUser($french)->patchJson("/api/v1/offers/{$offer->getKey()}", ['title' => 'Grand appartement', 'status' => 'draft', 'note' => 'Très calme'])->assertNoContent();
+        $this->asUser($french)->patchJson("/api/v1/offers/{$offer->getKey()}", ['title' => 'Grand appartement', 'status' => 'draft', 'note' => 'Très calme', 'photos' => [$this->pendingUpload($french)]])->assertNoContent();
 
         $this->assertSame(['fr' => 'Grand appartement', 'en' => 'Flat'], $offer->fresh()->getTranslations('title'));
         $this->assertSame(['fr' => 'Très calme', 'en' => 'Quiet'], $offer->fresh()->detail('note'));
         // Le français vidé : il est retiré, l'anglais reste.
-        $this->asUser($french)->patchJson("/api/v1/offers/{$offer->getKey()}", ['title' => 'Grand appartement', 'status' => 'draft', 'note' => ''])->assertNoContent();
+        $this->asUser($french)->patchJson("/api/v1/offers/{$offer->getKey()}", ['title' => 'Grand appartement', 'status' => 'draft', 'note' => '', 'photos' => [$this->pendingUpload($french)]])->assertNoContent();
         $this->assertSame(['en' => 'Quiet'], $offer->fresh()->detail('note'));
     }
 

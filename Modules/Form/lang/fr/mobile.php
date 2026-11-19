@@ -25,6 +25,16 @@ return [
         'rangeMax' => 'Max',
         'rangeOrder' => 'Le maximum doit être au moins égal au minimum.',
         'stepOf' => 'Étape :current sur :total',
+        // Champ de fichiers (décision 2026-11-19-contrat-champ-upload-photos).
+        'uploadAdd' => "Ajouter des photos",
+        'uploadMain' => "Principale",
+        'uploadMakeMain' => "Mettre en premier",
+        'uploadRemove' => "Retirer",
+        'uploadSending' => "Envoi…",
+        'uploadWrongType' => "Format non accepté.",
+        'uploadTooLarge' => "Fichier trop lourd : :max au plus.",
+        'uploadTooMany' => "Au plus :max fichiers.",
+        'uploadFailed' => "L'envoi a échoué. Réessayez.",
     ],
     'list' => [
         // Filtres d'une liste (décision 2026-11-19-contrat-filtres-vitrine).

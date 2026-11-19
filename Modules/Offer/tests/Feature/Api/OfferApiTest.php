@@ -3,10 +3,13 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Form\Models\FormUpload;
+use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
@@ -21,7 +24,7 @@ use Tests\TestCase;
  */
 class OfferApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use MakesFormUploads, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -31,6 +34,8 @@ class OfferApiTest extends TestCase
         // L'espace pays des tests : la Suisse, seul pays actif (décision 2026-11-18-espace-pays).
         Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
         $this->seed(OfferDatabaseSeeder::class);
+        Storage::fake(FormUpload::DISK);
+        Storage::fake('public');
     }
 
     private function member(): User
@@ -68,6 +73,8 @@ class OfferApiTest extends TestCase
             'bedrooms' => '2',
             'available_from' => '2026-12-01',
             'charges' => '180',
+            // Au moins une photo (décision 2026-11-19-contrat-champ-upload-photos).
+            'photos' => [$this->pendingUpload($user)],
             ...$overrides,
         ];
     }
@@ -95,7 +102,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'address_description', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'address_description', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -149,7 +156,7 @@ class OfferApiTest extends TestCase
         $this->assertNull($unfurnished->detail('surface'));
     }
 
-    public function test_the_app_form_comes_in_the_4_steps_of_the_domain(): void
+    public function test_the_app_form_comes_in_the_5_steps_of_the_domain(): void
     {
         $user = $this->member();
         UserAddress::factory()->for($user)->create();
@@ -160,13 +167,15 @@ class OfferApiTest extends TestCase
         // Titres centrés (décision 2026-11-19-alignement-titre-formulaire).
         $this->assertSame('center', $form['title_align']);
         // Décision 2026-11-19-etapes-formulaire-ordre-final.
-        // L'étape 1 sans titre (décision 2026-11-19-etape-1-sans-titre).
-        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Adresse'], array_column($steps, 'title'));
+        // L'étape 1 « Présentation » (décision 2026-11-19-etape-1-presentation), les photos en dernier
+        // (décision 2026-11-19-contrat-champ-upload-photos).
+        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Adresse', 'Photos'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
             ['street', 'zip', 'city', 'address_description'],
+            ['photos'],
         ], array_column($steps, 'fields'));
 
         // « Suivant » : seule l'étape est vérifiée.

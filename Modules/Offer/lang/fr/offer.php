@@ -21,6 +21,7 @@ return [
     'status' => 'Statut',
     'published_at' => 'Publiée le',
     'photos' => 'Photos',
+    'photos_help' => 'La première est la photo principale. JPEG, PNG ou WebP.',
     'attributes' => 'Caractéristiques',
     'statuses' => [
         'draft' => 'Brouillon',

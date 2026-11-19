@@ -3,12 +3,15 @@
 namespace Modules\Offer\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use LogicException;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
+use Modules\Form\Models\FormUpload;
 use Modules\Form\Support\Field;
+use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
@@ -21,11 +24,13 @@ use Tests\TestCase;
  */
 class DomainTest extends TestCase
 {
-    use RefreshDatabase;
+    use MakesFormUploads, RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake(FormUpload::DISK);
+        Storage::fake('public');
 
         // L'espace pays des tests : un seul pays actif (décision 2026-11-18-espace-pays).
         Country::factory()->create(['code' => 'CH', 'currency' => 'CHF']);
@@ -83,14 +88,15 @@ class DomainTest extends TestCase
             ->json('data.fields'), null, 'name');
         // Pas d'adresse dans une boutique ; ses propres attributs.
         $this->assertArrayNotHasKey('address_id', $fields);
-        $this->assertSame(['size', 'stock'], array_slice(array_keys($fields), -2));
+        // Les attributs du domaine, puis les photos, communes à tous (décision 2026-11-19-contrat-champ-upload-photos).
+        $this->assertSame(['size', 'stock', 'photos'], array_slice(array_keys($fields), -3));
         $this->assertSame('Mes articles', $this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.title'));
 
         $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'T-shirt', 'status' => 'draft', 'price' => '20', 'size' => 'XXL', 'stock' => '-1'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['size', 'stock']);
 
-        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'T-shirt', 'status' => 'draft', 'price' => '20', 'size' => 'M', 'stock' => '5'])->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'T-shirt', 'status' => 'draft', 'price' => '20', 'size' => 'M', 'stock' => '5', 'photos' => [$this->pendingUpload($user)]])->assertNoContent();
         $this->assertSame(['size' => 'M', 'stock' => 5], Offer::query()->sole()->details);
     }
 
@@ -100,9 +106,9 @@ class DomainTest extends TestCase
         config(['offer.domain' => 'test.profile']);
         $user = $this->member();
 
-        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Moi', 'status' => 'published'])->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Moi', 'status' => 'published', 'photos' => [$this->pendingUpload($user)]])->assertNoContent();
         $this->assertNull($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.create'));
-        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Encore moi', 'status' => 'published'])
+        $this->asUser($user)->postJson('/api/v1/offers', ['title' => 'Encore moi', 'status' => 'published', 'photos' => [$this->pendingUpload($user)]])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['title']);
     }

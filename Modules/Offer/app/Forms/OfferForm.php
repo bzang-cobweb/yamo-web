@@ -15,6 +15,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
+use Modules\Offer\Services\OfferPhotoService;
 
 /**
  * Une offre du compte, depuis « Mes logements » (ou le libellé du domaine) :
@@ -108,6 +109,15 @@ class OfferForm extends Form
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
                 ->required(),
             ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
+            // Les photos, au moins une (décision 2026-11-19-contrat-champ-upload-photos).
+            Field::upload('photos')
+                ->label(__('offer::offer.photos'))
+                ->help(__('offer::offer.photos_help'))
+                ->accept(OfferPhotoService::ACCEPTED_MIME_TYPES)
+                ->maxSize(OfferPhotoService::MAX_UPLOAD_KB)
+                ->maxFiles(OfferPhotoService::MAX_FILES)
+                ->files(app(OfferPhotoService::class)->current($offer))
+                ->required(),
         ]));
     }
 
