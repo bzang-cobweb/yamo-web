@@ -137,16 +137,9 @@ class RentalDomain extends Domain
                 // Un meublé se loue charges comprises : pas de charges.
                 ->visibleWhen('furnished', 'false')
                 ->rules(['min:0', 'max:100000']),
-            // Règles et informations pratiques, toutes facultatives (décision 2026-11-19-contrat-regles-informations).
-            // Les heures, pour un meublé seulement.
-            Field::select('check_in_from')
-                ->label(__('offer::rental.rules.check_in_from'))
-                ->options($this->hourOptions())
-                ->visibleWhen('furnished', 'true'),
-            Field::select('check_out_until')
-                ->label(__('offer::rental.rules.check_out_until'))
-                ->options($this->hourOptions())
-                ->visibleWhen('furnished', 'true'),
+            // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Les heures
+            // d'arrivée et de départ n'y sont plus : un bloc d'informations les dit (décision
+            // 2026-11-19-arrivee-depart-en-informations).
             Field::number('min_age')
                 ->label(__('offer::rental.rules.min_age'))
                 ->suffix(__('offer::rental.rules.years'))
@@ -162,27 +155,11 @@ class RentalDomain extends Domain
     }
 
     /**
-     * « 06:00 », « 06:30 »… « 23:00 » : les heures d'arrivée et de départ proposées.
-     *
-     * @return array<string, string>
-     */
-    private function hourOptions(): array
-    {
-        $hours = [];
-        for ($minutes = 6 * 60; $minutes <= 23 * 60; $minutes += 30) {
-            $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
-            $hours[$time] = $time;
-        }
-
-        return $hours;
-    }
-
-    /**
      * Les règles, à part sur la fiche et dans l'onglet « Règles » du back-office.
      */
     public function ruleAttributes(): array
     {
-        return ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties'];
+        return ['min_age', 'documents', 'pets', 'smoking', 'parties'];
     }
 
     /**

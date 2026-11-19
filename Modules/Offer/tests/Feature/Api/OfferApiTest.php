@@ -104,7 +104,7 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'informations', 'photos'],
+            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'min_age', 'documents', 'pets', 'smoking', 'parties', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -177,7 +177,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['check_in_from', 'check_out_until', 'min_age', 'documents', 'pets', 'smoking', 'parties'],
+            ['min_age', 'documents', 'pets', 'smoking', 'parties'],
             ['informations'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],
@@ -197,22 +197,22 @@ class OfferApiTest extends TestCase
         $user = $this->member();
         // Décision 2026-11-19-contrat-regles-informations.
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame('select', $fields['check_in_from']['type']);
-        $this->assertSame('06:00', array_key_first(array_column($fields['check_in_from']['options'], 'label', 'value')));
-        $this->assertSame(['field' => 'furnished', 'value' => 'true'], $fields['check_in_from']['visible_when']);
+        // Plus d'heures d'arrivée ni de départ : un bloc d'informations les dit
+        // (décision 2026-11-19-arrivee-depart-en-informations).
+        $this->assertArrayNotHasKey('check_in_from', $fields);
+        $this->assertArrayNotHasKey('check_out_until', $fields);
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, [
-            'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'],
-            'pets' => 'no',
+            'check_in_from' => '15:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'], 'pets' => 'no',
         ]))->assertNoContent();
         $offer = Offer::query()->sole();
-        $this->assertSame('15:00', $offer->detail('check_in_from'));
+        $this->assertNull($offer->detail('check_in_from'));
         $this->assertSame(21, $offer->detail('min_age'));
 
         // Valeurs inconnues ou hors limites refusées ; tout le reste est facultatif.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['check_in_from' => '05:00', 'min_age' => '12', 'documents' => ['visa'], 'pets' => 'maybe']))
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['min_age' => '12', 'documents' => ['visa'], 'pets' => 'maybe']))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['check_in_from', 'min_age', 'documents.0', 'pets']);
+            ->assertJsonValidationErrors(['min_age', 'documents.0', 'pets']);
     }
 
     public function test_information_blocks_are_added_edited_and_removed_in_order(): void

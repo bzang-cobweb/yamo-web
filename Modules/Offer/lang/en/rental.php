@@ -75,8 +75,6 @@ return [
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [
-        'check_in_from' => 'Check-in from',
-        'check_out_until' => 'Check-out before',
         'min_age' => 'Minimum age',
         'years' => 'years',
         'documents' => 'Required documents',

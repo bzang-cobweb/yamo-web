@@ -163,20 +163,21 @@ class OfferDetailApiTest extends TestCase
     public function test_rules_and_information_are_served_apart_from_the_facts(): void
     {
         // Décision 2026-11-19-contrat-regles-informations.
-        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
+        // Une heure d'arrivée enregistrée avant le retrait du champ n'est plus servie
+        // (décision 2026-11-19-arrivee-depart-en-informations).
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'min_age' => 21, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
-            ['label' => 'Arrivée à partir de', 'value' => '15:00'],
-            ['label' => 'Départ avant', 'value' => '11:00'],
             ['label' => 'Âge minimum', 'value' => '21 ans'],
             ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
             ['label' => 'Animaux acceptés', 'value' => 'Non'],
         ], $data['rules']);
-        $this->assertNotContains('Arrivée à partir de', array_column($data['facts'], 'label'));
+        $this->assertNotContains('Âge minimum', array_column($data['facts'], 'label'));
+        $this->assertNotContains('15:00', array_column([...$data['facts'], ...$data['rules']], 'value'));
 
-        // Les heures, pour un meublé seulement ; sans rien de renseigné : rien.
-        $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false, 'check_in_from' => '15:00']]);
+        // Sans rien de renseigné : rien.
+        $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false]]);
         $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
     }
 
