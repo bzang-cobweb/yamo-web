@@ -45,3 +45,30 @@ Demande : « 1) offre détail voir les avis 2) offre formulaire : changer l'ordr
   ligne ; la liste des adresses ne change pas.
 - Suites serveur et app vertes, tsc et lint propres, vérification au simulateur, QA
   indépendante.
+
+---
+
+## Ce que j'ai décidé seul
+
+- « Voir les avis » = la liste complète des avis (reportée par le contrat des avis), derrière un lien « Voir les N avis » affiché seulement quand la fiche n'en montre pas tous. Une offre non publiée n'a pas de liste (404), même pour son propriétaire.
+- L'ordre des photos se change par des flèches ‹ › (une place à la fois) plutôt que par glisser-déposer : aucune dépendance ajoutée la nuit. L'étoile « Mettre en premier » est retirée ; le badge « Principale » passe en haut à gauche.
+- Le libellé masqué est un réglage générique de Laravel (`Field::hideLabel()`), pas une règle propre au type `upload`. La marque d'obligation (*) disparaît avec lui.
+- « Retirer sur sa ligne » ne vaut que pour les items avec photo (ou avec « Voir » et « Éditer ») : la liste des adresses ne change pas.
+- Demande arrivée en cours de nuit (« boutons voir, éditer et retirer ») : traitée dans le même lot, car elle touche la même ligne d'actions. Toucher la carte ouvre toujours le formulaire.
+
+## Ce qui a été fait
+
+- Web : `GET /api/v1/offers/{offer}/reviews` (20 par page, curseur, `throttle:60,1`), `OfferReviewResource` partagé avec la fiche ; `Field::hideLabel()` / `label_hidden`, utilisé par `photos` ; lien `/offers/{id}` sur les items de « Mes logements » ; textes fr/en.
+- App : lien et écran `/offers/[id]/reviews` ; flèches dans `UploadField` ; `FieldShell` respecte `label_hidden` ; `ProfileListScreen` en colonne avec ligne d'actions « Voir · Éditer · Retirer ».
+- Preuves : 500 tests serveur, 233 tests app, tsc et lint propres ; simulateur : « Mes logements » (photo pleine largeur, trois actions), « Voir » ouvre la fiche du brouillon, étape Photos sans libellé, déplacement d'une photo enregistré dans l'ordre affiché. QA indépendante : GO, 0 bloquant.
+
+## Ce que je n'ai pas vérifié
+
+- L'écran de tous les avis au simulateur : aucune offre de démonstration n'a plus de 5 avis (couvert par les tests de l'app).
+- La lecture au lecteur d'écran et la taille des cibles tactiles sur un vrai téléphone.
+
+## Ce qui reste en suspens
+
+- Tri des avis par dernière modification (comme la fiche) : un avis modifié remonte en tête. À confirmer.
+- Flèches (24 px) et « Retirer » sous la cible tactile recommandée de 44 pt.
+- Avertissement de l'export OpenAPI sur `OfferReviewPageResource` (« Cannot infer the resource model ») : la ressource enveloppe une page, pas un modèle ; sans effet sur le document.
