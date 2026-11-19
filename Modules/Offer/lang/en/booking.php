@@ -124,6 +124,6 @@ return [
         'refuse' => 'Decline',
         'refuse_title' => 'Decline the request',
         'refuse_submit' => 'Decline the request',
-        'offer_status' => 'Listing status',
+        'offer_status' => 'Status',
     ],
 ];

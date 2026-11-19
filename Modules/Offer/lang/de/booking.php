@@ -124,6 +124,6 @@ return [
         'refuse' => 'Ablehnen',
         'refuse_title' => 'Anfrage ablehnen',
         'refuse_submit' => 'Anfrage ablehnen',
-        'offer_status' => 'Status des Inserats',
+        'offer_status' => 'Status',
     ],
 ];

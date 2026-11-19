@@ -110,7 +110,7 @@ return [
         'filter_any' => 'Tous',
         'filter_upcoming' => 'À venir',
         'filter_pending' => 'En attente',
-        'filter_past' => 'Passées',
+        'filter_past' => 'Passée',
         'filter_city' => 'Ville',
         'filter_type' => 'Type',
         'filter_offer' => 'Logement',
@@ -124,6 +124,6 @@ return [
         'refuse' => 'Refuser',
         'refuse_title' => 'Refuser la demande',
         'refuse_submit' => 'Refuser la demande',
-        'offer_status' => "Statut de l'annonce",
+        'offer_status' => 'Statut',
     ],
 ];
