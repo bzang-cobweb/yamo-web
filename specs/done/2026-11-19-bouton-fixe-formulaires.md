@@ -53,3 +53,29 @@ Demande : « pour tous les formulaires, j'aimerais remplacer le menu fixe du pie
 1. Connexion, inscription et mot de passe oublié reçoivent aussi la barre fixe (défaut : oui, pour que tous les formulaires se ressemblent).
 2. L'écran des filtres aussi (défaut : oui).
 3. « Précédent » : la flèche de l'en-tête suffit, pas de second bouton dans la barre (défaut).
+
+---
+
+## Ce que j'ai décidé seul
+
+- Un emplacement générique (`FixedFooterLayout`) : l'écran fournit la barre, le formulaire y place son bouton ; sans barre, le bouton reste sous les champs. Plusieurs formulaires montés (connexion puis code) : le dernier affiché tient la barre.
+- Le clavier n'est plus géré par `KeyboardAvoidingView` dans ces mises en page : il mesurait mal sa place sous l'en-tête et dans les onglets (barre cachée, vu au simulateur). La barre mesure sa position à l'écran et remonte d'autant ; la marge du bas de l'écran est retirée clavier ouvert.
+- L'écran des filtres avait déjà une barre fixe (« Effacer », « Appliquer les filtres ») : laissé tel quel.
+- Une nouvelle étape, ou une étape précédente, s'affiche depuis son début.
+
+## Ce qui a été fait
+
+- Mobile aca093a et suivant : `FixedFooterLayout`, `DynamicForm` (bouton dans la barre, défilement vers le premier champ en erreur et au début de chaque étape), `ProfileScreenShell` et `GuestScreen`, menu masqué sur `profile/[form]`, tests (barre, deux formulaires, maquettes des tests d'écrans).
+- Simulateur : formulaire d'une offre sans menu, bouton fixé, barre au-dessus du clavier ; « Mes logements » garde le menu.
+- Suites : app 248 verts, tsc et lint propres. QA indépendante : GO (`.ia/runs/2026-11-19-bouton-fixe-formulaires/qa-check.md`), mineur du retour à l'étape 1 corrigé.
+
+## Ce que je n'ai pas vérifié
+
+- Connexion, inscription, mot de passe oublié au simulateur (compte connecté) ; couverts par les tests.
+- Le défilement vers un champ en erreur au simulateur.
+- Android.
+
+## Ce qui reste en suspens
+
+- Listes du profil : clavier ouvert, le bas de la liste passe sous le clavier (recherche en haut, jamais masquée) ; `keyboardDismissMode="on-drag"` si cela gêne.
+- Peu de tests sur les comportements visuels (clavier, défilement, menu masqué).
