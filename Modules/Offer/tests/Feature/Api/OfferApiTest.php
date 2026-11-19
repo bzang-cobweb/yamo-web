@@ -172,7 +172,7 @@ class OfferApiTest extends TestCase
         // L'étape 1 « Présentation » (décision 2026-11-19-etape-1-presentation), les photos en dernier
         // (décision 2026-11-19-contrat-champ-upload-photos).
         // « Règles » en 4e, puis « Informations » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
-        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles', 'Informations', 'Adresse', 'Photos'], array_column($steps, 'title'));
+        $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles', 'Informations', 'Localisation', 'Photos'], array_column($steps, 'title'));
         $this->assertSame([
             ['property_type', 'furnished', 'category_id', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],

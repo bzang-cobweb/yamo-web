@@ -43,7 +43,7 @@ return [
         'photos' => 'Fotos',
         'presentation' => 'Vorstellung',
         'price' => 'Preis und Verfügbarkeit',
-        'place' => 'Adresse',
+        'place' => 'Lage',
         'features' => 'Merkmale',
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
