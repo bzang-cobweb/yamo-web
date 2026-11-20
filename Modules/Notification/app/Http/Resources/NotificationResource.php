@@ -44,7 +44,7 @@ class NotificationResource extends JsonResource
             'id' => (string) $notification->getKey(),
             'title' => (string) ($data['title'] ?? ''),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
-            'tag' => app(NotificationFilters::class)->tag((string) $this->resource->getAttribute('type')) ?? $this->tag($data),
+            'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
             'actor' => $this->actor(),
@@ -130,6 +130,12 @@ class NotificationResource extends JsonResource
      */
     private function tag(array $data): ?array
     {
+        // Selon le type, par le module qui l'inscrit (décision 2026-11-20-statut-par-type).
+        $byType = app(NotificationFilters::class)->tag((string) $this->resource->getAttribute('type'));
+        if ($byType !== null) {
+            return ['label' => (string) $byType['label'], 'tone' => (string) $byType['tone']];
+        }
+
         $tag = $data['tag'] ?? null;
 
         return is_array($tag) && is_string($tag['label'] ?? null) && is_string($tag['tone'] ?? null)

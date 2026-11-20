@@ -3809,7 +3809,7 @@
                                         "object",
                                         "null"
                                     ],
-                                    "description": "Statut en pastille sous le titre (\u00ab En attente \u00bb, ton `warning`), ou `null`.",
+                                    "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
                                     "properties": {
                                         "label": {
                                             "type": "string"
@@ -3991,7 +3991,7 @@
                             "object",
                             "null"
                         ],
-                        "description": "Statut en pastille sous le titre (\u00ab En attente \u00bb, ton `warning`), ou `null`.",
+                        "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
                         "properties": {
                             "label": {
                                 "type": "string"
