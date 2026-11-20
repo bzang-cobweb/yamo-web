@@ -205,6 +205,18 @@ abstract class Domain
     }
 
     /**
+     * Les caractéristiques de la fiche, par nom, avant leur mise en ordre : le domaine peut en
+     * ajouter, en retirer ou en renommer. Inchangées par défaut.
+     *
+     * @param  array<string, array{label: string, value: string}>  $facts
+     * @return array<string, array{label: string, value: string}>
+     */
+    public function adjustFacts(Offer $offer, array $facts, string $locale): array
+    {
+        return $facts;
+    }
+
+    /**
      * Les étapes du formulaire de l'app (décision
      * 2026-11-19-contrat-formulaire-etapes-symbole-devise) : titre traduit (ou `null`, sans titre) et noms
      * des champs, attributs du domaine et champs communs (`COMMON_FIELDS`). Aucune

@@ -3,6 +3,7 @@
 namespace Modules\Offer\Domains;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Number;
 use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
@@ -227,6 +228,36 @@ class RentalDomain extends Domain
      * la présentation (type, meublé, catégorie, titre, description), les
      * caractéristiques, le prix et la disponibilité (avec le statut), l'adresse, puis les photos.
      */
+    /**
+     * Les montants vides ou nuls (charges, caution, avance) ne s'affichent pas ; une location non
+     * meublée affiche son loyer mensuel après les charges, « (sans charges) » s'il y en a
+     * (décision 2026-11-20-fiche-loyer-caution).
+     */
+    public function adjustFacts(Offer $offer, array $facts, string $locale): array
+    {
+        foreach (['charges', 'deposit', 'deposit_months', 'advance_months'] as $name) {
+            if (! is_numeric($value = $offer->detail($name)) || (float) $value <= 0) {
+                unset($facts[$name]);
+            }
+        }
+
+        if ($offer->price === null || ! in_array($offer->detail('rental_type'), RentalTypeEnum::unfurnishedValues(), true)) {
+            return $facts;
+        }
+
+        $rent = [
+            'label' => (string) __(isset($facts['charges']) ? 'offer::booking.lines.rent_net' : 'offer::booking.lines.rent'),
+            'value' => Number::currency((float) $offer->price, (string) ($offer->currency ?? $offer->country?->currency), $locale),
+        ];
+        // Après les charges, sinon avant la caution et l'avance, sinon à la fin.
+        $keys = array_keys($facts);
+        $at = isset($facts['charges'])
+            ? array_search('charges', $keys, true) + 1
+            : (array_search('deposit_months', $keys, true) !== false ? array_search('deposit_months', $keys, true) : (array_search('advance_months', $keys, true) !== false ? array_search('advance_months', $keys, true) : count($keys)));
+
+        return [...array_slice($facts, 0, $at, true), 'rent' => $rent, ...array_slice($facts, $at, null, true)];
+    }
+
     /**
      * Type, meublé, catégorie en tête de la fiche (décisions 2026-11-19-fiche-offre-ordre
      * et 2026-11-19-fiche-sans-ville).

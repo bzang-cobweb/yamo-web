@@ -92,6 +92,8 @@ class OfferDetailApiTest extends TestCase
             ['label' => 'Disponible dès le', 'value' => '1 décembre 2026'],
             // Un montant, avec le symbole de la devise (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
             ['label' => 'Charges mensuelles', 'value' => '15 000 FCFA'],
+            // Le loyer mensuel après les charges (décision 2026-11-20-fiche-loyer-caution).
+            ['label' => 'Loyer mensuel (sans charges)', 'value' => '250 000 FCFA'],
         ], array_map(fn (array $fact): array => ['label' => $fact['label'], 'value' => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $fact['value'])], $data['facts']));
         $this->assertArrayNotHasKey('user_id', $data);
     }
@@ -110,11 +112,24 @@ class OfferDetailApiTest extends TestCase
         $flat = $this->home(['details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2, 'charges' => 15000, 'deposit_months' => 2, 'advance_months' => 3]]);
         $facts = fn (Offer $offer): array => array_map(fn (string $value): string => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $value), array_column($this->show($offer)->assertOk()->json('data.facts'), 'value', 'label'));
 
-        $this->assertSame(['Charges mensuelles' => '15 000 FCFA', 'Caution' => '2 mois', 'Avance de loyer' => '3 mois'], array_slice($facts($flat), -3));
+        // Le loyer mensuel après les charges, « (sans charges) » s'il y en a (décision 2026-11-20-fiche-loyer-caution).
+        $this->assertSame([
+            'Charges mensuelles' => '15 000 FCFA',
+            'Loyer mensuel (sans charges)' => '250 000 FCFA',
+            'Caution' => '2 mois',
+            'Avance de loyer' => '3 mois',
+        ], array_slice($facts($flat), -4));
 
+        // Vides ou nuls : ni charges, ni caution, ni avance ; le loyer sans « (sans charges) ».
+        $bare = $this->home(['details' => ['property_type' => 'apartment', 'rental_type' => 'shared', 'bedrooms' => 1, 'charges' => 0, 'deposit_months' => 0]]);
+        $this->assertSame('250 000 FCFA', $facts($bare)['Loyer mensuel']);
+        $this->assertSame([], array_intersect(['Charges mensuelles', 'Caution', 'Avance de loyer', 'Loyer mensuel (sans charges)'], array_keys($facts($bare))));
+
+        // Un meublé : la caution en montant, pas de loyer mensuel.
         $studio = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'deposit' => 100000, 'deposit_months' => 2]]);
         $this->assertSame('100 000 FCFA', $facts($studio)['Caution']);
         $this->assertArrayNotHasKey('Avance de loyer', $facts($studio));
+        $this->assertArrayNotHasKey('Loyer mensuel', $facts($studio));
     }
 
     public function test_texts_follow_the_language(): void

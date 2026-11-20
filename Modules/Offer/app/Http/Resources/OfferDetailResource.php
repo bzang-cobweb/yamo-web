@@ -182,6 +182,8 @@ class OfferDetailResource extends JsonResource
         // Les attributs, sans les règles ni le texte libre, servis à part (décision 2026-11-19-contrat-regles-informations).
         $apart = $domain->ruleAttributes();
         $facts = [...$facts, ...$this->displayed($offer, $domain, $locale, fn (string $name): bool => ! in_array($name, $apart, true))];
+        // Ce que le domaine y ajoute ou en retire (le loyer mensuel d'un logement, décision 2026-11-20-fiche-loyer-caution).
+        $facts = $domain->adjustFacts($offer, $facts, $locale);
 
         // Celles que le domaine place en tête, puis les autres dans leur ordre.
         $leading = array_intersect_key(array_flip($domain->leadingFacts()), $facts);
