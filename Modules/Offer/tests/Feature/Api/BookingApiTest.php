@@ -257,10 +257,12 @@ class BookingApiTest extends TestCase
 
         // Le compteur des demandes en attente, sur la carte du logement.
         $items = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id');
+        // Il ouvre les notifications : demandes en attente de ce logement.
         $this->assertSame([
             'label' => '2 demandes en attente',
-            'list' => 'offer.bookings.received',
-            'filter' => ['offer' => (string) $offer->getKey(), 'status' => 'pending'],
+            'list' => 'notifications',
+            'filter' => ['type' => BookingRequestReceived::class, 'offer' => (string) $offer->getKey()],
+            'link' => '/notifications',
         ], $items[(string) $offer->getKey()]['counter']);
         $this->assertNull($items[(string) $other->getKey()]['counter']);
 

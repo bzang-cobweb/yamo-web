@@ -47,7 +47,7 @@ final class ListItem
     /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null, link: string|null}> */
     private array $actions = [];
 
-    /** @var array{label: string, list: string, filter: array<string, string>}|null */
+    /** @var array{label: string, list: string, filter: array<string, string>, link: string|null}|null */
     private ?array $counter = null;
 
     /** @var array{label: string, tone: string}|null */
@@ -181,13 +181,14 @@ final class ListItem
 
     /**
      * Un compteur sur la carte (« 2 demandes en attente ») qui ouvre la liste `$list`
-     * avec ces filtres déjà choisis ; rien sans compteur.
+     * avec ces filtres déjà choisis ; rien sans compteur. Avec `$link`, il ouvre cet
+     * écran de l'app (« /notifications ») et `$list` nomme ses filtres.
      *
      * @param  array<string, string>  $filter
      */
-    public function counter(string $label, string $list, array $filter = []): self
+    public function counter(string $label, string $list, array $filter = [], ?string $link = null): self
     {
-        $this->counter = ['label' => $label, 'list' => $list, 'filter' => $filter];
+        $this->counter = ['label' => $label, 'list' => $list, 'filter' => $filter, 'link' => $link];
 
         return $this;
     }
@@ -236,7 +237,7 @@ final class ListItem
             ], $this->actions),
             /** Pastille de couleur (un statut) : libellé et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune. */
             'tag' => $this->tag,
-            /** Compteur de la carte : son libellé, la liste qu'il ouvre et les filtres déjà choisis ; `null` : aucun. */
+            /** Compteur de la carte : son libellé, la liste qu'il ouvre (ou l'écran `link`) et les filtres déjà choisis ; `null` : aucun. */
             'counter' => $this->counter,
             'delete' => $this->deleteSubmission === null ? null : [
                 'label' => (string) $this->deleteLabel,

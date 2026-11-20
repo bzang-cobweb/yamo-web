@@ -1569,7 +1569,7 @@
                                                             },
                                                             "state": {
                                                                 "type": "string",
-                                                                "description": "`past`, `conflict`, `accepted`, `blocked`, `pending` ou `free`.",
+                                                                "description": "`past`, `conflict`, `accepted`, `blocked`, `pending` ou `free` ; pour un s\u00e9jour ses nuits, pour une visite son jour.",
                                                                 "enum": [
                                                                     "past",
                                                                     "conflict",
@@ -1580,16 +1580,8 @@
                                                                 ]
                                                             },
                                                             "dot": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Le point des visites du jour : `success` (une accept\u00e9e), `warning` (en attente), ou `null`.",
-                                                                "enum": [
-                                                                    "success",
-                                                                    "warning",
-                                                                    null
-                                                                ]
+                                                                "type": "null",
+                                                                "description": "Plus de point : une visite colore son jour (gard\u00e9 pour les anciennes versions de l'app)."
                                                             }
                                                         },
                                                         "required": [
@@ -3562,7 +3554,7 @@
                                         "object",
                                         "null"
                                     ],
-                                    "description": "Compteur de la carte : son libell\u00e9, la liste qu'il ouvre et les filtres d\u00e9j\u00e0 choisis ; `null` : aucun.",
+                                    "description": "Compteur de la carte : son libell\u00e9, la liste qu'il ouvre (ou l'\u00e9cran `link`) et les filtres d\u00e9j\u00e0 choisis ; `null` : aucun.",
                                     "properties": {
                                         "label": {
                                             "type": "string"
@@ -3575,12 +3567,19 @@
                                             "additionalProperties": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "label",
                                         "list",
-                                        "filter"
+                                        "filter",
+                                        "link"
                                     ]
                                 },
                                 "delete": {
