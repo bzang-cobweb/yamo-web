@@ -166,15 +166,18 @@ class OfferCalendar
             $summary = BookingText::summary($booking, 'requested');
             /** @var list<array<string, mixed>> $actions */
             $actions = $listing->item($booking)->toArray()['actions'];
+            $tag = $tags->tag(self::STEPS[$booking->status->value] ?? BookingRequestReceived::class);
+            $message = $booking->message;
+            $total = $booking->formattedTotal($locale);
             $cards[] = [
                 'id' => (string) $booking->getKey(),
                 'actor' => ActorData::from($booking->user),
-                'tag' => $tags->tag(self::STEPS[$booking->status->value] ?? BookingRequestReceived::class),
+                'tag' => $tag === null ? null : ['label' => (string) $tag['label'], 'tone' => (string) $tag['tone']],
                 'summary' => $summary,
                 'text_links' => BookingText::offerLink($booking, $summary),
-                'message' => $booking->message,
-                'total' => $booking->formattedTotal($locale),
-                'created_at' => $booking->created_at?->toIso8601String(),
+                'message' => $message === null ? null : (string) $message,
+                'total' => $total === null ? null : (string) $total,
+                'created_at' => $booking->created_at === null ? null : (string) $booking->created_at->toIso8601String(),
                 'actions' => $actions,
             ];
         }

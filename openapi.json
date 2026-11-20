@@ -1737,7 +1737,22 @@
                                                                 ]
                                                             },
                                                             "tag": {
-                                                                "type": "string"
+                                                                "type": [
+                                                                    "object",
+                                                                    "null"
+                                                                ],
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "tone": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "label",
+                                                                    "tone"
+                                                                ]
                                                             },
                                                             "summary": {
                                                                 "type": "string"
@@ -1778,10 +1793,16 @@
                                                                 ]
                                                             },
                                                             "message": {
-                                                                "type": "string"
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
                                                             },
                                                             "total": {
-                                                                "type": "string"
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
                                                             },
                                                             "created_at": {
                                                                 "type": [
