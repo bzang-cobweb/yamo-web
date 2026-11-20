@@ -11,6 +11,7 @@ return [
         'guests' => 'Personnes',
         'price' => 'Prix',
         'price_per' => 'Prix par :unit',
+        'rent_per' => 'Loyer par :unit (sans charges)',
         'days' => 'Durée',
         'total' => 'Total',
         'charges' => 'Charges',

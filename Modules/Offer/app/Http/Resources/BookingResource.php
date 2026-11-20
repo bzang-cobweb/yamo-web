@@ -89,7 +89,12 @@ class BookingResource extends JsonResource
 
         return [
             'key' => 'price',
-            'label' => $unit === null ? __('offer::booking.lines.price') : __('offer::booking.lines.price_per', ['unit' => $unit]),
+            // Une visite (non meublé) : « Loyer par mois (sans charges) » (décision 2026-11-20-loyer-sans-charges).
+            'label' => match (true) {
+                $unit === null => __('offer::booking.lines.price'),
+                $booking->type === BookingTypeEnum::VISIT => __('offer::booking.lines.rent_per', ['unit' => $unit]),
+                default => __('offer::booking.lines.price_per', ['unit' => $unit]),
+            },
             'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
         ];
     }

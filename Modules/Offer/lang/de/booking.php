@@ -11,6 +11,7 @@ return [
         'guests' => 'Personen',
         'price' => 'Preis',
         'price_per' => 'Preis pro :unit',
+        'rent_per' => 'Miete pro :unit (ohne Nebenkosten)',
         'days' => 'Dauer',
         'total' => 'Gesamt',
         'charges' => 'Nebenkosten',

@@ -277,7 +277,7 @@ class BookingThreadTest extends TestCase
         // Rien de renseigné : les lignes à 0, le total à 0.
         $this->assertSame([
             'Visite' => '28 nov. 2026',
-            'Prix par mois' => Number::currency(250000, 'XAF', 'fr'),
+            'Loyer par mois (sans charges)' => Number::currency(250000, 'XAF', 'fr'),
             'Charges par mois' => Number::currency(0, 'XAF', 'fr'),
             '0 mois de caution' => Number::currency(0, 'XAF', 'fr'),
             '0 mois d’avance' => Number::currency(0, 'XAF', 'fr'),
