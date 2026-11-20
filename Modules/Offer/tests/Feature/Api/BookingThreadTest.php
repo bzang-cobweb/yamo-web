@@ -163,7 +163,7 @@ class BookingThreadTest extends TestCase
 
             $this->assertSame('Demande de logement', $page['title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            $this->assertStringStartsWith('demande un séjour', $page['summary']);
+            $this->assertStringStartsWith('Séjour du ', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
             $this->assertSame($booking->formattedTotal('fr'), $page['total']);
             $this->assertNotNull($page['total']);

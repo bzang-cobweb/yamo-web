@@ -81,11 +81,12 @@ return [
         'requested' => [
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'demande :type :period pour « :offer ».',
-            'summary_people' => 'demande :type :period pour « :offer » (:people).',
-            'summary_stay' => 'demande :type :period (:days) pour « :offer », :price (:people).',
-            'summary_visit' => 'demande :type :period pour « :offer », :price.',
+            // Le texte de la demande, sans qui la fait : « Séjour du … », « Visite le … »
+            // (décision 2026-11-20-texte-sans-verbe).
+            'summary' => ':kind :period pour « :offer ».',
+            'summary_people' => ':kind :period pour « :offer » (:people).',
+            'summary_stay' => ':kind :period (:days) pour « :offer », :price (:people).',
+            'summary_visit' => ':kind :period pour « :offer », :price.',
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [

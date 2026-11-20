@@ -26,6 +26,8 @@ final class BookingText
             'offer' => (string) $booking->offer->getTranslation('title', $locale),
             'period' => $booking->period($locale),
             'type' => __('offer::booking.notify.type_lower.'.$booking->type->value),
+            // « Séjour », « Visite » : le début du texte d'une demande (décision 2026-11-20-texte-sans-verbe).
+            'kind' => __('offer::booking.types.'.$booking->type->value),
         ];
     }
 
