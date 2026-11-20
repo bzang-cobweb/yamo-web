@@ -21,5 +21,7 @@ return [
         'writeReview' => 'Bewertung schreiben',
         'editReview' => 'Meine Bewertung bearbeiten',
         'signInToReview' => 'Melden Sie sich an, um eine Bewertung zu schreiben.',
+        // Le lien vers la fiche, sous les lignes d'une demande (décision 2026-11-20-lignes-demande).
+        'view' => 'Unterkunft ansehen',
     ],
 ];

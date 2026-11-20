@@ -21,5 +21,7 @@ return [
         'writeReview' => 'Write a review',
         'editReview' => 'Edit my review',
         'signInToReview' => 'Sign in to write a review.',
+        // Le lien vers la fiche, sous les lignes d'une demande (décision 2026-11-20-lignes-demande).
+        'view' => 'View the home',
     ],
 ];

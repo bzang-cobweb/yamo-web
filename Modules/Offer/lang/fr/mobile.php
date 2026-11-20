@@ -21,5 +21,7 @@ return [
         'writeReview' => 'Donner mon avis',
         'editReview' => 'Modifier mon avis',
         'signInToReview' => 'Connectez-vous pour donner votre avis.',
+        // Le lien vers la fiche, sous les lignes d'une demande (décision 2026-11-20-lignes-demande).
+        'view' => 'Voir le logement',
     ],
 ];

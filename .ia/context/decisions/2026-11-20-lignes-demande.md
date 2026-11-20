@@ -29,7 +29,9 @@ Le nombre de chambres a été retiré des lignes (« enlever la ligne du nombre 
 il reste obligatoire dans le formulaire d'un logement.
 
 Toucher le nom de l'offre déplie ou plie toutes les lignes (fermées d'abord, « par défaut fermé » ; une flèche à
-droite dit l'état) ; le nom n'est plus un lien vers la fiche de l'offre. Demande de l'humain :
+droite dit l'état) ; le nom n'est plus un lien vers la fiche de l'offre : un lien « Voir le
+logement » (`offer.view`) s'affiche sous les lignes dépliées (choix de l'humain entre deux
+options). Demande de l'humain :
 « pouvoir plier et déplier toutes ces lignes en cliquant sur le titre ».
 
 ## Motif
