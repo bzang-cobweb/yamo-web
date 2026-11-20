@@ -8,31 +8,46 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
-use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
 
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
- * - le logement, parmi ceux que nomment ses notifications ;
- * - le statut de la demande, celui de la pastille (en attente, acceptée, refusée, annulée) ;
+ * - les types de ses notifications : les quatre étapes d'une demande ;
+ * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
  * - la recherche, dans le titre du logement.
  *
- * Une notification sans offre, ou sans demande, ne passe pas le filtre correspondant.
+ * Une notification sans offre ne passe pas le filtre « Logement ».
  */
 class OfferNotificationFilter implements NotificationFilter
 {
+    /**
+     * Les quatre étapes d'une demande, nommées par le domaine (« Demande de logement
+     * acceptée »).
+     */
+    public function types(): array
+    {
+        // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
+        $request = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
+
+        return [
+            BookingRequestReceived::class => __('offer::booking.notify.requested.type', ['request' => $request]),
+            BookingRequestAccepted::class => __('offer::booking.notify.accepted.type', ['request' => $request]),
+            BookingRequestRefused::class => __('offer::booking.notify.refused.type', ['request' => $request]),
+            BookingRequestCancelled::class => __('offer::booking.notify.cancelled.type', ['request' => $request]),
+        ];
+    }
+
     public function fields(User $user): array
     {
         return [
+            // Le logement, seulement pour un type de demande.
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->offers($user))
-                ->searchable(),
-            // Le statut de la demande, tel que la pastille de la notification le montre (à l'envoi).
-            Field::select('status')
-                ->label(__('offer::booking.profile.filter_status'))
-                ->options(BookingStatusEnum::options()),
+                ->searchable()
+                ->visibleWhen('type', array_keys($this->types())),
         ];
     }
 
@@ -41,11 +56,6 @@ class OfferNotificationFilter implements NotificationFilter
         $offer = $filters['offer'] ?? null;
         if (is_scalar($offer) && ctype_digit((string) $offer)) {
             $query->where('data->offer_id', (int) $offer);
-        }
-
-        $status = $filters['status'] ?? null;
-        if (is_string($status) && BookingStatusEnum::tryFrom($status) !== null) {
-            $query->where('data->booking_status', $status);
         }
     }
 

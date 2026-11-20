@@ -40,10 +40,10 @@ class FormsAndLocalesApiTest extends TestCase
             ])
             ->assertJsonPath('data.fields.1.name', 'email')
             ->assertJsonPath('data.fields.1.type', 'email')
-            ->assertJsonPath('data.fields.1.visible_when', ['field' => 'channel', 'value' => 'email'])
+            ->assertJsonPath('data.fields.1.visible_when', ['field' => 'channel', 'value' => 'email', 'values' => ['email']])
             ->assertJsonPath('data.fields.2.name', 'phone')
             ->assertJsonPath('data.fields.2.type', 'phone')
-            ->assertJsonPath('data.fields.2.visible_when', ['field' => 'channel', 'value' => 'phone'])
+            ->assertJsonPath('data.fields.2.visible_when', ['field' => 'channel', 'value' => 'phone', 'values' => ['phone']])
             ->assertJsonPath('data.fields.3.name', 'password')
             ->assertJsonPath('data.fields.3.type', 'password');
 

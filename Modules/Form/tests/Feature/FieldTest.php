@@ -206,7 +206,7 @@ class FieldTest extends TestCase
         $this->assertArrayNotHasKey('pager', $validated);
 
         $pager = collect($this->form()->fields())->firstWhere('name', 'pager')->toArray();
-        $this->assertSame(['field' => 'contact', 'value' => 'sms'], $pager['visible_when']);
+        $this->assertSame(['field' => 'contact', 'value' => 'sms', 'values' => ['sms']], $pager['visible_when']);
     }
 
     public function test_a_single_option_is_chosen_and_locked_but_still_validated(): void

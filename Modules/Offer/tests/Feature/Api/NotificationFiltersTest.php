@@ -8,6 +8,10 @@ use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestCancelled;
+use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequestRefused;
 use Tests\TestCase;
 
 /**
@@ -44,31 +48,35 @@ class NotificationFiltersTest extends TestCase
             ->getJson('/api/v1/notifications'.$query)->assertOk()->json('data.items'), 'title');
     }
 
-    public function test_notifications_are_filtered_by_home_and_request_status(): void
+    public function test_notifications_are_filtered_by_type_and_by_home_for_a_request_type(): void
     {
         $user = User::factory()->create(['locale' => 'fr']);
-        $published = Offer::factory()->create(['status' => 'published', 'title' => ['fr' => 'Studio photos']]);
-        $draft = Offer::factory()->create(['status' => 'draft', 'title' => ['fr' => 'Appartement Akwa']]);
-        $this->notify($user, 'Pour le studio', $published, 'pending');
-        $this->notify($user, 'Pour l’appartement', $draft, 'accepted');
-        $this->notify($user, 'Sans logement', null);
+        $studio = Offer::factory()->create(['title' => ['fr' => 'Studio photos']]);
+        $flat = Offer::factory()->create(['title' => ['fr' => 'Appartement Akwa']]);
+        $create = fn (string $type, string $title, ?Offer $offer) => $user->notifications()->create([
+            'id' => (string) Str::uuid(), 'type' => $type,
+            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()])],
+        ]);
+        $create(BookingRequestReceived::class, 'Demande studio', $studio);
+        $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat);
+        $create('Autre', 'Sans logement', null);
 
         $this->app['auth']->forgetGuards();
-        $filters = $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
-            ->getJson('/api/v1/notifications')->json('data.filters');
-        $this->assertSame(['user', 'offer', 'status'], array_column($filters, 'name'));
-        $this->assertSame(['Membre', 'Logement', 'Statut'], array_column($filters, 'label'));
-        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters[2]['options'], 'value'));
-        // Membre et logement : une recherche dans la liste, même courte.
-        $this->assertSame([true, true, false], array_column($filters, 'searchable'));
-        $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters[1]['options'], 'label'));
+        $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
+            ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
+        $this->assertSame(['type', 'user', 'offer'], $filters->keys()->all());
+        // Les types de ses notifications, nommés par le domaine ; un type inconnu des modules n'est pas proposé.
+        $this->assertSame(['Demande de logement en attente', 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label'));
+        $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class], array_column($filters['type']['options'], 'value'));
+        // « Logement » : seulement pour un type de demande, avec une recherche.
+        $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class], $filters['offer']['visible_when']['values']);
+        $this->assertTrue($filters['offer']['searchable']);
+        $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
-        $this->assertCount(3, $this->titles($user));
-        $this->assertSame(['Pour le studio'], $this->titles($user, "?filter[offer]={$published->getKey()}"));
-        $this->assertSame(['Pour l’appartement'], $this->titles($user, '?filter[status]=accepted'));
-        $this->assertSame([], $this->titles($user, "?filter[offer]={$published->getKey()}&filter[status]=accepted"));
-        // Une valeur inconnue ne filtre rien.
-        $this->assertCount(3, $this->titles($user, '?filter[status]=inconnu'));
+        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]='.urlencode(BookingRequestAccepted::class)));
+        $this->assertSame(['Demande studio'], $this->titles($user, "?filter[offer]={$studio->getKey()}"));
+        // Un type inconnu ne filtre rien.
+        $this->assertCount(3, $this->titles($user, '?filter[type]=Inconnu'));
     }
 
     public function test_the_search_finds_who_acted_and_the_home_title(): void
@@ -104,7 +112,7 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters');
-        $this->assertSame(['Awa Ngono', 'Paul Etoa'], array_column($filters[0]['options'], 'label'));
+        $this->assertSame(['Awa Ngono', 'Paul Etoa'], array_column(collect($filters)->firstWhere('name', 'user')['options'], 'label'));
 
         $this->assertSame(['De Paul'], $this->titles($user, "?filter[user]={$paul->getKey()}"));
     }

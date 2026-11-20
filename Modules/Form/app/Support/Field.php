@@ -45,9 +45,10 @@ final class Field
 
     /**
      * Affiché seulement quand un autre champ a une valeur donnée ; masqué, il
-     * n'est ni validé ni pris en compte.
+     * n'est ni validé ni pris en compte. `values` : les valeurs qui l'affichent
+     * (`value`, la première, gardée pour les clients qui ne lisent qu'une valeur).
      *
-     * @var array{field: string, value: string}|null
+     * @var array{field: string, value: string, values: list<string>}|null
      */
     private ?array $visibleWhen = null;
 
@@ -481,12 +482,9 @@ final class Field
     }
 
     /**
-     * N'afficher (et ne valider) ce champ que si `$field` vaut `$value`.
-     */
-    /**
      * La condition d'affichage (`visibleWhen()`), ou `null`.
      *
-     * @return array{field: string, value: string}|null
+     * @return array{field: string, value: string, values: list<string>}|null
      */
     public function getVisibleWhen(): ?array
     {
@@ -505,7 +503,7 @@ final class Field
             return true;
         }
 
-        return self::conditionValue($values[$this->visibleWhen['field']] ?? null) === $this->visibleWhen['value'];
+        return in_array(self::conditionValue($values[$this->visibleWhen['field']] ?? null), $this->visibleWhen['values'], true);
     }
 
     /**
@@ -520,9 +518,16 @@ final class Field
         };
     }
 
-    public function visibleWhen(string $field, string $value): self
+    /**
+     * N'afficher (et ne valider) ce champ que si `$field` vaut `$value`, ou l'une des
+     * valeurs de la liste `$value` (« Logement » pour les seuls types de demande).
+     *
+     * @param  string|list<string>  $value
+     */
+    public function visibleWhen(string $field, string|array $value): self
     {
-        $this->visibleWhen = ['field' => $field, 'value' => $value];
+        $values = array_values(array_map('strval', (array) $value));
+        $this->visibleWhen = ['field' => $field, 'value' => $values[0] ?? '', 'values' => $values];
 
         return $this;
     }
@@ -940,7 +945,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string, values: list<string>}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {

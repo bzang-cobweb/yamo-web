@@ -11,7 +11,8 @@ use Modules\Notification\Contracts\NotificationFilter;
 
 /**
  * Les filtres de la liste des notifications (décision 2026-11-20-filtres-notifications) :
- * « Membre » (qui agit), puis ceux qu'inscrivent les modules (le logement, son statut).
+ * « Type » (parmi ceux qu'inscrivent les modules), « Membre » (qui agit), puis ceux
+ * des modules (le logement).
  */
 class NotificationFilters
 {
@@ -34,6 +35,10 @@ class NotificationFilters
     public function fields(User $user): array
     {
         return [
+            // Le type, parmi ceux de ses notifications (« Demande de logement acceptée »).
+            Field::select('type')
+                ->label(__('notification::notification.filter_type'))
+                ->options($this->typeOptions($user)),
             // Qui agit, parmi les membres que nomment ses notifications.
             Field::select('user')
                 ->label(__('notification::notification.filter_user'))
@@ -41,6 +46,28 @@ class NotificationFilters
                 ->searchable(),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
         ];
+    }
+
+    /**
+     * Les types inscrits par les modules (classe => libellé).
+     *
+     * @return array<string, string>
+     */
+    private function types(): array
+    {
+        return array_merge(...array_map(fn (string $filter): array => app($filter)->types(), $this->filters));
+    }
+
+    /**
+     * Les types présents dans ses notifications, avec leur libellé, dans l'ordre des modules.
+     *
+     * @return array<string, string>
+     */
+    private function typeOptions(User $user): array
+    {
+        $present = $user->notifications()->getQuery()->distinct()->pluck('type')->all();
+
+        return array_filter($this->types(), fn (string $type): bool => in_array($type, $present, true), ARRAY_FILTER_USE_KEY);
     }
 
     /**
@@ -64,6 +91,11 @@ class NotificationFilters
      */
     public function apply(Builder $query, array $filters, User $user): void
     {
+        $type = $filters['type'] ?? null;
+        if (is_string($type) && array_key_exists($type, $this->types())) {
+            $query->where('type', $type);
+        }
+
         $member = $filters['user'] ?? null;
         if (is_scalar($member) && ctype_digit((string) $member)) {
             $query->where('user_id', (int) $member);

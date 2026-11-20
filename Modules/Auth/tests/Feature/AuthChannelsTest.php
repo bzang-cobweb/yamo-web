@@ -70,8 +70,8 @@ class AuthChannelsTest extends AuthFilamentTestCase
         // Sélecteur « E-mail | Téléphone », puis le champ choisi.
         $this->assertSame(['channel', 'email', 'phone', 'password'], array_keys($login));
         $this->assertSame('segmented', $login['channel']['type']);
-        $this->assertSame(['field' => 'channel', 'value' => 'email'], $login['email']['visible_when']);
-        $this->assertSame(['field' => 'channel', 'value' => 'phone'], $login['phone']['visible_when']);
+        $this->assertSame(['field' => 'channel', 'value' => 'email', 'values' => ['email']], $login['email']['visible_when']);
+        $this->assertSame(['field' => 'channel', 'value' => 'phone', 'values' => ['phone']], $login['phone']['visible_when']);
 
         $this->getJson('/api/v1/app')->assertJsonPath('data.channels', ['email' => true, 'phone' => true]);
     }

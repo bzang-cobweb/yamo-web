@@ -65,6 +65,8 @@ return [
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'requested' => [
+            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
+            'type' => ':request pending',
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -72,6 +74,8 @@ return [
             'sms' => ':app: :guest requests :type :period for “:offer”. Reply in the app.',
         ],
         'accepted' => [
+            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
+            'type' => ':request accepted',
             'subject' => 'Request accepted: :offer',
             'body' => 'Your request for “:offer” (:period) has been accepted.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -79,6 +83,8 @@ return [
             'sms' => ':app: your request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
+            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
+            'type' => ':request declined',
             'subject' => 'Request declined: :offer',
             'body' => 'Your request for “:offer” (:period) has been declined.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -86,6 +92,8 @@ return [
             'sms' => ':app: your request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [
+            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
+            'type' => ':request cancelled',
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their request for “:offer” (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.

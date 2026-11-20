@@ -149,7 +149,7 @@ class OfferApiTest extends TestCase
 
         // Décision 2026-11-19-charges-meuble-surface-facultative.
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame(['field' => 'furnished', 'value' => 'false'], $fields['charges']['visible_when']);
+        $this->assertSame(['field' => 'furnished', 'value' => 'false', 'values' => ['false']], $fields['charges']['visible_when']);
         $this->assertFalse($fields['surface']['required']);
         $this->assertFalse($fields['rooms']['required']);
 

@@ -15,7 +15,7 @@ return [
         'markAllRead' => 'Tout marquer comme lu',
         'empty' => "Aucune notification pour l'instant.",
         // Recherche et filtres de la liste (décision 2026-11-20-filtres-notifications).
-        'search' => 'Rechercher un membre ou un logement…',
+        'search' => 'Rechercher…',
         'noResults' => 'Aucune notification ne correspond à cette recherche.',
         'unread' => 'Non lue',
         'justNow' => "à l'instant",

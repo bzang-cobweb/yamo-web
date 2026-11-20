@@ -93,7 +93,7 @@ final class FieldComponent
         $condition = $field->getVisibleWhen();
         if ($condition !== null) {
             $prefix = str_contains($name, '.') ? substr($name, 0, (int) strrpos($name, '.') + 1) : '';
-            $component->visible(fn (Get $get): bool => Field::conditionValue($get($prefix.$condition['field'])) === $condition['value']);
+            $component->visible(fn (Get $get): bool => in_array(Field::conditionValue($get($prefix.$condition['field'])), $condition['values'], true));
         }
 
         return $component

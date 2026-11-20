@@ -52,6 +52,8 @@ return [
     'list' => [
         // Filtres d'une liste (décision 2026-11-19-contrat-filtres-vitrine).
         'filters' => 'Filtres',
+        // Première option de chaque liste déroulante d'un filtre : aucun filtre.
+        'all' => 'Tous',
         'applyFilters' => 'Appliquer les filtres',
         'clearFilters' => 'Effacer les filtres',
         // Actions d'un item avec un écran et un formulaire (décision 2026-11-19-nuit-voir-editer-retirer).

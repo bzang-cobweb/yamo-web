@@ -16,6 +16,14 @@ use Modules\Form\Support\Field;
 interface NotificationFilter
 {
     /**
+     * Les types de notification du module, avec leur libellé pour le filtre « Type »
+     * (classe de la notification => « Demande de logement acceptée »).
+     *
+     * @return array<class-string, string>
+     */
+    public function types(): array;
+
+    /**
      * Les champs du filtre, pour le compte `$user`.
      *
      * @return list<Field>
