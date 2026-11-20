@@ -14,6 +14,9 @@ return [
         'open' => 'Öffnen',
         'markAllRead' => 'Alle als gelesen markieren',
         'empty' => 'Noch keine Benachrichtigungen.',
+        // Recherche et filtres de la liste (décision 2026-11-20-filtres-notifications).
+        'search' => 'Mitglied oder Unterkunft suchen…',
+        'noResults' => 'Keine Benachrichtigung entspricht dieser Suche.',
         'unread' => 'Ungelesen',
         'justNow' => 'gerade eben',
         'minutesAgo' => 'vor :count Min.',

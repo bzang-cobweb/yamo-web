@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
+use Modules\Notification\Support\NotificationFilters;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\BookingAnswerForm;
@@ -22,6 +23,7 @@ use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferReview;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Policies\BookingPolicy;
 use Modules\Offer\Policies\OfferCategoryPolicy;
 use Modules\Offer\Policies\OfferPolicy;
@@ -63,6 +65,9 @@ class OfferServiceProvider extends ModuleServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        // Filtrer ses notifications par logement et statut du logement (décision 2026-11-20-filtres-notifications).
+        $this->app->make(NotificationFilters::class)->register(OfferNotificationFilter::class);
 
         $domains = $this->app->make(DomainRegistry::class);
         $domains->register(RentalDomain::class);

@@ -158,7 +158,8 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame('/offers/'.$booking->offer_id.'/calendar?month='.today()->addDay()->format('Y-m'), $notification->data['link']);
         $this->assertSame([], $notification->data['links']);
         $this->assertSame('Handle the request', $notification->data['link_label']);
-        $this->assertSame($booking->user_id, $notification->data['actor_id']);
+        $this->assertSame($booking->user_id, (int) $notification->user_id);
+        $this->assertArrayNotHasKey('actor_id', $notification->data);
         $this->assertStringStartsWith('requests a stay', $notification->data['summary']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);
         $this->assertSame([

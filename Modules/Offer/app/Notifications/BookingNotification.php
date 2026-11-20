@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingListing;
@@ -22,7 +23,7 @@ use Modules\Offer\Models\Booking;
  * dans sa langue (`HasLocalePreference`).
  * Les textes sont dans `offer::booking.notify.<clé>` (fr, en, de).
  */
-abstract class BookingNotification extends Notification implements ShouldQueue
+abstract class BookingNotification extends Notification implements HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
@@ -63,7 +64,7 @@ abstract class BookingNotification extends Notification implements ShouldQueue
      * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
      * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, body: string, actor_id: int, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, tag: array{label: string, tone: string}, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -73,8 +74,7 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
             'tag' => ['label' => $this->status->label(), 'tone' => $this->status->tone()],
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
-            // La carte : qui agit (photo, nom, en ligne : lus à l'affichage), puis le texte sans son nom.
-            'actor_id' => (int) $this->actor()->getKey(),
+            // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom.
             'summary' => __("offer::booking.notify.{$this->key()}.summary", $this->replacements()),
             'message' => $this->note(),
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
@@ -91,6 +91,12 @@ abstract class BookingNotification extends Notification implements ShouldQueue
             // Plus de lien à part : le nom de l'offre, dans le texte, mène à l'annonce.
             'links' => [],
         ];
+    }
+
+    /** Qui agit, enregistré dans la colonne `user_id` de la notification (décision 2026-11-20-notification-user-id). */
+    public function notificationUserId(object $notifiable): ?int
+    {
+        return (int) $this->actor()->getKey();
     }
 
     /**

@@ -9,11 +9,12 @@ use Illuminate\Http\Response;
 use Modules\Auth\Models\User;
 use Modules\Notification\Http\Resources\NotificationPageResource;
 use Modules\Notification\Http\Resources\NotificationResource;
+use Modules\Notification\Support\NotificationFilters;
 
 /**
  * Les notifications de l'app du compte connecté (décision
  * 2026-11-19-contrat-centre-notifications) : la liste, la plus récente en tête,
- * par pages ; le nombre de non lues (la pastille de l'onglet) ; marquer une
+ * par pages, avec sa recherche et ses filtres ; le nombre de non lues (la pastille de l'onglet) ; marquer une
  * notification, ou toutes, comme lues. Une notification d'un autre compte
  * répond 404.
  */
@@ -23,12 +24,21 @@ class NotificationController
      * Ses notifications, la plus récente en tête, par pages.
      */
     #[QueryParameter('cursor', description: 'Curseur de la page voulue, tel que servi dans `next_cursor` ; absent : première page.', type: 'string', required: false)]
-    public function index(Request $request): NotificationPageResource
+    #[QueryParameter('search', description: 'Recherche : le nom de qui agit, le titre du logement (décision 2026-11-20-filtres-notifications).', type: 'string', required: false)]
+    #[QueryParameter('filter', description: 'Filtres choisis, `filter[offer]=12`, `filter[offer_status]=published` (décision 2026-11-20-filtres-notifications).', type: 'object', required: false)]
+    public function index(Request $request, NotificationFilters $filters): NotificationPageResource
     {
-        return new NotificationPageResource(
-            $this->user($request)->notifications()->reorder()->orderByDesc('created_at')->orderByDesc('id')
-                ->cursorPaginate((int) config('notification.per_page', 20)),
-        );
+        $user = $this->user($request);
+        $chosen = $request->query('filter');
+        $query = $user->notifications()->reorder()->orderByDesc('created_at')->orderByDesc('id');
+        $filters->apply($query->getQuery(), is_array($chosen) ? $chosen : [], $user);
+        $search = $request->query('search');
+        if (is_string($search)) {
+            $filters->search($query->getQuery(), $search);
+        }
+
+        return (new NotificationPageResource($query->cursorPaginate((int) config('notification.per_page', 20))))
+            ->withFilters($filters->fields($user));
     }
 
     /**

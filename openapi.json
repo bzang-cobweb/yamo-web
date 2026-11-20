@@ -1145,6 +1145,23 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche : le nom de qui agit, le titre du logement (d\u00e9cision 2026-11-20-filtres-notifications).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "description": "Filtres choisis, `filter[offer]=12`, `filter[offer_status]=published` (d\u00e9cision 2026-11-20-filtres-notifications).",
+                        "schema": {
+                            "type": "object"
+                        },
+                        "x-deepObject-style": "qs"
                     }
                 ],
                 "responses": {
@@ -3946,11 +3963,17 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "filters": {
+                        "type": "array",
+                        "description": "Filtres propos\u00e9s, en champs de formulaire (`?filter[nom]=valeur`), comme une liste (d\u00e9cision 2026-11-20-filtres-notifications).",
+                        "items": {}
                     }
                 },
                 "required": [
                     "items",
-                    "next_cursor"
+                    "next_cursor",
+                    "filters"
                 ],
                 "title": "NotificationPageResource"
             },

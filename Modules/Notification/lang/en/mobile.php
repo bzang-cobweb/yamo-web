@@ -14,6 +14,9 @@ return [
         'open' => 'Open',
         'markAllRead' => 'Mark all as read',
         'empty' => 'No notifications yet.',
+        // Recherche et filtres de la liste (décision 2026-11-20-filtres-notifications).
+        'search' => 'Search a member or a home…',
+        'noResults' => 'No notification matches this search.',
         'unread' => 'Unread',
         'justNow' => 'just now',
         'minutesAgo' => ':count min ago',

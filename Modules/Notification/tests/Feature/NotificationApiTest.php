@@ -132,8 +132,8 @@ class NotificationApiTest extends TestCase
         $user = User::factory()->create();
         $actor = User::factory()->create(['first_name' => 'Paul', 'last_name' => 'Etoa', 'last_seen_at' => now()]);
         $user->notifications()->create([
-            'id' => (string) Str::uuid(), 'type' => 'Test',
-            'data' => ['title' => 'Demande', 'body' => 'Paul Etoa demande un séjour.', 'summary' => 'demande un séjour.', 'actor_id' => $actor->getKey()],
+            'id' => (string) Str::uuid(), 'type' => 'Test', 'user_id' => $actor->getKey(),
+            'data' => ['title' => 'Demande', 'body' => 'Paul Etoa demande un séjour.', 'summary' => 'demande un séjour.'],
         ]);
         $this->notify($user, 'Sans acteur');
 
@@ -146,5 +146,17 @@ class NotificationApiTest extends TestCase
         $actor->forceFill(['last_seen_at' => now()->subHour()])->save();
         $id = $items['Demande']['id'];
         $this->assertFalse($this->asUser($user)->getJson("/api/v1/notifications/{$id}")->json('data.actor.online'));
+    }
+
+    public function test_deleting_the_account_of_who_acted_keeps_the_notification_without_them(): void
+    {
+        $user = User::factory()->create();
+        $actor = User::factory()->create();
+        $notification = $user->notifications()->create(['id' => (string) Str::uuid(), 'type' => 'Test', 'user_id' => $actor->getKey(), 'data' => ['title' => 'Demande', 'body' => 'Texte']]);
+
+        $actor->forceDelete();
+
+        $this->assertNull($notification->fresh()->user_id);
+        $this->assertNull($this->asUser($user)->getJson("/api/v1/notifications/{$notification->getKey()}")->json('data.actor'));
     }
 }

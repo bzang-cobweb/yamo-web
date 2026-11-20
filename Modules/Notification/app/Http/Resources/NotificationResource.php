@@ -46,7 +46,7 @@ class NotificationResource extends JsonResource
             'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
-            'actor' => $this->actor($data),
+            'actor' => $this->actor(),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
             'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
@@ -66,13 +66,14 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @param  array<mixed>  $data
+     * Qui agit (colonne `user_id`), lu à l'affichage.
+     *
      * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null
      */
-    private function actor(array $data): ?array
+    private function actor(): ?array
     {
-        $id = $data['actor_id'] ?? null;
-        $actor = $this->actorLoaded ? $this->actor : (is_int($id) ? User::query()->find($id) : null);
+        $id = $this->resource->getAttribute('user_id');
+        $actor = $this->actorLoaded ? $this->actor : ($id === null ? null : User::query()->find($id));
 
         if ($actor === null) {
             return null;
