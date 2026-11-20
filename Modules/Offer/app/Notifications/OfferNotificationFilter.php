@@ -10,15 +10,15 @@ use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
-use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferCategory;
 
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
  * - les types de ses notifications : les quatre étapes d'une demande ;
  * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
- * - le type de logement (location meublée : séjour ; longue durée : visite), affiché pour un type de demande ;
+ * - le type de logement : la catégorie de l'offre (« Location meublée »), affiché pour un type de demande ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
@@ -70,19 +70,20 @@ class OfferNotificationFilter implements NotificationFilter
                 ->options($this->offers($user))
                 ->searchable()
                 ->visibleWhen('type', array_keys($this->types())),
-            // Le type de logement (location meublée : séjour ; longue durée : visite), pour un type de demande.
-            Field::select('booking_type')
+            // Le type de logement : la catégorie de l'offre (« Location meublée »), pour un type de demande.
+            Field::select('category')
                 ->label(__('offer::booking.notify.filter_booking_type'))
-                ->options(app(DomainRegistry::class)->active()?->bookingTypeLabels() ?? [])
+                ->options($this->categories($user))
                 ->visibleWhen('type', array_keys($this->types())),
         ];
     }
 
     public function apply(Builder $query, array $filters, User $user): void
     {
-        $bookingType = $filters['booking_type'] ?? null;
-        if (is_string($bookingType) && BookingTypeEnum::tryFrom($bookingType) !== null) {
-            $query->whereIn('data->offer_id', $this->offersOfType($user, BookingTypeEnum::from($bookingType)) ?: [0]);
+        $category = $filters['category'] ?? null;
+        if (is_scalar($category) && ctype_digit((string) $category)) {
+            $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->where('category_id', (int) $category)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+            $query->whereIn('data->offer_id', $ids === [] ? [0] : $ids);
         }
 
         $offer = $filters['offer'] ?? null;
@@ -105,22 +106,16 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /**
-     * Ses offres nommées dans ses notifications qui se demandent ainsi (séjour ou visite),
-     * selon le domaine (un meublé se réserve, un non meublé se visite).
+     * Les catégories des offres que nomment ses notifications (« Location meublée »), dans l'ordre des catégories.
      *
-     * @return list<int>
+     * @return array<string, string>
      */
-    private function offersOfType(User $user, BookingTypeEnum $type): array
+    private function categories(User $user): array
     {
-        $domain = app(DomainRegistry::class)->active();
-        if ($domain === null) {
-            return [];
-        }
+        $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->whereNotNull('category_id')->distinct()->pluck('category_id')->all();
 
-        return Offer::query()->withTrashed()->whereKey($this->offerIds($user))->get()
-            ->filter(fn (Offer $offer): bool => $domain->bookingType($offer) === $type)
-            ->map(fn (Offer $offer): int => (int) $offer->getKey())
-            ->values()
+        return OfferCategory::query()->whereKey($ids)->orderBy('position')->orderBy('id')->get()
+            ->mapWithKeys(fn (OfferCategory $category): array => [(string) $category->getKey() => (string) $category->getTranslation('name', app()->getLocale())])
             ->all();
     }
 

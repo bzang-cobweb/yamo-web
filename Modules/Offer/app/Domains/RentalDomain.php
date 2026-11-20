@@ -281,17 +281,6 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Un séjour pour une location meublée, une visite pour une location longue durée.
-     */
-    public function bookingTypeLabels(): array
-    {
-        return [
-            BookingTypeEnum::STAY->value => __('offer::rental.booking_types.stay'),
-            BookingTypeEnum::VISIT->value => __('offer::rental.booking_types.visit'),
-        ];
-    }
-
-    /**
      * Les charges, après le loyer, dans l'onglet « Prix » (décision 2026-11-19-onglet-prix).
      */
     public function priceAttributes(): array

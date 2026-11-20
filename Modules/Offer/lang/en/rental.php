@@ -7,8 +7,6 @@ return [
     'plural' => 'Homes',
     'mine' => 'My homes',
     'add' => 'Add a home',
-    // Ce qu'on demande, nommé pour un filtre (décision 2026-11-20-filtre-type-logement).
-    'booking_types' => ['stay' => 'Furnished rental', 'visit' => 'Long-term rental'],
     'request' => 'Home request',
     'property_type' => 'Property type',
     'property_types' => [

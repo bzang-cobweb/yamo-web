@@ -7,8 +7,6 @@ return [
     'plural' => 'Logements',
     'mine' => 'Mes logements',
     'add' => 'Ajouter un logement',
-    // Ce qu'on demande, nommé pour un filtre (décision 2026-11-20-filtre-type-logement).
-    'booking_types' => ['stay' => 'Location meublée', 'visit' => 'Location longue durée'],
     'request' => 'Demande de logement',
     'property_type' => 'Type de logement',
     'property_types' => [
