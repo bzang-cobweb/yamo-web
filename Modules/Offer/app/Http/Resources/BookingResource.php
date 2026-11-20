@@ -4,6 +4,7 @@ namespace Modules\Offer\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingTypeEnum;
@@ -61,6 +62,9 @@ class BookingResource extends JsonResource
 
         $lines = [
             $line('guests', $booking->guests),
+            // La date de disponibilité du logement, si renseignée, avant l'arrivée ou la visite
+            // (décision 2026-11-20-disponibilite-demande).
+            $this->availableFrom($booking, $locale),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             // Une visite : charges, loyer (décision 2026-11-20-loyer-apres-charges), caution et avance,
@@ -72,6 +76,21 @@ class BookingResource extends JsonResource
         ];
 
         return array_values(array_filter($lines));
+    }
+
+    /**
+     * « Disponible dès le » : la date de disponibilité du logement (« 1 déc. 2026 ») ; `null` sans date.
+     *
+     * @return array{key: string, label: string, value: string}|null
+     */
+    private function availableFrom(Booking $booking, string $locale): ?array
+    {
+        $date = $booking->offer?->detail('available_from');
+        if (! is_string($date) || $date === '') {
+            return null;
+        }
+
+        return ['key' => 'available_from', 'label' => __('offer::rental.available_from'), 'value' => Carbon::parse($date)->locale($locale)->isoFormat('ll')];
     }
 
     /**

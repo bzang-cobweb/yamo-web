@@ -293,6 +293,24 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Charges mensuelles', 'Loyer mensuel (sans charges)'], array_slice(array_keys($lines()), 1, 2));
     }
 
+    public function test_the_lines_give_the_availability_date_before_the_arrival_when_set(): void
+    {
+        // Décision 2026-11-20-disponibilite-demande.
+        app()->setLocale('fr');
+        $flat = Offer::factory()->for($this->owner, 'user')->create([
+            'status' => 'published', 'price' => '250000', 'currency' => 'XAF',
+            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2, 'available_from' => '2026-12-01'],
+        ]);
+        $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
+        $labels = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
+
+        $this->assertSame(['Disponible dès le' => '1 déc. 2026', 'Visite' => '28 nov. 2026'], array_slice($labels(), 0, 2));
+
+        // Sans date : pas de ligne.
+        $flat->update(['details' => [...$flat->details, 'available_from' => null]]);
+        $this->assertArrayNotHasKey('Disponible dès le', $labels());
+    }
+
     public function test_a_stay_shows_its_deposit_when_set_before_the_total_that_adds_it(): void
     {
         // Décision 2026-11-20-caution-dans-le-total.
