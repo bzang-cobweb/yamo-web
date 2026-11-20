@@ -11,6 +11,7 @@ return [
         'guests' => 'Personen',
         'bedrooms' => 'Schlafzimmer',
         'price' => 'Preis',
+        'price_per' => 'Preis pro :unit',
         'days' => 'Dauer',
         'total' => 'Gesamt',
     ],

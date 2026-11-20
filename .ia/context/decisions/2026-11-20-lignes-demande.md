@@ -19,7 +19,7 @@ pas servie :
 | `arrival` / `visit` | Arrivée / Visite | « 5 déc. 2026 à partir de 14:00 » |
 | `departure` / `second` | Départ / Seconde date | « 7 déc. 2026 au plus tard à 11:00 » |
 | `days` | Durée | « 2 jours » |
-| `price` | Prix | « 20 000 FCFA / jour » |
+| `price` | Prix par jour / Prix par mois | « 20 000 FCFA » (l'unité dans le libellé, `priceUnit()` du domaine) |
 | `total` | Total | « 40 000 FCFA » |
 
 L'app affiche chaque ligne, libellé à gauche, valeur à droite, le total en gras. Elle n'a

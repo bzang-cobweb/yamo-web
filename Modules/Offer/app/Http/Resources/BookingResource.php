@@ -4,6 +4,7 @@ namespace Modules\Offer\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Number;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
@@ -63,11 +64,33 @@ class BookingResource extends JsonResource
             $line('bedrooms', is_numeric($bedrooms) ? (int) $bedrooms : null),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
-            $line('price', $booking->offer === null ? null : app(DomainRegistry::class)->require()->formattedPrice($booking->offer, $locale)),
+            $this->price($booking, $locale),
             $line('total', $booking->formattedTotal($locale)),
         ];
 
         return array_values(array_filter($lines));
+    }
+
+    /**
+     * Le prix du logement : l'unité dans le libellé (« Prix par jour », « Prix par mois »),
+     * le montant seul en valeur (« 20 000 FCFA ») ; `null` sans prix.
+     *
+     * @return array{key: string, label: string, value: string}|null
+     */
+    private function price(Booking $booking, string $locale): ?array
+    {
+        $offer = $booking->offer;
+        if ($offer === null || $offer->price === null) {
+            return null;
+        }
+
+        $unit = app(DomainRegistry::class)->require()->priceUnit($offer);
+
+        return [
+            'key' => 'price',
+            'label' => $unit === null ? __('offer::booking.lines.price') : __('offer::booking.lines.price_per', ['unit' => $unit]),
+            'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
+        ];
     }
 
     /**

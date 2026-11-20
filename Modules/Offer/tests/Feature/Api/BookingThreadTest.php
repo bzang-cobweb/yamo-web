@@ -5,6 +5,7 @@ namespace Modules\Offer\Tests\Feature\Api;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\User;
@@ -12,7 +13,6 @@ use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
-use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\BookingService;
@@ -181,7 +181,7 @@ class BookingThreadTest extends TestCase
                 ['key' => 'arrival', 'label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')],
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
                 ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
-                ['key' => 'price', 'label' => 'Prix', 'value' => (string) app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr')],
+                ['key' => 'price', 'label' => 'Prix par jour', 'value' => Number::currency(45000, 'XAF', 'fr')],
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
             ], $page['booking']['lines']);
         }
