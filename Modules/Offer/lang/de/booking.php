@@ -60,7 +60,6 @@ return [
         'search' => 'Angebot suchen…',
     ],
     'notify' => [
-        'filter_offer_status' => 'Status der Unterkunft',
         'handle' => 'Anfrage bearbeiten',
         'title' => 'Anfrage',
         'greeting' => 'Hallo :name,',

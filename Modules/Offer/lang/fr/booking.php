@@ -60,7 +60,6 @@ return [
         'search' => 'Rechercher une offre…',
     ],
     'notify' => [
-        'filter_offer_status' => 'Statut du logement',
         'handle' => 'Traiter la demande',
         'title' => 'Demande',
         'greeting' => 'Bonjour :name,',

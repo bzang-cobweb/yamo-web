@@ -27,11 +27,11 @@ class NotificationFiltersTest extends TestCase
         $this->seed(OfferDatabaseSeeder::class);
     }
 
-    private function notify(User $user, string $title, ?Offer $offer): void
+    private function notify(User $user, string $title, ?Offer $offer, ?string $status = null): void
     {
         $user->notifications()->create([
             'id' => (string) Str::uuid(), 'type' => 'Test',
-            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()])],
+            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($status === null ? [] : ['booking_status' => $status])],
         ]);
     }
 
@@ -44,28 +44,31 @@ class NotificationFiltersTest extends TestCase
             ->getJson('/api/v1/notifications'.$query)->assertOk()->json('data.items'), 'title');
     }
 
-    public function test_notifications_are_filtered_by_home_and_home_status(): void
+    public function test_notifications_are_filtered_by_home_and_request_status(): void
     {
         $user = User::factory()->create(['locale' => 'fr']);
         $published = Offer::factory()->create(['status' => 'published', 'title' => ['fr' => 'Studio photos']]);
         $draft = Offer::factory()->create(['status' => 'draft', 'title' => ['fr' => 'Appartement Akwa']]);
-        $this->notify($user, 'Pour le studio', $published);
-        $this->notify($user, 'Pour l’appartement', $draft);
+        $this->notify($user, 'Pour le studio', $published, 'pending');
+        $this->notify($user, 'Pour l’appartement', $draft, 'accepted');
         $this->notify($user, 'Sans logement', null);
 
         $this->app['auth']->forgetGuards();
         $filters = $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters');
-        $this->assertSame(['user', 'offer', 'offer_status'], array_column($filters, 'name'));
-        $this->assertSame(['Membre', 'Logement', 'Statut du logement'], array_column($filters, 'label'));
+        $this->assertSame(['user', 'offer', 'status'], array_column($filters, 'name'));
+        $this->assertSame(['Membre', 'Logement', 'Statut'], array_column($filters, 'label'));
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters[2]['options'], 'value'));
+        // Membre et logement : une recherche dans la liste, même courte.
+        $this->assertSame([true, true, false], array_column($filters, 'searchable'));
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters[1]['options'], 'label'));
 
         $this->assertCount(3, $this->titles($user));
         $this->assertSame(['Pour le studio'], $this->titles($user, "?filter[offer]={$published->getKey()}"));
-        $this->assertSame(['Pour l’appartement'], $this->titles($user, '?filter[offer_status]=draft'));
-        $this->assertSame([], $this->titles($user, "?filter[offer]={$published->getKey()}&filter[offer_status]=draft"));
+        $this->assertSame(['Pour l’appartement'], $this->titles($user, '?filter[status]=accepted'));
+        $this->assertSame([], $this->titles($user, "?filter[offer]={$published->getKey()}&filter[status]=accepted"));
         // Une valeur inconnue ne filtre rien.
-        $this->assertCount(3, $this->titles($user, '?filter[offer_status]=inconnu'));
+        $this->assertCount(3, $this->titles($user, '?filter[status]=inconnu'));
     }
 
     public function test_the_search_finds_who_acted_and_the_home_title(): void

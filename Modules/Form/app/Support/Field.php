@@ -35,6 +35,9 @@ final class Field
     /** Affiché, non modifiable, jamais validé ni enregistré. */
     private bool $readonly = false;
 
+    /** Liste déroulante : une recherche en tête des options, quel que soit leur nombre. */
+    private bool $searchable = false;
+
     /** Liste dépendante : nom du champ parent (ex. le pays d'une région). */
     private ?string $dependsOn = null;
 
@@ -451,6 +454,17 @@ final class Field
     public function readonly(bool $readonly = true): self
     {
         $this->readonly = $readonly;
+
+        return $this;
+    }
+
+    /**
+     * Une recherche en tête des options de la liste déroulante, même courte (un
+     * membre, un logement). Sans : la recherche n'apparaît qu'au-delà de 12 options.
+     */
+    public function searchable(bool $searchable = true): self
+    {
+        $this->searchable = $searchable;
 
         return $this;
     }
@@ -940,6 +954,8 @@ final class Field
             'help' => $this->help,
             'required' => $this->required,
             'readonly' => $this->readonly,
+            /** Liste déroulante : une recherche en tête des options, quel que soit leur nombre. */
+            'searchable' => $this->searchable,
             /** Option unique, choisie d'office : non modifiable, mais envoyée. */
             'locked' => $this->isLocked(),
             'depends_on' => $this->dependsOn,

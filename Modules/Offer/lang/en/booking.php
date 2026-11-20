@@ -60,7 +60,6 @@ return [
         'search' => 'Search an offer…',
     ],
     'notify' => [
-        'filter_offer_status' => 'Listing status',
         'handle' => 'Handle the request',
         'title' => 'Request',
         'greeting' => 'Hello :name,',

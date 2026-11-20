@@ -157,6 +157,7 @@ class FieldTest extends TestCase
             'help' => null,
             'required' => true,
             'readonly' => false,
+            'searchable' => false,
             'locked' => false,
             'depends_on' => null,
             'visible_when' => null,

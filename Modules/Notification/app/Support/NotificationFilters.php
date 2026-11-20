@@ -37,7 +37,8 @@ class NotificationFilters
             // Qui agit, parmi les membres que nomment ses notifications.
             Field::select('user')
                 ->label(__('notification::notification.filter_user'))
-                ->options($this->members($user)),
+                ->options($this->members($user))
+                ->searchable(),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
         ];
     }

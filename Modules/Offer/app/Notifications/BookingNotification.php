@@ -64,7 +64,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
      * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, tag: array{label: string, tone: string}, booking_id: int, booking_status: string, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -73,6 +73,9 @@ abstract class BookingNotification extends Notification implements HasNotificati
         return [
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
             'tag' => ['label' => $this->status->label(), 'tone' => $this->status->tone()],
+            // La demande et son statut à l'envoi (celui de la pastille), pour le filtre « Statut » (décision 2026-11-20-filtres-notifications).
+            'booking_id' => (int) $this->booking->getKey(),
+            'booking_status' => $this->status->value,
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
             // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom.
             'summary' => __("offer::booking.notify.{$this->key()}.summary", $this->replacements()),

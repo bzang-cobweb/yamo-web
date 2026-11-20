@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
-use Modules\Offer\Enums\OfferStatusEnum;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Offer;
 
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
  * - le logement, parmi ceux que nomment ses notifications ;
- * - le statut du logement (publié, brouillon, archivé) ;
+ * - le statut de la demande, celui de la pastille (en attente, acceptée, refusée, annulée) ;
  * - la recherche, dans le titre du logement.
  *
- * Une notification sans offre ne passe aucun de ces filtres.
+ * Une notification sans offre, ou sans demande, ne passe pas le filtre correspondant.
  */
 class OfferNotificationFilter implements NotificationFilter
 {
@@ -27,10 +27,12 @@ class OfferNotificationFilter implements NotificationFilter
         return [
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
-                ->options($this->offers($user)),
-            Field::select('offer_status')
-                ->label(__('offer::booking.notify.filter_offer_status'))
-                ->options(OfferStatusEnum::options()),
+                ->options($this->offers($user))
+                ->searchable(),
+            // Le statut de la demande, tel que la pastille de la notification le montre (à l'envoi).
+            Field::select('status')
+                ->label(__('offer::booking.profile.filter_status'))
+                ->options(BookingStatusEnum::options()),
         ];
     }
 
@@ -41,10 +43,9 @@ class OfferNotificationFilter implements NotificationFilter
             $query->where('data->offer_id', (int) $offer);
         }
 
-        $status = $filters['offer_status'] ?? null;
-        if (is_string($status) && OfferStatusEnum::tryFrom($status) !== null) {
-            $ids = Offer::query()->withTrashed()->where('status', $status)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
-            $query->whereIn('data->offer_id', $ids === [] ? [0] : $ids);
+        $status = $filters['status'] ?? null;
+        if (is_string($status) && BookingStatusEnum::tryFrom($status) !== null) {
+            $query->where('data->booking_status', $status);
         }
     }
 
