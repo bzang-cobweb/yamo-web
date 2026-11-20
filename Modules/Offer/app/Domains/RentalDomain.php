@@ -144,8 +144,10 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.bedrooms'))
                 ->required()
                 ->rules(['integer', 'min:0', 'max:50']),
+            // Pas pour un meublé, qui se réserve par dates (décision 2026-11-20-disponibilite-sans-meuble).
             Field::date('available_from')
-                ->label(__('offer::rental.available_from')),
+                ->label(__('offer::rental.available_from'))
+                ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues()),
             Field::multiselect('amenities')
                 ->label(__('offer::rental.amenities_label'))
                 ->options($this->amenityOptions()),
@@ -327,10 +329,12 @@ class RentalDomain extends Domain
         if (isset($filters['bedrooms'])) {
             $query->where('details->bedrooms', '>=', (int) $filters['bedrooms']);
         }
-        // Libre à cette date : disponible avant ou ce jour-là, ou sans date (libre tout de suite).
+        // Libre à cette date : disponible avant ou ce jour-là, ou sans date (libre tout de suite) ;
+        // un meublé n'a pas de date de disponibilité (décision 2026-11-20-disponibilite-sans-meuble).
         if (isset($filters['available_from'])) {
             $query->where(fn (Builder $dates) => $dates
-                ->whereNull('details->available_from')
+                ->where('details->rental_type', RentalTypeEnum::FURNISHED->value)
+                ->orWhereNull('details->available_from')
                 ->orWhere('details->available_from', '<=', (string) $filters['available_from']));
         }
         // Tous les équipements choisis.

@@ -309,6 +309,14 @@ class BookingThreadTest extends TestCase
         // Sans date : pas de ligne.
         $flat->update(['details' => [...$flat->details, 'available_from' => null]]);
         $this->assertArrayNotHasKey('Disponible dès le', $labels());
+
+        // Un séjour (meublé) : jamais, même avec une ancienne date (décision 2026-11-20-disponibilite-sans-meuble).
+        $studio = Offer::factory()->for($this->owner, 'user')->create([
+            'status' => 'published', 'price' => '85000', 'currency' => 'XAF',
+            'details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'available_from' => '2026-12-01'],
+        ]);
+        $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2]);
+        $this->assertNotContains('available_from', array_column((new BookingResource($stay))->resolve(request())['lines'], 'key'));
     }
 
     public function test_a_stay_shows_its_deposit_when_set_before_the_total_that_adds_it(): void

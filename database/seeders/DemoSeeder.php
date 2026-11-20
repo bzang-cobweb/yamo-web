@@ -270,7 +270,8 @@ class DemoSeeder extends Seeder
                     'surface' => $surface,
                     'rooms' => $rooms,
                     'bedrooms' => $bedrooms,
-                    'available_from' => now()->addDays(7 * ($index % 6))->toDateString(),
+                    // Pas de date de disponibilité pour un meublé (décision 2026-11-20-disponibilite-sans-meuble).
+                    'available_from' => $furnished ? null : now()->addDays(7 * ($index % 6))->toDateString(),
                     // Les logements de `WITHOUT_FEES` n'en ont aucun : un exemple de lignes vides masquées
                     // (décision 2026-11-20-lignes-vides-masquees).
                     'charges' => $furnished || $bare ? null : $charges,

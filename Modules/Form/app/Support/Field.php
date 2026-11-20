@@ -702,7 +702,8 @@ final class Field
         }
 
         // Masqué par sa condition : exclu de la validation et des données validées.
-        $condition = 'exclude_unless:'.$this->visibleWhen['field'].','.$this->visibleWhen['value'];
+        // Toutes les valeurs admises (longue durée et colocation), pas seulement la première.
+        $condition = 'exclude_unless:'.$this->visibleWhen['field'].','.implode(',', $this->visibleWhen['values']);
 
         return array_map(fn (array $rules): array => [$condition, ...$rules], $this->ownRules());
     }

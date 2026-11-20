@@ -162,6 +162,10 @@ class OfferApiTest extends TestCase
         $this->assertNull($furnished->detail('charges'));
         $this->assertSame(180, $unfurnished->detail('charges'));
         $this->assertNull($unfurnished->detail('surface'));
+
+        // Une colocation aussi : la condition admet toutes ses valeurs, pas la première seule.
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'shared', 'charges' => '90']))->assertNoContent();
+        $this->assertSame(90, Offer::query()->orderByDesc('id')->first()->detail('charges'));
     }
 
     public function test_an_unfurnished_home_has_a_deposit_and_rent_in_advance_in_months(): void

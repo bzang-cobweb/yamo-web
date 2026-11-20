@@ -96,7 +96,8 @@ class OfferFiltersApiTest extends TestCase
         $match = $this->home('Douala', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1], ['title' => ['fr' => 'Studio Akwa']]);
         $tooExpensive = $this->home('Douala', 200000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
         $otherCity = $this->home('Yaoundé', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
-        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'rental_type' => 'long_term', 'bedrooms' => 3]);
+        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'rental_type' => 'long_term', 'bedrooms' => 3, 'available_from' => '2027-01-15']);
+        // Une ancienne date sur un meublé ne compte pas (décision 2026-11-20-disponibilite-sans-meuble).
         $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'rental_type' => 'furnished', 'bedrooms' => 2, 'available_from' => '2027-01-15']);
 
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
@@ -108,8 +109,9 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
         // Libre le 1er janvier : pas celui qui se libère le 15.
-        $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
-        $this->assertContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-02-01'));
+        $this->assertNotContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
+        $this->assertContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-02-01'));
+        $this->assertContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
         // Avec la recherche.
         $this->assertSame([(string) $match->getKey()], $this->ids('?search=akwa&filter[city]=Douala'));
         $this->assertSame([], $this->ids('?search=akwa&filter[city]=Yaoundé'));

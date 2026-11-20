@@ -82,7 +82,10 @@ final class FieldComponent
             default => throw new LogicException("Champ « {$field->name} » : type {$field->type->value} sans équivalent dans le back-office."),
         };
 
-        $rules = $field->validationRules()[$field->name] ?? [];
+        // Sans `exclude_unless` : il nomme le champ voisin sans le préfixe d'état (`rental_type` et
+        // non `details.rental_type`) et exclurait toujours la valeur ; la condition d'affichage
+        // ci-dessous en tient lieu, un champ masqué n'étant pas enregistré.
+        $rules = array_values(array_filter($field->validationRules()[$field->name] ?? [], fn (mixed $rule): bool => ! is_string($rule) || ! str_starts_with($rule, 'exclude_unless:')));
 
         // Une case change l'affichage d'autres champs : le formulaire suit sa valeur.
         if (in_array($field->type, [FieldType::CHECKBOX, FieldType::SWITCH], true)) {

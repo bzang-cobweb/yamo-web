@@ -62,8 +62,8 @@ class BookingResource extends JsonResource
 
         $lines = [
             $line('guests', $booking->guests),
-            // La date de disponibilité du logement, si renseignée, avant l'arrivée ou la visite
-            // (décision 2026-11-20-disponibilite-demande).
+            // La date de disponibilité du logement, si renseignée, avant la visite
+            // (décisions 2026-11-20-disponibilite-demande et 2026-11-20-disponibilite-sans-meuble).
             $this->availableFrom($booking, $locale),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
@@ -85,8 +85,9 @@ class BookingResource extends JsonResource
      */
     private function availableFrom(Booking $booking, string $locale): ?array
     {
+        // Une visite seulement : un meublé n'a pas de date de disponibilité (décision 2026-11-20-disponibilite-sans-meuble).
         $date = $booking->offer?->detail('available_from');
-        if (! is_string($date) || $date === '') {
+        if ($booking->type !== BookingTypeEnum::VISIT || ! is_string($date) || $date === '') {
             return null;
         }
 
