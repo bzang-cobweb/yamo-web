@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Notification\Support\NotificationFilters;
 
 /**
@@ -24,6 +25,19 @@ class NotificationResource extends JsonResource
 
     private bool $actorLoaded = false;
 
+    /** Les coordonnées de qui agit (e-mail, téléphone) : sur la page d'une notification seulement. */
+    private bool $withContact = false;
+
+    /**
+     * Ajoute l'e-mail et le téléphone de qui agit (décision 2026-11-20-coordonnees-notification).
+     */
+    public function withContact(): self
+    {
+        $this->withContact = true;
+
+        return $this;
+    }
+
     public function withActor(?User $actor): self
     {
         $this->actor = $actor;
@@ -33,7 +47,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -69,7 +83,7 @@ class NotificationResource extends JsonResource
     /**
      * Qui agit (colonne `user_id`), lu à l'affichage.
      *
-     * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null
+     * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null
      */
     private function actor(): ?array
     {
@@ -87,6 +101,9 @@ class NotificationResource extends JsonResource
             'photo' => MediaUrl::onRequestHost($actor->avatarUrl()),
             'online' => (bool) $actor->is_online,
             'link' => '/members/'.$actor->getKey(),
+            /** Sur la page d'une notification : son e-mail et son téléphone (format international), sinon `null`. */
+            'email' => $this->withContact ? $actor->email : null,
+            'phone' => $this->withContact && $actor->phone !== null ? PhoneNumbers::international($actor->phone) : null,
         ];
     }
 

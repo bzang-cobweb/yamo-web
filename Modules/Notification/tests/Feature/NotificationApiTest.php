@@ -130,7 +130,7 @@ class NotificationApiTest extends TestCase
     public function test_the_card_shows_who_acted_read_live_with_their_online_state(): void
     {
         $user = User::factory()->create();
-        $actor = User::factory()->create(['first_name' => 'Paul', 'last_name' => 'Etoa', 'last_seen_at' => now()]);
+        $actor = User::factory()->create(['first_name' => 'Paul', 'last_name' => 'Etoa', 'last_seen_at' => now(), 'phone' => '+237690000099']);
         $user->notifications()->create([
             'id' => (string) Str::uuid(), 'type' => 'Test', 'user_id' => $actor->getKey(),
             'data' => ['title' => 'Demande', 'body' => 'Paul Etoa demande un séjour.', 'summary' => 'demande un séjour.'],
@@ -138,14 +138,18 @@ class NotificationApiTest extends TestCase
         $this->notify($user, 'Sans acteur');
 
         $items = collect($this->asUser($user)->getJson('/api/v1/notifications')->json('data.items'))->keyBy('title');
-        $this->assertSame(['id' => (string) $actor->getKey(), 'name' => 'Paul Etoa', 'initials' => 'PE', 'photo' => null, 'online' => true, 'link' => '/members/'.$actor->getKey()], $items['Demande']['actor']);
+        // Dans la liste : sans ses coordonnées.
+        $this->assertSame(['id' => (string) $actor->getKey(), 'name' => 'Paul Etoa', 'initials' => 'PE', 'photo' => null, 'online' => true, 'link' => '/members/'.$actor->getKey(), 'email' => null, 'phone' => null], $items['Demande']['actor']);
         $this->assertSame('demande un séjour.', $items['Demande']['summary']);
         $this->assertNull($items['Sans acteur']['actor']);
         $this->assertNull($items['Sans acteur']['summary']);
 
         $actor->forceFill(['last_seen_at' => now()->subHour()])->save();
         $id = $items['Demande']['id'];
-        $this->assertFalse($this->asUser($user)->getJson("/api/v1/notifications/{$id}")->json('data.actor.online'));
+        $detail = $this->asUser($user)->getJson("/api/v1/notifications/{$id}")->json('data.actor');
+        $this->assertFalse($detail['online']);
+        // Sur la page de la notification : son e-mail et son téléphone.
+        $this->assertSame([$actor->email, '+237 6 90 00 00 99'], [$detail['email'], $detail['phone']]);
     }
 
     public function test_deleting_the_account_of_who_acted_keeps_the_notification_without_them(): void

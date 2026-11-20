@@ -3853,6 +3853,18 @@
                                         },
                                         "link": {
                                             "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -3861,7 +3873,9 @@
                                         "initials",
                                         "photo",
                                         "online",
-                                        "link"
+                                        "link",
+                                        "email",
+                                        "phone"
                                     ]
                                 },
                                 "summary": {
@@ -4035,6 +4049,18 @@
                             },
                             "link": {
                                 "type": "string"
+                            },
+                            "email": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "phone": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
                             }
                         },
                         "required": [
@@ -4043,7 +4069,9 @@
                             "initials",
                             "photo",
                             "online",
-                            "link"
+                            "link",
+                            "email",
+                            "phone"
                         ]
                     },
                     "summary": {

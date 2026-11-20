@@ -54,7 +54,8 @@ class NotificationController
      */
     public function show(Request $request, string $notification): NotificationResource
     {
-        return new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail());
+        // Sur sa page : les coordonnées de qui agit (décision 2026-11-20-coordonnees-notification).
+        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withContact();
     }
 
     /**
