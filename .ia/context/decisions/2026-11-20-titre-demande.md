@@ -15,6 +15,11 @@ Le serveur envoie les trois données rédigées dans `booking.offer`
 (`property_type`, `rental_type`, `city`) ; l'app compose le titre. Aucune méthode n'est
 ajoutée au domaine (`itemTitle()`, le titre des listes, n'a pas le type de location).
 
+Après la pastille du statut, le nom de l'offre (son titre saisi, `booking.offer.title`) en
+gras, en lien vers sa fiche ; le titre composé n'est pas en gras. Demandes de l'humain :
+« afficher le nom de l'offre sous forme de lien après la pastille du statut », « mettre ce
+titre en gras et le titre composé enlever le gras ».
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « mettez le titre composé du type de l'offre, du type
