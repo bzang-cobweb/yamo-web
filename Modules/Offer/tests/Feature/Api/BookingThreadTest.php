@@ -150,6 +150,26 @@ class BookingThreadTest extends TestCase
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
+    public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void
+    {
+        // Décision 2026-11-20-entete-premiere-etape : sur les deux côtés, quelle que soit l'étape ouverte.
+        $this->travelTo(now()->setTime(9, 0));
+        $booking = $this->request(3);
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($booking, false, 'Déjà réservé');
+
+        foreach ([$this->owner, $this->guest] as $reader) {
+            $page = $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data');
+
+            $this->assertSame('Demande de logement', $page['title']);
+            $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
+            $this->assertStringStartsWith('demande un séjour', $page['summary']);
+            $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
+            $this->assertSame($booking->formattedTotal('fr'), $page['total']);
+            $this->assertNotNull($page['total']);
+        }
+    }
+
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void
     {
         $this->travelTo(now()->setTime(9, 0));

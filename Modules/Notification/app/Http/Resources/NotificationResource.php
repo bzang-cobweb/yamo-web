@@ -77,7 +77,12 @@ class NotificationResource extends JsonResource
     public function toArray(Request $request): array
     {
         $notification = $this->resource;
-        $data = (array) $notification->data;
+        $steps = $this->withHistory ? app(NotificationThreads::class)->steps($notification) : [];
+        // Sur sa page, une demande se présente par sa première étape : son titre, son texte,
+        // qui l'a faite, son prix (décision 2026-11-20-entete-premiere-etape).
+        $head = $steps[0] ?? $notification;
+        $data = (array) $head->data;
+        $own = (array) $notification->data;
 
         $item = [
             'id' => (string) $notification->getKey(),
@@ -86,21 +91,21 @@ class NotificationResource extends JsonResource
             'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
-            'actor' => $this->actor(),
+            'actor' => $this->actor($head),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
             'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
             /** Le total de la demande (« 255 000 FCFA »), en gras sur sa page ; `null` sans total. */
             'total' => $this->total($data),
-            'message' => $this->message($data),
+            'message' => $this->message($own),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
-            'link' => $this->link($data),
+            'link' => $this->link($own),
             /** Liens en plus, sous le texte (« Voir l'annonce » → `/offers/12`). */
-            'links' => $this->links($data),
+            'links' => $this->links($own),
             /** Passages du texte qui ouvrent un écran (« Paul Etoa » → `/members/37`). */
             'text_links' => $this->textLinks($data),
             /** Libellé du bouton qui ouvre `link` (« Réservations reçues »), ou `null`. */
-            'link_label' => $this->linkLabel($data),
+            'link_label' => $this->linkLabel($own),
             /** Lue : pour la carte d'une demande, toutes ses étapes le sont. */
             'read' => $this->read ?? $notification->read_at !== null,
             /** Date ISO 8601. */
@@ -109,7 +114,7 @@ class NotificationResource extends JsonResource
 
         if ($this->withHistory) {
             /** Le suivi de la demande, de la plus ancienne étape à la plus récente, des deux côtés ; vide sans fil. */
-            $item['history'] = $this->history();
+            $item['history'] = $this->history($steps);
         }
 
         return $item;
@@ -119,11 +124,12 @@ class NotificationResource extends JsonResource
      * Les étapes de son fil : leur libellé (« Demande acceptée »), qui agit, le message
      * joint, la date (décision 2026-11-20-suivi-demande).
      *
+     *
+     * @param  list<DatabaseNotification>  $steps
      * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null}>
      */
-    private function history(): array
+    private function history(array $steps): array
     {
-        $steps = app(NotificationThreads::class)->steps($this->resource);
         $ids = array_values(array_unique(array_filter(array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps))));
         $actors = User::query()->whereKey($ids)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
         $filters = app(NotificationFilters::class);
@@ -146,10 +152,10 @@ class NotificationResource extends JsonResource
      *
      * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null
      */
-    private function actor(): ?array
+    private function actor(DatabaseNotification $head): ?array
     {
-        $id = $this->resource->getAttribute('user_id');
-        $actor = $this->actorLoaded ? $this->actor : ($id === null ? null : User::query()->find($id));
+        $id = $head->getAttribute('user_id');
+        $actor = $this->actorLoaded && $head === $this->resource ? $this->actor : ($id === null ? null : User::query()->find($id));
 
         if ($actor === null) {
             return null;
