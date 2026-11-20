@@ -51,3 +51,38 @@ Aujourd'hui, chacune est une carte à part. Après le chantier, chaque personne 
 
 - Pas de notification au propriétaire pour sa propre réponse : son action apparaît dans le suivi seulement.
 - Pas de nouvelle table d'historique : le suivi est construit à partir des notifications.
+
+---
+
+## Ce que j'ai décidé seul
+
+- **Le fil** est une colonne générique `thread` (`booking:<id>`), remplie par le canal `database` via le contrat `HasNotificationThread` (même mécanisme que `user_id`). Le module Notification ne connaît pas les demandes.
+- **Les libellés des étapes** du suivi (« Demande envoyée », « … acceptée », « … refusée », « … annulée ») sont donnés par le module Offer (`NotificationFilter::step()`), dans la langue du lecteur, en fr, en et de. Sans module, le libellé est le titre de la notification.
+- **Les égalités de date** dans un fil sont départagées par l'identifiant de la notification. Les notifications de démonstration, générées toutes dans la même seconde, ont été redatées en local sur les dates de leur demande (envoi, réponse, annulation).
+- **Le suivi** est affiché sous la date de la notification, en frise : un point par étape, avec le libellé en gras, qui agit, le message et la date à droite.
+
+## Ce qui a été fait
+
+- web `3e25c44` :
+  - colonne `thread` et son rattrapage ;
+  - `NotificationThreads` : une carte par fil, non lues par fil, lecture du fil, étapes ;
+  - `history` sur la page d'une notification ;
+  - 5 tests (`BookingThreadTest`) ;
+  - OpenAPI régénéré.
+- mobile `e445aa0` : `NotificationHistory` sur la page d'une notification, avec 2 tests.
+- Résultats :
+  - web : 585 tests passés ;
+  - mobile : 289 tests passés ;
+  - QA indépendante : **GO** (`.ia/runs/2026-11-20-suivi-demande/qa.md`).
+- MariaDB local : listes, compteur et suivi vérifiés (une seule carte par demande, suivi dans l'ordre après redatation).
+
+## Ce que je n'ai pas vérifié
+
+- Le rendu dans le simulateur : les captures sont bloquées.
+- La performance de la requête `NOT EXISTS` sur un gros volume de notifications.
+- La cohérence entre le compteur « x demandes en attente » et la liste filtrée, en présence d'un fil : elle n'est vérifiée que par lecture du code, pas par un test croisé.
+
+## Ce qui reste en suspens
+
+- Chez le propriétaire, la carte d'une demande qu'il a acceptée garde « demande reçue » comme dernière étape et ne remonte pas en tête : sa propre réponse ne lui est pas notifiée. Une alternative a été proposée sans réponse : faire porter à la carte la dernière étape du suivi, quel que soit le côté.
+- Une ancienne notification dont `booking_id` serait stocké en chaîne resterait hors fil. Aucune n'existe aujourd'hui.
