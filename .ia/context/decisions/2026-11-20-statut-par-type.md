@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-statut-reel.md
+
 # Pastille d'une notification : le libellé de son type
 
 - **Type** : décision de conception

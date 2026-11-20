@@ -64,7 +64,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * logement »), un texte, le message saisi (celui du membre, ou le motif d'un
      * refus), la demande et l'offre, l'écran à ouvrir et son bouton. Textes figés
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
-     * l'API la déduit du type de la notification (décision 2026-11-20-statut-par-type).
+     * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
      * @return array{title: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
