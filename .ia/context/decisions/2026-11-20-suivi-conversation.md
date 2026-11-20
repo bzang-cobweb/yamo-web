@@ -11,8 +11,7 @@
 La page d'une notification se divise en deux :
 
 - **Une zone fixe en haut**, qui ne défile pas : le type en gras et la pastille du
-  statut à droite, le texte de la demande (le nom de qui l'a faite y ouvre sa page) et
-  son total. Plus de photo, de nom ni de coordonnées au-dessus.
+  statut à droite, le texte de la demande et son total. Plus de photo, de nom ni de coordonnées au-dessus.
 - **Dessous, ce qui défile** : le suivi de la demande comme une conversation, de la
   plus ancienne étape à la plus récente. Les étapes du membre à gauche, celles du
   propriétaire à droite, quel que soit le lecteur. Chacune : la photo de qui l'a faite
@@ -39,6 +38,9 @@ click se fera sur le nom et le cercle dans la conversation ».
 - Ses propres étapes : « Toi » (en « You », de « Du ») à la place de son nom, sans
   photo. Demande de l'humain : « ne pas afficher son propre nom, mettre juste toi et
   enlever son cercle ».
+- Le texte de la zone fixe ne nomme plus qui a fait la demande (`summary`, à défaut
+  `body`). Demande de l'humain : « Ne plus mettre l'utilisateur dans le summary de la
+  notification ».
 
 ## Portée
 
