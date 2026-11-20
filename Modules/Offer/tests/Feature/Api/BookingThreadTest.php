@@ -274,12 +274,16 @@ class BookingThreadTest extends TestCase
         $lines = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
         app()->setLocale('fr');
 
-        // Rien de renseigné : ni charges, ni caution, ni avance ; le total à 0 (décision 2026-11-20-lignes-vides-masquees).
+        // Rien de renseigné : ni charges, ni caution, ni avance, ni total (décisions
+        // 2026-11-20-lignes-vides-masquees et 2026-11-20-total-visite-si-caution).
         $this->assertSame([
             'Visite' => '28 nov. 2026',
             'Loyer mensuel' => Number::currency(250000, 'XAF', 'fr'),
-            'Total' => Number::currency(0, 'XAF', 'fr'),
         ], $lines());
+
+        // Une avance seule : le total, loyer × avance.
+        $flat->update(['details' => [...$flat->details, 'advance_months' => 3]]);
+        $this->assertSame(Number::currency(750000, 'XAF', 'fr'), $lines()['Total']);
 
         // Les mois dans le libellé, le loyer fois ces mois en valeur ; le total, leur somme, sans les
         // charges (décision 2026-11-20-caution-en-montant).
