@@ -122,19 +122,27 @@ class NotificationResource extends JsonResource
 
     /**
      * Les étapes de son fil : leur libellé (« Demande acceptée »), qui agit, le message
-     * joint, la date (décision 2026-11-20-suivi-demande).
-     *
+     * joint, la date (décision 2026-11-20-suivi-demande). Pour une étape du lecteur, ce
+     * qu'est devenue la notification envoyée à l'autre partie (`delivery`, décision
+     * 2026-11-20-coches-lecture) : `sent` (il ne s'est pas connecté depuis), `delivered`
+     * (connecté depuis, pas lue), `read` (lue) ; `null` pour une étape de l'autre.
      *
      * @param  list<DatabaseNotification>  $steps
-     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null}>
+     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null, delivery: string|null}>
      */
     private function history(array $steps): array
     {
         $ids = array_values(array_unique(array_filter(array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps))));
         $actors = User::query()->whereKey($ids)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
         $filters = app(NotificationFilters::class);
+        $reader = (int) $this->resource->getAttribute('notifiable_id');
+        // Les destinataires des étapes du lecteur : leur dernière connexion.
+        $recipients = User::query()->whereKey(array_map(
+            fn (DatabaseNotification $step): int => (int) $step->getAttribute('notifiable_id'),
+            array_filter($steps, fn (DatabaseNotification $step): bool => (int) $step->getAttribute('user_id') === $reader),
+        ))->get()->keyBy(fn (User $user): int => (int) $user->getKey());
 
-        return array_map(function (DatabaseNotification $step) use ($actors, $filters): array {
+        return array_map(function (DatabaseNotification $step) use ($actors, $filters, $reader, $recipients): array {
             $actor = $actors->get((int) $step->getAttribute('user_id'));
 
             return [
@@ -143,8 +151,23 @@ class NotificationResource extends JsonResource
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
+                'delivery' => (int) $step->getAttribute('user_id') === $reader
+                    ? $this->delivery($step, $recipients->get((int) $step->getAttribute('notifiable_id')))
+                    : null,
             ];
         }, $steps);
+    }
+
+    /** Lue ; sinon remise si le destinataire s'est connecté depuis l'envoi ; sinon envoyée. */
+    private function delivery(DatabaseNotification $step, ?User $recipient): string
+    {
+        if ($step->read_at !== null) {
+            return 'read';
+        }
+
+        $seen = $recipient?->last_seen_at;
+
+        return $seen !== null && $step->created_at !== null && $seen->gt($step->created_at) ? 'delivered' : 'sent';
     }
 
     /**

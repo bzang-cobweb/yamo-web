@@ -15,6 +15,8 @@ return [
         'history' => 'Request follow-up',
         // Le lecteur, dans le suivi d'une demande (décision 2026-11-20-suivi-conversation).
         'you' => 'You',
+        // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
+        'delivery' => ['sent' => 'Sent', 'delivered' => 'Delivered', 'read' => 'Read'],
         'open' => 'Open',
         'markAllRead' => 'Mark all as read',
         'empty' => 'No notifications yet.',

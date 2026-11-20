@@ -15,6 +15,8 @@ return [
         'history' => 'Verlauf der Anfrage',
         // Le lecteur, dans le suivi d'une demande (décision 2026-11-20-suivi-conversation).
         'you' => 'Du',
+        // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
+        'delivery' => ['sent' => 'Gesendet', 'delivered' => 'Zugestellt', 'read' => 'Gelesen'],
         'open' => 'Öffnen',
         'markAllRead' => 'Alle als gelesen markieren',
         'empty' => 'Noch keine Benachrichtigungen.',

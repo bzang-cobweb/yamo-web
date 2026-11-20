@@ -170,6 +170,29 @@ class BookingThreadTest extends TestCase
         }
     }
 
+    public function test_the_reader_steps_say_whether_the_other_party_got_and_read_them(): void
+    {
+        // Décision 2026-11-20-coches-lecture.
+        $this->travelTo(now()->setTime(9, 0));
+        $booking = $this->request(3);
+        $this->guest->forceFill(['last_seen_at' => null])->save();
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($booking, true);
+        $delivery = fn (): array => array_column($this->api($this->owner, 'GET', '/'.$this->cards($this->owner)[0]['id'])->assertOk()->json('data.history'), 'delivery');
+
+        // La demande est du membre : rien ; la réponse du propriétaire : envoyée.
+        $this->assertSame([null, 'sent'], $delivery());
+
+        // Le membre s'est connecté depuis, sans lire : remise.
+        $this->travel(5)->minutes();
+        $this->guest->forceFill(['last_seen_at' => now()])->save();
+        $this->assertSame([null, 'delivered'], $delivery());
+
+        // Le membre l'a lue.
+        $this->guest->notifications()->update(['read_at' => now()]);
+        $this->assertSame([null, 'read'], $delivery());
+    }
+
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void
     {
         $this->travelTo(now()->setTime(9, 0));
