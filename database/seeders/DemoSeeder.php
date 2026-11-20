@@ -166,6 +166,7 @@ class DemoSeeder extends Seeder
             $made = [];
             foreach (self::BOOKINGS as $key => [$visitor, $offerIndex, $from, $to, $guests, $message]) {
                 $tick();
+                $message = $message === self::LONG_MESSAGE ? mb_substr(str_repeat(self::LONG_MESSAGE, 10), 0, Booking::MESSAGE_MAX_LENGTH) : $message;
                 $made[$key] = $service->request(
                     User::query()->where('email', 'demo-visiteur-'.$visitor.'@example.test')->firstOrFail(),
                     $offers->get($offerIndex) ?? throw new LogicException("Logement {$offerIndex} absent."),
@@ -196,7 +197,8 @@ class DemoSeeder extends Seeder
      * @var array<string, array{int, int, int, int|null, int|null, string|null}>
      */
     private const BOOKINGS = [
-        'studio_pending' => [1, 1, 10, 13, 1, 'Bonjour, je viens à Douala pour le travail.'],
+        // Le message le plus long admis (`Booking::MESSAGE_MAX_LENGTH`) : voir son rendu partout.
+        'studio_pending' => [1, 1, 10, 13, 1, self::LONG_MESSAGE],
         'view_accepted' => [2, 4, 5, 9, 2, 'Nous serons deux, arrivée en soirée.'],
         'view_overlap' => [3, 4, 7, 10, 3, 'Séjour en famille, est-ce possible ?'],
         'flat_refused' => [1, 9, 20, 24, 2, null],
@@ -206,6 +208,9 @@ class DemoSeeder extends Seeder
         'visit_accepted' => [2, 3, 4, 6, null, 'Je cherche une colocation pour la rentrée.'],
         'visit_refused' => [3, 2, 8, null, null, null],
     ];
+
+    /** Un message répété jusqu'à la longueur maximale d'un message de demande. */
+    private const LONG_MESSAGE = 'Bonjour, je viens à Douala pour une mission de travail de trois jours et je cherche un logement calme, proche d’Akwa, avec une bonne connexion internet pour travailler le soir. ';
 
     /**
      * Les étapes suivantes, dans l'ordre : accepter (les demandes en attente qui
