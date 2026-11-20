@@ -107,7 +107,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -164,6 +164,31 @@ class OfferApiTest extends TestCase
         $this->assertNull($unfurnished->detail('surface'));
     }
 
+    public function test_an_unfurnished_home_has_a_deposit_and_rent_in_advance_in_months(): void
+    {
+        $user = $this->member();
+
+        // Décision 2026-11-20-caution-avance-loyer.
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        foreach (['deposit_months' => 'Caution', 'advance_months' => 'Avance de loyer'] as $name => $label) {
+            $this->assertSame($label, $fields[$name]['label']);
+            $this->assertSame('mois', $fields[$name]['suffix']);
+            $this->assertFalse($fields[$name]['required']);
+            $this->assertSame(['long_term', 'shared'], $fields[$name]['visible_when']['values']);
+        }
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'long_term', 'deposit_months' => '25']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('deposit_months');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'furnished', 'deposit_months' => '2', 'advance_months' => '3']))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'long_term', 'deposit_months' => '2', 'advance_months' => '3']))->assertNoContent();
+
+        [$furnished, $unfurnished] = Offer::query()->orderBy('id')->get()->all();
+        $this->assertNull($furnished->detail('deposit_months'));
+        $this->assertSame(2, $unfurnished->detail('deposit_months'));
+        $this->assertSame(3, $unfurnished->detail('advance_months'));
+    }
+
     public function test_the_app_form_comes_in_the_5_steps_of_the_domain(): void
     {
         $user = $this->member();
@@ -183,7 +208,7 @@ class OfferApiTest extends TestCase
             // Sans catégorie créée, pas de champ « Catégorie ».
             ['property_type', 'rental_type', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
-            ['price', 'charges', 'available_from', 'status'],
+            ['price', 'charges', 'deposit_months', 'advance_months', 'available_from', 'status'],
             ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],
             ['street', 'zip', 'city', 'indication'],

@@ -156,6 +156,18 @@ class RentalDomain extends Domain
                 // Un meublé se loue charges comprises : pas de charges.
                 ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
                 ->rules(['min:0', 'max:100000']),
+            // La caution et l'avance de loyer, en mois, pour une location non meublée, facultatives
+            // (décision 2026-11-20-caution-avance-loyer).
+            Field::number('deposit_months')
+                ->label(__('offer::rental.deposit_months'))
+                ->suffix(__('offer::rental.months'))
+                ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
+                ->rules(['integer', 'min:0', 'max:24']),
+            Field::number('advance_months')
+                ->label(__('offer::rental.advance_months'))
+                ->suffix(__('offer::rental.months'))
+                ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
+                ->rules(['integer', 'min:0', 'max:24']),
             // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Pas d'âge
             // minimum propre à l'offre : celui de l'application vaut pour toutes (décision
             // 2026-11-19-age-minimum-de-l-app).
@@ -224,7 +236,7 @@ class RentalDomain extends Domain
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
-            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
+            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],
             // Les blocs d'informations, à part (décision 2026-11-19-etape-informations).

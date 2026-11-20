@@ -263,6 +263,9 @@ class DemoSeeder extends Seeder
                     'bedrooms' => $bedrooms,
                     'available_from' => now()->addDays(7 * ($index % 6))->toDateString(),
                     'charges' => $furnished ? null : $charges,
+                    // Caution et avance de loyer d'une location non meublée (décision 2026-11-20-caution-avance-loyer).
+                    'deposit_months' => $furnished ? null : 2,
+                    'advance_months' => $furnished ? null : [3, 6, 12][$index % 3],
                     'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
                 ],
             ]);

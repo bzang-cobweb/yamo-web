@@ -43,6 +43,9 @@ return [
     'available_from' => 'Verfügbar ab',
     'charges' => 'Monatliche Nebenkosten',
     'charges_help' => 'Zusätzlich zur Miete.',
+    'deposit_months' => 'Kaution',
+    'advance_months' => 'Mietvorauszahlung',
+    'months' => 'Monate',
     'price' => 'Miete',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [
