@@ -12,7 +12,7 @@ return [
         'price' => 'Preis',
         'price_per' => 'Preis pro :unit',
         'rent' => 'Monatsmiete',
-        'rent_net' => 'Nettomonatsmiete',
+        'rent_net' => 'Monatsmiete (ohne Nebenkosten)',
         'days' => 'Dauer',
         'total' => 'Gesamt',
         'total_without_charges' => 'Gesamt (ohne Nebenkosten)',

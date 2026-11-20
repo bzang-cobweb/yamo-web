@@ -12,7 +12,7 @@ return [
         'price' => 'Price',
         'price_per' => 'Price per :unit',
         'rent' => 'Monthly rent',
-        'rent_net' => 'Net monthly rent',
+        'rent_net' => 'Monthly rent (excl. charges)',
         'days' => 'Duration',
         'total' => 'Total',
         'total_without_charges' => 'Total (excl. charges)',
