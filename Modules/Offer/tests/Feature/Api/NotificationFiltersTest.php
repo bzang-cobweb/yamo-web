@@ -51,8 +51,8 @@ class NotificationFiltersTest extends TestCase
     public function test_notifications_are_filtered_by_type_and_by_home_for_a_request_type(): void
     {
         $user = User::factory()->create(['locale' => 'fr']);
-        $studio = Offer::factory()->create(['title' => ['fr' => 'Studio photos']]);
-        $flat = Offer::factory()->create(['title' => ['fr' => 'Appartement Akwa']]);
+        $studio = Offer::factory()->create(['title' => ['fr' => 'Studio photos'], 'details' => ['property_type' => 'studio', 'furnished' => true]]);
+        $flat = Offer::factory()->create(['title' => ['fr' => 'Appartement Akwa'], 'details' => ['property_type' => 'apartment', 'furnished' => false]]);
         $create = fn (string $type, string $title, ?Offer $offer) => $user->notifications()->create([
             'id' => (string) Str::uuid(), 'type' => $type,
             'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()])],
@@ -64,7 +64,10 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        $this->assertSame(['user', 'type', 'offer'], $filters->keys()->all());
+        $this->assertSame(['user', 'type', 'offer', 'booking_type'], $filters->keys()->all());
+        // Le type de logement, comme « Logement » : seulement pour un type de demande.
+        $this->assertSame(['stay' => 'Location meublée', 'visit' => 'Location longue durée'], array_column($filters['booking_type']['options'], 'label', 'value'));
+        $this->assertSame($filters['offer']['visible_when'], $filters['booking_type']['visible_when']);
         // Les types de ses notifications, nommés par le domaine ; un type inconnu des modules n'est pas proposé.
         $this->assertSame(['Demande de logement en attente', 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label'));
         $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class], array_column($filters['type']['options'], 'value'));
@@ -75,6 +78,9 @@ class NotificationFiltersTest extends TestCase
 
         $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]='.urlencode(BookingRequestAccepted::class)));
         $this->assertSame(['Demande studio'], $this->titles($user, "?filter[offer]={$studio->getKey()}"));
+        // Un meublé se réserve (séjour), un non meublé se visite.
+        $this->assertSame(['Demande studio'], $this->titles($user, '?filter[booking_type]=stay'));
+        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[booking_type]=visit'));
         // Un type inconnu ne filtre rien.
         $this->assertCount(3, $this->titles($user, '?filter[type]=Inconnu'));
     }

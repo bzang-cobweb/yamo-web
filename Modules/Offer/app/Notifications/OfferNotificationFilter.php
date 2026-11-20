@@ -10,6 +10,7 @@ use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -17,6 +18,7 @@ use Modules\Offer\Models\Offer;
  * 2026-11-20-filtres-notifications) :
  * - les types de ses notifications : les quatre étapes d'une demande ;
  * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
+ * - le type de logement (location meublée : séjour ; longue durée : visite), affiché pour un type de demande ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
@@ -68,11 +70,21 @@ class OfferNotificationFilter implements NotificationFilter
                 ->options($this->offers($user))
                 ->searchable()
                 ->visibleWhen('type', array_keys($this->types())),
+            // Le type de logement (location meublée : séjour ; longue durée : visite), pour un type de demande.
+            Field::select('booking_type')
+                ->label(__('offer::booking.notify.filter_booking_type'))
+                ->options(app(DomainRegistry::class)->active()?->bookingTypeLabels() ?? [])
+                ->visibleWhen('type', array_keys($this->types())),
         ];
     }
 
     public function apply(Builder $query, array $filters, User $user): void
     {
+        $bookingType = $filters['booking_type'] ?? null;
+        if (is_string($bookingType) && BookingTypeEnum::tryFrom($bookingType) !== null) {
+            $query->whereIn('data->offer_id', $this->offersOfType($user, BookingTypeEnum::from($bookingType)) ?: [0]);
+        }
+
         $offer = $filters['offer'] ?? null;
         if (is_scalar($offer) && ctype_digit((string) $offer)) {
             $query->where('data->offer_id', (int) $offer);
@@ -93,18 +105,48 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /**
+     * Ses offres nommées dans ses notifications qui se demandent ainsi (séjour ou visite),
+     * selon le domaine (un meublé se réserve, un non meublé se visite).
+     *
+     * @return list<int>
+     */
+    private function offersOfType(User $user, BookingTypeEnum $type): array
+    {
+        $domain = app(DomainRegistry::class)->active();
+        if ($domain === null) {
+            return [];
+        }
+
+        return Offer::query()->withTrashed()->whereKey($this->offerIds($user))->get()
+            ->filter(fn (Offer $offer): bool => $domain->bookingType($offer) === $type)
+            ->map(fn (Offer $offer): int => (int) $offer->getKey())
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Les offres que nomment ses notifications.
+     *
+     * @return list<int>
+     */
+    private function offerIds(User $user): array
+    {
+        return $user->notifications()->get()
+            ->map(fn ($notification): int => (int) (((array) $notification->data)['offer_id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Les offres que nomment ses notifications, par titre.
      *
      * @return array<string, string>
      */
     private function offers(User $user): array
     {
-        $ids = $user->notifications()->get()
-            ->map(fn ($notification): int => (int) (((array) $notification->data)['offer_id'] ?? 0))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        $ids = $this->offerIds($user);
 
         return Offer::query()->withTrashed()->whereKey($ids)->get()
             ->sortBy(fn (Offer $offer): string => (string) $offer->getTranslation('title', app()->getLocale()))

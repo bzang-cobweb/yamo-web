@@ -7,6 +7,8 @@ return [
     'plural' => 'Unterkünfte',
     'mine' => 'Meine Unterkünfte',
     'add' => 'Unterkunft hinzufügen',
+    // Ce qu'on demande, nommé pour un filtre (décision 2026-11-20-filtre-type-logement).
+    'booking_types' => ['stay' => 'Möblierte Vermietung', 'visit' => 'Langzeitmiete'],
     'request' => 'Unterkunftsanfrage',
     'property_type' => 'Art der Unterkunft',
     'property_types' => [

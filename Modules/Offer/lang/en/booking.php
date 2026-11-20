@@ -60,6 +60,7 @@ return [
         'search' => 'Search an offer…',
     ],
     'notify' => [
+        'filter_booking_type' => 'Home type',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count day|[2,*] :count days',
         'people' => '{1} :count person|[2,*] :count people',

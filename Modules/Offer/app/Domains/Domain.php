@@ -148,6 +148,17 @@ abstract class Domain
     }
 
     /**
+     * Ce qu'on demande, nommé par le domaine pour un filtre (« Location meublée » pour
+     * un séjour) ; à défaut, le type de demande (« Séjour », « Visite »).
+     *
+     * @return array<string, string>
+     */
+    public function bookingTypeLabels(): array
+    {
+        return collect(BookingTypeEnum::cases())->mapWithKeys(fn (BookingTypeEnum $type): array => [$type->value => $type->label()])->all();
+    }
+
+    /**
      * Modules optionnels requis (ex. `Booking`), activés par `project:init`.
      *
      * @return list<string>
