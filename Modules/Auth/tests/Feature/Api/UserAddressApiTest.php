@@ -69,8 +69,9 @@ class UserAddressApiTest extends TestCase
                 'name' => 'auth.addresses',
                 'title' => 'Mes adresses',
                 'empty' => "Aucune adresse pour l'instant.",
-                'create' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address'],
-                'footer' => null,
+                // « Ajouter une adresse » en bouton dans la barre du bas (décision 2026-11-21-ajout-adresse-barre-du-bas).
+                'create' => null,
+                'footer' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address', 'link' => null],
                 'search' => 'Rechercher une adresse…',
                 'filters' => [],
                 'next_cursor' => null,

@@ -37,9 +37,15 @@ class UserAddressListing extends Listing
         return __('auth::address.list.empty');
     }
 
-    public function create(): array
+    /**
+     * « Ajouter une adresse » : un bouton dans la barre fixe du bas, plus de lien sous la
+     * recherche (décision 2026-11-21-ajout-adresse-barre-du-bas).
+     *
+     * @return array{label: string, form: string, link: null}
+     */
+    public function footer(): array
     {
-        return ['label' => __('auth::address.list.create'), 'form' => UserAddressForm::name()];
+        return ['label' => __('auth::address.list.create'), 'form' => UserAddressForm::name(), 'link' => null];
     }
 
     /**
