@@ -20,9 +20,9 @@ L'API sert `delivery` sur chaque étape du lecteur, `null` sur celles de l'autre
 une carte de demande marque lue tout son fil chez le lecteur (2026-11-20-suivi-demande) :
 « lue » veut donc dire que l'autre a ouvert la demande depuis.
 
-Aussi : dans la zone fixe, la pastille du statut vient après le texte, centrée (demande
-de l'humain du 2026-11-20, après trois essais : sous le texte à droite, en haut à droite,
-sous le titre de la barre du haut).
+Aussi : dans la zone fixe, la pastille du statut vient avant le texte, centrée (demande
+de l'humain du 2026-11-20, après plusieurs essais : sous le texte à droite, en haut à
+droite, sous le titre de la barre du haut, après le texte centrée).
 
 ## Motif
 
