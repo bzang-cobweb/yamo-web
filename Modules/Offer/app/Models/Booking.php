@@ -169,13 +169,13 @@ class Booking extends Model
      * - une visite : « Visite » — « 28 nov. 2026 », et « Seconde date » — « 30 nov. 2026 »
      *   s'il y en a une.
      *
-     * @return list<array{label: string, value: string}>
+     * @return list<array{key: string, label: string, value: string}>
      */
     public function dateLines(string $locale): array
     {
         $in = $this->check_in->copy()->locale($locale)->isoFormat('ll');
         $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
-        $line = fn (string $label, string $value): array => ['label' => __('offer::booking.dates.'.$label, [], $locale), 'value' => $value];
+        $line = fn (string $key, string $value): array => ['key' => $key, 'label' => __('offer::booking.dates.'.$key, [], $locale), 'value' => $value];
 
         if ($this->type === BookingTypeEnum::VISIT) {
             return $out === null ? [$line('visit', $in)] : [$line('visit', $in), $line('second', $out)];

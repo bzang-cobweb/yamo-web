@@ -6,6 +6,14 @@ return [
     'types' => ['stay' => 'Séjour', 'visit' => 'Visite'],
     'actions' => ['stay' => 'Réserver', 'visit' => 'Demander une visite'],
     'statuses' => ['pending' => 'En attente', 'accepted' => 'Acceptée', 'refused' => 'Refusée', 'cancelled' => 'Annulée'],
+    // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
+    'lines' => [
+        'guests' => 'Personnes',
+        'bedrooms' => 'Chambres',
+        'price' => 'Prix',
+        'days' => 'Durée',
+        'total' => 'Total',
+    ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [
         'arrival' => 'Arrivée',
@@ -83,8 +91,6 @@ return [
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count jour|[2,*] :count jours',
         'people' => '{1} :count personne|[2,*] :count personnes',
-        // Le nombre de chambres du logement, sur la page d'une demande.
-        'bedrooms' => '{0} Sans chambre|{1} :count chambre|[2,*] :count chambres',
         'handle' => 'Traiter la demande',
         'title' => 'Demande',
         'greeting' => 'Bonjour :name,',

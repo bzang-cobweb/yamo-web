@@ -172,9 +172,18 @@ class BookingThreadTest extends TestCase
             $this->assertArrayNotHasKey('total', $page);
             $this->assertSame([
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
-                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée', 'bedrooms' => null], 'dates' => [['label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')], ['label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')]], 'days_label' => '2 jours', 'guests' => 1, 'guests_label' => '1 personne', 'price_label' => app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr'), 'total' => $booking->formattedTotal('fr'),
-            ], $page['booking']);
-            $this->assertNotNull($page['booking']['total']);
+                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'guests' => 1,
+                'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée'],
+            ], array_diff_key($page['booking'], ['lines' => true]));
+            // Les lignes, libellé et valeur, dans l'ordre ; sans chambres renseignées, pas de ligne (décision 2026-11-20-lignes-demande).
+            $this->assertSame([
+                ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
+                ['key' => 'arrival', 'label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')],
+                ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
+                ['key' => 'price', 'label' => 'Prix', 'value' => (string) app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr')],
+                ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
+                ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
+            ], $page['booking']['lines']);
         }
     }
 
@@ -233,16 +242,16 @@ class BookingThreadTest extends TestCase
     {
         // Décision 2026-11-20-heures-arrivee-depart.
         $stay = Booking::factory()->for($this->offer)->create(['check_in' => '2026-12-05', 'check_out' => '2026-12-07']);
-        $this->assertSame([['label' => 'Arrivée', 'value' => '5 déc. 2026'], ['label' => 'Départ', 'value' => '7 déc. 2026']], $stay->dateLines('fr'));
+        $this->assertSame([['key' => 'arrival', 'label' => 'Arrivée', 'value' => '5 déc. 2026'], ['key' => 'departure', 'label' => 'Départ', 'value' => '7 déc. 2026']], $stay->dateLines('fr'));
 
         $this->offer->update(['details' => [...$this->offer->details, 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
-        $this->assertSame([['label' => 'Arrivée', 'value' => '5 déc. 2026 à partir de 14:00'], ['label' => 'Départ', 'value' => '7 déc. 2026 au plus tard à 11:00']], $stay->refresh()->dateLines('fr'));
-        $this->assertSame([['label' => 'Arrival', 'value' => 'Dec 5, 2026 from 14:00'], ['label' => 'Departure', 'value' => 'Dec 7, 2026 by 11:00']], $stay->dateLines('en'));
+        $this->assertSame([['key' => 'arrival', 'label' => 'Arrivée', 'value' => '5 déc. 2026 à partir de 14:00'], ['key' => 'departure', 'label' => 'Départ', 'value' => '7 déc. 2026 au plus tard à 11:00']], $stay->refresh()->dateLines('fr'));
+        $this->assertSame([['key' => 'arrival', 'label' => 'Arrival', 'value' => 'Dec 5, 2026 from 14:00'], ['key' => 'departure', 'label' => 'Departure', 'value' => 'Dec 7, 2026 by 11:00']], $stay->dateLines('en'));
 
         $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
-        $this->assertSame([['label' => 'Visite', 'value' => '28 nov. 2026'], ['label' => 'Seconde date', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
+        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Seconde date', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
         $visit->update(['check_out' => null]);
-        $this->assertSame([['label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
+        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
     }
 
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void

@@ -11,15 +11,16 @@ use Modules\Offer\Models\Offer;
 
 /**
  * Une demande, en léger, telle que la page d'une notification de son fil la reçoit
- * (décision 2026-11-20-notification-generique) : son type, son statut, ses dates (aussi
- * rédigées, une par ligne), ses voyageurs et son total dans la langue de la requête.
+ * (décision 2026-11-20-notification-generique) : son type, son statut, ses dates, son
+ * offre (titre, type de location), et ses lignes à afficher, libellé et valeur, dans la
+ * langue de la requête (décision 2026-11-20-lignes-demande).
  *
  * @property Booking $resource
  */
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, offer: array{title: string|null, rental_type: string|null, bedrooms: string|null}, dates: list<array{label: string, value: string}>, days_label: string|null, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, guests: int|null, offer: array{title: string|null, rental_type: string|null}, lines: list<array{key: string, label: string, value: string}>}
      */
     public function toArray(Request $request): array
     {
@@ -35,24 +36,42 @@ class BookingResource extends JsonResource
             'check_in' => $booking->check_in->toDateString(),
             /** Le départ d'un séjour, la seconde date proposée d'une visite, ou `null`. */
             'check_out' => $booking->check_out?->toDateString(),
-            /** L'offre : son titre saisi, son type de location et son nombre de chambres, rédigés (`null` s'ils manquent). */
-            'offer' => $this->offer($booking->offer),
-            /** Les dates, une par ligne, libellé et valeur, rédigées dans la langue de la requête (« Arrivée » — « 5 déc. 2026 à partir de 14:00 » ; « Visite » — « 28 nov. 2026 »). */
-            'dates' => $booking->dateLines(app()->getLocale()),
-            /** La durée d'un séjour, rédigée (« 2 jours ») ; `null` pour une visite. */
-            'days_label' => ($days = $booking->days()) === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
             'guests' => $booking->guests,
-            /** Le nombre de personnes, rédigé (« 2 personnes ») ; `null` sans voyageurs (une visite). */
-            'guests_label' => $booking->guests === null ? null : trans_choice('offer::booking.notify.people', $booking->guests, ['count' => $booking->guests]),
-            /** Le prix du logement, rédigé (« 20 000 FCFA / jour », « 400 000 FCFA / mois ») ; `null` sans prix. */
-            'price_label' => app(DomainRegistry::class)->require()->formattedPrice($booking->offer, app()->getLocale()),
-            /** Le total figé (« 255 000 FCFA »), ou `null` (une visite). */
-            'total' => $booking->formattedTotal(app()->getLocale()),
+            /** L'offre : son titre saisi et son type de location, rédigé (`null` s'ils manquent). */
+            'offer' => $this->offer($booking->offer),
+            /**
+             * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
+             * chambres, arrivée, départ (ou visite, seconde date), prix, durée, total. Une
+             * ligne sans valeur n'est pas servie.
+             */
+            'lines' => $this->lines($booking),
         ];
     }
 
     /**
-     * @return array{title: string|null, rental_type: string|null, bedrooms: string|null}
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function lines(Booking $booking): array
+    {
+        $locale = app()->getLocale();
+        $bedrooms = $booking->offer?->detail('bedrooms');
+        $days = $booking->days();
+        $line = fn (string $key, mixed $value): ?array => $value === null || $value === '' ? null : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => (string) $value];
+
+        $lines = [
+            $line('guests', $booking->guests),
+            $line('bedrooms', is_numeric($bedrooms) ? (int) $bedrooms : null),
+            ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
+            $line('price', $booking->offer === null ? null : app(DomainRegistry::class)->require()->formattedPrice($booking->offer, $locale)),
+            $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
+            $line('total', $booking->formattedTotal($locale)),
+        ];
+
+        return array_values(array_filter($lines));
+    }
+
+    /**
+     * @return array{title: string|null, rental_type: string|null}
      */
     private function offer(?Offer $offer): array
     {
@@ -61,8 +80,6 @@ class BookingResource extends JsonResource
             'title' => $offer === null ? null : (string) $offer->getTranslation('title', app()->getLocale()),
             // Le type de location, rédigé (« Location meublée »), ou `null`.
             'rental_type' => $offer === null ? null : RentalTypeEnum::of($offer)?->label(),
-            // Le nombre de chambres, rédigé (« 2 chambres », « Sans chambre »), ou `null` s'il n'est pas renseigné.
-            'bedrooms' => is_numeric($bedrooms = $offer?->detail('bedrooms')) ? trans_choice('offer::booking.notify.bedrooms', (int) $bedrooms, ['count' => (int) $bedrooms]) : null,
         ];
     }
 }
