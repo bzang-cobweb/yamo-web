@@ -62,6 +62,13 @@ return [
         'guests' => ':count guest(s)',
         'search' => 'Search an offer…',
     ],
+    // The follow-up of a request (decision 2026-11-20-suivi-demande).
+    'history' => [
+        'received' => 'Request sent',
+        'accepted' => 'Request accepted',
+        'refused' => 'Request declined',
+        'cancelled' => 'Request cancelled',
+    ],
     'notify' => [
         'filter_rental_type' => 'Rental type',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

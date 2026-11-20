@@ -33,6 +33,13 @@ interface NotificationFilter
     public function tag(DatabaseNotification $notification): ?array;
 
     /**
+     * Le libellé d'une étape du fil d'une notification du module (« Demande acceptée »),
+     * dans la langue courante ; `null` pour une notification qui n'est pas la sienne
+     * (décision 2026-11-20-suivi-demande).
+     */
+    public function step(DatabaseNotification $notification): ?string;
+
+    /**
      * Les champs du filtre, pour le compte `$user`.
      *
      * @return list<Field>

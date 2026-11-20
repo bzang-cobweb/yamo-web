@@ -62,6 +62,13 @@ return [
         'guests' => ':count voyageur(s)',
         'search' => 'Rechercher une offre…',
     ],
+    // Le suivi d'une demande (décision 2026-11-20-suivi-demande).
+    'history' => [
+        'received' => 'Demande envoyée',
+        'accepted' => 'Demande acceptée',
+        'refused' => 'Demande refusée',
+        'cancelled' => 'Demande annulée',
+    ],
     'notify' => [
         'filter_rental_type' => 'Type de location',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

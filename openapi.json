@@ -1192,7 +1192,7 @@
         "/v1/notifications/unread-count": {
             "get": {
                 "operationId": "v1.notifications.unread-count",
-                "summary": "Le nombre de ses notifications non lues",
+                "summary": "Le nombre de ses notifications non lues, un fil (une demande) comptant pour une",
                 "tags": [
                     "Notification"
                 ],
@@ -1208,8 +1208,7 @@
                                             "type": "object",
                                             "properties": {
                                                 "unread": {
-                                                    "type": "integer",
-                                                    "minimum": 0
+                                                    "type": "integer"
                                                 }
                                             },
                                             "required": [
@@ -1292,7 +1291,7 @@
         "/v1/notifications/{notification}/read": {
             "post": {
                 "operationId": "v1.notifications.read",
-                "summary": "Marquer une de ses notifications comme lue",
+                "summary": "Marquer une de ses notifications comme lue, et tout son fil (une demande)",
                 "tags": [
                     "Notification"
                 ],
@@ -3869,7 +3868,8 @@
                                     "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
                                 },
                                 "read": {
-                                    "type": "boolean"
+                                    "type": "boolean",
+                                    "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
                                 },
                                 "created_at": {
                                     "type": [
@@ -3877,6 +3877,10 @@
                                         "null"
                                     ],
                                     "description": "Date ISO 8601."
+                                },
+                                "history": {
+                                    "type": "array",
+                                    "items": {}
                                 }
                             },
                             "required": [
@@ -3893,7 +3897,8 @@
                                 "text_links",
                                 "link_label",
                                 "read",
-                                "created_at"
+                                "created_at",
+                                "history"
                             ]
                         }
                     },
@@ -4072,7 +4077,8 @@
                         "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
                     },
                     "read": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
                     },
                     "created_at": {
                         "type": [
@@ -4080,6 +4086,10 @@
                             "null"
                         ],
                         "description": "Date ISO 8601."
+                    },
+                    "history": {
+                        "type": "array",
+                        "items": {}
                     }
                 },
                 "required": [
@@ -4096,7 +4106,8 @@
                     "text_links",
                     "link_label",
                     "read",
-                    "created_at"
+                    "created_at",
+                    "history"
                 ],
                 "title": "NotificationResource"
             },

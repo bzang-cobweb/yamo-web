@@ -8,6 +8,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Notification\Support\ActorData;
 use Modules\Notification\Support\NotificationFilters;
+use Modules\Notification\Support\NotificationThreads;
 
 /**
  * Une notification : titre, statut en pastille, texte et ses passages liés, message
@@ -26,6 +27,31 @@ class NotificationResource extends JsonResource
 
     /** Les coordonnées de qui agit (e-mail, téléphone) : sur la page d'une notification seulement. */
     private bool $withContact = false;
+
+    /** Le suivi de son fil : sur la page d'une notification seulement (décision 2026-11-20-suivi-demande). */
+    private bool $withHistory = false;
+
+    /** Lue ou non, pour tout son fil ; `null` : la notification seule. */
+    private ?bool $read = null;
+
+    /**
+     * Ajoute le suivi de son fil, de la plus ancienne étape à la plus récente, des deux
+     * côtés (décision 2026-11-20-suivi-demande).
+     */
+    public function withHistory(): self
+    {
+        $this->withHistory = true;
+
+        return $this;
+    }
+
+    /** Lue si tout son fil l'est (la carte d'une demande, décision 2026-11-20-suivi-demande). */
+    public function withRead(bool $read): self
+    {
+        $this->read = $read;
+
+        return $this;
+    }
 
     /**
      * Ajoute l'e-mail et le téléphone de qui agit (décision 2026-11-20-coordonnees-notification).
@@ -53,7 +79,7 @@ class NotificationResource extends JsonResource
         $notification = $this->resource;
         $data = (array) $notification->data;
 
-        return [
+        $item = [
             'id' => (string) $notification->getKey(),
             'title' => (string) ($data['title'] ?? ''),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
@@ -75,10 +101,44 @@ class NotificationResource extends JsonResource
             'text_links' => $this->textLinks($data),
             /** Libellé du bouton qui ouvre `link` (« Réservations reçues »), ou `null`. */
             'link_label' => $this->linkLabel($data),
-            'read' => $notification->read_at !== null,
+            /** Lue : pour la carte d'une demande, toutes ses étapes le sont. */
+            'read' => $this->read ?? $notification->read_at !== null,
             /** Date ISO 8601. */
             'created_at' => $this->date($notification),
         ];
+
+        if ($this->withHistory) {
+            /** Le suivi de la demande, de la plus ancienne étape à la plus récente, des deux côtés ; vide sans fil. */
+            $item['history'] = $this->history();
+        }
+
+        return $item;
+    }
+
+    /**
+     * Les étapes de son fil : leur libellé (« Demande acceptée »), qui agit, le message
+     * joint, la date (décision 2026-11-20-suivi-demande).
+     *
+     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null}>
+     */
+    private function history(): array
+    {
+        $steps = app(NotificationThreads::class)->steps($this->resource);
+        $ids = array_values(array_unique(array_filter(array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps))));
+        $actors = User::query()->whereKey($ids)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
+        $filters = app(NotificationFilters::class);
+
+        return array_map(function (DatabaseNotification $step) use ($actors, $filters): array {
+            $actor = $actors->get((int) $step->getAttribute('user_id'));
+
+            return [
+                'id' => (string) $step->getKey(),
+                'label' => $filters->step($step),
+                'actor' => $actor === null ? null : ActorData::from($actor),
+                'message' => $this->message((array) $step->data),
+                'created_at' => $this->date($step),
+            ];
+        }, $steps);
     }
 
     /**

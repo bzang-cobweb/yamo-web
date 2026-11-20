@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
@@ -27,7 +28,7 @@ use Modules\Offer\Support\BookingText;
  * dans sa langue (`HasLocalePreference`).
  * Les textes sont dans `offer::booking.notify.<clé>` (fr, en, de).
  */
-class BookingRequested extends Notification implements HasNotificationUser, ShouldQueue
+class BookingRequested extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
@@ -118,6 +119,12 @@ class BookingRequested extends Notification implements HasNotificationUser, Shou
     public function notificationUserId(object $notifiable): ?int
     {
         return (int) $this->actor()->getKey();
+    }
+
+    /** Le fil de la demande : toutes ses étapes, des deux côtés (décision 2026-11-20-suivi-demande). */
+    public function notificationThread(object $notifiable): ?string
+    {
+        return 'booking:'.$this->booking->getKey();
     }
 
     /**

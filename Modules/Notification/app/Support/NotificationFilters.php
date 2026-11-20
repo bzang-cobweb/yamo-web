@@ -66,6 +66,22 @@ class NotificationFilters
     }
 
     /**
+     * Le libellé d'une étape d'un fil, donné par le module qui l'inscrit ; à défaut, le
+     * titre de la notification.
+     */
+    public function step(DatabaseNotification $notification): string
+    {
+        foreach ($this->filters as $filter) {
+            $step = app($filter)->step($notification);
+            if ($step !== null) {
+                return $step;
+            }
+        }
+
+        return (string) (((array) $notification->data)['title'] ?? '');
+    }
+
+    /**
      * Les types inscrits par les modules (clé => libellé et classe de notification).
      *
      * @return array<string, array{label: string, type: class-string}>

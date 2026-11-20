@@ -11,6 +11,8 @@ return [
         'title' => 'Benachrichtigungen',
         // La page d'une notification et son bouton, à défaut du libellé servi.
         'detail' => 'Benachrichtigung',
+        // Le suivi d'une demande, sur la page d'une notification (décision 2026-11-20-suivi-demande).
+        'history' => 'Verlauf der Anfrage',
         'open' => 'Öffnen',
         'markAllRead' => 'Alle als gelesen markieren',
         'empty' => 'Noch keine Benachrichtigungen.',

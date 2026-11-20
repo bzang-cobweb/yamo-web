@@ -62,6 +62,13 @@ return [
         'guests' => ':count Gast/Gäste',
         'search' => 'Angebot suchen…',
     ],
+    // Der Verlauf einer Anfrage (Entscheidung 2026-11-20-suivi-demande).
+    'history' => [
+        'received' => 'Anfrage gesendet',
+        'accepted' => 'Anfrage angenommen',
+        'refused' => 'Anfrage abgelehnt',
+        'cancelled' => 'Anfrage storniert',
+    ],
     'notify' => [
         'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

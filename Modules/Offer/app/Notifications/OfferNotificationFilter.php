@@ -60,6 +60,18 @@ class OfferNotificationFilter implements NotificationFilter
         return self::statusTag($status);
     }
 
+    /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
+    public function step(DatabaseNotification $notification): ?string
+    {
+        if ($notification->getAttribute('type') !== BookingRequested::class) {
+            return null;
+        }
+
+        $step = ((array) $notification->data)['step'] ?? null;
+
+        return __('offer::booking.history.'.(BookingStepEnum::tryFrom(is_string($step) ? $step : '') ?? BookingStepEnum::RECEIVED)->value);
+    }
+
     /** La pastille d'un statut de demande : son libellé et sa couleur. Aussi dans le calendrier. */
     public static function statusTag(BookingStatusEnum $status): array
     {

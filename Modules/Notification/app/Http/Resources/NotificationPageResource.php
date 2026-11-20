@@ -20,6 +20,21 @@ class NotificationPageResource extends JsonResource
     /** @var list<Field> */
     private array $filters = [];
 
+    /** @var list<string> Les fils de la page qui ont une notification non lue. */
+    private array $unreadThreads = [];
+
+    /**
+     * La carte d'une demande est non lue tant qu'une de ses étapes l'est (décision 2026-11-20-suivi-demande).
+     *
+     * @param  list<string>  $threads
+     */
+    public function withUnreadThreads(array $threads): self
+    {
+        $this->unreadThreads = $threads;
+
+        return $this;
+    }
+
     /**
      * Les filtres de la liste, servis avec chaque page (décision 2026-11-20-filtres-notifications).
      *
@@ -50,7 +65,12 @@ class NotificationPageResource extends JsonResource
         foreach ($this->resource->items() as $notification) {
             /** @var DatabaseNotification $notification */
             $id = $notification->getAttribute('user_id');
-            $items[] = (new NotificationResource($notification))->withActor($id === null ? null : $actors->get((int) $id))->toArray($request);
+            $thread = $notification->getAttribute('thread');
+            $resource = (new NotificationResource($notification))->withActor($id === null ? null : $actors->get((int) $id));
+            if (is_string($thread)) {
+                $resource->withRead(! in_array($thread, $this->unreadThreads, true));
+            }
+            $items[] = $resource->toArray($request);
         }
 
         return ['items' => $items, 'next_cursor' => $this->nextCursor(), /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`), comme une liste (décision 2026-11-20-filtres-notifications). */

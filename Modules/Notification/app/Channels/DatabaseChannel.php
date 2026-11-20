@@ -4,11 +4,13 @@ namespace Modules\Notification\Channels;
 
 use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Illuminate\Notifications\Notification;
+use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 
 /**
  * Le canal `database` de Laravel, qui remplit aussi la colonne `user_id` (qui agit)
- * quand la notification la donne (décision 2026-11-20-notification-user-id).
+ * quand la notification la donne (décision 2026-11-20-notification-user-id), et la
+ * colonne `thread` (son fil, décision 2026-11-20-suivi-demande).
  */
 class DatabaseChannel extends BaseDatabaseChannel
 {
@@ -20,6 +22,7 @@ class DatabaseChannel extends BaseDatabaseChannel
         return [
             ...parent::buildPayload($notifiable, $notification),
             'user_id' => $notification instanceof HasNotificationUser ? $notification->notificationUserId($notifiable) : null,
+            'thread' => $notification instanceof HasNotificationThread ? $notification->notificationThread($notifiable) : null,
         ];
     }
 }
