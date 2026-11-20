@@ -160,8 +160,9 @@ class OfferListing extends Listing
         $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
-            // Le statut en pastille de couleur, comme dans « Mes réservations » (décision 2026-11-19-statut-carte-logement).
-            ->tag($record->status->label(), $record->status->tone())
+            // Le statut en pastille de couleur (décision 2026-11-19-statut-carte-logement), sur la photo à la
+            // place du cœur : le propriétaire ne met pas son logement en favori (décision 2026-11-21-statut-a-la-place-du-coeur).
+            ->tag($record->status->label(), $record->status->tone(), onImage: true)
             ->highlight(implode(' · ', array_filter([$expiration, ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
             // « Voir » : sa fiche, brouillon compris (décision 2026-11-19-nuit-voir-editer-retirer).

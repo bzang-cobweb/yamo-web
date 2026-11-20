@@ -564,7 +564,9 @@ class OfferApiTest extends TestCase
         $this->assertSame('Studio', $data[0]['title']);
         // Statut, détails et prix en gras ; le titre saisi en sous-titre s'il diffère.
         // Le statut en pastille verte ; plus dans la ligne en gras (décision 2026-11-19-statut-carte-logement).
-        $this->assertSame(['label' => 'Publiée', 'tone' => 'success'], $data[0]['tag']);
+        // Sur la photo, à la place du cœur (décision 2026-11-21-statut-a-la-place-du-coeur).
+        $this->assertSame(['label' => 'Publiée', 'tone' => 'success', 'on_image' => true], $data[0]['tag']);
+        $this->assertNull($data[0]['favorite']);
         $this->assertStringNotContainsString('Publiée', $data[0]['highlight']);
         $this->assertStringContainsString('900', $data[0]['highlight']);
         $this->assertSame("/v1/offers/{$mine->getKey()}", $data[0]['delete']['endpoint']);

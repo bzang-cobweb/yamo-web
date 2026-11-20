@@ -13,6 +13,7 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
@@ -170,7 +171,9 @@ class OfferDetailApiTest extends TestCase
         $this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])
             ->getJson("/api/v1/offers/{$draft->getKey()}")
             ->assertOk()
-            ->assertJsonPath('data.status', ['value' => 'draft', 'label' => 'Brouillon']);
+            // Avec son ton : une pastille sur la photo (décision 2026-11-21-statut-a-la-place-du-coeur).
+            ->assertJsonPath('data.status', ['value' => 'draft', 'label' => 'Brouillon', 'tone' => OfferStatusEnum::DRAFT->tone()])
+            ->assertJsonPath('data.favorite', null);
     }
 
     public function test_another_member_does_not_see_a_draft_and_the_owner_sees_an_archived_one(): void

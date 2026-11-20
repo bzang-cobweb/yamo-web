@@ -50,7 +50,7 @@ final class ListItem
     /** @var array{label: string, list: string, filter: array<string, string>, link: string|null}|null */
     private ?array $counter = null;
 
-    /** @var array{label: string, tone: string}|null */
+    /** @var array{label: string, tone: string, on_image?: bool}|null */
     private ?array $tag = null;
 
     private function __construct(
@@ -172,9 +172,11 @@ final class ListItem
      * décision 2026-11-19-contrat-reservations-logements-profil. Ton : `warning`
      * (orange), `success` (vert), `danger` (rouge) ou `neutral` (gris).
      */
-    public function tag(string $label, string $tone = 'neutral'): self
+    public function tag(string $label, string $tone = 'neutral', bool $onImage = false): self
     {
-        $this->tag = ['label' => $label, 'tone' => $tone];
+        // `$onImage` : sur la photo, en haut à droite, à la place du cœur de favori (décision
+        // 2026-11-21-statut-a-la-place-du-coeur).
+        $this->tag = ['label' => $label, 'tone' => $tone, ...($onImage ? ['on_image' => true] : [])];
 
         return $this;
     }
