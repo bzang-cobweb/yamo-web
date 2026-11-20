@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-20-lignes-vides-masquees.md
+
 # La caution et l'avance, toujours affichées et comptées dans le total
 
 - **Date** : 2026-11-20

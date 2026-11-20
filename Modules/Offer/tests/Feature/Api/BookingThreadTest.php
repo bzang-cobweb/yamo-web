@@ -186,8 +186,6 @@ class BookingThreadTest extends TestCase
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
                 ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
                 ['key' => 'price', 'label' => 'Prix par jour', 'value' => Number::currency(45000, 'XAF', 'fr')],
-                // La caution du meublé, même à 0, avant le total qui l'ajoute (décision 2026-11-20-caution-dans-le-total).
-                ['key' => 'deposit', 'label' => 'Caution', 'value' => Number::currency(0, 'XAF', 'fr')],
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
             ], $page['booking']['lines']);
         }
@@ -263,7 +261,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
     }
 
-    public function test_a_visit_shows_its_charges_deposit_and_advance_even_at_zero_and_the_total_of_the_months(): void
+    public function test_a_visit_shows_its_charges_deposit_and_advance_when_set_and_the_total_of_the_months(): void
     {
         // Décisions 2026-11-20-charges-visite et 2026-11-20-caution-dans-le-total.
         $flat = Offer::factory()->for($this->owner, 'user')->create([
@@ -274,14 +272,10 @@ class BookingThreadTest extends TestCase
         $lines = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
         app()->setLocale('fr');
 
-        // Rien de renseigné : les lignes à 0, le total à 0.
+        // Rien de renseigné : ni charges, ni caution, ni avance ; le total à 0 (décision 2026-11-20-lignes-vides-masquees).
         $this->assertSame([
             'Visite' => '28 nov. 2026',
-            // Les charges, puis le loyer (décision 2026-11-20-loyer-apres-charges).
-            'Charges mensuelles' => Number::currency(0, 'XAF', 'fr'),
             'Loyer mensuel' => Number::currency(250000, 'XAF', 'fr'),
-            '0 mois de caution' => Number::currency(0, 'XAF', 'fr'),
-            '0 mois d’avance' => Number::currency(0, 'XAF', 'fr'),
             'Total' => Number::currency(0, 'XAF', 'fr'),
         ], $lines());
 
@@ -293,9 +287,11 @@ class BookingThreadTest extends TestCase
             '6 mois d’avance' => Number::currency(1500000, 'XAF', 'fr'),
             'Total' => Number::currency(2000000, 'XAF', 'fr'),
         ], array_slice($lines(), -3));
+        // Les charges, puis le loyer (décision 2026-11-20-loyer-apres-charges).
+        $this->assertSame(['Charges mensuelles', 'Loyer mensuel'], array_slice(array_keys($lines()), 1, 2));
     }
 
-    public function test_a_stay_shows_its_deposit_even_at_zero_before_the_total_that_adds_it(): void
+    public function test_a_stay_shows_its_deposit_when_set_before_the_total_that_adds_it(): void
     {
         // Décision 2026-11-20-caution-dans-le-total.
         app()->setLocale('fr');
@@ -306,7 +302,8 @@ class BookingThreadTest extends TestCase
         $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2, 'total' => '255000', 'currency' => 'XAF']);
         $tail = fn (): array => array_slice(array_column((new BookingResource($stay->refresh()))->resolve(request())['lines'], 'value', 'label'), -2);
 
-        $this->assertSame(['Caution' => Number::currency(0, 'XAF', 'fr'), 'Total' => Number::currency(255000, 'XAF', 'fr')], $tail());
+        // Sans caution : pas de ligne (décision 2026-11-20-lignes-vides-masquees).
+        $this->assertSame(['Prix par jour' => Number::currency(85000, 'XAF', 'fr'), 'Total' => Number::currency(255000, 'XAF', 'fr')], $tail());
 
         $studio->update(['details' => [...$studio->details, 'deposit' => 100000]]);
         $this->assertSame(['Caution' => Number::currency(100000, 'XAF', 'fr'), 'Total' => Number::currency(355000, 'XAF', 'fr')], $tail());
