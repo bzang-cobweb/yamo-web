@@ -126,7 +126,7 @@ class NotificationResource extends JsonResource
      *
      *
      * @param  list<DatabaseNotification>  $steps
-     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null}>
+     * @return list<array{id: string, label: string, side: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null}>
      */
     private function history(array $steps): array
     {
@@ -140,6 +140,8 @@ class NotificationResource extends JsonResource
             return [
                 'id' => (string) $step->getKey(),
                 'label' => $filters->step($step),
+                // `start` à gauche, `end` à droite (le propriétaire d'une demande, décision 2026-11-20-suivi-conversation).
+                'side' => $filters->side($step),
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
