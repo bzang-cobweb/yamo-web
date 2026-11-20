@@ -78,7 +78,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
             'booking_status' => $this->status->value,
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
             // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom.
-            'summary' => __("offer::booking.notify.{$this->key()}.summary", $this->replacements()),
+            'summary' => $this->summary(),
             'message' => $this->note(),
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
@@ -147,6 +147,20 @@ abstract class BookingNotification extends Notification implements HasNotificati
     public function toSms(object $notifiable): string
     {
         return __("offer::booking.notify.{$this->key()}.sms", $this->replacements());
+    }
+
+    /**
+     * Le texte de la carte, sans le nom de qui agit ; pour un séjour (logement meublé),
+     * avec le nombre de voyageurs (« … pour « Studio photos » (3 personnes). »).
+     */
+    private function summary(): string
+    {
+        $replace = $this->replacements();
+        $key = "offer::booking.notify.{$this->key()}.summary";
+
+        return $this->booking->guests !== null && trans()->has($key.'_people')
+            ? __($key.'_people', [...$replace, 'people' => trans_choice('offer::booking.notify.people', $this->booking->guests, ['count' => $this->booking->guests])])
+            : __($key, $replace);
     }
 
     /**

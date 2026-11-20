@@ -60,6 +60,8 @@ return [
         'search' => 'Angebot suchen…',
     ],
     'notify' => [
+        // Le nombre de personnes d'une demande, dans le texte de la carte.
+        'people' => '{1} :count Person|[2,*] :count Personen',
         'handle' => 'Anfrage bearbeiten',
         'title' => 'Anfrage',
         'greeting' => 'Hallo :name,',
@@ -71,6 +73,7 @@ return [
             'body' => ':guest fragt :type :period für „:offer“ an.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'fragt :type :period für „:offer“ an.',
+            'summary_people' => 'fragt :type :period für „:offer“ an (:people).',
             'sms' => ':app: :guest fragt :type :period für „:offer“ an. Antworten Sie in der App.',
         ],
         'accepted' => [

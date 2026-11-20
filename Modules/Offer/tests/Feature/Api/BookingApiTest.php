@@ -144,6 +144,8 @@ class BookingApiTest extends TestCase
         $this->asUser($guest)->postJson($url, $this->stay(['check_out' => today()->addDays(5)->toDateString()]))->assertJsonValidationErrors('check_out');
         $this->asUser($guest)->postJson($url, $this->stay(['check_out' => today()->addDays(400)->toDateString()]))->assertJsonValidationErrors('check_out');
         $this->asUser($guest)->postJson($url, $this->stay(['guests' => '0']))->assertJsonValidationErrors('guests');
+        // Le nombre de voyageurs est obligatoire pour un séjour (logement meublé).
+        $this->asUser($guest)->postJson($url, $this->stay(['guests' => '']))->assertJsonValidationErrors('guests');
 
         // Une seule demande en attente par offre.
         $this->asUser($guest)->postJson($url, $this->stay())->assertNoContent();

@@ -93,13 +93,21 @@ class OfferBookingForm extends Form
                 ->help($price === null ? null : __('offer::booking.form.price_help', ['price' => $price]))
                 ->required()
                 ->rules(['date', 'after:check_in', $this->withinMaxDays($tooFar)]),
-            Field::number('guests')
-                ->label(__('offer::booking.form.guests'))
-                ->default('1')
-                ->required()
-                ->rules(['integer', 'min:1', 'max:'.Booking::MAX_GUESTS]),
+            $this->guests(__('offer::booking.form.guests')),
             $message,
         ];
+    }
+
+    /**
+     * Le nombre de voyageurs d'un séjour (logement meublé), obligatoire, 1 au départ.
+     */
+    private function guests(string $label): Field
+    {
+        return Field::number('guests')
+            ->label($label)
+            ->default('1')
+            ->required()
+            ->rules(['required', 'integer', 'min:1', 'max:'.Booking::MAX_GUESTS]);
     }
 
     /**

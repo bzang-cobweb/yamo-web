@@ -186,6 +186,8 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame($booking->user_id, (int) $notification->user_id);
         $this->assertArrayNotHasKey('actor_id', $notification->data);
         $this->assertStringStartsWith('requests a stay', $notification->data['summary']);
+        // Un séjour : le nombre de voyageurs en fin de texte.
+        $this->assertStringEndsWith('(1 person).', $notification->data['summary']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);
         $this->assertSame([
             ['text' => 'Marie Curie', 'link' => '/members/'.$booking->user_id],
