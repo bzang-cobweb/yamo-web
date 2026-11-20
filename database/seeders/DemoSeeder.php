@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use LogicException;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\RoleEnum;
@@ -13,15 +14,18 @@ use Modules\Auth\Services\UserAddressService;
 use Modules\Location\Models\Country;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferFavorite;
 use Modules\Offer\Models\OfferReview;
+use Modules\Offer\Services\BookingService;
 
 /**
  * Données de démonstration, en développement seulement : un membre camerounais
  * et 20 logements à son nom (domaine `rental`), chacun avec deux photos dessinées
  * (`DemoPhoto`), et trois visiteurs qui laissent des avis (décision
- * 2026-11-19-contrat-avis-offres). Rejouable : rien n'est recréé si le membre a déjà ses offres ;
+ * 2026-11-19-contrat-avis-offres), qui lui envoient aussi des demandes : séjours
+ * dans les logements meublés, visites des autres, à chaque étape (`BOOKINGS`). Rejouable : rien n'est recréé si le membre a déjà ses offres ;
  * seules les photos manquantes sont ajoutées. Jamais appelé par `DatabaseSeeder`.
  *
  *     ddev artisan db:seed --class='Database\Seeders\DemoSeeder'
@@ -74,6 +78,7 @@ class DemoSeeder extends Seeder
         $this->reviews($member, $cameroon);
         $this->featuredAndFavorites($member);
         $this->amenities($member);
+        $this->bookings($member);
     }
 
     /**
@@ -132,6 +137,91 @@ class DemoSeeder extends Seeder
             }
         }
     }
+
+    /**
+     * Les demandes des visiteurs au membre, passées par `BookingService` pour que
+     * chaque étape soit notifiée et forme le suivi de sa demande (décision
+     * 2026-11-20-suivi-demande). Les étapes sont datées des jours passés, dans l'ordre,
+     * et notifiées tout de suite (file synchrone). Rejouable : rien si le membre a déjà
+     * des demandes.
+     */
+    private function bookings(User $member): void
+    {
+        $offers = Offer::query()->where('user_id', $member->getKey())->where('status', OfferStatusEnum::PUBLISHED)->orderBy('id')->get()->values();
+        if (Booking::query()->whereIn('offer_id', $offers->modelKeys())->exists()) {
+            return;
+        }
+
+        $service = app(BookingService::class);
+        $queue = config('queue.default');
+        config(['queue.default' => 'sync']);
+        $today = today();
+        $clock = now()->subDays(6)->setTime(9, 0);
+        $tick = function () use (&$clock): void {
+            $clock = $clock->copy()->addMinutes(97);
+            Carbon::setTestNow($clock);
+        };
+
+        try {
+            $made = [];
+            foreach (self::BOOKINGS as $key => [$visitor, $offerIndex, $from, $to, $guests, $message]) {
+                $tick();
+                $made[$key] = $service->request(
+                    User::query()->where('email', 'demo-visiteur-'.$visitor.'@example.test')->firstOrFail(),
+                    $offers->get($offerIndex) ?? throw new LogicException("Logement {$offerIndex} absent."),
+                    ['check_in' => $today->copy()->addDays($from)->toDateString(), 'check_out' => $to === null ? null : $today->copy()->addDays($to)->toDateString(), 'guests' => $guests, 'message' => $message],
+                );
+            }
+
+            foreach (self::ANSWERS as [$key, $answer, $note]) {
+                $tick();
+                $booking = $made[$key]->refresh();
+                match ($answer) {
+                    'accept' => $service->answer($booking, true),
+                    'refuse' => $service->answer($booking, false, $note),
+                    'cancel' => $service->cancel($booking),
+                };
+            }
+        } finally {
+            Carbon::setTestNow();
+            config(['queue.default' => $queue]);
+        }
+    }
+
+    /**
+     * Demandes : visiteur (1 à 3), rang du logement publié, arrivée et départ (ou date
+     * et seconde date d'une visite) en jours depuis aujourd'hui, voyageurs, message.
+     * Rangs 1, 4, 9, 10, 14 : meublés (séjours) ; 0, 2, 3 : visites.
+     *
+     * @var array<string, array{int, int, int, int|null, int|null, string|null}>
+     */
+    private const BOOKINGS = [
+        'studio_pending' => [1, 1, 10, 13, 1, 'Bonjour, je viens à Douala pour le travail.'],
+        'view_accepted' => [2, 4, 5, 9, 2, 'Nous serons deux, arrivée en soirée.'],
+        'view_overlap' => [3, 4, 7, 10, 3, 'Séjour en famille, est-ce possible ?'],
+        'flat_refused' => [1, 9, 20, 24, 2, null],
+        'short_cancelled' => [2, 10, 15, 17, 1, 'Court séjour pour un rendez-vous.'],
+        'upscale_cancelled' => [3, 14, 30, 35, 4, 'Vacances en famille.'],
+        'visit_pending' => [1, 0, 3, null, null, 'Je peux passer en fin de journée.'],
+        'visit_accepted' => [2, 3, 4, 6, null, 'Je cherche une colocation pour la rentrée.'],
+        'visit_refused' => [3, 2, 8, null, null, null],
+    ];
+
+    /**
+     * Les étapes suivantes, dans l'ordre : accepter (les demandes en attente qui
+     * chevauchent sont refusées), refuser (avec un motif), annuler (par le visiteur).
+     *
+     * @var list<array{string, string, string|null}>
+     */
+    private const ANSWERS = [
+        ['view_accepted', 'accept', null],
+        ['flat_refused', 'refuse', 'Le logement est en travaux à ces dates.'],
+        ['short_cancelled', 'accept', null],
+        ['visit_accepted', 'accept', null],
+        ['upscale_cancelled', 'cancel', null],
+        ['visit_refused', 'refuse', 'La maison vient d’être louée.'],
+        ['short_cancelled', 'cancel', null],
+    ];
 
     /**
      * Les 20 logements du membre.
