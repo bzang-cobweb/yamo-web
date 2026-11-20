@@ -54,7 +54,7 @@ class NotificationPageResource extends JsonResource
         }
 
         return ['items' => $items, 'next_cursor' => $this->nextCursor(), /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`), comme une liste (décision 2026-11-20-filtres-notifications). */
-            'filters' => array_map(fn (Field $field): array => $field->toArray(), $this->filters)];
+            'filters' => array_map(fn (Field $field): array => $field->asFilter()->toArray(), $this->filters)];
     }
 
     private function nextCursor(): ?string

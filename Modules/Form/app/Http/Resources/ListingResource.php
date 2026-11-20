@@ -39,7 +39,7 @@ class ListingResource extends JsonResource
             /** Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignoré. */
             'search' => $this->resource->searchPlaceholder(),
             /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`) ; vide : liste sans filtres. */
-            'filters' => array_map(fn (Field $field): array => $field->toArray(), $this->resource->filters()),
+            'filters' => array_map(fn (Field $field): array => $field->asFilter()->toArray(), $this->resource->filters()),
             /** Curseur de la page suivante, à renvoyer en `?cursor=` ; `null` : plus rien après. */
             'next_cursor' => $page->nextCursor()?->encode(),
             /** Items de la page : `image` est la photo affichée au-dessus du titre ; `edit` ouvre le formulaire lié à l'enregistrement (`?record=`), `delete` décrit le retrait. */

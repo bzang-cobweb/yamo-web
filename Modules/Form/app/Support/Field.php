@@ -41,6 +41,9 @@ final class Field
     /** Liste dépendante : nom du champ parent (ex. le pays d'une région). */
     private ?string $dependsOn = null;
 
+    /** Un filtre : jamais verrouillé, « Tous » reste possible (décision 2026-11-20-filtre-option-unique). */
+    private bool $filter = false;
+
     private mixed $default = null;
 
     /**
@@ -533,13 +536,26 @@ final class Field
     }
 
     /**
+     * Le champ sert de filtre d'une liste (décision 2026-11-20-filtre-option-unique) :
+     * une seule option ne le verrouille pas et n'en fait pas la valeur par défaut,
+     * sinon l'app la confondrait avec « Tous » et l'ignorerait.
+     */
+    public function asFilter(): static
+    {
+        $this->filter = true;
+
+        return $this;
+    }
+
+    /**
      * Une liste (ou le pays d'un téléphone) qui n'a qu'une option : elle est
      * choisie d'office et ne peut pas changer. Contrairement à `readonly`, la
      * valeur est envoyée et validée (décision 2026-11-20-pays-unique-identifiant-double).
      */
     public function isLocked(): bool
     {
-        return in_array($this->type, [FieldType::SELECT, FieldType::PHONE], true)
+        return ! $this->filter
+            && in_array($this->type, [FieldType::SELECT, FieldType::PHONE], true)
             && $this->dependsOn === null
             && count($this->options) === 1;
     }
