@@ -61,6 +61,7 @@ return [
     ],
     'notify' => [
         // Le nombre de personnes d'une demande, dans le texte de la carte.
+        'days' => '{1} :count Tag|[2,*] :count Tage',
         'people' => '{1} :count Person|[2,*] :count Personen',
         'handle' => 'Anfrage bearbeiten',
         'title' => 'Anfrage',
@@ -74,6 +75,8 @@ return [
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'fragt :type :period für „:offer“ an.',
             'summary_people' => 'fragt :type :period für „:offer“ an (:people).',
+            'summary_stay' => 'fragt :type :period (:days) für „:offer“ an, :price (:people).',
+            'summary_visit' => 'fragt :type :period für „:offer“ an, :price.',
             'sms' => ':app: :guest fragt :type :period für „:offer“ an. Antworten Sie in der App.',
         ],
         'accepted' => [

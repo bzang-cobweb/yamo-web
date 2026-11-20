@@ -150,17 +150,33 @@ abstract class BookingNotification extends Notification implements HasNotificati
     }
 
     /**
-     * Le texte de la carte, sans le nom de qui agit ; pour un séjour (logement meublé),
-     * avec le nombre de voyageurs (« … pour « Studio photos » (3 personnes). »).
+     * Le texte de la carte, sans le nom de qui agit (une demande reçue, décision
+     * 2026-11-20-texte-demande) :
+     * - un séjour (logement meublé) : sa durée après les dates, le prix par jour et le
+     *   nombre de voyageurs (« … (3 jours) pour « Studio photos », 85 000 FCFA / jour (2 personnes). ») ;
+     * - une visite : le loyer par mois (« … pour « Appartement », 250 000 FCFA / mois. »).
+     *
+     * Sans prix ou sans voyageurs, le texte s'en passe.
      */
     private function summary(): string
     {
         $replace = $this->replacements();
         $key = "offer::booking.notify.{$this->key()}.summary";
+        $price = app(DomainRegistry::class)->require()->formattedPrice($this->booking->offer, app()->getLocale());
+        $days = $this->booking->days();
+        $people = $this->booking->guests === null ? null : trans_choice('offer::booking.notify.people', $this->booking->guests, ['count' => $this->booking->guests]);
 
-        return $this->booking->guests !== null && trans()->has($key.'_people')
-            ? __($key.'_people', [...$replace, 'people' => trans_choice('offer::booking.notify.people', $this->booking->guests, ['count' => $this->booking->guests])])
-            : __($key, $replace);
+        return match (true) {
+            $days !== null && $price !== null && $people !== null && trans()->has($key.'_stay') => __($key.'_stay', [
+                ...$replace,
+                'days' => trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
+                'price' => $price,
+                'people' => $people,
+            ]),
+            $people !== null && trans()->has($key.'_people') => __($key.'_people', [...$replace, 'people' => $people]),
+            $days === null && $price !== null && trans()->has($key.'_visit') => __($key.'_visit', [...$replace, 'price' => $price]),
+            default => __($key, $replace),
+        };
     }
 
     /**
