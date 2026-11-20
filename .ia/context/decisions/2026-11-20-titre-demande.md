@@ -20,6 +20,12 @@ gras, en lien vers sa fiche ; le titre composé n'est pas en gras. Demandes de l
 « afficher le nom de l'offre sous forme de lien après la pastille du statut », « mettre ce
 titre en gras et le titre composé enlever le gras ».
 
+**Puis retiré** (demande de l'humain : « enlever le summary et le titre composé ») : la
+page d'une notification d'une demande n'a plus ni texte de la demande ni titre composé ;
+après la pastille, le nom de l'offre en lien, puis les lignes (dates, durée, personnes, prix,
+total) ; après le nom, le type de location (« mettez le type de location après le titre »).
+`booking.offer` garde `title` et `rental_type`. Une notification sans demande garde son texte.
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « mettez le titre composé du type de l'offre, du type

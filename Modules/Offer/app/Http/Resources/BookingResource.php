@@ -19,7 +19,7 @@ use Modules\Offer\Models\Offer;
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, offer: array{title: string|null, property_type: string|null, rental_type: string|null, city: string|null}, dates: list<string>, days_label: string|null, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, offer: array{title: string|null, rental_type: string|null}, dates: list<string>, days_label: string|null, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -35,7 +35,7 @@ class BookingResource extends JsonResource
             'check_in' => $booking->check_in->toDateString(),
             /** Le départ d'un séjour, la seconde date proposée d'une visite, ou `null`. */
             'check_out' => $booking->check_out?->toDateString(),
-            /** L'offre, rédigée : son titre saisi, le type de logement (« Studio »), le type de location (« Location meublée »), la ville ; `null` quand ils manquent. */
+            /** L'offre : son titre saisi et son type de location, rédigé (`null` s'ils manquent). */
             'offer' => $this->offer($booking->offer),
             /** Les dates, une par ligne, rédigées dans la langue de la requête (« Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le 7 déc. 2026 avant 11:00 » ; « Visite le 28 nov. 2026 »). */
             'dates' => $booking->dateLines(app()->getLocale()),
@@ -52,18 +52,15 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * @return array{title: string|null, property_type: string|null, rental_type: string|null, city: string|null}
+     * @return array{title: string|null, rental_type: string|null}
      */
     private function offer(?Offer $offer): array
     {
-        $type = $offer?->detail('property_type');
-
         return [
             // Le titre saisi par le propriétaire, dans la langue de la requête.
             'title' => $offer === null ? null : (string) $offer->getTranslation('title', app()->getLocale()),
-            'property_type' => is_string($type) && $type !== '' ? __('offer::rental.property_types.'.$type) : null,
+            // Le type de location, rédigé (« Location meublée »), ou `null`.
             'rental_type' => $offer === null ? null : RentalTypeEnum::of($offer)?->label(),
-            'city' => $offer?->address?->city,
         ];
     }
 }
