@@ -41,7 +41,7 @@ class BookingResource extends JsonResource
             'offer' => $this->offer($booking->offer),
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
-             * chambres, arrivée, départ (ou visite, seconde date), prix, durée, total. Une
+             * chambres, arrivée, départ (ou visite, seconde date), durée, prix, total. Une
              * ligne sans valeur n'est pas servie.
              */
             'lines' => $this->lines($booking),
@@ -62,8 +62,8 @@ class BookingResource extends JsonResource
             $line('guests', $booking->guests),
             $line('bedrooms', is_numeric($bedrooms) ? (int) $bedrooms : null),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
-            $line('price', $booking->offer === null ? null : app(DomainRegistry::class)->require()->formattedPrice($booking->offer, $locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
+            $line('price', $booking->offer === null ? null : app(DomainRegistry::class)->require()->formattedPrice($booking->offer, $locale)),
             $line('total', $booking->formattedTotal($locale)),
         ];
 

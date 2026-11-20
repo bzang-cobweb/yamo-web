@@ -18,8 +18,8 @@ pas servie :
 | `bedrooms` | Chambres | « 0 » |
 | `arrival` / `visit` | Arrivée / Visite | « 5 déc. 2026 à partir de 14:00 » |
 | `departure` / `second` | Départ / Seconde date | « 7 déc. 2026 au plus tard à 11:00 » |
-| `price` | Prix | « 20 000 FCFA / jour » |
 | `days` | Durée | « 2 jours » |
+| `price` | Prix | « 20 000 FCFA / jour » |
 | `total` | Total | « 40 000 FCFA » |
 
 L'app affiche chaque ligne, libellé à gauche, valeur à droite, le total en gras. Elle n'a

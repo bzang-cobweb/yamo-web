@@ -180,8 +180,8 @@ class BookingThreadTest extends TestCase
                 ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
                 ['key' => 'arrival', 'label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')],
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
-                ['key' => 'price', 'label' => 'Prix', 'value' => (string) app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr')],
                 ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
+                ['key' => 'price', 'label' => 'Prix', 'value' => (string) app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr')],
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
             ], $page['booking']['lines']);
         }
