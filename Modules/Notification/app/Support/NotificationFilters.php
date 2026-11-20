@@ -11,8 +11,8 @@ use Modules\Notification\Contracts\NotificationFilter;
 
 /**
  * Les filtres de la liste des notifications (décision 2026-11-20-filtres-notifications) :
- * « Type » (parmi ceux qu'inscrivent les modules), « Membre » (qui agit), puis ceux
- * des modules (le logement).
+ * « Membre » (qui agit) en premier, « Type » (parmi ceux qu'inscrivent les modules),
+ * puis ceux des modules (le logement).
  */
 class NotificationFilters
 {
@@ -35,15 +35,15 @@ class NotificationFilters
     public function fields(User $user): array
     {
         return [
-            // Le type, parmi ceux de ses notifications (« Demande de logement acceptée »).
-            Field::select('type')
-                ->label(__('notification::notification.filter_type'))
-                ->options($this->typeOptions($user)),
             // Qui agit, parmi les membres que nomment ses notifications.
             Field::select('user')
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
+            // Le type, parmi ceux de ses notifications (« Demande de logement acceptée »).
+            Field::select('type')
+                ->label(__('notification::notification.filter_type'))
+                ->options($this->typeOptions($user)),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
         ];
     }

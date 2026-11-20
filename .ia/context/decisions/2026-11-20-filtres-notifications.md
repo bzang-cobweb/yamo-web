@@ -2,14 +2,14 @@
 
 - **Type** : décision de conception
 - **Date** : 2026-11-20
-- **Décidé par** : l'humain (« add filters in notifications list: filter by offer, and offer statut » ; « add search in notifications list (search on user name and offer name) » ; « ajouter un filtre sur le user » ; « les filtres logement et user doivent avoir une recherche » ; « filtre statut concerne le statut de la demande pas du logement » ; puis « add filter type… show logement if type is about booking and remove statut filter », « filters list show max 10 records », « add all option to all filters list »)
+- **Décidé par** : l'humain (« add filters in notifications list: filter by offer, and offer statut » ; « add search in notifications list (search on user name and offer name) » ; « ajouter un filtre sur le user » ; « les filtres logement et user doivent avoir une recherche » ; « filtre statut concerne le statut de la demande pas du logement » ; puis « add filter type… show logement if type is about booking and remove statut filter », « filters list show max 10 records », « add all option to all filters list » ; « all member filter first »)
 
 ## Décision
 
 - **La recherche** : elle porte sur le nom de qui agit (chaque mot, dans le prénom ou le nom) et sur le titre du logement, dans toutes les langues, sans tenir compte de la casse (`ContainsSearch`).
 - **Les filtres** :
-  - « Type », parmi les types de ses notifications, nommés par les modules (« Demande de logement en attente », « … acceptée », « … refusée », « … annulée ») ;
   - « Membre » (qui agit, colonne `user_id`), parmi les membres que nomment ses notifications, porté par le module Notification lui-même ;
+  - « Type », parmi les types de ses notifications, nommés par les modules (« Demande de logement en attente », « … acceptée », « … refusée », « … annulée ») ;
   - « Logement », parmi les logements que nomment ses notifications, affiché seulement pour un type de demande (`visibleWhen` accepte une liste de valeurs).
 
   Le filtre « Statut » est retiré.

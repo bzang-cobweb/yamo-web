@@ -64,7 +64,7 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        $this->assertSame(['type', 'user', 'offer'], $filters->keys()->all());
+        $this->assertSame(['user', 'type', 'offer'], $filters->keys()->all());
         // Les types de ses notifications, nommés par le domaine ; un type inconnu des modules n'est pas proposé.
         $this->assertSame(['Demande de logement en attente', 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label'));
         $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class], array_column($filters['type']['options'], 'value'));
