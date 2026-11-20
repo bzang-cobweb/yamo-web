@@ -202,9 +202,9 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame([$booking->offer_id, BookingStatusEnum::PENDING], [$sent->offer_id, $sent->status]);
         $this->assertSame($booking->user_id, (int) $notification->user_id);
         $this->assertArrayNotHasKey('actor_id', $notification->data);
-        // Sans verbe ni qui la fait ; les dates, la durée, les personnes et le prix à part
-        // (décisions 2026-11-20-texte-sans-verbe et 2026-11-20-personnes-a-part).
-        $this->assertSame('Stay for “'.$booking->offer->getTranslation('title', 'en').'”.', $notification->data['summary']);
+        // « Rental request for “…” from … to … for 1 person. », sans qui la fait (décision 2026-11-20-texte-demande-location).
+        $this->assertStringStartsWith('Rental request for “'.$booking->offer->getTranslation('title', 'en').'” from ', $notification->data['summary']);
+        $this->assertStringEndsWith(' for 1 person.', $notification->data['summary']);
         // Le total figé de la demande.
         $this->assertSame($booking->offer->bookings()->latest('id')->first()->formattedTotal('en'), $notification->data['total']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);

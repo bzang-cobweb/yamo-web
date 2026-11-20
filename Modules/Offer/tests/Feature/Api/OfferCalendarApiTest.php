@@ -182,8 +182,9 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame('Demande de logement', $card['type']);
         $this->assertSame((string) $pending->user_id, $card['actor']['id']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
-        // Le type et le logement seulement (décision 2026-11-20-personnes-a-part).
-        $this->assertStringStartsWith('Séjour pour « ', $card['summary']);
+        // « Demande de location « … » du … au … pour … » (décision 2026-11-20-texte-demande-location).
+        $this->assertStringStartsWith('Demande de location « ', $card['summary']);
+        $this->assertStringContainsString(' pour ', $card['summary']);
         $this->assertSame($pending->formattedTotal('fr'), $card['total']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => "/v1/offers/{$offer->getKey()}/blocked-dates/{$this->date(41)}"], array_intersect_key($day['action']['submission'], ['method' => 1, 'endpoint' => 1]));

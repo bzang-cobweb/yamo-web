@@ -98,9 +98,10 @@ return [
         'requested' => [
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
-            // Le texte de la demande, sans qui la fait : « Séjour pour … », « Visite pour … » ; dates, jours, personnes, prix à part
-            // (décision 2026-11-20-texte-sans-verbe).
-            'summary' => ':kind pour « :offer ».',
+            // Le texte de la demande (décision 2026-11-20-texte-demande-location) : « Demande de location
+            // « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » ; une visite, sans personnes.
+            'summary' => 'Demande de visite « :offer » :period.',
+            'summary_stay' => 'Demande de location « :offer » :period pour :people.',
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [

@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-texte-demande-location.md
+
 # Le texte d'une demande commence par « Séjour » ou « Visite »
 
 - **Date** : 2026-11-20

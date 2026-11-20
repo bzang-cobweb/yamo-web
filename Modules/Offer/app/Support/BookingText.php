@@ -32,13 +32,20 @@ final class BookingText
 
     /**
      * Le texte d'une carte, sans le nom de qui agit, pour l'étape `$step` (`requested`,
-     * `accepted`…) : « Séjour pour « Studio photos ». », « Visite pour « Appartement ». ».
-     * Les dates, la durée, les personnes et le prix s'affichent à part (décisions
-     * 2026-11-20-personnes-a-part et 2026-11-20-heures-arrivee-depart).
+     * `accepted`…) (décision 2026-11-20-texte-demande-location) : « Demande de location
+     * « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » pour un séjour,
+     * « Demande de visite « Maison » le 28 nov. 2026. » pour une visite.
      */
     public static function summary(Booking $booking, string $step): string
     {
-        return __("offer::booking.notify.{$step}.summary", self::replacements($booking));
+        $replace = self::replacements($booking);
+        $key = "offer::booking.notify.{$step}.summary";
+
+        if ($booking->guests !== null && $booking->days() !== null && trans()->has($key.'_stay')) {
+            return __($key.'_stay', [...$replace, 'people' => trans_choice('offer::booking.notify.people', $booking->guests, ['count' => $booking->guests])]);
+        }
+
+        return __($key, $replace);
     }
 
     /**
