@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-caution-dans-le-total.md
+
 # Les charges et le total d'une visite
 
 - **Date** : 2026-11-20

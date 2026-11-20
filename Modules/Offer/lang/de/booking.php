@@ -13,7 +13,6 @@ return [
         'price_per' => 'Preis pro :unit',
         'days' => 'Dauer',
         'total' => 'Gesamt',
-        'total_per' => 'Gesamt pro :unit',
         'charges' => 'Nebenkosten',
         'charges_per' => 'Nebenkosten pro :unit',
         'deposit' => 'Kaution',

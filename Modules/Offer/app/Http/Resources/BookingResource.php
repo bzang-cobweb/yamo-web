@@ -64,12 +64,9 @@ class BookingResource extends JsonResource
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             $this->price($booking, $locale),
-            // Une visite : les charges du mois, puis le total du mois (prix + charges), toujours
-            // (décision 2026-11-20-charges-visite) ; un séjour : son total figé.
-            ...($booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : [$line('total', $booking->formattedTotal($locale))]),
-            // Après le total, la caution (et l'avance de loyer d'une visite), si le logement les
-            // renseigne (décision 2026-11-20-caution-affichee).
-            ...$this->deposit($booking, $locale),
+            // Une visite : charges, caution et avance en mois, puis le total ; un séjour : la caution,
+            // puis le total, toujours, même à 0 (décision 2026-11-20-caution-dans-le-total).
+            ...($booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : $this->stay($booking, $locale)),
         ];
 
         return array_values(array_filter($lines));
@@ -98,37 +95,12 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * Les charges par mois d'une visite, même à 0, puis le total par mois, prix et charges
-     * additionnés, même égal au prix (décision 2026-11-20-charges-visite) ; rien sans prix.
+     * Une visite (non meublé), toujours, même à 0 : les charges du mois, la caution et l'avance
+     * de loyer en mois, puis le total, le loyer seul fois les mois de caution et d'avance
+     * (décision 2026-11-20-caution-dans-le-total).
      *
      * @return list<array{key: string, label: string, value: string}>
      */
-    /**
-     * La caution du logement : en mois et l'avance de loyer pour une visite (non meublé),
-     * un montant pour un séjour (meublé) ; rien de ce qui n'est pas renseigné.
-     *
-     * @return list<array{key: string, label: string, value: string}>
-     */
-    private function deposit(Booking $booking, string $locale): array
-    {
-        $offer = $booking->offer;
-        if ($offer === null) {
-            return [];
-        }
-
-        $months = fn (string $key, mixed $count): ?array => is_numeric($count)
-            ? ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => trans_choice('offer::booking.lines.months', (int) $count, ['count' => (int) $count])]
-            : null;
-
-        $lines = $booking->type === BookingTypeEnum::VISIT
-            ? [$months('deposit', $offer->detail('deposit_months')), $months('advance', $offer->detail('advance_months'))]
-            : [is_numeric($amount = $offer->detail('deposit'))
-                ? ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => Number::currency((float) $amount, (string) $offer->currency, $locale)]
-                : null];
-
-        return array_values(array_filter($lines));
-    }
-
     private function monthly(Booking $booking, string $locale): array
     {
         $offer = $booking->offer;
@@ -137,13 +109,33 @@ class BookingResource extends JsonResource
         }
 
         $unit = app(DomainRegistry::class)->require()->priceUnit($offer);
-        $charges = is_numeric($value = $offer->detail('charges')) ? (float) $value : 0.0;
+        $number = fn (string $key): float => is_numeric($value = $offer->detail($key)) ? (float) $value : 0.0;
         $money = fn (float $amount): string => Number::currency($amount, (string) $offer->currency, $locale);
-        $label = fn (string $key): string => $unit === null ? __('offer::booking.lines.'.$key) : __('offer::booking.lines.'.$key.'_per', ['unit' => $unit]);
+        $months = fn (float $count): string => trans_choice('offer::booking.lines.months', (int) $count, ['count' => (int) $count]);
+        [$deposit, $advance] = [$number('deposit_months'), $number('advance_months')];
 
         return [
-            ['key' => 'charges', 'label' => $label('charges'), 'value' => $money($charges)],
-            ['key' => 'total', 'label' => $label('total'), 'value' => $money((float) $offer->price + $charges)],
+            ['key' => 'charges', 'label' => $unit === null ? __('offer::booking.lines.charges') : __('offer::booking.lines.charges_per', ['unit' => $unit]), 'value' => $money($number('charges'))],
+            ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $months($deposit)],
+            ['key' => 'advance', 'label' => __('offer::booking.lines.advance'), 'value' => $months($advance)],
+            ['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $offer->price * ($deposit + $advance))],
+        ];
+    }
+
+    /**
+     * Un séjour (meublé), toujours, même à 0 : la caution, un montant, puis le total, le total
+     * figé de la demande plus la caution (décision 2026-11-20-caution-dans-le-total).
+     *
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function stay(Booking $booking, string $locale): array
+    {
+        $deposit = is_numeric($value = $booking->offer?->detail('deposit')) ? (float) $value : 0.0;
+        $money = fn (float $amount): string => Number::currency($amount, (string) $booking->currency, $locale);
+
+        return [
+            ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $money($deposit)],
+            ...($booking->total === null ? [] : [['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $booking->total + $deposit)]]),
         ];
     }
 

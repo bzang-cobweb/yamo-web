@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-caution-dans-le-total.md
+
 # La caution et l'avance de loyer affichées
 
 - **Date** : 2026-11-20

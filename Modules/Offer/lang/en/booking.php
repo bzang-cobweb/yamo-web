@@ -13,7 +13,6 @@ return [
         'price_per' => 'Price per :unit',
         'days' => 'Duration',
         'total' => 'Total',
-        'total_per' => 'Total per :unit',
         'charges' => 'Charges',
         'charges_per' => 'Charges per :unit',
         'deposit' => 'Deposit',
