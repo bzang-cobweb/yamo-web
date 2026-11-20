@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use LogicException;
 use Modules\Auth\Enums\GenderEnum;
@@ -184,6 +185,13 @@ class DemoSeeder extends Seeder
                     'cancel' => $service->cancel($booking),
                 };
             }
+
+            // Le visiteur lit les réponses du propriétaire à ces demandes : deux coches vertes
+            // sous elles (décision 2026-11-20-demo-reponses-lues).
+            $tick();
+            foreach (self::READ_BY_VISITORS as $key) {
+                self::readByVisitor($made[$key]);
+            }
         } finally {
             Carbon::setTestNow();
             config(['queue.default' => $queue]);
@@ -219,6 +227,29 @@ class DemoSeeder extends Seeder
      * @var list<int>
      */
     private const WITHOUT_FEES = [2, 10];
+
+    /**
+     * Les demandes dont le visiteur a lu les réponses du propriétaire (décision
+     * 2026-11-20-demo-reponses-lues) ; les autres restent non lues (une ou deux coches grises).
+     *
+     * @var list<string>
+     */
+    private const READ_BY_VISITORS = ['view_accepted', 'flat_refused', 'visit_accepted'];
+
+    /**
+     * Marque lues, maintenant, les notifications du propriétaire reçues par le visiteur de
+     * `$booking` (ses étapes, pas les copies du propriétaire), et note sa connexion.
+     */
+    public static function readByVisitor(Booking $booking): void
+    {
+        DatabaseNotification::query()
+            ->where('thread', $booking->thread())
+            ->where('notifiable_id', $booking->user_id)
+            ->whereNotNull('user_id')
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+        $booking->user()->first()?->forceFill(['last_seen_at' => now()])->saveQuietly();
+    }
 
     /** Un message répété jusqu'à la longueur maximale d'un message de demande. */
     private const LONG_MESSAGE = 'Bonjour, je viens à Douala pour une mission de travail de trois jours et je cherche un logement calme, proche d’Akwa, avec une bonne connexion internet pour travailler le soir. ';

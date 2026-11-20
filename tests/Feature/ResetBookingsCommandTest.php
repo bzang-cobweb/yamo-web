@@ -46,6 +46,13 @@ class ResetBookingsCommandTest extends TestCase
 
         $this->assertSame(9, Booking::query()->count());
         $this->assertSame([], array_intersect([...$demo, $other->getKey()], Booking::query()->pluck('id')->all()));
+        // Des réponses du propriétaire lues par leur visiteur (décision 2026-11-20-demo-reponses-lues),
+        // pas toutes : on voit les coches vertes et les grises.
+        $answers = DatabaseNotification::query()->whereNotNull('user_id')
+            ->whereIn('notifiable_id', Booking::query()->pluck('user_id'))
+            ->whereColumn('user_id', '!=', 'notifiable_id')->get();
+        $this->assertGreaterThanOrEqual(3, $answers->whereNotNull('read_at')->count());
+        $this->assertNotEmpty($answers->whereNull('read_at'));
         $this->assertSame(0, DatabaseNotification::query()->where('type', 'Autre')->count());
         // Chaque demande recréée a ses notifications, au membre (propriétaire) et aux visiteurs.
         $this->assertGreaterThan(9, DatabaseNotification::query()->count());
