@@ -63,10 +63,12 @@ class BookingResource extends JsonResource
             $line('guests', $booking->guests),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
-            $this->price($booking, $locale),
-            // Une visite : charges, caution et avance en mois, puis le total ; un séjour : la caution,
-            // puis le total, toujours, même à 0 (décision 2026-11-20-caution-dans-le-total).
-            ...($booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : $this->stay($booking, $locale)),
+            // Une visite : charges, loyer (décision 2026-11-20-loyer-apres-charges), caution et avance,
+            // puis le total ; un séjour : prix, caution, puis le total, toujours, même à 0
+            // (décision 2026-11-20-caution-dans-le-total).
+            ...($booking->type === BookingTypeEnum::VISIT
+                ? $this->monthly($booking, $locale)
+                : [$this->price($booking, $locale), ...$this->stay($booking, $locale)]),
         ];
 
         return array_values(array_filter($lines));
@@ -100,7 +102,7 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * Une visite (non meublé), toujours, même à 0 : les charges du mois, la caution et l'avance
+     * Une visite (non meublé), toujours, même à 0 : les charges du mois, le loyer, la caution et l'avance
      * de loyer, le nombre de mois dans le libellé (« 2 mois de caution ») et leur montant, le
      * loyer fois ces mois, en valeur ; puis le total, leur somme (décision 2026-11-20-caution-en-montant).
      *
@@ -126,6 +128,7 @@ class BookingResource extends JsonResource
 
         return [
             ['key' => 'charges', 'label' => $unit === null ? __('offer::booking.lines.charges') : __('offer::booking.lines.charges_per', ['unit' => $unit]), 'value' => $money($number('charges'))],
+            $this->price($booking, $locale),
             $months('deposit', $deposit),
             $months('advance', $advance),
             ['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
