@@ -14,7 +14,7 @@ lecteur, des coches disent ce qu'est devenue la notification envoyée à l'autre
 |---|---|---|
 | `sent` | l'autre ne s'est pas connecté depuis l'envoi (`last_seen_at`) | une grise |
 | `delivered` | connecté depuis, notification non lue | deux grises |
-| `read` | notification lue (`read_at`) | une verte |
+| `read` | notification lue (`read_at`) | deux vertes |
 
 L'API sert `delivery` sur chaque étape du lecteur, `null` sur celles de l'autre. Lire
 une carte de demande marque lue tout son fil chez le lecteur (2026-11-20-suivi-demande) :
@@ -29,7 +29,8 @@ Demande de l'humain du 2026-11-20 : « un simple check si l'utilisateur qui lit 
 pas connecté depuis l'envoi de notre notification », « un double check s'il s'est
 connecté … et que la notification n'est toujours pas lue », « un check vert si notre
 notification est marquée comme lue », précisé ensuite : « toute notification qui est
-marquée comme lue a toujours un check de couleur verte » (une seule coche).
+marquée comme lue a toujours un check de couleur verte », puis : « garder les 2 coches
+vertes pour toutes les notifications lues ».
 
 ## Portée
 
