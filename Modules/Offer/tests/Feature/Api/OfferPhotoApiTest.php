@@ -67,6 +67,7 @@ class OfferPhotoApiTest extends TestCase
             'city' => 'Genève',
             'status' => 'published',
             'property_type' => 'apartment',
+            'rental_type' => 'long_term',
             ...$overrides,
         ];
     }

@@ -85,6 +85,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'offerAddress.indication.fr' => 'Portail vert',
                 'category_id' => (string) OfferCategory::query()->where('slug', 'long-term')->value('id'),
                 'details.property_type' => 'house',
+                'details.rental_type' => 'long_term',
                 'details.surface' => '120',
                 'details.rooms' => '5.5',
             ])
@@ -109,7 +110,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $this->actingAs($admin);
         $offer = Offer::factory()->at(Address::factory()->create())->create([
             'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
-            'details' => ['property_type' => 'studio'],
+            'details' => ['property_type' => 'studio', 'rental_type' => 'long_term'],
         ]);
         $other = Offer::factory()->create(['status' => 'published']);
 
@@ -138,6 +139,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'price' => '1000',
                 'offerAddress.address_id' => Address::factory()->create()->getKey(),
                 'details.property_type' => 'castle',
+                'details.rental_type' => 'long_term',
                 'details.surface' => '-5',
                 'details.rooms' => '2',
             ])
@@ -156,6 +158,7 @@ class OfferResourceTest extends AuthFilamentTestCase
             'price' => '1000',
             'offerAddress.address_id' => Address::factory()->create()->getKey(),
             'details.property_type' => 'studio',
+            'details.rental_type' => 'long_term',
             'details.surface' => '20',
             'details.rooms' => '1',
         ];
@@ -196,6 +199,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'price' => '1000',
                 'offerAddress.address_id' => $elsewhere->getKey(),
                 'details.property_type' => 'studio',
+                'details.rental_type' => 'long_term',
                 'details.surface' => '20',
                 'details.rooms' => '1',
             ])
@@ -206,7 +210,7 @@ class OfferResourceTest extends AuthFilamentTestCase
     public function test_editing_keeps_the_attributes(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
-        $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'currency' => 'CHF', 'details' => ['property_type' => 'studio', 'surface' => 30, 'rooms' => 1]]);
+        $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'currency' => 'CHF', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'surface' => 30, 'rooms' => 1]]);
 
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr'), 'offerAddress.indication.fr' => 'Portail bleu'])

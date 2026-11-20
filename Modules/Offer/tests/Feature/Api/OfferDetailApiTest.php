@@ -52,9 +52,10 @@ class OfferDetailApiTest extends TestCase
             'status' => 'published',
             'price' => '250000',
             'currency' => 'XAF',
-            'category_id' => OfferCategory::query()->where('slug', 'long-term')->value('id'),
+            // Une vraie catégorie reste possible, à côté du type de location (décision 2026-11-20-type-de-location-garder-categories).
+            'category_id' => OfferCategory::query()->firstOrCreate(['slug' => 'standing'], ['name' => ['fr' => 'Standing', 'en' => 'Upscale'], 'position' => 0])->getKey(),
             'published_at' => '2026-11-18 10:00:00',
-            'details' => ['property_type' => 'apartment', 'furnished' => false, 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'available_from' => '2026-12-01', 'charges' => 15000],
+            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'available_from' => '2026-12-01', 'charges' => 15000],
             ...$overrides,
         ]);
     }
@@ -80,11 +81,11 @@ class OfferDetailApiTest extends TestCase
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);
         $this->assertNull($data['status']);
-        // Type, meublé, catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville).
+        // Type, type de location, catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville).
         $this->assertSame([
             ['label' => 'Type de logement', 'value' => 'Appartement'],
-            ['label' => 'Meublé', 'value' => 'Non'],
-            ['label' => 'Catégorie', 'value' => 'Location longue durée'],
+            ['label' => 'Type de location', 'value' => 'Location longue durée'],
+            ['label' => 'Catégorie', 'value' => 'Standing'],
             ['label' => 'Surface', 'value' => '85 m²'],
             ['label' => 'Pièces', 'value' => '3,5'],
             ['label' => 'Chambres', 'value' => '2'],
@@ -98,7 +99,7 @@ class OfferDetailApiTest extends TestCase
     public function test_a_furnished_home_does_not_show_old_charges(): void
     {
         // Décision 2026-11-19-charges-meuble-surface-facultative.
-        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'charges' => 0]]);
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'charges' => 0]]);
 
         $this->assertNotContains('Charges mensuelles', array_column($this->show($offer)->assertOk()->json('data.facts'), 'label'));
     }
@@ -110,7 +111,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('3-room flat in Bonapriso', $data['title']);
         $this->assertSame('Rent', $data['price']['label']);
         $this->assertStringEndsWith(' / month', $data['price']['value']);
-        $this->assertContains(['label' => 'Furnished', 'value' => 'No'], $data['facts']);
+        $this->assertContains(['label' => 'Rental type', 'value' => 'Long-term rental'], $data['facts']);
         $this->assertContains(['label' => 'Area', 'value' => '85 m²'], $data['facts']);
     }
 
@@ -168,7 +169,7 @@ class OfferDetailApiTest extends TestCase
         // (décision 2026-11-19-arrivee-depart-en-informations).
         // Un âge minimum propre à l'offre, enregistré avant son retrait, non plus
         // (décision 2026-11-19-age-minimum-de-l-app).
-        $furnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'check_in_from' => '15:00', 'min_age' => 30, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'check_in_from' => '15:00', 'min_age' => 30, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
@@ -180,7 +181,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertNotContains('Âge minimum', array_column([...$data['facts'], ...$data['rules']], 'label'));
 
         // Sans rien de renseigné ni âge minimum réglé : rien.
-        $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'furnished' => false]]);
+        $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'long_term']]);
         $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
 
         // L'âge minimum de l'application, réglé : en tête des règles de toute offre.
@@ -193,7 +194,7 @@ class OfferDetailApiTest extends TestCase
     public function test_sections_come_from_the_configuration(): void
     {
         // Décision 2026-11-19-sections-fiche-laravel ; complètes (décision 2026-11-19-sections-construites-laravel).
-        $offer = $this->home(['details' => ['property_type' => 'studio', 'furnished' => true, 'pets' => 'no']]);
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'pets' => 'no']]);
         $sections = $this->show($offer)->json('data.sections');
         $this->assertSame([
             ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => true],

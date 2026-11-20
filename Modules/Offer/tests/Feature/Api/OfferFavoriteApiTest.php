@@ -175,9 +175,9 @@ class OfferFavoriteApiTest extends TestCase
         // Décision 2026-11-19-favoris-recherche-filtres.
         $user = $this->member();
         $douala = Offer::factory()->at(Address::factory()->for(Country::query()->where('code', 'CM')->sole())->create(['city' => 'Douala']))
-            ->create(['status' => 'published', 'title' => ['fr' => 'Studio Akwa'], 'price' => '50000', 'details' => ['property_type' => 'studio', 'furnished' => true]]);
+            ->create(['status' => 'published', 'title' => ['fr' => 'Studio Akwa'], 'price' => '50000', 'details' => ['property_type' => 'studio', 'rental_type' => 'furnished']]);
         $yaounde = Offer::factory()->at(Address::factory()->for(Country::query()->where('code', 'CM')->sole())->create(['city' => 'Yaoundé']))
-            ->create(['status' => 'published', 'title' => ['fr' => 'Maison Bastos'], 'price' => '300000', 'details' => ['property_type' => 'house', 'furnished' => false]]);
+            ->create(['status' => 'published', 'title' => ['fr' => 'Maison Bastos'], 'price' => '300000', 'details' => ['property_type' => 'house', 'rental_type' => 'long_term']]);
         $notMine = Offer::factory()->create(['status' => 'published']);
         foreach ([$douala, $yaounde] as $offer) {
             OfferFavorite::query()->create(['user_id' => $user->getKey(), 'offer_id' => $offer->getKey()]);
@@ -191,7 +191,7 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
 
         $this->assertSame([(string) $douala->getKey()], $ids('?filter[city]=Douala'));
-        $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[furnished]=false'));
+        $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[rental_type]=long_term'));
         $this->assertSame([(string) $douala->getKey()], $ids('?filter[price][]=&filter[price][]=100000'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?search=bastos'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?search=yaound'));

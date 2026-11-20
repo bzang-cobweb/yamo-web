@@ -9,6 +9,13 @@ return [
     'add' => 'Add a home',
     'request' => 'Home request',
     'property_type' => 'Property type',
+    // Type de location (décision 2026-11-20-contrat-type-de-location).
+    'rental_type' => 'Rental type',
+    'rental_types' => [
+        'long_term' => 'Long-term rental',
+        'furnished' => 'Furnished rental',
+        'shared' => 'Flat share',
+    ],
     'property_types' => [
         'apartment' => 'Apartment',
         'house' => 'House',

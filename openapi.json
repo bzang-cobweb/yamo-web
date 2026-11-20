@@ -4533,18 +4533,6 @@
                         ],
                         "maxLength": 1000
                     },
-                    "category_id": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "enum": [
-                            "1",
-                            "2",
-                            "3",
-                            null
-                        ]
-                    },
                     "price": {
                         "type": "number",
                         "minimum": 0,
@@ -4589,10 +4577,12 @@
                             "room"
                         ]
                     },
-                    "furnished": {
-                        "type": [
-                            "boolean",
-                            "null"
+                    "rental_type": {
+                        "type": "string",
+                        "enum": [
+                            "long_term",
+                            "furnished",
+                            "shared"
                         ]
                     },
                     "surface": {
@@ -4755,6 +4745,7 @@
                     "city",
                     "status",
                     "property_type",
+                    "rental_type",
                     "photos"
                 ],
                 "title": "OfferRequest"

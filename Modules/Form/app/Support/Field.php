@@ -70,7 +70,7 @@ final class Field
 
     /**
      * Unité qui suit la valeur d'un autre champ (décision 2026-11-18-unite-prix-chambres) :
-     * `{field: 'furnished', suffixes: {'true': 'FCFA / jour', 'false': 'FCFA / mois'}}`.
+     * `{field: 'rental_type', suffixes: {'furnished': 'FCFA / jour', 'long_term': 'FCFA / mois'}}`.
      *
      * @var array{field: string, suffixes: array<string, string>}|null
      */

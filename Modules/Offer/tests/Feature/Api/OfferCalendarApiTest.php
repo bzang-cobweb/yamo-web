@@ -57,7 +57,7 @@ class OfferCalendarApiTest extends TestCase
 
         return Offer::factory()->for($owner, 'user')->create([
             'status' => 'published', 'price' => '45000', 'currency' => 'XAF',
-            'details' => ['property_type' => 'studio', 'furnished' => $furnished],
+            'details' => ['property_type' => 'studio', 'rental_type' => ($furnished ? 'furnished' : 'long_term')],
         ]);
     }
 

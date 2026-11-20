@@ -34,7 +34,7 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
     {
         return Offer::factory()->at(Address::factory()->create())->create([
             'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
-            'details' => ['property_type' => 'studio'],
+            'details' => ['property_type' => 'studio', 'rental_type' => 'long_term'],
         ]);
     }
 
@@ -97,7 +97,7 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         $this->assertSame('2026-12-15', $offer->detail('available_from'));
     }
 
-    public function test_type_and_furnished_come_before_the_category_and_the_rent_before_the_charges(): void
+    public function test_type_and_rental_type_come_before_the_category_and_the_rent_before_the_charges(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
         $html = $this->get(OfferResource::getUrl('edit', ['record' => $this->offer()]))->assertOk()->getContent();
@@ -105,11 +105,11 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         // Décision 2026-11-19-backoffice-loyer-type-annonce.
         // Les champs du formulaire, par leur chemin d'état (`data.…`), dans l'ordre de la page.
         $position = fn (string $path): int => (int) strpos((string) $html, '"data.'.$path.'"');
-        foreach (['details.property_type', 'details.furnished', 'category_id', 'details.bedrooms', 'price', 'details.charges'] as $path) {
+        foreach (['details.property_type', 'details.rental_type', 'category_id', 'details.bedrooms', 'price', 'details.charges'] as $path) {
             $this->assertGreaterThan(0, $position($path), $path);
         }
         $this->assertLessThan($position('category_id'), $position('details.property_type'));
-        $this->assertLessThan($position('category_id'), $position('details.furnished'));
+        $this->assertLessThan($position('category_id'), $position('details.rental_type'));
         // Le loyer puis les charges dans l'onglet « Prix », après « Localisation » et avant les
         // caractéristiques (décision 2026-11-19-onglet-prix).
         $this->assertLessThan($position('price'), $position('category_id'));

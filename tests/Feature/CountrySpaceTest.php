@@ -97,7 +97,7 @@ class CountrySpaceTest extends TestCase
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [
             'title' => 'Studio à Bonanza', 'status' => 'published', 'price' => '85000', 'street' => 'Rue Njo-Njo', 'city' => 'Douala',
-            'property_type' => 'studio', 'surface' => '25', 'rooms' => '1', 'photos' => [$this->pendingUpload($user)],
+            'property_type' => 'studio', 'rental_type' => 'long_term', 'surface' => '25', 'rooms' => '1', 'photos' => [$this->pendingUpload($user)],
         ])->assertNoContent();
 
         $offer = Offer::query()->sole();

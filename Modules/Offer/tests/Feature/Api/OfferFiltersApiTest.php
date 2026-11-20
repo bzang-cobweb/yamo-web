@@ -55,7 +55,7 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
-        $this->assertSame(['city', 'price', 'property_type', 'furnished', 'bedrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
+        $this->assertSame(['city', 'price', 'property_type', 'rental_type', 'bedrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
         // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
@@ -63,7 +63,9 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame('FCFA', $filters['price']['suffix']);
         $this->assertSame('multiselect', $filters['property_type']['type']);
         $this->assertSame('multiselect', $filters['amenities']['type']);
-        $this->assertSame('any', $filters['furnished']['default']);
+        // Le type de location, en liste (« Tous » ajouté par l'app).
+        $this->assertSame('select', $filters['rental_type']['type']);
+        $this->assertSame(['long_term', 'furnished', 'shared'], array_column($filters['rental_type']['options'], 'value'));
     }
 
     public function test_yes_no_rules_filter_on_the_owner_answer(): void
@@ -91,16 +93,16 @@ class OfferFiltersApiTest extends TestCase
 
     public function test_filters_combine_with_each_other_and_the_search(): void
     {
-        $match = $this->home('Douala', 80000, ['property_type' => 'studio', 'furnished' => false, 'bedrooms' => 1], ['title' => ['fr' => 'Studio Akwa']]);
-        $tooExpensive = $this->home('Douala', 200000, ['property_type' => 'studio', 'furnished' => false, 'bedrooms' => 1]);
-        $otherCity = $this->home('Yaoundé', 80000, ['property_type' => 'studio', 'furnished' => false, 'bedrooms' => 1]);
-        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'furnished' => false, 'bedrooms' => 3]);
-        $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'furnished' => true, 'bedrooms' => 2, 'available_from' => '2027-01-15']);
+        $match = $this->home('Douala', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1], ['title' => ['fr' => 'Studio Akwa']]);
+        $tooExpensive = $this->home('Douala', 200000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
+        $otherCity = $this->home('Yaoundé', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
+        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'rental_type' => 'long_term', 'bedrooms' => 3]);
+        $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'rental_type' => 'furnished', 'bedrooms' => 2, 'available_from' => '2027-01-15']);
 
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
         $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city]=Douala&filter[price][]=&filter[price][]=100000'));
-        $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[furnished]=true'));
-        $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[furnished]=false'));
+        $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[rental_type]=furnished'));
+        $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[rental_type]=long_term'));
         $this->assertCount(5, $this->ids('?filter[furnished]=any'));
         $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $furnished->getKey()]), $this->ids('?filter[bedrooms]=2'));
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));

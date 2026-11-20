@@ -10,15 +10,15 @@ use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferCategory;
 
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
  * - les types de ses notifications : les quatre étapes d'une demande ;
  * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
- * - la catégorie de l'offre (« Location meublée »), affichée pour un type de demande ;
+ * - le type de location de l'offre (« Location meublée »), affiché pour un type de demande ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
@@ -70,19 +70,19 @@ class OfferNotificationFilter implements NotificationFilter
                 ->options($this->offers($user))
                 ->searchable()
                 ->visibleWhen('type', array_keys($this->types())),
-            // La catégorie de l'offre (« Location meublée »), pour un type de demande.
-            Field::select('category')
-                ->label(__('offer::booking.notify.filter_category'))
-                ->options($this->categories($user))
+            // Le type de location de l'offre, pour un type de demande (décision 2026-11-20-contrat-type-de-location).
+            Field::select('rental_type')
+                ->label(__('offer::booking.notify.filter_rental_type'))
+                ->options(RentalTypeEnum::options())
                 ->visibleWhen('type', array_keys($this->types())),
         ];
     }
 
     public function apply(Builder $query, array $filters, User $user): void
     {
-        $category = $filters['category'] ?? null;
-        if (is_scalar($category) && ctype_digit((string) $category)) {
-            $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->where('category_id', (int) $category)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+        $rentalType = $filters['rental_type'] ?? null;
+        if (is_string($rentalType) && RentalTypeEnum::tryFrom($rentalType) !== null) {
+            $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->where('details->rental_type', $rentalType)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
             $query->whereIn('data->offer_id', $ids === [] ? [0] : $ids);
         }
 
@@ -103,20 +103,6 @@ class OfferNotificationFilter implements NotificationFilter
         if ($ids !== []) {
             $query->orWhereIn('data->offer_id', $ids);
         }
-    }
-
-    /**
-     * Les catégories des offres que nomment ses notifications (« Location meublée »), dans l'ordre des catégories.
-     *
-     * @return array<string, string>
-     */
-    private function categories(User $user): array
-    {
-        $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->whereNotNull('category_id')->distinct()->pluck('category_id')->all();
-
-        return OfferCategory::query()->whereKey($ids)->orderBy('position')->orderBy('id')->get()
-            ->mapWithKeys(fn (OfferCategory $category): array => [(string) $category->getKey() => (string) $category->getTranslation('name', app()->getLocale())])
-            ->all();
     }
 
     /**

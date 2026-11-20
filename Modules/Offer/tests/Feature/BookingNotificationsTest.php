@@ -51,7 +51,7 @@ class BookingNotificationsTest extends TestCase
     {
         $offer = Offer::factory()->for(User::factory()->create(['locale' => 'fr', 'email_verified_at' => now(), ...$owner]), 'user')->create([
             'status' => 'published', 'price' => '45000', 'currency' => 'XAF',
-            'details' => ['property_type' => 'studio', 'furnished' => true],
+            'details' => ['property_type' => 'studio', 'rental_type' => 'furnished'],
         ]);
 
         return Booking::factory()->for($offer)->for(User::factory()->create(['first_name' => 'Marie', 'last_name' => 'Curie', 'locale' => 'fr', 'email_verified_at' => now(), ...$guest]))

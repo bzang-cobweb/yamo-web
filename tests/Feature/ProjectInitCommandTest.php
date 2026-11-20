@@ -80,7 +80,8 @@ class ProjectInitCommandTest extends TestCase
         $this->assertStringContainsString("APP_KEY=base64:secret-key-not-to-touch\nDB_PASSWORD=\"s3cret pass\"\n", $env);
 
         // Données de départ : catégories du domaine, seul CH actif, rôles.
-        $this->assertSame(3, OfferCategory::query()->count());
+        // Le domaine « location » ne crée plus de catégories : son type de location les remplace (décision 2026-11-20-type-de-location-garder-categories).
+        $this->assertSame(0, OfferCategory::query()->count());
         $this->assertSame(['CH'], Country::query()->where('active', true)->pluck('code')->all());
         $this->assertTrue(Role::query()->where('name', RoleEnum::MEMBER->value)->exists());
 
@@ -102,7 +103,8 @@ class ProjectInitCommandTest extends TestCase
         $this->init()->expectsOutputToContain('rien')->assertSuccessful();
 
         $this->assertSame($env, $this->env());
-        $this->assertSame(3, OfferCategory::query()->count());
+        // Le domaine « location » ne crée plus de catégories : son type de location les remplace (décision 2026-11-20-type-de-location-garder-categories).
+        $this->assertSame(0, OfferCategory::query()->count());
     }
 
     public function test_an_invalid_setting_stops_everything_before_writing(): void

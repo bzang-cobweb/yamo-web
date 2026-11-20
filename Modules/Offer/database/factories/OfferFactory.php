@@ -27,7 +27,8 @@ class OfferFactory extends Factory
             'status' => OfferStatusEnum::DRAFT,
             'price' => null,
             'currency' => null,
-            'details' => [],
+            // Un type de location, obligatoire (décision 2026-11-20-contrat-type-de-location).
+            'details' => ['rental_type' => 'long_term'],
         ];
     }
 

@@ -70,9 +70,9 @@ class OfferBrowseApiTest extends TestCase
     public function test_a_home_is_titled_by_its_type_furnished_and_city(): void
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
-        $house = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'house', 'furnished' => true, 'bedrooms' => 3]]);
-        $studio = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'furnished' => false]]);
-        $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'furnished' => true]]);
+        $house = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'house', 'rental_type' => 'furnished', 'bedrooms' => 3]]);
+        $studio = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term']]);
+        $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'rental_type' => 'furnished']]);
 
         $fr = array_column($this->browse()->json('data.items'), 'title', 'id');
         $this->assertSame('Maison · meublée · Douala', $fr[(string) $house->getKey()]);

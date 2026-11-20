@@ -63,7 +63,7 @@ return [
         'search' => 'Angebot suchen…',
     ],
     'notify' => [
-        'filter_category' => 'Kategorie',
+        'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count Tag|[2,*] :count Tage',
         'people' => '{1} :count Person|[2,*] :count Personen',

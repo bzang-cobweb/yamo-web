@@ -9,6 +9,13 @@ return [
     'add' => 'Ajouter un logement',
     'request' => 'Demande de logement',
     'property_type' => 'Type de logement',
+    // Type de location (décision 2026-11-20-contrat-type-de-location).
+    'rental_type' => 'Type de location',
+    'rental_types' => [
+        'long_term' => 'Location longue durée',
+        'furnished' => 'Location meublée',
+        'shared' => 'Colocation',
+    ],
     'property_types' => [
         'apartment' => 'Appartement',
         'house' => 'Maison',

@@ -9,6 +9,13 @@ return [
     'add' => 'Unterkunft hinzufügen',
     'request' => 'Unterkunftsanfrage',
     'property_type' => 'Art der Unterkunft',
+    // Type de location (décision 2026-11-20-contrat-type-de-location).
+    'rental_type' => 'Art der Vermietung',
+    'rental_types' => [
+        'long_term' => 'Langzeitmiete',
+        'furnished' => 'Möblierte Vermietung',
+        'shared' => 'Wohngemeinschaft',
+    ],
     'property_types' => [
         'apartment' => 'Wohnung',
         'house' => 'Haus',

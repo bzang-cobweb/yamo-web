@@ -16,7 +16,6 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
-use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
 use Tests\TestCase;
 
@@ -62,14 +61,13 @@ class OfferApiTest extends TestCase
         return [
             'title' => 'Appartement lumineux',
             'description' => 'Proche du lac.',
-            'category_id' => (string) OfferCategory::query()->where('slug', 'furnished')->value('id'),
             'price' => '1850',
             'street' => 'Rue du Lac 4',
             'zip' => '1200',
             'city' => 'Genève',
             'status' => 'published',
             'property_type' => 'apartment',
-            'furnished' => true,
+            'rental_type' => 'furnished',
             'surface' => '64',
             'rooms' => '3.5',
             'bedrooms' => '2',
@@ -108,16 +106,19 @@ class OfferApiTest extends TestCase
 
         $fields = array_column($data, null, 'name');
         $this->assertSame(
-            ['title', 'description', 'category_id', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'furnished', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
-        // L'unité suit « Meublé » pendant la saisie.
+        // L'unité suit le type de location pendant la saisie.
         $this->assertSame('CHF / mois', $fields['price']['suffix']);
-        $this->assertSame(['field' => 'furnished', 'suffixes' => ['true' => 'CHF / jour', 'false' => 'CHF / mois']], $fields['price']['suffix_when']);
+        $this->assertSame(['field' => 'rental_type', 'suffixes' => ['furnished' => 'CHF / jour', 'long_term' => 'CHF / mois', 'shared' => 'CHF / mois']], $fields['price']['suffix_when']);
+        // Le type de location, obligatoire, avec ses trois valeurs.
+        $this->assertTrue($fields['rental_type']['required']);
+        $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['rental_type']['options'], 'label'));
         $this->assertSame('Surface', $fields['surface']['label']);
         $this->assertSame('m²', $fields['surface']['suffix']);
-        $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['category_id']['options'], 'label'));
         // La rue propose des adresses ; le code postal est facultatif (décision 2026-11-19-contrat-adresse-offre-recherche).
         $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);
         $this->assertTrue($fields['street']['required']);
@@ -149,12 +150,13 @@ class OfferApiTest extends TestCase
 
         // Décision 2026-11-19-charges-meuble-surface-facultative.
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame(['field' => 'furnished', 'value' => 'false', 'values' => ['false']], $fields['charges']['visible_when']);
+        // Les charges : pour une location longue durée ou une colocation.
+        $this->assertSame(['field' => 'rental_type', 'value' => 'long_term', 'values' => ['long_term', 'shared']], $fields['charges']['visible_when']);
         $this->assertFalse($fields['surface']['required']);
         $this->assertFalse($fields['rooms']['required']);
 
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['furnished' => true, 'charges' => '180']))->assertNoContent();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['furnished' => false, 'charges' => '180', 'surface' => null, 'rooms' => null]))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'furnished', 'charges' => '180']))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'long_term', 'charges' => '180', 'surface' => null, 'rooms' => null]))->assertNoContent();
 
         [$furnished, $unfurnished] = Offer::query()->orderBy('id')->get()->all();
         $this->assertNull($furnished->detail('charges'));
@@ -178,7 +180,8 @@ class OfferApiTest extends TestCase
         // « Règles » en 4e, puis « Informations » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
         $this->assertSame(['Présentation', 'Caractéristiques', 'Prix et disponibilité', 'Règles', 'Informations', 'Localisation', 'Photos'], array_column($steps, 'title'));
         $this->assertSame([
-            ['property_type', 'furnished', 'category_id', 'title', 'description'],
+            // Sans catégorie créée, pas de champ « Catégorie ».
+            ['property_type', 'rental_type', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
             ['pets', 'smoking', 'parties', 'documents'],
@@ -193,7 +196,7 @@ class OfferApiTest extends TestCase
             ->assertJsonValidationErrors(['property_type', 'title'])
             ->assertJsonMissingValidationErrors(['surface', 'rooms', 'price', 'street']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
-        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'title' => 'Studio'])->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'rental_type' => 'long_term', 'title' => 'Studio'])->assertNoContent();
     }
 
     public function test_rules_and_information_are_optional_and_saved(): void
@@ -351,7 +354,7 @@ class OfferApiTest extends TestCase
         $this->assertSame('1850.00', $offer->price);
         $this->assertSame('CHF', $offer->currency);
         $this->assertSame('apartment', $offer->detail('property_type'));
-        $this->assertTrue($offer->detail('furnished'));
+        $this->assertSame('furnished', $offer->detail('rental_type'));
         $this->assertSame(3.5, $offer->detail('rooms'));
         $this->assertSame(64, $offer->detail('surface'));
     }

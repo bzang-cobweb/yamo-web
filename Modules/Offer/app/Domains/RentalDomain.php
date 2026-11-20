@@ -5,6 +5,7 @@ namespace Modules\Offer\Domains;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
+use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -66,7 +67,7 @@ class RentalDomain extends Domain
 
         return implode(' · ', array_filter([
             __('offer::rental.property_types.'.$type),
-            $offer->detail('furnished') ? __('offer::rental.furnished_words.'.$type) : null,
+            RentalTypeEnum::of($offer)?->isFurnished() ? __('offer::rental.furnished_words.'.$type) : null,
             $offer->address?->city,
         ]));
     }
@@ -77,17 +78,21 @@ class RentalDomain extends Domain
      */
     public function priceUnit(Offer $offer): ?string
     {
-        return __('offer::rental.price_units.'.($offer->detail('furnished') ? 'day' : 'month'));
+        return __('offer::rental.price_units.'.(RentalTypeEnum::of($offer)?->isFurnished() ? 'day' : 'month'));
     }
 
     /**
-     * Pendant la saisie : « / jour » si « Meublé » est coché, « / mois » sinon.
+     * Pendant la saisie : « / jour » pour une location meublée, « / mois » sinon.
      */
     public function priceUnitWhen(): ?array
     {
         return [
-            'field' => 'furnished',
-            'units' => ['true' => __('offer::rental.price_units.day'), 'false' => __('offer::rental.price_units.month')],
+            'field' => 'rental_type',
+            'units' => [
+                RentalTypeEnum::FURNISHED->value => __('offer::rental.price_units.day'),
+                RentalTypeEnum::LONG_TERM->value => __('offer::rental.price_units.month'),
+                RentalTypeEnum::SHARED->value => __('offer::rental.price_units.month'),
+            ],
             'default' => __('offer::rental.price_units.month'),
         ];
     }
@@ -119,8 +124,11 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.property_type'))
                 ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all())
                 ->required(),
-            Field::switch('furnished')
-                ->label(__('offer::rental.furnished')),
+            // Le type de location, obligatoire : il remplace « Meublé » (décision 2026-11-20-contrat-type-de-location).
+            Field::select('rental_type')
+                ->label(__('offer::rental.rental_type'))
+                ->options(RentalTypeEnum::options())
+                ->required(),
             // Facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
             Field::number('surface')
                 ->label(__('offer::rental.surface'))
@@ -144,7 +152,7 @@ class RentalDomain extends Domain
                 // Un montant mensuel : « FCFA / mois », la devise venant de qui l'affiche.
                 ->money(__('offer::rental.price_units.month'))
                 // Un meublé se loue charges comprises : pas de charges.
-                ->visibleWhen('furnished', 'false')
+                ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
                 ->rules(['min:0', 'max:100000']),
             // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Les heures
             // d'arrivée et de départ n'y sont plus : un bloc d'informations les dit (décision
@@ -180,14 +188,14 @@ class RentalDomain extends Domain
      */
     public function leadingFacts(): array
     {
-        return ['property_type', 'furnished', 'category_id'];
+        return ['property_type', 'rental_type', 'category_id'];
     }
 
     public function formSteps(): array
     {
         return [
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
-            ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'furnished', 'category_id', 'title', 'description']],
+            ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
@@ -210,10 +218,9 @@ class RentalDomain extends Domain
             Field::multiselect('property_type')
                 ->label(__('offer::rental.property_type'))
                 ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all()),
-            Field::segmented('furnished')
-                ->label(__('offer::rental.furnished'))
-                ->options(['any' => __('offer::rental.filters.any'), 'true' => __('offer::rental.filters.furnished'), 'false' => __('offer::rental.filters.unfurnished')])
-                ->default('any'),
+            Field::select('rental_type')
+                ->label(__('offer::rental.rental_type'))
+                ->options(RentalTypeEnum::options()),
             Field::select('bedrooms')
                 ->label(__('offer::rental.filters.bedrooms'))
                 ->options(collect([1, 2, 3, 4])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
@@ -238,8 +245,8 @@ class RentalDomain extends Domain
             $query->whereIn('details->property_type', (array) $filters['property_type']);
         }
         // « Tous » ne filtre rien.
-        if (in_array($filters['furnished'] ?? 'any', ['true', 'false'], true)) {
-            $query->where('details->furnished', $filters['furnished'] === 'true');
+        if (is_string($filters['rental_type'] ?? null) && RentalTypeEnum::tryFrom($filters['rental_type']) !== null) {
+            $query->where('details->rental_type', $filters['rental_type']);
         }
         if (isset($filters['bedrooms'])) {
             $query->where('details->bedrooms', '>=', (int) $filters['bedrooms']);
@@ -268,16 +275,16 @@ class RentalDomain extends Domain
      */
     public function listingAttributes(): array
     {
-        return ['property_type', 'furnished'];
+        return ['property_type', 'rental_type'];
     }
 
     /**
-     * Un meublé se réserve par dates ; un non meublé se visite (décision
-     * 2026-11-19-contrat-reservations).
+     * Une location meublée se réserve par dates ; une location longue durée ou une
+     * colocation se visite (décisions 2026-11-19-contrat-reservations et 2026-11-20-contrat-type-de-location).
      */
     public function bookingType(Offer $offer): ?BookingTypeEnum
     {
-        return $offer->detail('furnished') === true ? BookingTypeEnum::STAY : BookingTypeEnum::VISIT;
+        return RentalTypeEnum::of($offer)?->isFurnished() ? BookingTypeEnum::STAY : BookingTypeEnum::VISIT;
     }
 
     /**
@@ -291,15 +298,6 @@ class RentalDomain extends Domain
     public function accessAttributes(): array
     {
         return ['available_from'];
-    }
-
-    public function categories(): array
-    {
-        return [
-            ['slug' => 'long-term', 'name' => ['fr' => 'Location longue durée', 'en' => 'Long-term rental', 'de' => 'Langzeitmiete']],
-            ['slug' => 'furnished', 'name' => ['fr' => 'Location meublée', 'en' => 'Furnished rental', 'de' => 'Möblierte Vermietung']],
-            ['slug' => 'shared', 'name' => ['fr' => 'Colocation', 'en' => 'Flat share', 'de' => 'Wohngemeinschaft']],
-        ];
     }
 
     public function requiresPrice(): bool
