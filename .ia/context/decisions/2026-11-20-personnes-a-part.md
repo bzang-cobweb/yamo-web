@@ -14,6 +14,11 @@
   le texte (« 1 personne »), lu dans `booking.guests_label`, rédigé par
   `BookingResource` dans la langue de la requête.
 
+- Pour un séjour (meublé), les dates d'arrivée et de départ s'affichent aussi sur leur
+  ligne, après le texte et avant le nombre de personnes (« Du 5 déc. 2026 au 7 déc. 2026 »),
+  lues dans `booking.period_label`. Demande de l'humain : « afficher pour un meublé la date
+  check_in au check_out après le summary ».
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « afficher après le summary le nombre de personne »,
