@@ -71,6 +71,7 @@ class NotificationFiltersTest extends TestCase
         // Le type de logement (la catégorie de l'offre), comme « Logement » : seulement pour un type de demande.
         $this->assertEqualsCanonicalizing([(string) $furnished->getKey() => 'Location meublée', (string) $longTerm->getKey() => 'Location longue durée'], array_column($filters['category']['options'], 'label', 'value'));
         $this->assertSame($filters['offer']['visible_when'], $filters['category']['visible_when']);
+        $this->assertSame('Catégorie', $filters['category']['label']);
         // Les types de ses notifications, nommés par le domaine ; un type inconnu des modules n'est pas proposé.
         $this->assertSame(['Demande de logement en attente', 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label'));
         $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class], array_column($filters['type']['options'], 'value'));

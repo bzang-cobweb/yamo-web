@@ -18,7 +18,7 @@ use Modules\Offer\Models\OfferCategory;
  * 2026-11-20-filtres-notifications) :
  * - les types de ses notifications : les quatre étapes d'une demande ;
  * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
- * - le type de logement : la catégorie de l'offre (« Location meublée »), affiché pour un type de demande ;
+ * - la catégorie de l'offre (« Location meublée »), affichée pour un type de demande ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
@@ -70,9 +70,9 @@ class OfferNotificationFilter implements NotificationFilter
                 ->options($this->offers($user))
                 ->searchable()
                 ->visibleWhen('type', array_keys($this->types())),
-            // Le type de logement : la catégorie de l'offre (« Location meublée »), pour un type de demande.
+            // La catégorie de l'offre (« Location meublée »), pour un type de demande.
             Field::select('category')
-                ->label(__('offer::booking.notify.filter_booking_type'))
+                ->label(__('offer::booking.notify.filter_category'))
                 ->options($this->categories($user))
                 ->visibleWhen('type', array_keys($this->types())),
         ];

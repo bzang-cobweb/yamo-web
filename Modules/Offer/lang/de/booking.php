@@ -60,7 +60,7 @@ return [
         'search' => 'Angebot suchen…',
     ],
     'notify' => [
-        'filter_booking_type' => 'Art der Unterkunft',
+        'filter_category' => 'Kategorie',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count Tag|[2,*] :count Tage',
         'people' => '{1} :count Person|[2,*] :count Personen',
