@@ -168,6 +168,12 @@ class RentalDomain extends Domain
                 ->suffix(__('offer::rental.months'))
                 ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
                 ->rules(['integer', 'min:0', 'max:24']),
+            // La caution d'un meublé : un montant, pas un nombre de mois (décision 2026-11-20-caution-meuble).
+            Field::number('deposit')
+                ->label(__('offer::rental.deposit'))
+                ->money()
+                ->visibleWhen('rental_type', RentalTypeEnum::FURNISHED->value)
+                ->rules(['integer', 'min:0', 'max:100000000']),
             // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Pas d'âge
             // minimum propre à l'offre : celui de l'application vaut pour toutes (décision
             // 2026-11-19-age-minimum-de-l-app).
@@ -236,7 +242,7 @@ class RentalDomain extends Domain
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
             ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
-            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'available_from', 'status']],
+            ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],
             // Les blocs d'informations, à part (décision 2026-11-19-etape-informations).

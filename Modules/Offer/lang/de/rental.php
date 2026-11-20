@@ -46,6 +46,7 @@ return [
     'deposit_months' => 'Kaution',
     'advance_months' => 'Mietvorauszahlung',
     'months' => 'Monate',
+    'deposit' => 'Kaution',
     'price' => 'Miete',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [

@@ -46,6 +46,7 @@ return [
     'deposit_months' => 'Caution',
     'advance_months' => 'Avance de loyer',
     'months' => 'mois',
+    'deposit' => 'Caution',
     'price' => 'Loyer',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [

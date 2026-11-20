@@ -266,6 +266,8 @@ class DemoSeeder extends Seeder
                     // Caution et avance de loyer d'une location non meublée (décision 2026-11-20-caution-avance-loyer).
                     'deposit_months' => $furnished ? null : 2,
                     'advance_months' => $furnished ? null : [3, 6, 12][$index % 3],
+                    // La caution d'un meublé, un montant (décision 2026-11-20-caution-meuble).
+                    'deposit' => $furnished ? [50000, 100000][$index % 2] : null,
                     'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
                 ],
             ]);

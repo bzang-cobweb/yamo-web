@@ -46,6 +46,7 @@ return [
     'deposit_months' => 'Deposit',
     'advance_months' => 'Rent in advance',
     'months' => 'months',
+    'deposit' => 'Deposit',
     'price' => 'Rent',
     // Étapes du formulaire de l'app (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
     'steps' => [
