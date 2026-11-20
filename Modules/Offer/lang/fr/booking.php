@@ -9,7 +9,6 @@ return [
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
         'guests' => 'Personnes',
-        'bedrooms' => 'Chambres',
         'price' => 'Prix',
         'price_per' => 'Prix par :unit',
         'days' => 'Durée',

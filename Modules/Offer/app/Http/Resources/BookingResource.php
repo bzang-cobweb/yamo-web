@@ -42,7 +42,7 @@ class BookingResource extends JsonResource
             'offer' => $this->offer($booking->offer),
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
-             * chambres, arrivée, départ (ou visite, seconde date), durée, prix, total. Une
+             * arrivée, départ (ou visite, seconde date), durée, prix, total. Une
              * ligne sans valeur n'est pas servie.
              */
             'lines' => $this->lines($booking),
@@ -55,13 +55,11 @@ class BookingResource extends JsonResource
     private function lines(Booking $booking): array
     {
         $locale = app()->getLocale();
-        $bedrooms = $booking->offer?->detail('bedrooms');
         $days = $booking->days();
         $line = fn (string $key, mixed $value): ?array => $value === null || $value === '' ? null : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => (string) $value];
 
         $lines = [
             $line('guests', $booking->guests),
-            $line('bedrooms', is_numeric($bedrooms) ? (int) $bedrooms : null),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             $this->price($booking, $locale),

@@ -15,7 +15,6 @@ pas servie :
 | key | label (fr) | value |
 |---|---|---|
 | `guests` | Personnes | « 1 » |
-| `bedrooms` | Chambres | « 0 » |
 | `arrival` / `visit` | Arrivée / Visite | « 5 déc. 2026 à partir de 14:00 » |
 | `departure` / `second` | Départ / Seconde date | « 7 déc. 2026 au plus tard à 11:00 » |
 | `days` | Durée | « 2 jours » |
@@ -25,6 +24,9 @@ pas servie :
 L'app affiche chaque ligne, libellé à gauche, valeur à droite, le total en gras. Elle n'a
 qu'une boucle. Les champs servis un à un (`dates`, `days_label`, `guests_label`,
 `price_label`, `total`, `offer.bedrooms`) sont retirés.
+
+Le nombre de chambres a été retiré des lignes (« enlever la ligne du nombre de chambre ») ;
+il reste obligatoire dans le formulaire d'un logement.
 
 ## Motif
 
@@ -39,4 +41,4 @@ page d'une notification dans l'app.
 
 ## Corollaires
 
-- Les personnes et les chambres valent un simple nombre : leur libellé dit l'unité.
+- Les personnes valent un simple nombre : leur libellé dit l'unité.
