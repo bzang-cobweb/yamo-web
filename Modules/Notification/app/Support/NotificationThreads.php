@@ -34,11 +34,15 @@ class NotificationThreads
                     ->orWhere(fn (QueryBuilder $same) => $same->whereColumn('later.created_at', 'notifications.created_at')->whereColumn('later.id', '>', 'notifications.id')))));
     }
 
-    /** Le nombre de non lues, un fil comptant pour une. */
+    /**
+     * Le nombre de non lues, un fil comptant pour une : les fils distincts, plus
+     * chaque notification sans fil. Pas de `coalesce(thread, id)` : sous MariaDB, `id`
+     * est de type `uuid` et le mélange des deux types compte chaque ligne à part.
+     */
     public function unreadCount(User $user): int
     {
         return (int) $user->unreadNotifications()->getQuery()->reorder()
-            ->selectRaw('count(distinct coalesce(thread, id)) as unread')
+            ->selectRaw('count(distinct thread) + sum(case when thread is null then 1 else 0 end) as unread')
             ->value('unread');
     }
 
