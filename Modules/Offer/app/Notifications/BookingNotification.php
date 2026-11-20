@@ -13,6 +13,7 @@ use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Support\BookingText;
 
 /**
  * Une étape d'une demande, notifiée à l'autre partie (décision
@@ -65,7 +66,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la déduit du type de la notification (décision 2026-11-20-statut-par-type).
      *
-     * @return array{title: string, booking_id: int, booking_status: string, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -78,7 +79,9 @@ abstract class BookingNotification extends Notification implements HasNotificati
             'booking_status' => $this->status->value,
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),
             // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom.
-            'summary' => $this->summary(),
+            'summary' => BookingText::summary($this->booking, $this->key()),
+            // Le total figé de la demande (« 255 000 FCFA »), en gras sur la page de la notification ; `null` pour une visite.
+            'total' => $this->booking->formattedTotal(app()->getLocale()),
             'message' => $this->note(),
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
@@ -150,52 +153,12 @@ abstract class BookingNotification extends Notification implements HasNotificati
     }
 
     /**
-     * Le texte de la carte, sans le nom de qui agit (une demande reçue, décision
-     * 2026-11-20-texte-demande) :
-     * - un séjour (logement meublé) : sa durée après les dates, le prix par jour et le
-     *   nombre de voyageurs (« … (3 jours) pour « Studio photos », 85 000 FCFA / jour (2 personnes). ») ;
-     * - une visite : le loyer par mois (« … pour « Appartement », 250 000 FCFA / mois. »).
-     *
-     * Sans prix ou sans voyageurs, le texte s'en passe.
-     */
-    private function summary(): string
-    {
-        $replace = $this->replacements();
-        $key = "offer::booking.notify.{$this->key()}.summary";
-        $price = app(DomainRegistry::class)->require()->formattedPrice($this->booking->offer, app()->getLocale());
-        $days = $this->booking->days();
-        $people = $this->booking->guests === null ? null : trans_choice('offer::booking.notify.people', $this->booking->guests, ['count' => $this->booking->guests]);
-
-        return match (true) {
-            $days !== null && $price !== null && $people !== null && trans()->has($key.'_stay') => __($key.'_stay', [
-                ...$replace,
-                'days' => trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
-                'price' => $price,
-                'people' => $people,
-            ]),
-            $people !== null && trans()->has($key.'_people') => __($key.'_people', [...$replace, 'people' => $people]),
-            $days === null && $price !== null && trans()->has($key.'_visit') => __($key.'_visit', [...$replace, 'price' => $price]),
-            default => __($key, $replace),
-        };
-    }
-
-    /**
      * Les remplacements des textes, dans la langue courante (celle du destinataire).
      *
      * @return array<string, string>
      */
     protected function replacements(): array
     {
-        $locale = app()->getLocale();
-        $offer = $this->booking->offer;
-
-        return [
-            'app' => (string) config('app.name'),
-            'guest' => (string) $this->booking->user->full_name,
-            // Le titre saisi par le propriétaire, pas le titre construit de la liste.
-            'offer' => (string) $offer->getTranslation('title', $locale),
-            'period' => $this->booking->period($locale),
-            'type' => __('offer::booking.notify.type_lower.'.$this->booking->type->value),
-        ];
+        return BookingText::replacements($this->booking);
     }
 }

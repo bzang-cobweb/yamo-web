@@ -12,7 +12,6 @@ use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
-use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Events\BookingAnswered;
 use Modules\Offer\Events\BookingCancelled;
@@ -190,6 +189,8 @@ class BookingNotificationsTest extends TestCase
         // Un séjour : sa durée après les dates, le prix par jour, le nombre de voyageurs.
         $this->assertStringContainsString('(1 day) for', $notification->data['summary']);
         $this->assertStringEndsWith('45,000 / day (1 person).', $notification->data['summary']);
+        // Le total figé de la demande.
+        $this->assertSame($booking->offer->bookings()->latest('id')->first()->formattedTotal('en'), $notification->data['total']);
         $this->assertSame($booking->offer_id, $notification->data['offer_id']);
         $this->assertSame([
             ['text' => 'Marie Curie', 'link' => '/members/'.$booking->user_id],

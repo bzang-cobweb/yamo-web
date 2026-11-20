@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Submission;
+use Modules\Notification\Support\ActorData;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestCancelled;
+use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Notifications\OfferNotificationFilter;
+use Modules\Offer\Support\BookingText;
 
 /**
  * Le calendrier d'une offre, vu par son propriétaire (décision
@@ -26,6 +33,14 @@ use Modules\Offer\Models\Offer;
  */
 class OfferCalendar
 {
+    /** Le type de notification qui nomme chaque statut, pour la pastille d'une carte. */
+    private const STEPS = [
+        'pending' => BookingRequestReceived::class,
+        'accepted' => BookingRequestAccepted::class,
+        'refused' => BookingRequestRefused::class,
+        'cancelled' => BookingRequestCancelled::class,
+    ];
+
     /** Les mois qu'on peut revoir avant le mois courant. */
     public const PAST_MONTHS = 12;
 
@@ -97,7 +112,7 @@ class OfferCalendar
      * Accepter / Refuser ; « Bloquer ce jour » (libre, à venir, sans séjour accepté)
      * ou « Débloquer ».
      *
-     * @return array{title: string, items: list<array<string, mixed>>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
+     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}|null, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
      */
     public function day(Offer $offer, Carbon $day, Authenticatable $owner, string $locale): array
     {
@@ -122,7 +137,7 @@ class OfferCalendar
 
         return [
             'title' => ucfirst($day->copy()->locale($locale)->isoFormat('dddd LL')).($isBlocked ? ' · '.__('offer::booking.calendar.legend.blocked', [], $locale) : ''),
-            'items' => $this->cards($listing, $bookings),
+            'items' => $this->cards($listing, $bookings, $locale),
             'empty' => __('offer::booking.calendar.empty_day', [], $locale),
             'action' => $action,
             'note' => $note,
@@ -130,19 +145,40 @@ class OfferCalendar
     }
 
     /**
-     * Les demandes en cartes, comme dans « Demandes reçues » (Accepter, Refuser).
+     * Les demandes en cartes de notification (décision 2026-11-20-calendrier-cartes) :
+     * - qui demande (photo, nom, en ligne) et la date de la demande ;
+     * - la pastille (« Demande de logement en attente », comme le type de notification) ;
+     * - le texte (dates, durée, prix, voyageurs) et le message ;
+     * - le total en gras (logement meublé) ;
+     * - Accepter et Refuser, comme dans « Demandes reçues ».
      *
      * @param  Collection<int, Booking>  $bookings
-     * @return list<array<string, mixed>>
+     * @return list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}|null, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>
      */
-    private function cards(ReceivedBookingListing $listing, Collection $bookings): array
+    private function cards(ReceivedBookingListing $listing, Collection $bookings, string $locale): array
     {
+        $current = app()->getLocale();
+        app()->setLocale($locale);
+        $tags = app(OfferNotificationFilter::class);
+
         $cards = [];
         foreach ($bookings as $booking) {
-            /** @var array<string, mixed> $card */
-            $card = $listing->item($booking)->toArray();
-            $cards[] = $card;
+            $summary = BookingText::summary($booking, 'requested');
+            /** @var list<array<string, mixed>> $actions */
+            $actions = $listing->item($booking)->toArray()['actions'];
+            $cards[] = [
+                'id' => (string) $booking->getKey(),
+                'actor' => ActorData::from($booking->user),
+                'tag' => $tags->tag(self::STEPS[$booking->status->value] ?? BookingRequestReceived::class),
+                'summary' => $summary,
+                'text_links' => BookingText::offerLink($booking, $summary),
+                'message' => $booking->message,
+                'total' => $booking->formattedTotal($locale),
+                'created_at' => $booking->created_at?->toIso8601String(),
+                'actions' => $actions,
+            ];
         }
+        app()->setLocale($current);
 
         return $cards;
     }

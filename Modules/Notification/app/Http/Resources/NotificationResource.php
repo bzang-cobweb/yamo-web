@@ -2,12 +2,11 @@
 
 namespace Modules\Notification\Http\Resources;
 
-use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Auth\Support\PhoneNumbers;
+use Modules\Notification\Support\ActorData;
 use Modules\Notification\Support\NotificationFilters;
 
 /**
@@ -47,7 +46,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, total: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -65,6 +64,8 @@ class NotificationResource extends JsonResource
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
             'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
+            /** Le total de la demande (« 255 000 FCFA »), en gras sur sa page ; `null` sans total. */
+            'total' => $this->total($data),
             'message' => $this->message($data),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
             'link' => $this->link($data),
@@ -94,17 +95,7 @@ class NotificationResource extends JsonResource
             return null;
         }
 
-        return [
-            'id' => (string) $actor->getKey(),
-            'name' => (string) $actor->full_name,
-            'initials' => (string) $actor->initials,
-            'photo' => MediaUrl::onRequestHost($actor->avatarUrl()),
-            'online' => (bool) $actor->is_online,
-            'link' => '/members/'.$actor->getKey(),
-            /** Sur la page d'une notification : son e-mail et son téléphone (format international), sinon `null`. */
-            'email' => $this->withContact ? $actor->email : null,
-            'phone' => $this->withContact && $actor->phone !== null ? PhoneNumbers::international($actor->phone) : null,
-        ];
+        return ActorData::from($actor, $this->withContact);
     }
 
     /**
@@ -113,6 +104,14 @@ class NotificationResource extends JsonResource
     private function summary(array $data): ?string
     {
         return isset($data['summary']) && is_string($data['summary']) ? (string) $data['summary'] : null;
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     */
+    private function total(array $data): ?string
+    {
+        return isset($data['total']) && is_string($data['total']) ? (string) $data['total'] : null;
     }
 
     /**

@@ -1691,68 +1691,34 @@
                                                             "id": {
                                                                 "type": "string"
                                                             },
-                                                            "title": {
-                                                                "type": "string"
-                                                            },
-                                                            "subtitle": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
-                                                            },
-                                                            "image": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
-                                                            },
-                                                            "rating": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Note moyenne (1 \u00e0 5, au dixi\u00e8me) et nombre de notes ; `null` sans note.",
+                                                            "actor": {
+                                                                "type": "object",
                                                                 "properties": {
-                                                                    "average": {
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "initials": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "photo": {
                                                                         "type": [
-                                                                            "number",
+                                                                            "string",
                                                                             "null"
                                                                         ]
                                                                     },
-                                                                    "count": {
-                                                                        "type": "integer"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "average",
-                                                                    "count"
-                                                                ]
-                                                            },
-                                                            "highlight": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Phrase mise en avant, affich\u00e9e en gras sur sa ligne ; `null` sans."
-                                                            },
-                                                            "quote": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Message cit\u00e9 sur la carte, sous le sous-titre ; `null` sans."
-                                                            },
-                                                            "favorite": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "description": "C\u0153ur de favori : plein si `active` ; PUT sur `endpoint` ajoute, DELETE retire ; `null` : pas de c\u0153ur.",
-                                                                "properties": {
-                                                                    "active": {
+                                                                    "online": {
                                                                         "type": "boolean"
                                                                     },
-                                                                    "endpoint": {
+                                                                    "link": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "email": {
+                                                                        "type": "null"
+                                                                    },
+                                                                    "phone": {
                                                                         "type": [
                                                                             "string",
                                                                             "null"
@@ -1760,152 +1726,85 @@
                                                                     }
                                                                 },
                                                                 "required": [
-                                                                    "active",
-                                                                    "endpoint"
+                                                                    "id",
+                                                                    "name",
+                                                                    "initials",
+                                                                    "photo",
+                                                                    "online",
+                                                                    "link",
+                                                                    "email",
+                                                                    "phone"
                                                                 ]
                                                             },
-                                                            "link": {
+                                                            "tag": {
+                                                                "type": "string"
+                                                            },
+                                                            "summary": {
+                                                                "type": "string"
+                                                            },
+                                                            "text_links": {
+                                                                "anyOf": [
+                                                                    {
+                                                                        "type": "array",
+                                                                        "prefixItems": [
+                                                                            {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "text": {
+                                                                                        "type": "string",
+                                                                                        "description": "Le titre saisi par le propri\u00e9taire, pas le titre construit de la liste."
+                                                                                    },
+                                                                                    "link": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "required": [
+                                                                                    "text",
+                                                                                    "link"
+                                                                                ]
+                                                                            }
+                                                                        ],
+                                                                        "minItems": 1,
+                                                                        "maxItems": 1
+                                                                    },
+                                                                    {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "minItems": 0,
+                                                                        "maxItems": 0
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            },
+                                                            "total": {
+                                                                "type": "string"
+                                                            },
+                                                            "created_at": {
                                                                 "type": [
                                                                     "string",
                                                                     "null"
-                                                                ],
-                                                                "description": "\u00c9cran de l'app ouvert en touchant l'item ; `null` : aucun."
-                                                            },
-                                                            "edit": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "properties": {
-                                                                    "form": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "record": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "form",
-                                                                    "record"
                                                                 ]
                                                             },
                                                             "actions": {
                                                                 "type": "array",
                                                                 "description": "Boutons de la carte : libell\u00e9, style, confirmation, et un envoi, un formulaire \u00e0 ouvrir (li\u00e9 \u00e0 `record`) ou un \u00e9cran de l'app (`link`).",
                                                                 "items": {}
-                                                            },
-                                                            "tag": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Pastille de couleur (un statut) : libell\u00e9 et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune.",
-                                                                "properties": {
-                                                                    "label": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "tone": {
-                                                                        "type": "string"
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "label",
-                                                                    "tone"
-                                                                ]
-                                                            },
-                                                            "counter": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "description": "Compteur de la carte : son libell\u00e9, la liste qu'il ouvre et les filtres d\u00e9j\u00e0 choisis ; `null` : aucun.",
-                                                                "properties": {
-                                                                    "label": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "list": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "filter": {
-                                                                        "type": "object",
-                                                                        "additionalProperties": {
-                                                                            "type": "string"
-                                                                        }
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "label",
-                                                                    "list",
-                                                                    "filter"
-                                                                ]
-                                                            },
-                                                            "delete": {
-                                                                "type": [
-                                                                    "object",
-                                                                    "null"
-                                                                ],
-                                                                "properties": {
-                                                                    "label": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "confirm": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "method": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "endpoint": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "destructive": {
-                                                                        "type": "boolean"
-                                                                    },
-                                                                    "success": {
-                                                                        "type": "object",
-                                                                        "properties": {
-                                                                            "action": {
-                                                                                "type": "string",
-                                                                                "enum": [
-                                                                                    "profile",
-                                                                                    "sign-out",
-                                                                                    "back"
-                                                                                ]
-                                                                            },
-                                                                            "message": {
-                                                                                "type": "string"
-                                                                            }
-                                                                        },
-                                                                        "required": [
-                                                                            "action",
-                                                                            "message"
-                                                                        ]
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "label",
-                                                                    "confirm",
-                                                                    "method",
-                                                                    "endpoint",
-                                                                    "destructive",
-                                                                    "success"
-                                                                ]
                                                             }
                                                         },
                                                         "required": [
                                                             "id",
-                                                            "title",
-                                                            "subtitle",
-                                                            "image",
-                                                            "rating",
-                                                            "highlight",
-                                                            "quote",
-                                                            "favorite",
-                                                            "link",
-                                                            "edit",
-                                                            "actions",
+                                                            "actor",
                                                             "tag",
-                                                            "counter",
-                                                            "delete"
+                                                            "summary",
+                                                            "text_links",
+                                                            "message",
+                                                            "total",
+                                                            "created_at",
+                                                            "actions"
                                                         ]
                                                     }
                                                 },
@@ -3855,10 +3754,7 @@
                                             "type": "string"
                                         },
                                         "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
+                                            "type": "null"
                                         },
                                         "phone": {
                                             "type": [
@@ -3885,12 +3781,18 @@
                                     ],
                                     "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
                                 },
-                                "message": {
+                                "total": {
                                     "type": [
                                         "string",
                                         "null"
                                     ],
-                                    "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                                    "description": "Le total de la demande (\u00ab 255 000 FCFA \u00bb), en gras sur sa page ; `null` sans total."
+                                },
+                                "message": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
                                 },
                                 "link": {
                                     "type": [
@@ -3962,6 +3864,7 @@
                                 "body",
                                 "actor",
                                 "summary",
+                                "total",
                                 "message",
                                 "link",
                                 "links",
@@ -4081,12 +3984,18 @@
                         ],
                         "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
                     },
-                    "message": {
+                    "total": {
                         "type": [
                             "string",
                             "null"
                         ],
-                        "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                        "description": "Le total de la demande (\u00ab 255 000 FCFA \u00bb), en gras sur sa page ; `null` sans total."
+                    },
+                    "message": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "link": {
                         "type": [
@@ -4158,6 +4067,7 @@
                     "body",
                     "actor",
                     "summary",
+                    "total",
                     "message",
                     "link",
                     "links",

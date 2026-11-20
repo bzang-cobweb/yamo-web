@@ -27,11 +27,18 @@ use Modules\Offer\Models\OfferReview;
  *     ddev artisan db:seed --class='Database\Seeders\DemoSeeder'
  *
  * Compte de démonstration : demo-membre@example.test, mot de passe « password » ;
- * visiteurs : demo-visiteur-1@example.test à -3, même mot de passe.
+ * visiteurs : demo-visiteur-1@example.test à -3, même mot de passe. Chacun a un
+ * téléphone de démonstration, non vérifié (`PHONES`).
  */
 class DemoSeeder extends Seeder
 {
     public const EMAIL = 'demo-membre@example.test';
+
+    /**
+     * Téléphones de démonstration (Cameroun) : le membre, puis les visiteurs 1 à 3.
+     * Jamais vérifiés, pour qu'aucun SMS ne parte vers eux.
+     */
+    public const PHONES = ['+237670000001', '+237670000002', '+237670000003', '+237670000004'];
 
     /** Mot de passe de démonstration, comme celui des factories. */
     private const PASSWORD = 'password';
@@ -51,6 +58,9 @@ class DemoSeeder extends Seeder
             'last_name' => 'Ngono',
             'gender' => GenderEnum::FEMALE,
             'country_id' => $cameroon->getKey(),
+            // Un téléphone de démonstration, non vérifié : aucun SMS ne part vers lui.
+            'phone' => self::PHONES[0],
+            'phone_country_id' => $cameroon->getKey(),
             'locale' => 'fr',
         ]);
         $member->forceFill(['password' => self::PASSWORD, 'email_verified_at' => $member->email_verified_at ?? now()])->save();
@@ -103,6 +113,8 @@ class DemoSeeder extends Seeder
                 'last_name' => $lastName,
                 'gender' => GenderEnum::MALE,
                 'country_id' => $cameroon->getKey(),
+                'phone' => self::PHONES[$number + 1],
+                'phone_country_id' => $cameroon->getKey(),
                 'locale' => 'fr',
             ]);
             $reviewer->forceFill(['password' => self::PASSWORD, 'email_verified_at' => $reviewer->email_verified_at ?? now()])->save();

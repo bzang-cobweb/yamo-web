@@ -172,6 +172,12 @@ class OfferCalendarApiTest extends TestCase
         $day = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->assertOk()->json('data');
         $this->assertSame([(string) $pending->getKey()], array_column($day['items'], 'id'));
         $this->assertSame(['Accepter', 'Refuser'], array_column($day['items'][0]['actions'], 'label'));
+        // En carte de notification : qui demande, la pastille du type, le texte, le total.
+        $card = $day['items'][0];
+        $this->assertSame((string) $pending->user_id, $card['actor']['id']);
+        $this->assertSame(['label' => 'Demande de logement en attente', 'tone' => 'warning'], $card['tag']);
+        $this->assertStringContainsString('(3 jours)', $card['summary']);
+        $this->assertSame($pending->formattedTotal('fr'), $card['total']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => "/v1/offers/{$offer->getKey()}/blocked-dates/{$this->date(41)}"], array_intersect_key($day['action']['submission'], ['method' => 1, 'endpoint' => 1]));
 
