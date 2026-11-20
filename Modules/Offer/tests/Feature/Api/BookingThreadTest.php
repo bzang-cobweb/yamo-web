@@ -82,6 +82,8 @@ class BookingThreadTest extends TestCase
         $owner = $this->cards($this->owner);
         $this->assertCount(1, $owner);
         $this->assertSame(['label' => 'Annulée', 'tone' => 'neutral'], $owner[0]['tag']);
+        // Le titre de la carte : le type de location (décision 2026-11-20-titre-carte).
+        $this->assertSame('Location meublée', $owner[0]['card_title']);
         // Le membre : une carte, l'acceptation.
         $this->assertCount(1, $this->cards($this->guest));
 

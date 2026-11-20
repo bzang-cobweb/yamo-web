@@ -40,6 +40,12 @@ interface NotificationFilter
     public function step(DatabaseNotification $notification): ?string;
 
     /**
+     * Le titre de la carte d'une notification du module dans la liste (« Location
+     * meublée » pour une demande, décision 2026-11-20-titre-carte) ; `null` : son titre.
+     */
+    public function cardTitle(DatabaseNotification $notification): ?string;
+
+    /**
      * Charge en une fois ce que ces notifications demanderont (une page de la liste) ;
      * `tag()` et les autres n'ont plus à relire, notification par notification (décision
      * 2026-11-20-cache-fil).

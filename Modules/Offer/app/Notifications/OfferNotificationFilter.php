@@ -58,6 +58,19 @@ class OfferNotificationFilter implements NotificationFilter
         app(BookingCache::class)->load($ids);
     }
 
+    /** Le type de location du logement de la demande (« Location meublée ») ; `null` sans lui. */
+    public function cardTitle(DatabaseNotification $notification): ?string
+    {
+        $id = ((array) $notification->data)['booking_id'] ?? null;
+        if ($notification->getAttribute('type') !== BookingRequested::class || ! is_int($id)) {
+            return null;
+        }
+
+        $offer = app(BookingCache::class)->find($id)?->offer;
+
+        return $offer === null ? null : RentalTypeEnum::of($offer)?->label();
+    }
+
     public function tag(DatabaseNotification $notification): ?array
     {
         if ($notification->getAttribute('type') !== BookingRequested::class) {

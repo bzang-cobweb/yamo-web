@@ -40,10 +40,12 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Demande de logement »).
+            // Le type, parmi ceux de ses notifications (« Demande de logement ») ; un seul :
+            // choisi d'emblée (décision 2026-11-20-type-unique-preselectionne).
             Field::select('type')
                 ->label(__('notification::notification.filter_type'))
-                ->options($this->typeOptions($user)),
+                ->options($types = $this->typeOptions($user))
+                ->selected(count($types) === 1 ? (string) array_key_first($types) : null),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
         ];
     }
@@ -81,6 +83,19 @@ class NotificationFilters
      * Le libellé d'une étape d'un fil, donné par le module qui l'inscrit ; à défaut, le
      * titre de la notification.
      */
+    /** Le titre de la carte, donné par le module qui l'inscrit ; à défaut, `null` (son titre). */
+    public function cardTitle(DatabaseNotification $notification): ?string
+    {
+        foreach ($this->filters as $filter) {
+            $title = app($filter)->cardTitle($notification);
+            if ($title !== null) {
+                return $title;
+            }
+        }
+
+        return null;
+    }
+
     public function step(DatabaseNotification $notification): string
     {
         foreach ($this->filters as $filter) {

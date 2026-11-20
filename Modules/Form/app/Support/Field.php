@@ -44,6 +44,9 @@ final class Field
     /** Un filtre : jamais verrouillé, « Tous » reste possible (décision 2026-11-20-filtre-option-unique). */
     private bool $filter = false;
 
+    /** La valeur d'un filtre choisie d'emblée, comme si on l'avait choisie (décision 2026-11-20-type-unique-preselectionne). */
+    private ?string $selected = null;
+
     private mixed $default = null;
 
     /**
@@ -548,6 +551,18 @@ final class Field
     }
 
     /**
+     * Un filtre choisi d'emblée (décision 2026-11-20-type-unique-preselectionne) : l'app
+     * l'applique à la première ouverture de la liste, comme un choix ; « Tous » reste
+     * possible. Distinct de la valeur par défaut, qui vaut « Tous » pour un filtre.
+     */
+    public function selected(?string $value): static
+    {
+        $this->selected = $value;
+
+        return $this;
+    }
+
+    /**
      * Une liste (ou le pays d'un téléphone) qui n'a qu'une option : elle est
      * choisie d'office et ne peut pas changer. Contrairement à `readonly`, la
      * valeur est envoyée et validée (décision 2026-11-20-pays-unique-identifiant-double).
@@ -1008,6 +1023,8 @@ final class Field
                 'add_label' => $this->addLabel,
             ],
             'default' => $this->initialValue(),
+            // Seulement pour un filtre choisi d'emblée.
+            ...($this->selected === null ? [] : ['selected' => $this->selected]),
             'options' => collect($this->options)
                 ->map(fn (string|array $option, string|int $value): array => [
                     'value' => (string) $value,

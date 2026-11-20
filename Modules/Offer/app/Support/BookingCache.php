@@ -37,7 +37,8 @@ final class BookingCache
             return;
         }
 
-        $found = Booking::query()->whereKey(array_values($missing))->get()->keyBy(fn (Booking $booking): int => (int) $booking->getKey());
+        // Avec leur logement : le titre de la carte d'une demande en est tiré.
+        $found = Booking::query()->with('offer')->whereKey(array_values($missing))->get()->keyBy(fn (Booking $booking): int => (int) $booking->getKey());
         foreach ($missing as $id) {
             $this->bookings[$id] = $found->get($id);
         }
