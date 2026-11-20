@@ -60,11 +60,12 @@ abstract class BookingNotification extends Notification implements HasNotificati
 
     /**
      * Dans l'onglet « Notifications » : le titre de la demande (« Demande de
-     * logement »), son statut en pastille comme dans Mes réservations, un texte, le
-     * message saisi (celui du membre, ou le motif d'un refus), l'offre, l'écran à ouvrir (la liste où retrouver la demande) et un lien vers la fiche
-     * de l'offre. Textes figés dans la langue du destinataire, statut figé à l'envoi.
+     * logement »), un texte, le message saisi (celui du membre, ou le motif d'un
+     * refus), la demande et l'offre, l'écran à ouvrir et son bouton. Textes figés
+     * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
+     * l'API la déduit du type de la notification (décision 2026-11-20-statut-par-type).
      *
-     * @return array{title: string, tag: array{label: string, tone: string}, booking_id: int, booking_status: string, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, booking_id: int, booking_status: string, body: string, summary: string, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -72,8 +73,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
 
         return [
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
-            'tag' => ['label' => $this->status->label(), 'tone' => $this->status->tone()],
-            // La demande et son statut à l'envoi (celui de la pastille), pour le filtre « Statut » (décision 2026-11-20-filtres-notifications).
+            // La demande et son statut à l'envoi.
             'booking_id' => (int) $this->booking->getKey(),
             'booking_status' => $this->status->value,
             'body' => __("offer::booking.notify.{$this->key()}.body", $this->replacements()),

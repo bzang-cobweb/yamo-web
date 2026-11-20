@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Support\NotificationFilters;
 
 /**
  * Une notification : titre, statut en pastille, texte et ses passages liés, message
@@ -42,8 +43,8 @@ class NotificationResource extends JsonResource
         return [
             'id' => (string) $notification->getKey(),
             'title' => (string) ($data['title'] ?? ''),
-            /** Statut en pastille sous le titre (« En attente », ton `warning`), ou `null`. */
-            'tag' => $this->tag($data),
+            /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
+            'tag' => app(NotificationFilters::class)->tag((string) $this->resource->getAttribute('type')) ?? $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
             'actor' => $this->actor(),

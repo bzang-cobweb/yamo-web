@@ -5,6 +5,7 @@ namespace Modules\Offer\Tests\Feature;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Auth\Notifications\Channels\SmsChannel;
 use Modules\Auth\Sms\SmsSender;
@@ -18,7 +19,9 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestCancelled;
 use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequestRefused;
 use Modules\Offer\Services\BookingService;
 use Tests\TestCase;
 
@@ -120,7 +123,7 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('Marie Curie requests a stay', $this->sms->messages[0]['message']);
     }
 
-    public function test_the_notification_status_is_the_one_at_send_time(): void
+    public function test_the_notification_keeps_the_status_at_send_time(): void
     {
         $booking = $this->booking();
         $notification = new BookingRequestReceived($booking);
@@ -128,8 +131,28 @@ class BookingNotificationsTest extends TestCase
 
         $data = unserialize(serialize($notification))->toArray($booking->offer->user);
 
-        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $data['tag']);
+        $this->assertSame('pending', $data['booking_status']);
         $this->assertSame('Demande de logement', $data['title']);
+    }
+
+    public function test_the_pill_is_the_notification_type_label_in_the_reader_language(): void
+    {
+        $owner = User::factory()->create(['locale' => 'en']);
+        foreach ([BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class] as $type) {
+            // Même sans pastille dans les données (une ancienne notification).
+            $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => $type, 'data' => ['title' => class_basename($type), 'body' => 'Texte']]);
+        }
+        $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => 'Autre', 'data' => ['title' => 'Autre', 'body' => 'Texte', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]]);
+
+        $tags = collect($this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'en', 'X-Country' => 'CM'])
+            ->getJson('/api/v1/notifications')->assertOk()->json('data.items'))->pluck('tag', 'title');
+
+        $this->assertSame(['label' => 'Home request pending', 'tone' => 'warning'], $tags['BookingRequestReceived']);
+        $this->assertSame(['label' => 'Home request accepted', 'tone' => 'success'], $tags['BookingRequestAccepted']);
+        $this->assertSame(['label' => 'Home request declined', 'tone' => 'neutral'], $tags['BookingRequestRefused']);
+        $this->assertSame(['label' => 'Home request cancelled', 'tone' => 'neutral'], $tags['BookingRequestCancelled']);
+        // Un type inconnu des modules garde la pastille de ses données.
+        $this->assertSame(['label' => 'Gardée', 'tone' => 'neutral'], $tags['Autre']);
     }
 
     public function test_an_accepted_answer_reaches_the_guest(): void
@@ -153,7 +176,6 @@ class BookingNotificationsTest extends TestCase
 
         $notification = $owner->notifications()->sole();
         $this->assertSame('Home request', $notification->data['title']);
-        $this->assertSame(['label' => 'Pending', 'tone' => 'warning'], $notification->data['tag']);
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
         $this->assertSame('/offers/'.$booking->offer_id.'/calendar?month='.today()->addDay()->format('Y-m'), $notification->data['link']);
         $this->assertSame([], $notification->data['links']);

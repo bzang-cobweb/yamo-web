@@ -24,6 +24,14 @@ interface NotificationFilter
     public function types(): array;
 
     /**
+     * La pastille d'un type de notification du module (« Acceptée », ton `success`),
+     * lue à l'affichage ; `null` pour un type qui n'est pas le sien.
+     *
+     * @return array{label: string, tone: string}|null
+     */
+    public function tag(string $type): ?array;
+
+    /**
      * Les champs du filtre, pour le compte `$user`.
      *
      * @return list<Field>

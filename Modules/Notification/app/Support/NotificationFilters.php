@@ -49,6 +49,23 @@ class NotificationFilters
     }
 
     /**
+     * La pastille d'un type de notification, donnée par le module qui l'inscrit, ou `null`.
+     *
+     * @return array{label: string, tone: string}|null
+     */
+    public function tag(string $type): ?array
+    {
+        foreach ($this->filters as $filter) {
+            $tag = app($filter)->tag($type);
+            if ($tag !== null) {
+                return $tag;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Les types inscrits par les modules (classe => libellé).
      *
      * @return array<string, string>

@@ -9,6 +9,7 @@ use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -37,6 +38,25 @@ class OfferNotificationFilter implements NotificationFilter
             BookingRequestRefused::class => __('offer::booking.notify.refused.type', ['request' => $request]),
             BookingRequestCancelled::class => __('offer::booking.notify.cancelled.type', ['request' => $request]),
         ];
+    }
+
+    /**
+     * La pastille d'une étape de demande, selon son type : son libellé (« Demande de
+     * logement acceptée ») et la couleur de son statut (en attente orange, acceptée
+     * verte, refusée et annulée grises).
+     */
+    public function tag(string $type): ?array
+    {
+        $status = match ($type) {
+            BookingRequestReceived::class => BookingStatusEnum::PENDING,
+            BookingRequestAccepted::class => BookingStatusEnum::ACCEPTED,
+            BookingRequestRefused::class => BookingStatusEnum::REFUSED,
+            BookingRequestCancelled::class => BookingStatusEnum::CANCELLED,
+            default => null,
+        };
+
+        // Le libellé du type (« Demande de logement acceptée »), la couleur du statut.
+        return $status === null ? null : ['label' => $this->types()[$type], 'tone' => $status->tone()];
     }
 
     public function fields(User $user): array
