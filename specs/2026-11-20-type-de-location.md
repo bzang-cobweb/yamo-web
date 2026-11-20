@@ -72,3 +72,12 @@ Les demandes et notifications existantes ne changent pas.
 
 - D'autres types de location ; un ajout passerait par le code.
 - Un parcours de réservation propre à la colocation (une chambre, une durée minimale).
+
+## Révision du 2026-11-20 (décidée par l'humain)
+
+« yes keep both but current categories data go to type de location field » :
+
+- **Les catégories restent** : la table, l'arbre, l'écran du back-office et le champ « Catégorie » de l'offre. Elles redeviennent libres, pour de vraies catégories.
+- **Les trois catégories actuelles** (Location longue durée, Location meublée, Colocation) **passent dans le type de location** : la migration les convertit, retire leur lien aux offres et les supprime. Le domaine « location » ne les recrée plus (`Domain::categories()` vide), et les seeders non plus.
+- **Le reste du contrat ne change pas** : l'enum, la disparition du champ « Meublé », séjour ou visite selon le type, et les filtres.
+- **Le filtre des notifications** « Catégorie » devient « Type de location ».
