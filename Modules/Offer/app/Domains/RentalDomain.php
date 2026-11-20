@@ -138,8 +138,10 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.rooms'))
                 ->help(__('offer::rental.rooms_help'))
                 ->rules(['min:1', 'max:50']),
+            // Obligatoire (décision 2026-11-20-chambres-obligatoires) : 0 pour un studio.
             Field::number('bedrooms')
                 ->label(__('offer::rental.bedrooms'))
+                ->required()
                 ->rules(['integer', 'min:0', 'max:50']),
             Field::date('available_from')
                 ->label(__('offer::rental.available_from')),

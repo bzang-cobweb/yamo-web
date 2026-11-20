@@ -199,6 +199,19 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'rental_type' => 'long_term', 'title' => 'Studio'])->assertNoContent();
     }
 
+    public function test_the_number_of_bedrooms_is_required(): void
+    {
+        // Décision 2026-11-20-chambres-obligatoires : 0 pour un studio.
+        $user = $this->member();
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        $this->assertTrue($fields['bedrooms']['required']);
+
+        $input = $this->input($user);
+        unset($input['bedrooms']);
+        $this->asUser($user)->postJson('/api/v1/offers', $input)->assertUnprocessable()->assertJsonValidationErrors(['bedrooms']);
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['bedrooms' => '0']))->assertNoContent();
+    }
+
     public function test_rules_and_information_are_optional_and_saved(): void
     {
         $user = $this->member();

@@ -68,6 +68,7 @@ class OfferPhotoApiTest extends TestCase
             'status' => 'published',
             'property_type' => 'apartment',
             'rental_type' => 'long_term',
+            'bedrooms' => '1',
             ...$overrides,
         ];
     }
