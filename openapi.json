@@ -1728,6 +1728,10 @@
                                                                     "phone"
                                                                 ]
                                                             },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "description": "Le type, en gras au-dessus du statut (d\u00e9cision 2026-11-20-type-et-statut)."
+                                                            },
                                                             "tag": {
                                                                 "type": "object",
                                                                 "properties": {
@@ -1808,6 +1812,7 @@
                                                         "required": [
                                                             "id",
                                                             "actor",
+                                                            "type",
                                                             "tag",
                                                             "summary",
                                                             "text_links",

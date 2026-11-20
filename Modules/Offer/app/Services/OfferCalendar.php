@@ -102,7 +102,7 @@ class OfferCalendar
      * Accepter / Refuser ; « Bloquer ce jour » (libre, à venir, sans séjour accepté)
      * ou « Débloquer ».
      *
-     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
+     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, type: string, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
      */
     public function day(Offer $offer, Carbon $day, Authenticatable $owner, string $locale): array
     {
@@ -161,6 +161,8 @@ class OfferCalendar
             $cards[] = [
                 'id' => (string) $booking->getKey(),
                 'actor' => ActorData::from($booking->user),
+                // Le type, en gras au-dessus du statut (décision 2026-11-20-type-et-statut).
+                'type' => (string) app(DomainRegistry::class)->require()->requestLabel(),
                 'tag' => ['label' => (string) $tag['label'], 'tone' => (string) $tag['tone']],
                 'summary' => $summary,
                 'text_links' => BookingText::offerLink($booking, $summary),

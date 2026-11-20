@@ -179,6 +179,7 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame(['Accepter', 'Refuser'], array_column($day['items'][0]['actions'], 'label'));
         // En carte de notification : qui demande, la pastille du type, le texte, le total.
         $card = $day['items'][0];
+        $this->assertSame('Demande de logement', $card['type']);
         $this->assertSame((string) $pending->user_id, $card['actor']['id']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
         $this->assertStringContainsString('(3 jours)', $card['summary']);
