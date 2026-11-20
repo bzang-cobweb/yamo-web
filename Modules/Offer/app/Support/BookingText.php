@@ -34,11 +34,12 @@ final class BookingText
     /**
      * Le texte d'une carte, sans le nom de qui agit, pour l'étape `$step`
      * (`requested`, `accepted`…) :
-     * - un séjour (logement meublé) : sa durée après les dates, le prix par jour et le
-     *   nombre de voyageurs (« … (3 jours) pour « Studio photos », 85 000 FCFA / jour (2 personnes). ») ;
+     * - un séjour (logement meublé) : sa durée après les dates et le prix par jour
+     *   (« … (3 jours) pour « Studio photos », 85 000 FCFA / jour. ») ; le nombre de
+     *   personnes s'affiche à part (décision 2026-11-20-personnes-a-part) ;
      * - une visite : le loyer par mois (« … pour « Appartement », 250 000 FCFA / mois. »).
      *
-     * Sans prix ou sans voyageurs, le texte s'en passe.
+     * Sans prix, le texte s'en passe.
      */
     public static function summary(Booking $booking, string $step): string
     {
@@ -46,16 +47,13 @@ final class BookingText
         $key = "offer::booking.notify.{$step}.summary";
         $price = app(DomainRegistry::class)->require()->formattedPrice($booking->offer, app()->getLocale());
         $days = $booking->days();
-        $people = $booking->guests === null ? null : trans_choice('offer::booking.notify.people', $booking->guests, ['count' => $booking->guests]);
 
         return match (true) {
-            $days !== null && $price !== null && $people !== null && trans()->has($key.'_stay') => __($key.'_stay', [
+            $days !== null && $price !== null && trans()->has($key.'_stay') => __($key.'_stay', [
                 ...$replace,
                 'days' => trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
                 'price' => $price,
-                'people' => $people,
             ]),
-            $people !== null && trans()->has($key.'_people') => __($key.'_people', [...$replace, 'people' => $people]),
             $days === null && $price !== null && trans()->has($key.'_visit') => __($key.'_visit', [...$replace, 'price' => $price]),
             default => __($key, $replace),
         };

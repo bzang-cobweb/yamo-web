@@ -84,8 +84,7 @@ return [
             // Le texte de la demande, sans qui la fait : « Séjour du … », « Visite le … »
             // (décision 2026-11-20-texte-sans-verbe).
             'summary' => ':kind :period for “:offer”.',
-            'summary_people' => ':kind :period for “:offer” (:people).',
-            'summary_stay' => ':kind :period (:days) for “:offer”, :price (:people).',
+            'summary_stay' => ':kind :period (:days) for “:offer”, :price.',
             'summary_visit' => ':kind :period for “:offer”, :price.',
             'sms' => ':app: :guest requests :type :period for “:offer”. Reply in the app.',
         ],
