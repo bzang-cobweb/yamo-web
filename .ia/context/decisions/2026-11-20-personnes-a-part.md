@@ -19,6 +19,10 @@
   lues dans `booking.period_label`. Demande de l'humain : « afficher pour un meublé la date
   check_in au check_out après le summary ».
 
+- Le prix du logement s'affiche aussi sur sa ligne, juste avant le total (« 20 000 FCFA /
+  jour »), lu dans `booking.price_label`. Demande de l'humain : « afficher le prix avant le
+  total ».
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « afficher après le summary le nombre de personne »,

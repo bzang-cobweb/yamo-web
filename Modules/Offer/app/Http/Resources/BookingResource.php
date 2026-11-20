@@ -4,6 +4,7 @@ namespace Modules\Offer\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -16,7 +17,7 @@ use Modules\Offer\Models\Booking;
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, dates: list<string>, guests: int|null, guests_label: string|null, total: string|null}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, dates: list<string>, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -37,6 +38,8 @@ class BookingResource extends JsonResource
             'guests' => $booking->guests,
             /** Le nombre de personnes, rédigé (« 2 personnes ») ; `null` sans voyageurs (une visite). */
             'guests_label' => $booking->guests === null ? null : trans_choice('offer::booking.notify.people', $booking->guests, ['count' => $booking->guests]),
+            /** Le prix du logement, rédigé (« 20 000 FCFA / jour », « 400 000 FCFA / mois ») ; `null` sans prix. */
+            'price_label' => app(DomainRegistry::class)->require()->formattedPrice($booking->offer, app()->getLocale()),
             /** Le total figé (« 255 000 FCFA »), ou `null` (une visite). */
             'total' => $booking->formattedTotal(app()->getLocale()),
         ];

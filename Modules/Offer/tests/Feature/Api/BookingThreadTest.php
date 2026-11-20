@@ -12,6 +12,7 @@ use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\BookingService;
@@ -171,7 +172,7 @@ class BookingThreadTest extends TestCase
             $this->assertArrayNotHasKey('total', $page);
             $this->assertSame([
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
-                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'dates' => ['Arrivée le '.$booking->check_in->locale('fr')->isoFormat('ll'), 'Départ le '.$booking->check_out?->locale('fr')->isoFormat('ll')], 'guests' => 1, 'guests_label' => '1 personne', 'total' => $booking->formattedTotal('fr'),
+                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'dates' => ['Arrivée le '.$booking->check_in->locale('fr')->isoFormat('ll'), 'Départ le '.$booking->check_out?->locale('fr')->isoFormat('ll')], 'guests' => 1, 'guests_label' => '1 personne', 'price_label' => app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr'), 'total' => $booking->formattedTotal('fr'),
             ], $page['booking']);
             $this->assertNotNull($page['booking']['total']);
         }
