@@ -24,6 +24,7 @@ Aujourd'hui, chacune est une carte à part. Après le chantier, chaque personne 
    - Recherche et filtres s'appliquent à cette ligne. Le statut reste le statut réel de la demande.
 3. **Le compteur** (`GET /notifications/unread-count`) : le nombre de fils qui ont au moins une notification non lue.
 4. **La page** (`GET /notifications/{id}`) : en plus de l'actuel, un **`history`**, c'est-à-dire les étapes de la demande dans l'ordre chronologique.
+   - Il va de la plus ancienne étape à la plus récente (précision de la validation).
    - Il est construit à partir des notifications des **deux** parties sur ce fil : demande envoyée, acceptée ou refusée (avec le motif), annulée.
    - Chaque étape donne : son libellé, qui agit, sa date, son message.
    - Le texte est dans la langue du lecteur.

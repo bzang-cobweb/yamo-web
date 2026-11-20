@@ -10,4 +10,9 @@
 - **Suivi** : toutes les étapes de la demande, des deux côtés (membre et propriétaire), avec leur date et leur message. Il est construit à partir des notifications des deux parties, sans nouvelle table.
 - **Non lues** : une demande qui a une étape non lue compte pour 1. L'ouvrir marque toutes ses étapes lues.
 
-Contrat : specs/2026-11-20-suivi-demande.md (en attente de validation).
+Contrat : specs/2026-11-20-suivi-demande.md (validé, voir plus bas).
+
+## Validation
+
+- **2026-11-20** : contrat validé par l'humain (« je valide »), avec une précision : sur la page de la notification, le suivi va **de la plus ancienne étape à la plus récente**.
+- La question laissée ouverte n'a pas reçu de réponse : chez le propriétaire, une demande qu'il a acceptée garde comme dernière étape « demande reçue ». Le contrat s'applique tel quel : la carte ne remonte pas quand il répond, mais sa pastille suit le statut réel.
