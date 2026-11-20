@@ -32,6 +32,14 @@ le message de la notification suivi de la date aligné à droite », « afficher
 les messages du propriétaire », et, pour les coordonnées : « il faut les retirer, le
 click se fera sur le nom et le cercle dans la conversation ».
 
+## Complément du même jour
+
+- Les dates de la page : l'heure seule le jour même (« 14:05 »), sinon la date et
+  l'heure (`formatStamp`).
+- Ses propres étapes : « Toi » (en « You », de « Du ») à la place de son nom, sans
+  photo. Demande de l'humain : « ne pas afficher son propre nom, mettre juste toi et
+  enlever son cercle ».
+
 ## Portée
 
 La page d'une notification dans l'app. Pas les cartes de la liste.

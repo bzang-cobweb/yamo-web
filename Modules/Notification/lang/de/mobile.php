@@ -13,6 +13,8 @@ return [
         'detail' => 'Benachrichtigung',
         // Le suivi d'une demande, sur la page d'une notification (décision 2026-11-20-suivi-demande).
         'history' => 'Verlauf der Anfrage',
+        // Le lecteur, dans le suivi d'une demande (décision 2026-11-20-suivi-conversation).
+        'you' => 'Du',
         'open' => 'Öffnen',
         'markAllRead' => 'Alle als gelesen markieren',
         'empty' => 'Noch keine Benachrichtigungen.',
