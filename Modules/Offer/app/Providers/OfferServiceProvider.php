@@ -28,6 +28,7 @@ use Modules\Offer\Policies\BookingPolicy;
 use Modules\Offer\Policies\OfferCategoryPolicy;
 use Modules\Offer\Policies\OfferPolicy;
 use Modules\Offer\Policies\OfferReviewPolicy;
+use Modules\Offer\Support\BookingCache;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 /**
@@ -60,7 +61,7 @@ class OfferServiceProvider extends ModuleServiceProvider
     /**
      * @var array<class-string, class-string>
      */
-    public array $singletons = [DomainRegistry::class => DomainRegistry::class];
+    public array $singletons = [DomainRegistry::class => DomainRegistry::class, BookingCache::class => BookingCache::class];
 
     public function boot(): void
     {

@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-sans-coordonnees.md
+
 # Coordonnées de qui agit, sur la page d'une notification
 
 - **Type** : décision de conception

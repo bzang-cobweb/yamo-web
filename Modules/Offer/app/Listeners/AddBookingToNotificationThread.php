@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Support\BookingCache;
 
 /**
  * Sur la page d'une notification du fil d'une demande (`booking:12`), la demande en
@@ -21,7 +22,7 @@ class AddBookingToNotificationThread
         }
 
         $id = Str::after($event->thread, Booking::THREAD_PREFIX);
-        $booking = ctype_digit($id) ? Booking::query()->find((int) $id) : null;
+        $booking = ctype_digit($id) ? app(BookingCache::class)->find((int) $id) : null;
 
         $event->data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
     }

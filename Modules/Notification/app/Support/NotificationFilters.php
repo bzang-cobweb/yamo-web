@@ -53,6 +53,18 @@ class NotificationFilters
      *
      * @return array{label: string, tone: string}|null
      */
+    /**
+     * Chaque module charge en une fois ce que ces notifications demanderont.
+     *
+     * @param  list<DatabaseNotification>  $notifications
+     */
+    public function prepare(array $notifications): void
+    {
+        foreach ($this->filters as $filter) {
+            app($filter)->prepare($notifications);
+        }
+    }
+
     public function tag(DatabaseNotification $notification): ?array
     {
         foreach ($this->filters as $filter) {

@@ -2,7 +2,9 @@
 
 namespace Modules\Offer\Tests\Feature\Api;
 
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\User;
@@ -196,6 +198,34 @@ class BookingThreadTest extends TestCase
         // Le membre l'a lue.
         $this->guest->notifications()->update(['read_at' => now()]);
         $this->assertSame([null, 'read'], $delivery());
+    }
+
+    public function test_each_request_is_read_once_per_api_call(): void
+    {
+        // Décision 2026-11-20-cache-fil : une demande lue une fois, quel que soit le nombre de cartes ou d'usages.
+        $this->travelTo(now()->setTime(9, 0));
+        $this->request(3);
+        $this->travel(5)->minutes();
+        $second = $this->request(10);
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($second, true);
+        $count = function (string $uri): int {
+            $queries = [];
+            DB::listen(function (QueryExecuted $query) use (&$queries): void {
+                if (str_contains($query->sql, 'from `bookings`') || str_contains($query->sql, 'from "bookings"')) {
+                    $queries[] = $query->sql;
+                }
+            });
+            $this->api($this->owner, 'GET', $uri)->assertOk();
+            $this->app['events']->forget(QueryExecuted::class);
+
+            return count($queries);
+        };
+
+        // La liste : toutes ses demandes en une requête.
+        $this->assertSame(1, $count(''));
+        // La page : la pastille et la demande, une seule lecture.
+        $this->assertSame(1, $count('/'.$this->cards($this->owner)[0]['id']));
     }
 
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void

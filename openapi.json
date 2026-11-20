@@ -1705,15 +1705,6 @@
                                                                     },
                                                                     "link": {
                                                                         "type": "string"
-                                                                    },
-                                                                    "email": {
-                                                                        "type": "null"
-                                                                    },
-                                                                    "phone": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
                                                                     }
                                                                 },
                                                                 "required": [
@@ -1722,9 +1713,7 @@
                                                                     "initials",
                                                                     "photo",
                                                                     "online",
-                                                                    "link",
-                                                                    "email",
-                                                                    "phone"
+                                                                    "link"
                                                                 ]
                                                             },
                                                             "type": {
@@ -3775,15 +3764,6 @@
                                                 },
                                                 "link": {
                                                     "type": "string"
-                                                },
-                                                "email": {
-                                                    "type": "null"
-                                                },
-                                                "phone": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -3792,9 +3772,7 @@
                                                 "initials",
                                                 "photo",
                                                 "online",
-                                                "link",
-                                                "email",
-                                                "phone"
+                                                "link"
                                             ]
                                         },
                                         "summary": {
@@ -3954,15 +3932,6 @@
                                                 },
                                                 "link": {
                                                     "type": "string"
-                                                },
-                                                "email": {
-                                                    "type": "null"
-                                                },
-                                                "phone": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
                                                 }
                                             },
                                             "required": [
@@ -3971,9 +3940,7 @@
                                                 "initials",
                                                 "photo",
                                                 "online",
-                                                "link",
-                                                "email",
-                                                "phone"
+                                                "link"
                                             ]
                                         },
                                         "summary": {
@@ -4152,18 +4119,6 @@
                                     },
                                     "link": {
                                         "type": "string"
-                                    },
-                                    "email": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    },
-                                    "phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
                                     }
                                 },
                                 "required": [
@@ -4172,9 +4127,7 @@
                                     "initials",
                                     "photo",
                                     "online",
-                                    "link",
-                                    "email",
-                                    "phone"
+                                    "link"
                                 ]
                             },
                             "summary": {
@@ -4334,18 +4287,6 @@
                                     },
                                     "link": {
                                         "type": "string"
-                                    },
-                                    "email": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
-                                    },
-                                    "phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ]
                                     }
                                 },
                                 "required": [
@@ -4354,9 +4295,7 @@
                                     "initials",
                                     "photo",
                                     "online",
-                                    "link",
-                                    "email",
-                                    "phone"
+                                    "link"
                                 ]
                             },
                             "summary": {

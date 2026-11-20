@@ -40,6 +40,15 @@ interface NotificationFilter
     public function step(DatabaseNotification $notification): ?string;
 
     /**
+     * Charge en une fois ce que ces notifications demanderont (une page de la liste) ;
+     * `tag()` et les autres n'ont plus à relire, notification par notification (décision
+     * 2026-11-20-cache-fil).
+     *
+     * @param  list<DatabaseNotification>  $notifications
+     */
+    public function prepare(array $notifications): void;
+
+    /**
      * Les champs du filtre, pour le compte `$user`.
      *
      * @return list<Field>

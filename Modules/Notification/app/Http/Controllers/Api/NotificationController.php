@@ -70,9 +70,9 @@ class NotificationController
      */
     public function show(Request $request, string $notification): NotificationResource
     {
-        // Sur sa page : les coordonnées de qui agit (décision 2026-11-20-coordonnees-notification).
-        // Et le suivi de son fil, des deux côtés (décision 2026-11-20-suivi-demande).
-        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withContact()->withThread();
+        // Et son fil : le suivi, des deux côtés, et ce qu'y ajoute son module (décisions
+        // 2026-11-20-suivi-demande et 2026-11-20-notification-generique).
+        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withThread();
     }
 
     /**

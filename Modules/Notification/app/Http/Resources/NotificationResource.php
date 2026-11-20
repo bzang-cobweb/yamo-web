@@ -26,8 +26,8 @@ class NotificationResource extends JsonResource
 
     private bool $actorLoaded = false;
 
-    /** Les coordonnées de qui agit (e-mail, téléphone) : sur la page d'une notification seulement. */
-    private bool $withContact = false;
+    /** @var array<int, User|null> Les membres déjà lus pour cette notification et son fil (décision 2026-11-20-cache-fil). */
+    private array $users = [];
 
     /** Son fil : sur la page d'une notification seulement (décisions 2026-11-20-suivi-demande et 2026-11-20-notification-generique). */
     private bool $withThread = false;
@@ -56,16 +56,6 @@ class NotificationResource extends JsonResource
         return $this;
     }
 
-    /**
-     * Ajoute l'e-mail et le téléphone de qui agit (décision 2026-11-20-coordonnees-notification).
-     */
-    public function withContact(): self
-    {
-        $this->withContact = true;
-
-        return $this;
-    }
-
     public function withActor(?User $actor): self
     {
         $this->actor = $actor;
@@ -75,7 +65,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -84,6 +74,11 @@ class NotificationResource extends JsonResource
         // Sur sa page, un fil se présente par sa première étape : son titre, son texte, qui
         // l'a faite (décision 2026-11-20-entete-premiere-etape).
         $head = $steps[0] ?? $notification;
+        // Qui a fait chaque étape, et à qui elle a été envoyée : lus en une fois.
+        $this->loadUsers(array_merge(
+            array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps),
+            array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('notifiable_id'), $steps),
+        ));
         $data = (array) $head->data;
         $own = (array) $notification->data;
 
@@ -139,22 +134,15 @@ class NotificationResource extends JsonResource
      * (connecté depuis, pas lue), `read` (lue) ; `null` pour une étape de l'autre.
      *
      * @param  list<DatabaseNotification>  $steps
-     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, message: string|null, created_at: string|null, delivery: string|null}>
+     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, message: string|null, created_at: string|null, delivery: string|null}>
      */
     private function history(array $steps): array
     {
-        $ids = array_values(array_unique(array_filter(array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps))));
-        $actors = User::query()->whereKey($ids)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
         $filters = app(NotificationFilters::class);
         $reader = (int) $this->resource->getAttribute('notifiable_id');
-        // Les destinataires des étapes du lecteur : leur dernière connexion.
-        $recipients = User::query()->whereKey(array_map(
-            fn (DatabaseNotification $step): int => (int) $step->getAttribute('notifiable_id'),
-            array_filter($steps, fn (DatabaseNotification $step): bool => (int) $step->getAttribute('user_id') === $reader),
-        ))->get()->keyBy(fn (User $user): int => (int) $user->getKey());
 
-        return array_map(function (DatabaseNotification $step) use ($actors, $filters, $reader, $recipients): array {
-            $actor = $actors->get((int) $step->getAttribute('user_id'));
+        return array_map(function (DatabaseNotification $step) use ($filters, $reader): array {
+            $actor = $this->user((int) $step->getAttribute('user_id'));
 
             return [
                 'id' => (string) $step->getKey(),
@@ -163,7 +151,7 @@ class NotificationResource extends JsonResource
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
                 'delivery' => (int) $step->getAttribute('user_id') === $reader
-                    ? $this->delivery($step, $recipients->get((int) $step->getAttribute('notifiable_id')))
+                    ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id')))
                     : null,
             ];
         }, $steps);
@@ -184,18 +172,44 @@ class NotificationResource extends JsonResource
     /**
      * Qui agit (colonne `user_id`), lu à l'affichage.
      *
-     * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null
+     * @return array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null
      */
+    /**
+     * Lit en une requête les membres qui ne le sont pas encore.
+     *
+     * @param  list<int>  $ids
+     */
+    private function loadUsers(array $ids): void
+    {
+        $missing = array_values(array_diff(array_unique(array_filter($ids)), array_keys($this->users)));
+        if ($missing === []) {
+            return;
+        }
+
+        $found = User::query()->whereKey($missing)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
+        foreach ($missing as $id) {
+            $this->users[$id] = $found->get($id);
+        }
+    }
+
+    /** Un membre, lu une seule fois ; `null` s'il n'existe plus. */
+    private function user(int $id): ?User
+    {
+        $this->loadUsers([$id]);
+
+        return $this->users[$id] ?? null;
+    }
+
     private function actor(DatabaseNotification $head): ?array
     {
         $id = $head->getAttribute('user_id');
-        $actor = $this->actorLoaded && $head === $this->resource ? $this->actor : ($id === null ? null : User::query()->find($id));
+        $actor = $this->actorLoaded && $head === $this->resource ? $this->actor : ($id === null ? null : $this->user((int) $id));
 
         if ($actor === null) {
             return null;
         }
 
-        return ActorData::from($actor, $this->withContact);
+        return ActorData::from($actor);
     }
 
     /**

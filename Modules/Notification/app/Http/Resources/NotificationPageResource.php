@@ -8,6 +8,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Pagination\CursorPaginator;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
+use Modules\Notification\Support\NotificationFilters;
 
 /**
  * Une page de notifications, chacune sous la forme de `NotificationResource`, et le
@@ -48,7 +49,7 @@ class NotificationPageResource extends JsonResource
     }
 
     /**
-     * @return array{items: list<array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, total: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, filters: list<array<string, mixed>>}
+     * @return array{items: list<array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, filters: list<array<string, mixed>>}
      */
     public function toArray(Request $request): array
     {
@@ -61,6 +62,13 @@ class NotificationPageResource extends JsonResource
             $ids[] = (int) $notification->getAttribute('user_id');
         }
         $actors = User::query()->whereKey(array_unique($ids))->get()->keyBy(fn (User $user): int => (int) $user->getKey());
+        // Ce que les modules liront pour chaque carte (une demande : son statut), en une fois.
+        $notifications = [];
+        foreach ($this->resource->items() as $notification) {
+            /** @var DatabaseNotification $notification */
+            $notifications[] = $notification;
+        }
+        app(NotificationFilters::class)->prepare($notifications);
 
         foreach ($this->resource->items() as $notification) {
             /** @var DatabaseNotification $notification */

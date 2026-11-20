@@ -15,6 +15,7 @@ use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Support\BookingCache;
 
 /**
  * Les filtres des notifications liées à une offre (décision
@@ -30,9 +31,6 @@ class OfferNotificationFilter implements NotificationFilter
     /** La clé du groupe « Demande de logement » dans le filtre « Type ». */
     public const BOOKING = 'booking';
 
-    /** @var array<int, BookingStatusEnum|null> Statuts déjà lus, par demande. */
-    private array $statuses = [];
-
     public function types(): array
     {
         // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
@@ -46,6 +44,20 @@ class OfferNotificationFilter implements NotificationFilter
      * lu à l'affichage (décision 2026-11-20-statut-reel) ; à défaut (demande supprimée,
      * ancienne notification sans `booking_id`), celui que nomme l'étape notifiée.
      */
+    /** Les demandes de ces notifications, lues en une fois (décision 2026-11-20-cache-fil). */
+    public function prepare(array $notifications): void
+    {
+        $ids = [];
+        foreach ($notifications as $notification) {
+            $id = ((array) $notification->data)['booking_id'] ?? null;
+            if ($notification->getAttribute('type') === BookingRequested::class && is_int($id)) {
+                $ids[] = $id;
+            }
+        }
+
+        app(BookingCache::class)->load($ids);
+    }
+
     public function tag(DatabaseNotification $notification): ?array
     {
         if ($notification->getAttribute('type') !== BookingRequested::class) {
@@ -55,7 +67,7 @@ class OfferNotificationFilter implements NotificationFilter
         $data = (array) $notification->data;
         $id = $data['booking_id'] ?? null;
         $step = BookingStepEnum::tryFrom(is_string($data['step'] ?? null) ? $data['step'] : '') ?? BookingStepEnum::RECEIVED;
-        $status = (is_int($id) ? $this->status($id) : null) ?? $step->status();
+        $status = (is_int($id) ? app(BookingCache::class)->find($id)?->status : null) ?? $step->status();
 
         return self::statusTag($status);
     }
@@ -76,17 +88,6 @@ class OfferNotificationFilter implements NotificationFilter
     public static function statusTag(BookingStatusEnum $status): array
     {
         return ['label' => $status->label(), 'tone' => $status->tone()];
-    }
-
-    private function status(int $booking): ?BookingStatusEnum
-    {
-        if (! array_key_exists($booking, $this->statuses)) {
-            $this->statuses[$booking] = Booking::query()->whereKey($booking)->value('status');
-            $value = $this->statuses[$booking];
-            $this->statuses[$booking] = $value instanceof BookingStatusEnum ? $value : (is_string($value) ? BookingStatusEnum::tryFrom($value) : null);
-        }
-
-        return $this->statuses[$booking];
     }
 
     public function fields(User $user): array

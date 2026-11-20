@@ -138,8 +138,8 @@ class NotificationApiTest extends TestCase
         $this->notify($user, 'Sans acteur');
 
         $items = collect($this->asUser($user)->getJson('/api/v1/notifications')->json('data.items'))->keyBy('title');
-        // Dans la liste : sans ses coordonnées.
-        $this->assertSame(['id' => (string) $actor->getKey(), 'name' => 'Paul Etoa', 'initials' => 'PE', 'photo' => null, 'online' => true, 'link' => '/members/'.$actor->getKey(), 'email' => null, 'phone' => null], $items['Demande']['actor']);
+        // Sans coordonnées.
+        $this->assertSame(['id' => (string) $actor->getKey(), 'name' => 'Paul Etoa', 'initials' => 'PE', 'photo' => null, 'online' => true, 'link' => '/members/'.$actor->getKey()], $items['Demande']['actor']);
         $this->assertSame('demande un séjour.', $items['Demande']['summary']);
         $this->assertNull($items['Sans acteur']['actor']);
         $this->assertNull($items['Sans acteur']['summary']);
@@ -148,8 +148,9 @@ class NotificationApiTest extends TestCase
         $id = $items['Demande']['id'];
         $detail = $this->asUser($user)->getJson("/api/v1/notifications/{$id}")->json('data.actor');
         $this->assertFalse($detail['online']);
-        // Sur la page de la notification : son e-mail et son téléphone.
-        $this->assertSame([$actor->email, '+237 6 90 00 00 99'], [$detail['email'], $detail['phone']]);
+        // Sur la page de la notification non plus : ni e-mail ni téléphone (décision 2026-11-20-sans-coordonnees).
+        $this->assertArrayNotHasKey('email', $detail);
+        $this->assertArrayNotHasKey('phone', $detail);
     }
 
     public function test_deleting_the_account_of_who_acted_keeps_the_notification_without_them(): void
