@@ -28,7 +28,7 @@ qu'une boucle. Les champs servis un à un (`dates`, `days_label`, `guests_label`
 Le nombre de chambres a été retiré des lignes (« enlever la ligne du nombre de chambre ») ;
 il reste obligatoire dans le formulaire d'un logement.
 
-Toucher le nom de l'offre plie ou déplie toutes les lignes (ouvertes d'abord, une flèche à
+Toucher le nom de l'offre déplie ou plie toutes les lignes (fermées d'abord, « par défaut fermé » ; une flèche à
 droite dit l'état) ; le nom n'est plus un lien vers la fiche de l'offre. Demande de l'humain :
 « pouvoir plier et déplier toutes ces lignes en cliquant sur le titre ».
 
