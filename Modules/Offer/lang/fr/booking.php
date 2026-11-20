@@ -9,6 +9,8 @@ return [
     'period' => [
         'stay' => 'du :from au :to',
         'visit' => 'le :date',
+        // Une visite avec une seconde date proposée.
+        'visit_or' => 'le :date ou le :second',
     ],
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',
@@ -22,6 +24,7 @@ return [
         'check_in' => "Date d'arrivée",
         'check_out' => 'Date de départ',
         'visit_date' => 'Date souhaitée',
+        'visit_second_date' => 'Seconde date (facultatif)',
         'guests' => 'Voyageurs',
         'message' => 'Message au propriétaire',
         'message_placeholder' => 'Présentez-vous, précisez vos besoins…',

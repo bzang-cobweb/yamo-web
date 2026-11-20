@@ -59,7 +59,7 @@ class OfferCalendar
         for ($day = $from->copy(); $day->lessThan($to); $day->addDay()) {
             $date = $day->toDateString();
             $stays = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::STAY && $this->coversNight($booking, $day));
-            $visits = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT && $booking->check_in->isSameDay($day));
+            $visits = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT && $this->visitsOn($booking, $day));
             $isBlocked = in_array($date, $blocked, true);
             // Une visite colore son jour comme un séjour ses nuits (décision 2026-11-20-calendrier-visites).
             $stayAccepted = $stays->contains('status', BookingStatusEnum::ACCEPTED);
@@ -120,7 +120,7 @@ class OfferCalendar
     {
         $listing = new ReceivedBookingListing($owner);
         $bookings = $this->bookings($offer, $day, $day->copy()->addDay())
-            ->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT ? $booking->check_in->isSameDay($day) : $this->coversNight($booking, $day));
+            ->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT ? $this->visitsOn($booking, $day) : $this->coversNight($booking, $day));
         $isBlocked = $offer->blockedDates()->whereDate('date', $day->toDateString())->exists();
         $hasAccepted = $bookings->contains(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::STAY && $booking->status === BookingStatusEnum::ACCEPTED);
         $parameters = ['offer' => $offer->getKey(), 'date' => $day->toDateString()];
@@ -200,8 +200,9 @@ class OfferCalendar
             ->where(fn (Builder $query) => $query
                 ->where(fn (Builder $stays) => $stays->overlapping($from, $to))
                 ->orWhere(fn (Builder $visits) => $visits->where('type', BookingTypeEnum::VISIT)
-                    ->whereDate('check_in', '>=', $from->toDateString())
-                    ->whereDate('check_in', '<', $to->toDateString())))
+                    ->where(fn (Builder $dates) => $dates
+                        ->where(fn (Builder $first) => $first->whereDate('check_in', '>=', $from->toDateString())->whereDate('check_in', '<', $to->toDateString()))
+                        ->orWhere(fn (Builder $second) => $second->whereDate('check_out', '>=', $from->toDateString())->whereDate('check_out', '<', $to->toDateString())))))
             ->with(['user', 'offer'])
             ->orderBy('check_in')
             ->get();
@@ -221,9 +222,15 @@ class OfferCalendar
             ->all();
     }
 
+    /** Une visite tombe ce jour-là : sa date, ou la seconde date proposée. */
+    private function visitsOn(Booking $booking, Carbon $day): bool
+    {
+        return $booking->check_in->isSameDay($day) || ($booking->check_out?->isSameDay($day) ?? false);
+    }
+
     private function coversNight(Booking $booking, Carbon $day): bool
     {
-        return $booking->check_out !== null && ! $booking->check_in->greaterThan($day) && $booking->check_out->greaterThan($day);
+        return $booking->type === BookingTypeEnum::STAY && $booking->check_out !== null && ! $booking->check_in->greaterThan($day) && $booking->check_out->greaterThan($day);
     }
 
     /**

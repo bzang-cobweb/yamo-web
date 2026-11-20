@@ -109,7 +109,9 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.fields.1.date_range.min', today()->addDay()->toDateString());
 
         $visit = $this->asUser($guest)->getJson('/api/v1/forms/offer.booking?record='.$this->home(false)->getKey())->assertOk();
-        $this->assertSame(['check_in', 'message'], array_column($visit->json('data.fields'), 'name'));
+        // Une visite : sa date, et une seconde date facultative.
+        $this->assertSame(['check_in', 'check_out', 'message'], array_column($visit->json('data.fields'), 'name'));
+        $visit->assertJsonPath('data.fields.1.label', 'Seconde date (facultatif)')->assertJsonPath('data.fields.1.required', false);
         $visit->assertJsonPath('data.title', 'Demander une visite')->assertJsonPath('data.fields.0.label', 'Date souhaitée');
     }
 

@@ -9,6 +9,8 @@ return [
     'period' => [
         'stay' => 'from :from to :to',
         'visit' => 'on :date',
+        // Une visite avec une seconde date proposée.
+        'visit_or' => 'on :date or :second',
     ],
     'own_offer' => 'You cannot book your own offer.',
     'not_cancellable' => 'This request can no longer be cancelled.',
@@ -22,6 +24,7 @@ return [
         'check_in' => 'Arrival date',
         'check_out' => 'Departure date',
         'visit_date' => 'Preferred date',
+        'visit_second_date' => 'Second date (optional)',
         'guests' => 'Guests',
         'message' => 'Message to the owner',
         'message_placeholder' => 'Introduce yourself, tell them what you need…',

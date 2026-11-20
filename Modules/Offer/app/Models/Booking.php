@@ -24,7 +24,7 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property int $user_id
  * @property BookingTypeEnum $type
  * @property Carbon $check_in
- * @property Carbon|null $check_out
+ * @property Carbon|null $check_out départ d'un séjour ; seconde date proposée d'une visite (facultative)
  * @property int|null $guests
  * @property string|null $message
  * @property string|null $unit_price
@@ -131,7 +131,8 @@ class Booking extends Model
      */
     public function days(): ?int
     {
-        return $this->check_out === null ? null : (int) $this->check_in->diffInDays($this->check_out);
+        // Une visite n'a pas de durée : son `check_out` est une seconde date proposée.
+        return $this->type !== BookingTypeEnum::STAY || $this->check_out === null ? null : (int) $this->check_in->diffInDays($this->check_out);
     }
 
     /**
@@ -158,9 +159,18 @@ class Booking extends Model
     {
         $in = $this->check_in->copy()->locale($locale)->isoFormat('ll');
 
-        return $this->check_out === null
+        $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
+
+        if ($this->type === BookingTypeEnum::VISIT) {
+            // Une visite : sa date, et la seconde date proposée s'il y en a une (`check_out`).
+            return $out === null
+                ? __('offer::booking.period.visit', ['date' => $in], $locale)
+                : __('offer::booking.period.visit_or', ['date' => $in, 'second' => $out], $locale);
+        }
+
+        return $out === null
             ? __('offer::booking.period.visit', ['date' => $in], $locale)
-            : __('offer::booking.period.stay', ['from' => $in, 'to' => $this->check_out->copy()->locale($locale)->isoFormat('ll')], $locale);
+            : __('offer::booking.period.stay', ['from' => $in, 'to' => $out], $locale);
     }
 
     /**

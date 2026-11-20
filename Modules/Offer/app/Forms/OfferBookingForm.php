@@ -72,6 +72,12 @@ class OfferBookingForm extends Form
                     ->calendar($unavailable)
                     ->required()
                     ->rules([...$dates, $this->onePending()]),
+                // Une seconde date, facultative, autre que la première.
+                Field::date('check_out')
+                    ->label(__('offer::booking.form.visit_second_date'))
+                    ->dateRange(today()->toDateString(), $latest)
+                    ->calendar($unavailable)
+                    ->rules(['nullable', ...$dates, 'different:check_in']),
                 $message,
             ];
         }

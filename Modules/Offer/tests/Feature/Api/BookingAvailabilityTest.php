@@ -176,4 +176,29 @@ class BookingAvailabilityTest extends TestCase
         $this->block($visit, 3);
         $this->assertSame(['unavailable' => [$day(3)], 'after' => null], $this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$visit->getKey())->json('data.fields.0.calendar'));
     }
+
+    public function test_a_visit_can_propose_a_second_date(): void
+    {
+        $offer = $this->home(false);
+        $this->block($offer, 9);
+        $url = "/api/v1/offers/{$offer->getKey()}/bookings";
+        $date = fn (int $days): string => today()->addDays($days)->toDateString();
+
+        // Une seconde date : gardée dans `check_out`, sans durée ni voyageurs ; écrite dans le texte.
+        $this->asUser($this->member())->postJson($url, ['check_in' => $date(5), 'check_out' => $date(7)])->assertNoContent();
+        $booking = $offer->bookings()->latest('id')->first();
+        $this->assertSame([$date(5), $date(7)], [$booking->check_in->toDateString(), $booking->check_out->toDateString()]);
+        $this->assertNull($booking->days());
+        $this->assertNull($booking->guests);
+        $this->assertMatchesRegularExpression('/^le .+ ou le .+$/', $booking->period('fr'));
+
+        // Facultative ; jamais la même date ; jamais un jour bloqué.
+        $this->asUser($this->member())->postJson($url, ['check_in' => $date(6)])->assertNoContent();
+        $this->asUser($this->member())->postJson($url, ['check_in' => $date(8), 'check_out' => $date(8)])->assertJsonValidationErrors('check_out');
+        $this->asUser($this->member())->postJson($url, ['check_in' => $date(8), 'check_out' => $date(9)])->assertUnprocessable();
+
+        // Le calendrier colore les deux jours de la visite.
+        $days = collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar?month=".today()->addDays(7)->format('Y-m'))->json('data.days'))->keyBy('date');
+        $this->assertSame('pending', $days[$date(7)]['state']);
+    }
 }

@@ -36,8 +36,9 @@ class BookingService
     {
         $type = app(DomainRegistry::class)->require()->bookingType($offer) ?? BookingTypeEnum::VISIT;
         $checkIn = Carbon::parse((string) $data['check_in'])->startOfDay();
-        $checkOut = $type === BookingTypeEnum::STAY ? Carbon::parse((string) $data['check_out'])->startOfDay() : null;
-        $days = $checkOut === null ? null : (int) $checkIn->diffInDays($checkOut);
+        // Un séjour : le départ ; une visite : une seconde date proposée, facultative.
+        $checkOut = filled($data['check_out'] ?? null) ? Carbon::parse((string) $data['check_out'])->startOfDay() : null;
+        $days = $type === BookingTypeEnum::STAY && $checkOut !== null ? (int) $checkIn->diffInDays($checkOut) : null;
         $message = trim((string) ($data['message'] ?? ''));
         $unitPrice = $type === BookingTypeEnum::STAY ? $offer->price : null;
         $guests = $type === BookingTypeEnum::STAY ? (int) ($data['guests'] ?? 1) : null;

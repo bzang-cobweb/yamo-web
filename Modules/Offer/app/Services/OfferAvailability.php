@@ -30,6 +30,11 @@ class OfferAvailability
             return true;
         }
 
+        // Une visite : sa seconde date proposée ne tombe pas non plus sur un jour bloqué.
+        if ($type === BookingTypeEnum::VISIT && $out !== null && $offer->blockedDates()->whereDate('date', $out->toDateString())->exists()) {
+            return true;
+        }
+
         return $type === BookingTypeEnum::STAY && $offer->bookings()
             ->where('status', BookingStatusEnum::ACCEPTED)
             ->overlapping($in, $to)
