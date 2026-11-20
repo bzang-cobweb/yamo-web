@@ -279,14 +279,19 @@ class BookingThreadTest extends TestCase
             'Visite' => '28 nov. 2026',
             'Prix par mois' => Number::currency(250000, 'XAF', 'fr'),
             'Charges par mois' => Number::currency(0, 'XAF', 'fr'),
-            'Caution' => '0 mois',
-            'Avance de loyer' => '0 mois',
+            '0 mois de caution' => Number::currency(0, 'XAF', 'fr'),
+            '0 mois d’avance' => Number::currency(0, 'XAF', 'fr'),
             'Total' => Number::currency(0, 'XAF', 'fr'),
         ], $lines());
 
-        // Le total : le loyer seul fois les mois de caution et d'avance, sans les charges.
-        $flat->update(['details' => [...$flat->details, 'charges' => 15000, 'deposit_months' => 2, 'advance_months' => 3]]);
-        $this->assertSame(['Caution' => '2 mois', 'Avance de loyer' => '3 mois', 'Total' => Number::currency(1250000, 'XAF', 'fr')], array_slice($lines(), -3));
+        // Les mois dans le libellé, le loyer fois ces mois en valeur ; le total, leur somme, sans les
+        // charges (décision 2026-11-20-caution-en-montant).
+        $flat->update(['details' => [...$flat->details, 'charges' => 15000, 'deposit_months' => 2, 'advance_months' => 6]]);
+        $this->assertSame([
+            '2 mois de caution' => Number::currency(500000, 'XAF', 'fr'),
+            '6 mois d’avance' => Number::currency(1500000, 'XAF', 'fr'),
+            'Total' => Number::currency(2000000, 'XAF', 'fr'),
+        ], array_slice($lines(), -3));
     }
 
     public function test_a_stay_shows_its_deposit_even_at_zero_before_the_total_that_adds_it(): void

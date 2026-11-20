@@ -16,8 +16,8 @@ return [
         'charges' => 'Nebenkosten',
         'charges_per' => 'Nebenkosten pro :unit',
         'deposit' => 'Kaution',
-        'advance' => 'Mietvorauszahlung',
-        'months' => '{0} :count Monate|{1} :count Monat|[2,*] :count Monate',
+        'deposit_months' => '{0} :count Monate Kaution|{1} :count Monat Kaution|[2,*] :count Monate Kaution',
+        'advance_months' => '{0} :count Monate Vorauszahlung|{1} :count Monat Vorauszahlung|[2,*] :count Monate Vorauszahlung',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [

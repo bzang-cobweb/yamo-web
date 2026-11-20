@@ -96,8 +96,8 @@ class BookingResource extends JsonResource
 
     /**
      * Une visite (non meublé), toujours, même à 0 : les charges du mois, la caution et l'avance
-     * de loyer en mois, puis le total, le loyer seul fois les mois de caution et d'avance
-     * (décision 2026-11-20-caution-dans-le-total).
+     * de loyer, le nombre de mois dans le libellé (« 2 mois de caution ») et leur montant, le
+     * loyer fois ces mois, en valeur ; puis le total, leur somme (décision 2026-11-20-caution-en-montant).
      *
      * @return list<array{key: string, label: string, value: string}>
      */
@@ -111,14 +111,19 @@ class BookingResource extends JsonResource
         $unit = app(DomainRegistry::class)->require()->priceUnit($offer);
         $number = fn (string $key): float => is_numeric($value = $offer->detail($key)) ? (float) $value : 0.0;
         $money = fn (float $amount): string => Number::currency($amount, (string) $offer->currency, $locale);
-        $months = fn (float $count): string => trans_choice('offer::booking.lines.months', (int) $count, ['count' => (int) $count]);
+        $rent = (float) $offer->price;
+        $months = fn (string $key, float $count): array => [
+            'key' => $key,
+            'label' => trans_choice('offer::booking.lines.'.$key.'_months', (int) $count, ['count' => (int) $count]),
+            'value' => $money($rent * $count),
+        ];
         [$deposit, $advance] = [$number('deposit_months'), $number('advance_months')];
 
         return [
             ['key' => 'charges', 'label' => $unit === null ? __('offer::booking.lines.charges') : __('offer::booking.lines.charges_per', ['unit' => $unit]), 'value' => $money($number('charges'))],
-            ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $months($deposit)],
-            ['key' => 'advance', 'label' => __('offer::booking.lines.advance'), 'value' => $months($advance)],
-            ['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $offer->price * ($deposit + $advance))],
+            $months('deposit', $deposit),
+            $months('advance', $advance),
+            ['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
         ];
     }
 

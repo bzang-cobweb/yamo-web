@@ -16,8 +16,8 @@ return [
         'charges' => 'Charges',
         'charges_per' => 'Charges par :unit',
         'deposit' => 'Caution',
-        'advance' => 'Avance de loyer',
-        'months' => '{0} :count mois|{1} :count mois|[2,*] :count mois',
+        'deposit_months' => ':count mois de caution',
+        'advance_months' => ':count mois d’avance',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [
