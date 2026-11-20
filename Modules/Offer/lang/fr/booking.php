@@ -83,6 +83,8 @@ return [
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count jour|[2,*] :count jours',
         'people' => '{1} :count personne|[2,*] :count personnes',
+        // Le nombre de chambres du logement, sur la page d'une demande.
+        'bedrooms' => '{0} Sans chambre|{1} :count chambre|[2,*] :count chambres',
         'handle' => 'Traiter la demande',
         'title' => 'Demande',
         'greeting' => 'Bonjour :name,',
