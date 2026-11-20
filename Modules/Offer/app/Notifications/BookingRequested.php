@@ -149,7 +149,7 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
     /** Le fil de la demande : toutes ses étapes, des deux côtés (décision 2026-11-20-suivi-demande). */
     public function notificationThread(object $notifiable): ?string
     {
-        return 'booking:'.$this->booking->getKey();
+        return $this->booking->thread();
     }
 
     /**

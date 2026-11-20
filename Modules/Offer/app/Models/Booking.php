@@ -50,6 +50,15 @@ class Booking extends Model
 
     public const MESSAGE_MAX_LENGTH = 1000;
 
+    /** Le préfixe du fil de notifications d'une demande : `booking:12` (décision 2026-11-20-notification-generique). */
+    public const THREAD_PREFIX = 'booking:';
+
+    /** Le fil de notifications de cette demande. */
+    public function thread(): string
+    {
+        return self::THREAD_PREFIX.$this->getKey();
+    }
+
     /**
      * @return array<string, string>
      */

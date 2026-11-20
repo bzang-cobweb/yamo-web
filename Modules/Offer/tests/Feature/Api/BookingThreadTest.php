@@ -165,8 +165,13 @@ class BookingThreadTest extends TestCase
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertStringStartsWith('Séjour du ', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
-            $this->assertSame($booking->formattedTotal('fr'), $page['total']);
-            $this->assertNotNull($page['total']);
+            // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
+            $this->assertArrayNotHasKey('total', $page);
+            $this->assertSame([
+                'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
+                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'guests' => 1, 'total' => $booking->formattedTotal('fr'),
+            ], $page['booking']);
+            $this->assertNotNull($page['booking']['total']);
         }
     }
 

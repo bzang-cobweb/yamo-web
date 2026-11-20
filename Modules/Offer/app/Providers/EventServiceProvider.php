@@ -3,9 +3,11 @@
 namespace Modules\Offer\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Offer\Events\BookingAnswered;
 use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested;
+use Modules\Offer\Listeners\AddBookingToNotificationThread;
 use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
@@ -23,6 +25,8 @@ class EventServiceProvider extends ServiceProvider
         BookingRequested::class => [NotifyOwnerOfBookingRequest::class],
         BookingAnswered::class => [NotifyGuestOfBookingAnswer::class, NotifyOwnerOfOwnAnswer::class],
         BookingCancelled::class => [NotifyOwnerOfBookingCancellation::class],
+        // La page d'une notification du fil d'une demande : la demande (décision 2026-11-20-notification-generique).
+        NotificationThreadSerializing::class => [AddBookingToNotificationThread::class],
     ];
 
     /**

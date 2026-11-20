@@ -3716,189 +3716,360 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string"
-                                },
-                                "title": {
-                                    "type": "string"
-                                },
-                                "tag": {
-                                    "type": [
-                                        "object",
-                                        "null"
-                                    ],
-                                    "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
-                                    "properties": {
-                                        "label": {
-                                            "type": "string"
-                                        },
-                                        "tone": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "label",
-                                        "tone"
-                                    ]
-                                },
-                                "body": {
-                                    "type": "string"
-                                },
-                                "actor": {
-                                    "type": [
-                                        "object",
-                                        "null"
-                                    ],
-                                    "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                            "anyOf": [
+                                {
+                                    "type": "object",
                                     "properties": {
                                         "id": {
                                             "type": "string"
                                         },
-                                        "name": {
+                                        "title": {
                                             "type": "string"
                                         },
-                                        "initials": {
+                                        "tag": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
+                                            "properties": {
+                                                "label": {
+                                                    "type": "string"
+                                                },
+                                                "tone": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "label",
+                                                "tone"
+                                            ]
+                                        },
+                                        "body": {
                                             "type": "string"
                                         },
-                                        "photo": {
+                                        "actor": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "initials": {
+                                                    "type": "string"
+                                                },
+                                                "photo": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "online": {
+                                                    "type": "boolean"
+                                                },
+                                                "link": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "null"
+                                                },
+                                                "phone": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "initials",
+                                                "photo",
+                                                "online",
+                                                "link",
+                                                "email",
+                                                "phone"
+                                            ]
+                                        },
+                                        "summary": {
                                             "type": [
                                                 "string",
                                                 "null"
-                                            ]
+                                            ],
+                                            "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
                                         },
-                                        "online": {
-                                            "type": "boolean"
+                                        "message": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
                                         },
                                         "link": {
-                                            "type": "string"
-                                        },
-                                        "email": {
-                                            "type": "null"
-                                        },
-                                        "phone": {
                                             "type": [
                                                 "string",
                                                 "null"
-                                            ]
+                                            ],
+                                            "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "link": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "label",
+                                                    "link"
+                                                ]
+                                            }
+                                        },
+                                        "text_links": {
+                                            "type": "array",
+                                            "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "text": {
+                                                        "type": "string"
+                                                    },
+                                                    "link": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "text",
+                                                    "link"
+                                                ]
+                                            }
+                                        },
+                                        "link_label": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                                        },
+                                        "read": {
+                                            "type": "boolean",
+                                            "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
+                                        },
+                                        "created_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Date ISO 8601."
+                                        },
+                                        "history": {
+                                            "type": "array",
+                                            "items": {}
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "name",
-                                        "initials",
-                                        "photo",
-                                        "online",
+                                        "title",
+                                        "tag",
+                                        "body",
+                                        "actor",
+                                        "summary",
+                                        "message",
                                         "link",
-                                        "email",
-                                        "phone"
+                                        "links",
+                                        "text_links",
+                                        "link_label",
+                                        "read",
+                                        "created_at",
+                                        "history"
                                     ]
                                 },
-                                "summary": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
-                                    "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
-                                },
-                                "total": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
-                                    "description": "Le total de la demande (\u00ab 255 000 FCFA \u00bb), en gras sur sa page ; `null` sans total."
-                                },
-                                "message": {
-                                    "type": [
-                                        "string",
-                                        "null"
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tag": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
+                                            "properties": {
+                                                "label": {
+                                                    "type": "string"
+                                                },
+                                                "tone": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "label",
+                                                "tone"
+                                            ]
+                                        },
+                                        "body": {
+                                            "type": "string"
+                                        },
+                                        "actor": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "initials": {
+                                                    "type": "string"
+                                                },
+                                                "photo": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "online": {
+                                                    "type": "boolean"
+                                                },
+                                                "link": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "null"
+                                                },
+                                                "phone": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "initials",
+                                                "photo",
+                                                "online",
+                                                "link",
+                                                "email",
+                                                "phone"
+                                            ]
+                                        },
+                                        "summary": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
+                                        },
+                                        "message": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "link": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "label",
+                                                    "link"
+                                                ]
+                                            }
+                                        },
+                                        "text_links": {
+                                            "type": "array",
+                                            "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "text": {
+                                                        "type": "string"
+                                                    },
+                                                    "link": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "text",
+                                                    "link"
+                                                ]
+                                            }
+                                        },
+                                        "link_label": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                                        },
+                                        "read": {
+                                            "type": "boolean",
+                                            "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
+                                        },
+                                        "created_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
+                                            "description": "Date ISO 8601."
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "title",
+                                        "tag",
+                                        "body",
+                                        "actor",
+                                        "summary",
+                                        "message",
+                                        "link",
+                                        "links",
+                                        "text_links",
+                                        "link_label",
+                                        "read",
+                                        "created_at"
                                     ]
-                                },
-                                "link": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
-                                    "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
-                                },
-                                "links": {
-                                    "type": "array",
-                                    "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "label": {
-                                                "type": "string"
-                                            },
-                                            "link": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "label",
-                                            "link"
-                                        ]
-                                    }
-                                },
-                                "text_links": {
-                                    "type": "array",
-                                    "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "text": {
-                                                "type": "string"
-                                            },
-                                            "link": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "text",
-                                            "link"
-                                        ]
-                                    }
-                                },
-                                "link_label": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
-                                    "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
-                                },
-                                "read": {
-                                    "type": "boolean",
-                                    "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
-                                },
-                                "created_at": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
-                                    "description": "Date ISO 8601."
-                                },
-                                "history": {
-                                    "type": "array",
-                                    "items": {}
                                 }
-                            },
-                            "required": [
-                                "id",
-                                "title",
-                                "tag",
-                                "body",
-                                "actor",
-                                "summary",
-                                "total",
-                                "message",
-                                "link",
-                                "links",
-                                "text_links",
-                                "link_label",
-                                "read",
-                                "created_at",
-                                "history"
                             ]
                         }
                     },
@@ -3922,192 +4093,366 @@
                 "title": "NotificationPageResource"
             },
             "NotificationResource": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "tag": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
-                        "properties": {
-                            "label": {
-                                "type": "string"
-                            },
-                            "tone": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "label",
-                            "tone"
-                        ]
-                    },
-                    "body": {
-                        "type": "string"
-                    },
-                    "actor": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                "anyOf": [
+                    {
+                        "type": "object",
                         "properties": {
                             "id": {
                                 "type": "string"
                             },
-                            "name": {
+                            "title": {
                                 "type": "string"
                             },
-                            "initials": {
+                            "tag": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "tone": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "tone"
+                                ]
+                            },
+                            "body": {
                                 "type": "string"
                             },
-                            "photo": {
+                            "actor": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "initials": {
+                                        "type": "string"
+                                    },
+                                    "photo": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "online": {
+                                        "type": "boolean"
+                                    },
+                                    "link": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "initials",
+                                    "photo",
+                                    "online",
+                                    "link",
+                                    "email",
+                                    "phone"
+                                ]
+                            },
+                            "summary": {
                                 "type": [
                                     "string",
                                     "null"
-                                ]
+                                ],
+                                "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
                             },
-                            "online": {
-                                "type": "boolean"
+                            "message": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
                             },
                             "link": {
-                                "type": "string"
-                            },
-                            "email": {
                                 "type": [
                                     "string",
                                     "null"
-                                ]
+                                ],
+                                "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
                             },
-                            "phone": {
+                            "links": {
+                                "type": "array",
+                                "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "link": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "link"
+                                    ]
+                                }
+                            },
+                            "text_links": {
+                                "type": "array",
+                                "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "text": {
+                                            "type": "string"
+                                        },
+                                        "link": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "text",
+                                        "link"
+                                    ]
+                                }
+                            },
+                            "link_label": {
                                 "type": [
                                     "string",
                                     "null"
-                                ]
+                                ],
+                                "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                            },
+                            "read": {
+                                "type": "boolean",
+                                "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
+                            },
+                            "created_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Date ISO 8601."
+                            },
+                            "history": {
+                                "type": "array",
+                                "items": {}
                             }
                         },
                         "required": [
                             "id",
-                            "name",
-                            "initials",
-                            "photo",
-                            "online",
+                            "title",
+                            "tag",
+                            "body",
+                            "actor",
+                            "summary",
+                            "message",
                             "link",
-                            "email",
-                            "phone"
+                            "links",
+                            "text_links",
+                            "link_label",
+                            "read",
+                            "created_at",
+                            "history"
                         ]
                     },
-                    "summary": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
-                    },
-                    "total": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Le total de la demande (\u00ab 255 000 FCFA \u00bb), en gras sur sa page ; `null` sans total."
-                    },
-                    "message": {
-                        "type": [
-                            "string",
-                            "null"
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "tag": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "Statut en pastille, selon le type de la notification (\u00ab Accept\u00e9e \u00bb, ton `success`), \u00e0 d\u00e9faut celui des donn\u00e9es ; ou `null`.",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "tone": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "tone"
+                                ]
+                            },
+                            "body": {
+                                "type": "string"
+                            },
+                            "actor": {
+                                "type": [
+                                    "object",
+                                    "null"
+                                ],
+                                "description": "Qui agit, lu \u00e0 l'affichage (photo, nom, en ligne), ou `null`.",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "initials": {
+                                        "type": "string"
+                                    },
+                                    "photo": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "online": {
+                                        "type": "boolean"
+                                    },
+                                    "link": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "initials",
+                                    "photo",
+                                    "online",
+                                    "link",
+                                    "email",
+                                    "phone"
+                                ]
+                            },
+                            "summary": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Le texte sans le nom de qui agit, pour la carte ; `null` : `body`."
+                            },
+                            "message": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`."
+                            },
+                            "link": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
+                            },
+                            "links": {
+                                "type": "array",
+                                "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "link": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "label",
+                                        "link"
+                                    ]
+                                }
+                            },
+                            "text_links": {
+                                "type": "array",
+                                "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "text": {
+                                            "type": "string"
+                                        },
+                                        "link": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "text",
+                                        "link"
+                                    ]
+                                }
+                            },
+                            "link_label": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
+                            },
+                            "read": {
+                                "type": "boolean",
+                                "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
+                            },
+                            "created_at": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "description": "Date ISO 8601."
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "title",
+                            "tag",
+                            "body",
+                            "actor",
+                            "summary",
+                            "message",
+                            "link",
+                            "links",
+                            "text_links",
+                            "link_label",
+                            "read",
+                            "created_at"
                         ]
-                    },
-                    "link": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "\u00c9cran de l'app \u00e0 ouvrir (`/profile/lists/offer.bookings`), ou `null`."
-                    },
-                    "links": {
-                        "type": "array",
-                        "description": "Liens en plus, sous le texte (\u00ab Voir l'annonce \u00bb \u2192 `/offers/12`).",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "label": {
-                                    "type": "string"
-                                },
-                                "link": {
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "label",
-                                "link"
-                            ]
-                        }
-                    },
-                    "text_links": {
-                        "type": "array",
-                        "description": "Passages du texte qui ouvrent un \u00e9cran (\u00ab Paul Etoa \u00bb \u2192 `/members/37`).",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "text": {
-                                    "type": "string"
-                                },
-                                "link": {
-                                    "type": "string"
-                                }
-                            },
-                            "required": [
-                                "text",
-                                "link"
-                            ]
-                        }
-                    },
-                    "link_label": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Libell\u00e9 du bouton qui ouvre `link` (\u00ab R\u00e9servations re\u00e7ues \u00bb), ou `null`."
-                    },
-                    "read": {
-                        "type": "boolean",
-                        "description": "Lue : pour la carte d'une demande, toutes ses \u00e9tapes le sont."
-                    },
-                    "created_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "Date ISO 8601."
-                    },
-                    "history": {
-                        "type": "array",
-                        "items": {}
                     }
-                },
-                "required": [
-                    "id",
-                    "title",
-                    "tag",
-                    "body",
-                    "actor",
-                    "summary",
-                    "total",
-                    "message",
-                    "link",
-                    "links",
-                    "text_links",
-                    "link_label",
-                    "read",
-                    "created_at",
-                    "history"
                 ],
                 "title": "NotificationResource"
             },

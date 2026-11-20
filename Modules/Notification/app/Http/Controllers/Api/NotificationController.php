@@ -72,7 +72,7 @@ class NotificationController
     {
         // Sur sa page : les coordonnées de qui agit (décision 2026-11-20-coordonnees-notification).
         // Et le suivi de son fil, des deux côtés (décision 2026-11-20-suivi-demande).
-        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withContact()->withHistory();
+        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withContact()->withThread();
     }
 
     /**

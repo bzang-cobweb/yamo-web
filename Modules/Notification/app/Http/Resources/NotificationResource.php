@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Notification\Support\ActorData;
 use Modules\Notification\Support\NotificationFilters;
 use Modules\Notification\Support\NotificationThreads;
@@ -28,19 +29,21 @@ class NotificationResource extends JsonResource
     /** Les coordonnées de qui agit (e-mail, téléphone) : sur la page d'une notification seulement. */
     private bool $withContact = false;
 
-    /** Le suivi de son fil : sur la page d'une notification seulement (décision 2026-11-20-suivi-demande). */
-    private bool $withHistory = false;
+    /** Son fil : sur la page d'une notification seulement (décisions 2026-11-20-suivi-demande et 2026-11-20-notification-generique). */
+    private bool $withThread = false;
 
     /** Lue ou non, pour tout son fil ; `null` : la notification seule. */
     private ?bool $read = null;
 
     /**
-     * Ajoute le suivi de son fil, de la plus ancienne étape à la plus récente, des deux
-     * côtés (décision 2026-11-20-suivi-demande).
+     * Ajoute son fil : le suivi, de la plus ancienne étape à la plus récente, des deux
+     * côtés (décision 2026-11-20-suivi-demande), et ce qu'y ajoute le module du fil par
+     * l'événement `NotificationThreadSerializing` (une demande : `booking`, décision
+     * 2026-11-20-notification-generique).
      */
-    public function withHistory(): self
+    public function withThread(): self
     {
-        $this->withHistory = true;
+        $this->withThread = true;
 
         return $this;
     }
@@ -72,14 +75,14 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, total: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
         $notification = $this->resource;
-        $steps = $this->withHistory ? app(NotificationThreads::class)->steps($notification) : [];
-        // Sur sa page, une demande se présente par sa première étape : son titre, son texte,
-        // qui l'a faite, son prix (décision 2026-11-20-entete-premiere-etape).
+        $steps = $this->withThread ? app(NotificationThreads::class)->steps($notification) : [];
+        // Sur sa page, un fil se présente par sa première étape : son titre, son texte, qui
+        // l'a faite (décision 2026-11-20-entete-premiere-etape).
         $head = $steps[0] ?? $notification;
         $data = (array) $head->data;
         $own = (array) $notification->data;
@@ -95,8 +98,6 @@ class NotificationResource extends JsonResource
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
             'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
-            /** Le total de la demande (« 255 000 FCFA »), en gras sur sa page ; `null` sans total. */
-            'total' => $this->total($data),
             'message' => $this->message($own),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
             'link' => $this->link($own),
@@ -112,9 +113,19 @@ class NotificationResource extends JsonResource
             'created_at' => $this->date($notification),
         ];
 
-        if ($this->withHistory) {
-            /** Le suivi de la demande, de la plus ancienne étape à la plus récente, des deux côtés ; vide sans fil. */
-            $item['history'] = $this->history($steps);
+        if (! $this->withThread) {
+            return $item;
+        }
+
+        /** Le suivi de son fil, de la plus ancienne étape à la plus récente, des deux côtés ; vide sans fil. */
+        $item['history'] = $this->history($steps);
+
+        // Le module du fil complète la réponse (une demande : `booking`).
+        $thread = $notification->getAttribute('thread');
+        if (is_string($thread)) {
+            $event = new NotificationThreadSerializing($notification, $thread, $item);
+            event($event);
+            $item = $event->data;
         }
 
         return $item;
@@ -193,14 +204,6 @@ class NotificationResource extends JsonResource
     private function summary(array $data): ?string
     {
         return isset($data['summary']) && is_string($data['summary']) ? (string) $data['summary'] : null;
-    }
-
-    /**
-     * @param  array<mixed>  $data
-     */
-    private function total(array $data): ?string
-    {
-        return isset($data['total']) && is_string($data['total']) ? (string) $data['total'] : null;
     }
 
     /**
