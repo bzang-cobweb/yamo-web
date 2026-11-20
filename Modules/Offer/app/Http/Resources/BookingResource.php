@@ -75,7 +75,7 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * Le prix du logement : l'unité dans le libellé (« Prix par jour », « Prix par mois »),
+     * Le prix du logement : l'unité dans le libellé (« Prix par jour » ; « Loyer mensuel (sans charges) » pour une visite),
      * le montant seul en valeur (« 20 000 FCFA ») ; `null` sans prix.
      *
      * @return array{key: string, label: string, value: string}|null
@@ -91,10 +91,10 @@ class BookingResource extends JsonResource
 
         return [
             'key' => 'price',
-            // Une visite (non meublé) : « Loyer par mois (sans charges) » (décision 2026-11-20-loyer-sans-charges).
+            // Une visite (non meublé) : « Loyer mensuel (sans charges) » (décision 2026-11-20-libelles-mensuels).
             'label' => match (true) {
+                $booking->type === BookingTypeEnum::VISIT => __('offer::booking.lines.rent'),
                 $unit === null => __('offer::booking.lines.price'),
-                $booking->type === BookingTypeEnum::VISIT => __('offer::booking.lines.rent_per', ['unit' => $unit]),
                 default => __('offer::booking.lines.price_per', ['unit' => $unit]),
             },
             'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
@@ -115,7 +115,6 @@ class BookingResource extends JsonResource
             return [];
         }
 
-        $unit = app(DomainRegistry::class)->require()->priceUnit($offer);
         $number = fn (string $key): float => is_numeric($value = $offer->detail($key)) ? (float) $value : 0.0;
         $money = fn (float $amount): string => Number::currency($amount, (string) $offer->currency, $locale);
         $rent = (float) $offer->price;
@@ -127,7 +126,8 @@ class BookingResource extends JsonResource
         [$deposit, $advance] = [$number('deposit_months'), $number('advance_months')];
 
         return [
-            ['key' => 'charges', 'label' => $unit === null ? __('offer::booking.lines.charges') : __('offer::booking.lines.charges_per', ['unit' => $unit]), 'value' => $money($number('charges'))],
+            // « Charges mensuelles » (décision 2026-11-20-libelles-mensuels).
+            ['key' => 'charges', 'label' => __('offer::booking.lines.charges'), 'value' => $money($number('charges'))],
             $this->price($booking, $locale),
             $months('deposit', $deposit),
             $months('advance', $advance),

@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-libelles-mensuels.md
+
 # « Loyer par mois (sans charges) » dans les lignes d'une visite
 
 - **Date** : 2026-11-20
