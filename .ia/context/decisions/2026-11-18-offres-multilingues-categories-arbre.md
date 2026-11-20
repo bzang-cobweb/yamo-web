@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-contrat-type-de-location.md (pour les catégories)
+
 # `2026-11-18` — Offres multilingues ; catégories en arbre, triables
 
 - **Type** : décision
