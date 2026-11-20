@@ -146,8 +146,8 @@ class NotificationResource extends JsonResource
      */
     private function tag(array $data): ?array
     {
-        // Selon le type, par le module qui l'inscrit (décision 2026-11-20-statut-par-type).
-        $byType = app(NotificationFilters::class)->tag((string) $this->resource->getAttribute('type'));
+        // Par le module qui l'inscrit : pour une demande, son statut réel (décision 2026-11-20-statut-reel).
+        $byType = app(NotificationFilters::class)->tag($this->resource);
         if ($byType !== null) {
             return ['label' => (string) $byType['label'], 'tone' => (string) $byType['tone']];
         }

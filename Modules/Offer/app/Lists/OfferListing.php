@@ -19,7 +19,7 @@ use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 
 /**
  * Les offres du compte (« Mes logements »), ouvertes depuis le menu du profil :
@@ -183,12 +183,12 @@ class OfferListing extends Listing
         // Ses demandes en attente : un compteur (décision 2026-11-19-contrat-reservations-logements-profil).
         $pending = (int) ($record->pending_bookings_count ?? 0);
 
-        // Il ouvre les notifications, filtrées sur les demandes en attente de ce logement
+        // Il ouvre les notifications, filtrées sur les demandes de logement réellement en attente de ce logement
         // (décision 2026-11-20-compteur-vers-notifications).
         return $pending === 0 ? $item : $item->counter(
             trans_choice('offer::booking.profile.pending_count', $pending, ['count' => $pending]),
             'notifications',
-            ['type' => BookingRequestReceived::class, 'offer' => (string) $record->getKey()],
+            ['type' => OfferNotificationFilter::BOOKING, 'status' => BookingStatusEnum::PENDING->value, 'offer' => (string) $record->getKey()],
             link: '/notifications',
         );
     }

@@ -72,8 +72,6 @@ return [
         'greeting' => 'Bonjour :name,',
         'salutation' => "L'équipe :app",
         'requested' => [
-            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
-            'type' => ':request en attente',
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -84,8 +82,6 @@ return [
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [
-            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
-            'type' => ':request acceptée',
             'subject' => 'Demande acceptée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est acceptée.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -93,8 +89,6 @@ return [
             'sms' => ':app : votre demande pour « :offer » (:period) est acceptée.',
         ],
         'refused' => [
-            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
-            'type' => ':request refusée',
             'subject' => 'Demande refusée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est refusée.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
@@ -102,8 +96,6 @@ return [
             'sms' => ':app : votre demande pour « :offer » (:period) est refusée.',
         ],
         'cancelled' => [
-            // Libellé du filtre « Type » des notifications (décision 2026-11-20-filtres-notifications).
-            'type' => ':request annulée',
             'subject' => 'Demande annulée : :offer',
             'body' => ':guest a annulé sa demande pour « :offer » (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.

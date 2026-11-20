@@ -5,81 +5,113 @@ namespace Modules\Offer\Notifications;
 use App\Support\ContainsSearch;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
- * - les types de ses notifications : les quatre étapes d'une demande ;
- * - le logement, parmi ceux que nomment ses notifications, affiché pour un type de demande ;
- * - le type de location de l'offre (« Location meublée »), affiché pour un type de demande ;
+ * - un seul type, « Demande de logement », pour les quatre étapes d'une demande ;
+ * - pour ce type : le statut réel de la demande, le logement, le type de location ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
  */
 class OfferNotificationFilter implements NotificationFilter
 {
-    /**
-     * Les quatre étapes d'une demande, nommées par le domaine (« Demande de logement
-     * acceptée »).
-     */
+    /** Les quatre étapes d'une demande : un seul type pour le filtre, « Demande de logement ». */
+    public const BOOKING_TYPES = [BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class];
+
+    /** La clé du groupe « Demande de logement » dans le filtre « Type ». */
+    public const BOOKING = 'booking';
+
+    /** @var array<int, BookingStatusEnum|null> Statuts déjà lus, par demande. */
+    private array $statuses = [];
+
     public function types(): array
     {
         // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
-        $request = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
+        $label = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
 
-        return [
-            BookingRequestReceived::class => __('offer::booking.notify.requested.type', ['request' => $request]),
-            BookingRequestAccepted::class => __('offer::booking.notify.accepted.type', ['request' => $request]),
-            BookingRequestRefused::class => __('offer::booking.notify.refused.type', ['request' => $request]),
-            BookingRequestCancelled::class => __('offer::booking.notify.cancelled.type', ['request' => $request]),
-        ];
+        return [self::BOOKING => ['label' => $label, 'types' => self::BOOKING_TYPES]];
     }
 
     /**
-     * La pastille d'une étape de demande, selon son type : son libellé (« Demande de
-     * logement acceptée ») et la couleur de son statut (en attente orange, acceptée
-     * verte, refusée et annulée grises).
+     * La pastille d'une notification de demande : le statut **réel** de la demande,
+     * lu à l'affichage (décision 2026-11-20-statut-reel) ; à défaut (demande supprimée,
+     * ancienne notification sans `booking_id`), celui que nomme l'étape notifiée.
      */
-    public function tag(string $type): ?array
+    public function tag(DatabaseNotification $notification): ?array
     {
-        $status = match ($type) {
-            BookingRequestReceived::class => BookingStatusEnum::PENDING,
+        $type = (string) $notification->getAttribute('type');
+        if (! in_array($type, self::BOOKING_TYPES, true)) {
+            return null;
+        }
+
+        $id = ((array) $notification->data)['booking_id'] ?? null;
+        $status = (is_int($id) ? $this->status($id) : null) ?? match ($type) {
             BookingRequestAccepted::class => BookingStatusEnum::ACCEPTED,
             BookingRequestRefused::class => BookingStatusEnum::REFUSED,
             BookingRequestCancelled::class => BookingStatusEnum::CANCELLED,
-            default => null,
+            default => BookingStatusEnum::PENDING,
         };
 
-        // Le libellé du type (« Demande de logement acceptée »), la couleur du statut.
-        return $status === null ? null : ['label' => $this->types()[$type], 'tone' => $status->tone()];
+        return self::statusTag($status);
+    }
+
+    /** La pastille d'un statut de demande : son libellé et sa couleur. Aussi dans le calendrier. */
+    public static function statusTag(BookingStatusEnum $status): array
+    {
+        return ['label' => $status->label(), 'tone' => $status->tone()];
+    }
+
+    private function status(int $booking): ?BookingStatusEnum
+    {
+        if (! array_key_exists($booking, $this->statuses)) {
+            $this->statuses[$booking] = Booking::query()->whereKey($booking)->value('status');
+            $value = $this->statuses[$booking];
+            $this->statuses[$booking] = $value instanceof BookingStatusEnum ? $value : (is_string($value) ? BookingStatusEnum::tryFrom($value) : null);
+        }
+
+        return $this->statuses[$booking];
     }
 
     public function fields(User $user): array
     {
         return [
-            // Le logement, seulement pour un type de demande.
+            // Pour une demande de logement : son statut réel, le logement, son type de location.
+            Field::select('status')
+                ->label(__('offer::booking.profile.filter_status'))
+                ->options(BookingStatusEnum::options())
+                ->visibleWhen('type', self::BOOKING),
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->offers($user))
                 ->searchable()
-                ->visibleWhen('type', array_keys($this->types())),
-            // Le type de location de l'offre, pour un type de demande (décision 2026-11-20-contrat-type-de-location).
+                ->visibleWhen('type', self::BOOKING),
             Field::select('rental_type')
                 ->label(__('offer::booking.notify.filter_rental_type'))
                 ->options(RentalTypeEnum::options())
-                ->visibleWhen('type', array_keys($this->types())),
+                ->visibleWhen('type', self::BOOKING),
         ];
     }
 
     public function apply(Builder $query, array $filters, User $user): void
     {
+        // Le statut réel de la demande (décision 2026-11-20-statut-reel).
+        $status = $filters['status'] ?? null;
+        if (is_string($status) && BookingStatusEnum::tryFrom($status) !== null) {
+            $ids = Booking::query()->whereKey($this->bookingIds($user))->where('status', $status)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+            $query->whereIn('data->booking_id', $ids === [] ? [0] : $ids);
+        }
+
         $rentalType = $filters['rental_type'] ?? null;
         if (is_string($rentalType) && RentalTypeEnum::tryFrom($rentalType) !== null) {
             $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->where('details->rental_type', $rentalType)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
@@ -103,6 +135,21 @@ class OfferNotificationFilter implements NotificationFilter
         if ($ids !== []) {
             $query->orWhereIn('data->offer_id', $ids);
         }
+    }
+
+    /**
+     * Les demandes que nomment ses notifications.
+     *
+     * @return list<int>
+     */
+    private function bookingIds(User $user): array
+    {
+        return $user->notifications()->get()
+            ->map(fn ($notification): int => (int) (((array) $notification->data)['booking_id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

@@ -7,11 +7,11 @@ use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestCancelled;
 use Modules\Offer\Notifications\BookingRequestReceived;
-use Modules\Offer\Notifications\BookingRequestRefused;
 use Tests\TestCase;
 
 /**
@@ -48,42 +48,47 @@ class NotificationFiltersTest extends TestCase
             ->getJson('/api/v1/notifications'.$query)->assertOk()->json('data.items'), 'title');
     }
 
-    public function test_notifications_are_filtered_by_type_and_by_home_for_a_request_type(): void
+    public function test_one_request_type_with_the_real_status_home_and_rental_type(): void
     {
+        // Décisions 2026-11-20-filtres-notifications et 2026-11-20-statut-reel.
         $user = User::factory()->create(['locale' => 'fr']);
         $studio = Offer::factory()->create(['title' => ['fr' => 'Studio photos'], 'details' => ['rental_type' => 'furnished']]);
         $flat = Offer::factory()->create(['title' => ['fr' => 'Appartement Akwa'], 'details' => ['rental_type' => 'long_term']]);
-        $create = fn (string $type, string $title, ?Offer $offer) => $user->notifications()->create([
+        $pending = Booking::factory()->for($studio)->create();
+        $accepted = Booking::factory()->for($flat)->status(BookingStatusEnum::ACCEPTED)->create();
+        $create = fn (string $type, string $title, ?Offer $offer, ?Booking $booking) => $user->notifications()->create([
             'id' => (string) Str::uuid(), 'type' => $type,
-            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()])],
+            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($booking === null ? [] : ['booking_id' => $booking->getKey()])],
         ]);
-        $create(BookingRequestReceived::class, 'Demande studio', $studio);
-        $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat);
-        $create('Autre', 'Sans logement', null);
+        $create(BookingRequestReceived::class, 'Demande studio', $studio, $pending);
+        // Reçue en attente, acceptée depuis : son statut réel est « Acceptée ».
+        $create(BookingRequestReceived::class, 'Demande appartement', $flat, $accepted);
+        $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat, $accepted);
+        $create('Autre', 'Sans logement', null, null);
 
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        $this->assertSame(['user', 'type', 'offer', 'rental_type'], $filters->keys()->all());
-        // Le type de logement (la catégorie de l'offre), comme « Logement » : seulement pour un type de demande.
-        // Le type de location de l'offre, comme « Logement » : seulement pour un type de demande.
+        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type'], $filters->keys()->all());
+        // Un seul type pour les quatre étapes d'une demande ; un type inconnu des modules n'est pas proposé.
+        $this->assertSame(['booking' => 'Demande de logement'], array_column($filters['type']['options'], 'label', 'value'));
+        // Statut, logement et type de location : pour ce type seulement.
+        foreach (['status', 'offer', 'rental_type'] as $name) {
+            $this->assertSame(['booking'], $filters[$name]['visible_when']['values']);
+        }
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters['status']['options'], 'value'));
         $this->assertSame(['long_term' => 'Location longue durée', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
-        $this->assertSame($filters['offer']['visible_when'], $filters['rental_type']['visible_when']);
-        $this->assertSame('Type de location', $filters['rental_type']['label']);
-        // Les types de ses notifications, nommés par le domaine ; un type inconnu des modules n'est pas proposé.
-        $this->assertSame(['Demande de logement en attente', 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label'));
-        $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class], array_column($filters['type']['options'], 'value'));
-        // « Logement » : seulement pour un type de demande, avec une recherche.
-        $this->assertSame([BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class], $filters['offer']['visible_when']['values']);
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
-        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]='.urlencode(BookingRequestAccepted::class)));
+        $this->assertCount(3, $this->titles($user, '?filter[type]=booking'));
+        // Le statut réel de la demande, pas l'étape notifiée.
+        $this->assertSame(['Demande studio'], $this->titles($user, '?filter[type]=booking&filter[status]=pending'));
+        $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->titles($user, '?filter[type]=booking&filter[status]=accepted'));
         $this->assertSame(['Demande studio'], $this->titles($user, "?filter[offer]={$studio->getKey()}"));
         $this->assertSame(['Demande studio'], $this->titles($user, '?filter[rental_type]=furnished'));
-        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[rental_type]=long_term'));
         // Un type inconnu ne filtre rien.
-        $this->assertCount(3, $this->titles($user, '?filter[type]=Inconnu'));
+        $this->assertCount(4, $this->titles($user, '?filter[type]=Inconnu'));
     }
 
     public function test_the_search_finds_who_acted_and_the_home_title(): void

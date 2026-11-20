@@ -16,20 +16,21 @@ use Modules\Form\Support\Field;
 interface NotificationFilter
 {
     /**
-     * Les types de notification du module, avec leur libellé pour le filtre « Type »
-     * (classe de la notification => « Demande de logement acceptée »).
+     * Les types de notification du module, regroupés pour le filtre « Type » : clé du
+     * groupe => son libellé et ses classes de notification (« booking » => « Demande de
+     * logement », les quatre étapes d'une demande).
      *
-     * @return array<class-string, string>
+     * @return array<string, array{label: string, types: list<class-string>}>
      */
     public function types(): array;
 
     /**
-     * La pastille d'un type de notification du module (« Acceptée », ton `success`),
-     * lue à l'affichage ; `null` pour un type qui n'est pas le sien.
+     * La pastille d'une notification du module (« Acceptée », ton `success`), lue à
+     * l'affichage ; `null` pour une notification qui n'est pas la sienne.
      *
      * @return array{label: string, tone: string}|null
      */
-    public function tag(string $type): ?array;
+    public function tag(DatabaseNotification $notification): ?array;
 
     /**
      * Les champs du filtre, pour le compte `$user`.

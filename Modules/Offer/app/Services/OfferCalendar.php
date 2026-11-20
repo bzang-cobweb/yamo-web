@@ -15,10 +15,6 @@ use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestCancelled;
-use Modules\Offer\Notifications\BookingRequestReceived;
-use Modules\Offer\Notifications\BookingRequestRefused;
 use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Support\BookingText;
 
@@ -33,14 +29,6 @@ use Modules\Offer\Support\BookingText;
  */
 class OfferCalendar
 {
-    /** Le type de notification qui nomme chaque statut, pour la pastille d'une carte. */
-    private const STEPS = [
-        'pending' => BookingRequestReceived::class,
-        'accepted' => BookingRequestAccepted::class,
-        'refused' => BookingRequestRefused::class,
-        'cancelled' => BookingRequestCancelled::class,
-    ];
-
     /** Les mois qu'on peut revoir avant le mois courant. */
     public const PAST_MONTHS = 12;
 
@@ -114,7 +102,7 @@ class OfferCalendar
      * Accepter / Refuser ; « Bloquer ce jour » (libre, à venir, sans séjour accepté)
      * ou « Débloquer ».
      *
-     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}|null, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
+     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
      */
     public function day(Offer $offer, Carbon $day, Authenticatable $owner, string $locale): array
     {
@@ -149,32 +137,31 @@ class OfferCalendar
     /**
      * Les demandes en cartes de notification (décision 2026-11-20-calendrier-cartes) :
      * - qui demande (photo, nom, en ligne) et la date de la demande ;
-     * - la pastille (« Demande de logement en attente », comme le type de notification) ;
+     * - la pastille du statut (« En attente », « Acceptée »…), comme dans une notification ;
      * - le texte (dates, durée, prix, voyageurs) et le message ;
      * - le total en gras (logement meublé) ;
      * - Accepter et Refuser, comme dans « Demandes reçues ».
      *
      * @param  Collection<int, Booking>  $bookings
-     * @return list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}|null, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>
+     * @return list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>
      */
     private function cards(ReceivedBookingListing $listing, Collection $bookings, string $locale): array
     {
         $current = app()->getLocale();
         app()->setLocale($locale);
-        $tags = app(OfferNotificationFilter::class);
 
         $cards = [];
         foreach ($bookings as $booking) {
             $summary = BookingText::summary($booking, 'requested');
             /** @var list<array<string, mixed>> $actions */
             $actions = $listing->item($booking)->toArray()['actions'];
-            $tag = $tags->tag(self::STEPS[$booking->status->value] ?? BookingRequestReceived::class);
+            $tag = OfferNotificationFilter::statusTag($booking->status);
             $message = $booking->message;
             $total = $booking->formattedTotal($locale);
             $cards[] = [
                 'id' => (string) $booking->getKey(),
                 'actor' => ActorData::from($booking->user),
-                'tag' => $tag === null ? null : ['label' => (string) $tag['label'], 'tone' => (string) $tag['tone']],
+                'tag' => ['label' => (string) $tag['label'], 'tone' => (string) $tag['tone']],
                 'summary' => $summary,
                 'text_links' => BookingText::offerLink($booking, $summary),
                 'message' => $message === null ? null : (string) $message,

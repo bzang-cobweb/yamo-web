@@ -263,7 +263,7 @@ class BookingApiTest extends TestCase
         $this->assertSame([
             'label' => '2 demandes en attente',
             'list' => 'notifications',
-            'filter' => ['type' => BookingRequestReceived::class, 'offer' => (string) $offer->getKey()],
+            'filter' => ['type' => 'booking', 'status' => 'pending', 'offer' => (string) $offer->getKey()],
             'link' => '/notifications',
         ], $items[(string) $offer->getKey()]['counter']);
         $this->assertNull($items[(string) $other->getKey()]['counter']);

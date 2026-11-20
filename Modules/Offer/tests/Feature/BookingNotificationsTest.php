@@ -19,7 +19,6 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestCancelled;
 use Modules\Offer\Notifications\BookingRequestReceived;
 use Modules\Offer\Notifications\BookingRequestRefused;
 use Modules\Offer\Services\BookingService;
@@ -135,23 +134,24 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame('Demande de logement', $data['title']);
     }
 
-    public function test_the_pill_is_the_notification_type_label_in_the_reader_language(): void
+    public function test_the_pill_is_the_real_booking_status_in_the_reader_language(): void
     {
+        // Décision 2026-11-20-statut-reel.
         $owner = User::factory()->create(['locale' => 'en']);
-        foreach ([BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class] as $type) {
-            // Même sans pastille dans les données (une ancienne notification).
-            $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => $type, 'data' => ['title' => class_basename($type), 'body' => 'Texte']]);
-        }
-        $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => 'Autre', 'data' => ['title' => 'Autre', 'body' => 'Texte', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]]);
+        $booking = $this->booking();
+        $create = fn (string $type, array $data) => $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => $type, 'data' => ['title' => 'Demande', 'body' => 'Texte', ...$data]]);
+        // Reçue en attente, puis acceptée : la pastille suit la demande, pas l'étape.
+        $create(BookingRequestReceived::class, ['title' => 'Reçue', 'booking_id' => $booking->getKey()]);
+        $booking->forceFill(['status' => BookingStatusEnum::ACCEPTED])->save();
+        // Sans demande connue (ancienne notification) : le statut que nomme l'étape.
+        $create(BookingRequestRefused::class, ['title' => 'Ancienne']);
+        $create('Autre', ['title' => 'Autre', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]);
 
         $tags = collect($this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'en', 'X-Country' => 'CM'])
             ->getJson('/api/v1/notifications')->assertOk()->json('data.items'))->pluck('tag', 'title');
 
-        $this->assertSame(['label' => 'Home request pending', 'tone' => 'warning'], $tags['BookingRequestReceived']);
-        $this->assertSame(['label' => 'Home request accepted', 'tone' => 'success'], $tags['BookingRequestAccepted']);
-        $this->assertSame(['label' => 'Home request declined', 'tone' => 'neutral'], $tags['BookingRequestRefused']);
-        $this->assertSame(['label' => 'Home request cancelled', 'tone' => 'neutral'], $tags['BookingRequestCancelled']);
-        // Un type inconnu des modules garde la pastille de ses données.
+        $this->assertSame(['label' => 'Accepted', 'tone' => 'success'], $tags['Reçue']);
+        $this->assertSame(['label' => 'Declined', 'tone' => 'neutral'], $tags['Ancienne']);
         $this->assertSame(['label' => 'Gardée', 'tone' => 'neutral'], $tags['Autre']);
     }
 
