@@ -155,7 +155,8 @@ class BookingResource extends JsonResource
             $months('deposit', $deposit),
             $months('advance', $advance),
             // Avec des charges, le total le dit : « Total (sans charges) » (décision 2026-11-20-total-sans-charges).
-            ['key' => 'total', 'label' => __($charges > 0 ? 'offer::booking.lines.total_without_charges' : 'offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
+            // Le total, seulement s'il dépasse 0 (décision 2026-11-20-total-positif).
+            $rent * ($deposit + $advance) <= 0 ? null : ['key' => 'total', 'label' => __($charges > 0 ? 'offer::booking.lines.total_without_charges' : 'offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
         ]));
     }
 
@@ -174,7 +175,8 @@ class BookingResource extends JsonResource
         return [
             // Toujours, 0 sans montant (décision 2026-11-20-caution-meuble-toujours).
             ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $money($deposit)],
-            ...($booking->total === null ? [] : [['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $booking->total + $deposit)]]),
+            // Le total, seulement s'il dépasse 0 (décision 2026-11-20-total-positif).
+            ...($booking->total === null || (float) $booking->total + $deposit <= 0 ? [] : [['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $booking->total + $deposit)]]),
         ];
     }
 
