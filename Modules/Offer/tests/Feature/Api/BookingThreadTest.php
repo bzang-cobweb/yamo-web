@@ -13,6 +13,7 @@ use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\BookingService;
@@ -258,6 +259,30 @@ class BookingThreadTest extends TestCase
         $this->assertSame('Demande de visite « '.$this->offer->getTranslation('title', 'fr').' » le 28 nov. 2026 ou le 30 nov. 2026.', BookingText::summary($visit, 'requested'));
         $visit->update(['check_out' => null]);
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
+    }
+
+    public function test_a_visit_shows_its_monthly_charges_and_total_even_at_zero(): void
+    {
+        // Décision 2026-11-20-charges-visite.
+        $flat = Offer::factory()->for($this->owner, 'user')->create([
+            'status' => 'published', 'price' => '250000', 'currency' => 'XAF',
+            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2],
+        ]);
+        $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
+        $lines = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
+        app()->setLocale('fr');
+
+        // Sans charges : la ligne à 0, le total égal au prix.
+        $this->assertSame([
+            'Visite' => '28 nov. 2026',
+            'Prix par mois' => Number::currency(250000, 'XAF', 'fr'),
+            'Charges par mois' => Number::currency(0, 'XAF', 'fr'),
+            'Total par mois' => Number::currency(250000, 'XAF', 'fr'),
+        ], $lines());
+
+        // Avec charges : le total les additionne.
+        $flat->update(['details' => [...$flat->details, 'charges' => 15000]]);
+        $this->assertSame(Number::currency(265000, 'XAF', 'fr'), $lines()['Total par mois']);
     }
 
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void

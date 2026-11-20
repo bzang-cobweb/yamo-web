@@ -13,6 +13,9 @@ return [
         'price_per' => 'Preis pro :unit',
         'days' => 'Dauer',
         'total' => 'Gesamt',
+        'total_per' => 'Gesamt pro :unit',
+        'charges' => 'Nebenkosten',
+        'charges_per' => 'Nebenkosten pro :unit',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [

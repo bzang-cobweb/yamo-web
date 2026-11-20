@@ -13,6 +13,9 @@ return [
         'price_per' => 'Prix par :unit',
         'days' => 'Durée',
         'total' => 'Total',
+        'total_per' => 'Total par :unit',
+        'charges' => 'Charges',
+        'charges_per' => 'Charges par :unit',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [

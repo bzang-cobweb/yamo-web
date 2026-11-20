@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Number;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -63,7 +64,9 @@ class BookingResource extends JsonResource
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             $this->price($booking, $locale),
-            $line('total', $booking->formattedTotal($locale)),
+            // Une visite : les charges du mois, puis le total du mois (prix + charges), toujours
+            // (décision 2026-11-20-charges-visite) ; un séjour : son total figé.
+            ...($booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : [$line('total', $booking->formattedTotal($locale))]),
         ];
 
         return array_values(array_filter($lines));
@@ -88,6 +91,30 @@ class BookingResource extends JsonResource
             'key' => 'price',
             'label' => $unit === null ? __('offer::booking.lines.price') : __('offer::booking.lines.price_per', ['unit' => $unit]),
             'value' => Number::currency((float) $offer->price, (string) $offer->currency, $locale),
+        ];
+    }
+
+    /**
+     * Les charges par mois d'une visite, même à 0, puis le total par mois, prix et charges
+     * additionnés, même égal au prix (décision 2026-11-20-charges-visite) ; rien sans prix.
+     *
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function monthly(Booking $booking, string $locale): array
+    {
+        $offer = $booking->offer;
+        if ($offer === null || $offer->price === null) {
+            return [];
+        }
+
+        $unit = app(DomainRegistry::class)->require()->priceUnit($offer);
+        $charges = is_numeric($value = $offer->detail('charges')) ? (float) $value : 0.0;
+        $money = fn (float $amount): string => Number::currency($amount, (string) $offer->currency, $locale);
+        $label = fn (string $key): string => $unit === null ? __('offer::booking.lines.'.$key) : __('offer::booking.lines.'.$key.'_per', ['unit' => $unit]);
+
+        return [
+            ['key' => 'charges', 'label' => $label('charges'), 'value' => $money($charges)],
+            ['key' => 'total', 'label' => $label('total'), 'value' => $money((float) $offer->price + $charges)],
         ];
     }
 
