@@ -279,7 +279,7 @@ class BookingThreadTest extends TestCase
             'Visite' => '28 nov. 2026',
             // Les charges, puis le loyer (décision 2026-11-20-loyer-apres-charges).
             'Charges mensuelles' => Number::currency(0, 'XAF', 'fr'),
-            'Loyer mensuel (sans charges)' => Number::currency(250000, 'XAF', 'fr'),
+            'Loyer mensuel' => Number::currency(250000, 'XAF', 'fr'),
             '0 mois de caution' => Number::currency(0, 'XAF', 'fr'),
             '0 mois d’avance' => Number::currency(0, 'XAF', 'fr'),
             'Total' => Number::currency(0, 'XAF', 'fr'),

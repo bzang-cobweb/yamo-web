@@ -75,7 +75,7 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * Le prix du logement : l'unité dans le libellé (« Prix par jour » ; « Loyer mensuel (sans charges) » pour une visite),
+     * Le prix du logement : l'unité dans le libellé (« Prix par jour » ; « Loyer mensuel » pour une visite),
      * le montant seul en valeur (« 20 000 FCFA ») ; `null` sans prix.
      *
      * @return array{key: string, label: string, value: string}|null
@@ -91,7 +91,7 @@ class BookingResource extends JsonResource
 
         return [
             'key' => 'price',
-            // Une visite (non meublé) : « Loyer mensuel (sans charges) » (décision 2026-11-20-libelles-mensuels).
+            // Une visite (non meublé) : « Loyer mensuel » (décision 2026-11-20-libelles-mensuels).
             'label' => match (true) {
                 $booking->type === BookingTypeEnum::VISIT => __('offer::booking.lines.rent'),
                 $unit === null => __('offer::booking.lines.price'),

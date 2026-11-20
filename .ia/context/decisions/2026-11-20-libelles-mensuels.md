@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-20-loyer-mensuel.md
+
 # « Charges mensuelles » et « Loyer mensuel (sans charges) » dans les lignes d'une visite
 
 - **Date** : 2026-11-20

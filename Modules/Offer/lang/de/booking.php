@@ -11,7 +11,7 @@ return [
         'guests' => 'Personen',
         'price' => 'Preis',
         'price_per' => 'Preis pro :unit',
-        'rent' => 'Monatsmiete (ohne Nebenkosten)',
+        'rent' => 'Monatsmiete',
         'days' => 'Dauer',
         'total' => 'Gesamt',
         'charges' => 'Monatliche Nebenkosten',
