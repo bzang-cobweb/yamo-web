@@ -16,6 +16,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\BookingService;
+use Modules\Offer\Support\BookingText;
 use Tests\TestCase;
 
 /**
@@ -252,6 +253,9 @@ class BookingThreadTest extends TestCase
 
         $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Seconde date', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
+        // Le texte d'une visite : sa date, ou la seconde proposée (décision 2026-11-20-texte-demande-location).
+        app()->setLocale('fr');
+        $this->assertSame('Demande de visite « '.$this->offer->getTranslation('title', 'fr').' » le 28 nov. 2026 ou le 30 nov. 2026.', BookingText::summary($visit, 'requested'));
         $visit->update(['check_out' => null]);
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
     }
