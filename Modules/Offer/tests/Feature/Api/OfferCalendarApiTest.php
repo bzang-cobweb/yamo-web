@@ -148,19 +148,24 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame('past', $this->days($offer, today()->subMonth()->format('Y-m'))[today()->subMonth()->startOfMonth()->toDateString()]['state']);
     }
 
-    public function test_visits_are_a_dot_on_their_day(): void
+    public function test_visits_color_their_day_like_stays(): void
     {
         $offer = $this->home(false);
         Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40)]);
         Booking::factory()->for($offer)->for($this->member())->visit()->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(41)]);
+        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(42)]);
+        $offer->blockedDates()->create(['date' => today()->addDays(42)]);
 
         $data = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar?month={$this->monthOf(40)}")->json('data');
         $days = collect($data['days'])->keyBy('date');
-        $this->assertSame(['state' => 'free', 'dot' => 'warning'], array_intersect_key($days[$this->date(40)], ['state' => 1, 'dot' => 1]));
-        $this->assertSame('success', $days[$this->date(41)]['dot']);
-        $this->assertSame(['visit_accepted' => 'success', 'visit_pending' => 'warning'], [
-            'visit_accepted' => $data['legend'][0]['tone'], 'visit_pending' => $data['legend'][1]['tone'],
-        ]);
+        $this->assertSame(['state' => 'pending', 'dot' => null], array_intersect_key($days[$this->date(40)], ['state' => 1, 'dot' => 1]));
+        $this->assertSame('accepted', $days[$this->date(41)]['state']);
+        // Une visite en attente sur un jour bloqué : en rouge.
+        if (isset($days[$this->date(42)])) {
+            $this->assertSame('conflict', $days[$this->date(42)]['state']);
+        }
+        $this->assertSame(['day', 'day', 'day', 'day'], array_column($data['legend'], 'kind'));
+        $this->assertSame(['Visite acceptée', 'Visite en attente', 'Chevauchement', 'Bloqué'], array_column($data['legend'], 'label'));
     }
 
     public function test_the_day_panel_lists_its_requests_with_their_buttons_and_blocks_or_unblocks(): void

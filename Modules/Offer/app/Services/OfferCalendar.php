@@ -60,28 +60,30 @@ class OfferCalendar
             $date = $day->toDateString();
             $stays = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::STAY && $this->coversNight($booking, $day));
             $visits = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT && $booking->check_in->isSameDay($day));
-            $accepted = $stays->contains('status', BookingStatusEnum::ACCEPTED);
-            $pending = $stays->contains('status', BookingStatusEnum::PENDING);
             $isBlocked = in_array($date, $blocked, true);
+            // Une visite colore son jour comme un séjour ses nuits (décision 2026-11-20-calendrier-visites).
+            $stayAccepted = $stays->contains('status', BookingStatusEnum::ACCEPTED);
+            $stayPending = $stays->contains('status', BookingStatusEnum::PENDING);
+            $visitPending = $visits->contains('status', BookingStatusEnum::PENDING);
+            $accepted = $stayAccepted || $visits->contains('status', BookingStatusEnum::ACCEPTED);
+            $pending = $stayPending || $visitPending;
+            // Chevauchement : un séjour en attente sur une nuit prise ou bloquée ; une visite en attente sur un jour bloqué.
+            $conflict = ($stayPending && ($stayAccepted || $isBlocked)) || ($visitPending && $isBlocked);
 
             $days[] = [
                 'date' => $date,
                 'day' => (int) $day->day,
-                /** `past`, `conflict`, `accepted`, `blocked`, `pending` ou `free`. */
+                /** `past`, `conflict`, `accepted`, `blocked`, `pending` ou `free` ; pour un séjour ses nuits, pour une visite son jour. */
                 'state' => match (true) {
                     $day->lessThan(today()) => 'past',
-                    $pending && ($accepted || $isBlocked) => 'conflict',
+                    $conflict => 'conflict',
                     $accepted => 'accepted',
                     $isBlocked => 'blocked',
                     $pending => 'pending',
                     default => 'free',
                 },
-                /** Le point des visites du jour : `success` (une acceptée), `warning` (en attente), ou `null`. */
-                'dot' => match (true) {
-                    $visits->contains('status', BookingStatusEnum::ACCEPTED) => 'success',
-                    $visits->isNotEmpty() => 'warning',
-                    default => null,
-                },
+                /** Plus de point : une visite colore son jour (gardé pour les anciennes versions de l'app). */
+                'dot' => null,
             ];
         }
 
@@ -245,8 +247,9 @@ class OfferCalendar
     {
         $label = fn (string $key): string => __('offer::booking.calendar.legend.'.$key, [], $locale);
         $type = app(DomainRegistry::class)->require()->bookingType($offer);
+        // Le même style pour les visites que pour les séjours : des jours colorés.
         $entries = $type === BookingTypeEnum::VISIT
-            ? [['dot', 'success', $label('visit_accepted')], ['dot', 'warning', $label('visit_pending')]]
+            ? [['day', 'accepted', $label('visit_accepted')], ['day', 'pending', $label('visit_pending')], ['day', 'conflict', $label('conflict')]]
             : [['day', 'accepted', $label('accepted')], ['day', 'pending', $label('pending')], ['day', 'conflict', $label('conflict')]];
 
         return array_map(fn (array $entry): array => ['kind' => $entry[0], 'tone' => $entry[1], 'label' => $entry[2]], [...$entries, ['day', 'blocked', $label('blocked')]]);
