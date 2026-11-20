@@ -2,7 +2,6 @@
 
 namespace Modules\Offer\Support;
 
-use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -32,31 +31,14 @@ final class BookingText
     }
 
     /**
-     * Le texte d'une carte, sans le nom de qui agit, pour l'étape `$step`
-     * (`requested`, `accepted`…) :
-     * - un séjour (logement meublé) : sa durée après les dates et le prix par jour
-     *   (« … (3 jours) pour « Studio photos », 85 000 FCFA / jour. ») ; le nombre de
-     *   personnes s'affiche à part (décision 2026-11-20-personnes-a-part) ;
-     * - une visite : le loyer par mois (« … pour « Appartement », 250 000 FCFA / mois. »).
-     *
-     * Sans prix, le texte s'en passe.
+     * Le texte d'une carte, sans le nom de qui agit, pour l'étape `$step` (`requested`,
+     * `accepted`…) : « Séjour pour « Studio photos ». », « Visite pour « Appartement ». ».
+     * Les dates, la durée, les personnes et le prix s'affichent à part (décisions
+     * 2026-11-20-personnes-a-part et 2026-11-20-heures-arrivee-depart).
      */
     public static function summary(Booking $booking, string $step): string
     {
-        $replace = self::replacements($booking);
-        $key = "offer::booking.notify.{$step}.summary";
-        $price = app(DomainRegistry::class)->require()->formattedPrice($booking->offer, app()->getLocale());
-        $days = $booking->days();
-
-        return match (true) {
-            $days !== null && $price !== null && trans()->has($key.'_stay') => __($key.'_stay', [
-                ...$replace,
-                'days' => trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
-                'price' => $price,
-            ]),
-            $days === null && $price !== null && trans()->has($key.'_visit') => __($key.'_visit', [...$replace, 'price' => $price]),
-            default => __($key, $replace),
-        };
+        return __("offer::booking.notify.{$step}.summary", self::replacements($booking));
     }
 
     /**

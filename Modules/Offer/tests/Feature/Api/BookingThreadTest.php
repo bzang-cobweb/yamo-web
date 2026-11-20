@@ -166,13 +166,13 @@ class BookingThreadTest extends TestCase
 
             $this->assertSame('Demande de logement', $page['title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            $this->assertStringStartsWith('Séjour (2 jours) pour ', $page['summary']);
+            $this->assertSame('Séjour pour « '.$this->offer->getTranslation('title', 'fr').' ».', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
             // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
             $this->assertArrayNotHasKey('total', $page);
             $this->assertSame([
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
-                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'dates' => ['Arrivée le '.$booking->check_in->locale('fr')->isoFormat('ll'), 'Départ le '.$booking->check_out?->locale('fr')->isoFormat('ll')], 'guests' => 1, 'guests_label' => '1 personne', 'price_label' => app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr'), 'total' => $booking->formattedTotal('fr'),
+                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'dates' => ['Arrivée le '.$booking->check_in->locale('fr')->isoFormat('ll'), 'Départ le '.$booking->check_out?->locale('fr')->isoFormat('ll')], 'days_label' => '2 jours', 'guests' => 1, 'guests_label' => '1 personne', 'price_label' => app(DomainRegistry::class)->require()->formattedPrice($this->offer, 'fr'), 'total' => $booking->formattedTotal('fr'),
             ], $page['booking']);
             $this->assertNotNull($page['booking']['total']);
         }

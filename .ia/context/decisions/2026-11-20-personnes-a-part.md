@@ -23,6 +23,14 @@
   jour »), lu dans `booking.price_label`. Demande de l'humain : « afficher le prix avant le
   total ».
 
+- La durée d'un séjour s'affiche sur sa ligne, avant le nombre de personnes (« 2 jours »,
+  `booking.days_label`). Le texte de la demande ne garde que le type et le logement :
+  « Séjour pour « Studio ». », « Visite pour « Maison ». » (`summary_stay` et
+  `summary_visit` supprimés ; prix et durée retirés). Ordre sur la page : texte, dates,
+  durée, personnes, prix, total. Demande de l'humain : « afficher nombre de jours avant le
+  nombre de personnes ; oui retire le [prix du texte] » ; retirer aussi la durée du texte,
+  devenue en double : décidé seul.
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « afficher après le summary le nombre de personne »,
@@ -35,5 +43,6 @@ sur la page d'une notification seulement.
 
 ## Corollaires
 
-- Les cartes de la liste et du calendrier ne disent plus le nombre de personnes.
+- Les cartes de la liste et du calendrier ne disent plus ni le nombre de personnes, ni la
+  durée, ni le prix.
 - Les textes déjà enregistrés de la base locale ont été réécrits le 2026-11-20.

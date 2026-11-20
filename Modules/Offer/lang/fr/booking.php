@@ -90,11 +90,9 @@ return [
         'requested' => [
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
-            // Le texte de la demande, sans qui la fait : « Séjour (2 jours) pour … », « Visite pour … » ; les dates à part
+            // Le texte de la demande, sans qui la fait : « Séjour pour … », « Visite pour … » ; dates, jours, personnes, prix à part
             // (décision 2026-11-20-texte-sans-verbe).
             'summary' => ':kind pour « :offer ».',
-            'summary_stay' => ':kind (:days) pour « :offer », :price.',
-            'summary_visit' => ':kind pour « :offer », :price.',
             'sms' => ':app : :guest demande :type :period pour « :offer ». Répondez dans l\'app.',
         ],
         'accepted' => [

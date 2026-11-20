@@ -17,7 +17,7 @@ use Modules\Offer\Models\Booking;
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, dates: list<string>, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, dates: list<string>, days_label: string|null, guests: int|null, guests_label: string|null, price_label: string|null, total: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -35,6 +35,8 @@ class BookingResource extends JsonResource
             'check_out' => $booking->check_out?->toDateString(),
             /** Les dates, une par ligne, rédigées dans la langue de la requête (« Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le 7 déc. 2026 avant 11:00 » ; « Visite le 28 nov. 2026 »). */
             'dates' => $booking->dateLines(app()->getLocale()),
+            /** La durée d'un séjour, rédigée (« 2 jours ») ; `null` pour une visite. */
+            'days_label' => ($days = $booking->days()) === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days]),
             'guests' => $booking->guests,
             /** Le nombre de personnes, rédigé (« 2 personnes ») ; `null` sans voyageurs (une visite). */
             'guests_label' => $booking->guests === null ? null : trans_choice('offer::booking.notify.people', $booking->guests, ['count' => $booking->guests]),
