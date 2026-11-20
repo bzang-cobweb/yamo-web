@@ -91,6 +91,8 @@ return [
         'accepted' => [
             'subject' => 'Demande acceptée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est acceptée.',
+            // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
+            'own' => 'Vous avez accepté la demande de :guest pour « :offer » (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'a accepté votre demande pour « :offer » (:period).',
             'sms' => ':app : votre demande pour « :offer » (:period) est acceptée.',
@@ -98,6 +100,8 @@ return [
         'refused' => [
             'subject' => 'Demande refusée : :offer',
             'body' => 'Votre demande pour « :offer » (:period) est refusée.',
+            // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
+            'own' => 'Vous avez refusé la demande de :guest pour « :offer » (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'a refusé votre demande pour « :offer » (:period).',
             'sms' => ':app : votre demande pour « :offer » (:period) est refusée.',

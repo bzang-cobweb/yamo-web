@@ -73,7 +73,9 @@ class NotificationThreads
 
     /**
      * Le fil de la notification, des deux côtés, de la plus ancienne étape à la plus
-     * récente ; vide sans fil.
+     * récente ; vide sans fil. Sans les notifications qui tracent, chez qui agit, sa
+     * propre action (`data.own`) : celle de l'autre partie porte déjà l'étape
+     * (décision 2026-11-20-reponse-dans-son-fil).
      *
      * @return list<DatabaseNotification>
      */
@@ -84,6 +86,7 @@ class NotificationThreads
             return [];
         }
 
-        return array_values(DatabaseNotification::query()->where('thread', $thread)->orderBy('created_at')->orderBy('id')->get()->all());
+        return array_values(DatabaseNotification::query()->where('thread', $thread)->orderBy('created_at')->orderBy('id')->get()
+            ->reject(fn (DatabaseNotification $step): bool => (bool) (((array) $step->data)['own'] ?? false))->all());
     }
 }

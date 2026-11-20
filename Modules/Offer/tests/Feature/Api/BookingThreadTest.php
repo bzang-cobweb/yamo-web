@@ -123,6 +123,33 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Annulée', 'En attente'], array_column(array_column($cards, 'tag'), 'label'));
     }
 
+    public function test_the_owner_answer_lands_in_their_own_card_already_read(): void
+    {
+        // Décision 2026-11-20-reponse-dans-son-fil.
+        $this->travelTo(now()->setTime(9, 0));
+        $first = $this->request(3, 'Première');
+        $this->travel(5)->minutes();
+        $this->request(10, 'Seconde');
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($first, true);
+
+        // Sa réponse remonte la première demande en tête, dans ses mots, sans qui agit.
+        $cards = $this->cards($this->owner);
+        $this->assertCount(2, $cards);
+        $this->assertStringStartsWith('Vous avez accepté la demande de '.$this->guest->full_name, $cards[0]['body']);
+        $this->assertNull($cards[0]['actor']);
+        $this->assertNull($cards[0]['summary']);
+        $this->assertSame(['label' => 'Acceptée', 'tone' => 'success'], $cards[0]['tag']);
+        $this->assertSame('/offers/'.$this->offer->getKey().'/calendar?month='.$first->check_in->format('Y-m'), $cards[0]['link']);
+        // Déjà lue : les non lues restent les deux demandes reçues.
+        $this->assertNotNull($this->owner->notifications()->where('data->own', true)->sole()->read_at);
+        $this->assertSame(2, $this->api($this->owner, 'GET', '/unread-count')->json('data.unread'));
+        // Le suivi ne la répète pas : l'étape vient du membre.
+        $history = $this->api($this->owner, 'GET', '/'.$cards[0]['id'])->assertOk()->json('data.history');
+        $this->assertSame(['Demande envoyée', 'Demande acceptée'], array_column($history, 'label'));
+        $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
+    }
+
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void
     {
         $this->travelTo(now()->setTime(9, 0));

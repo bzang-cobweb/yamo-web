@@ -166,6 +166,23 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('est acceptée', $this->sms->messages[0]['message']);
     }
 
+    public function test_the_owner_own_answer_stays_in_the_tab(): void
+    {
+        // Décision 2026-11-20-reponse-dans-son-fil : ni e-mail ni SMS pour sa propre réponse.
+        $booking = $this->booking(owner: ['phone' => '+237690000009', 'phone_verified_at' => now()]);
+        $notification = new BookingRequestedNotification($booking, BookingStepEnum::REFUSED, own: true);
+
+        $this->assertSame(['database'], $notification->via($booking->offer->user));
+        $this->assertTrue($notification->sentAsRead($booking->offer->user));
+        $this->assertNull($notification->notificationUserId($booking->offer->user));
+
+        app(BookingService::class)->answer($booking, false);
+
+        // Seul le membre reçoit un SMS ; pas le propriétaire.
+        $this->assertSame([], array_filter($this->sms->messages, fn (array $sms): bool => $sms['to'] === '+237690000009'));
+        $this->assertStringContainsString('Vous avez refusé la demande de Marie Curie', $booking->offer->user->notifications()->sole()->data['body']);
+    }
+
     public function test_a_request_lands_in_the_owner_notifications_tab_in_their_language(): void
     {
         // Décision 2026-11-19-contrat-centre-notifications : toujours, même sans e-mail ni SMS.

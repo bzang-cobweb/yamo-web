@@ -91,6 +91,8 @@ return [
         'accepted' => [
             'subject' => 'Request accepted: :offer',
             'body' => 'Your request for “:offer” (:period) has been accepted.',
+            // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
+            'own' => 'You accepted :guest’s request for “:offer” (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'accepted your request for “:offer” (:period).',
             'sms' => ':app: your request for “:offer” (:period) has been accepted.',
@@ -98,6 +100,8 @@ return [
         'refused' => [
             'subject' => 'Request declined: :offer',
             'body' => 'Your request for “:offer” (:period) has been declined.',
+            // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
+            'own' => 'You declined :guest’s request for “:offer” (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'declined your request for “:offer” (:period).',
             'sms' => ':app: your request for “:offer” (:period) has been declined.',

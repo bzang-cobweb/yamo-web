@@ -9,6 +9,7 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
+use Modules\Offer\Listeners\NotifyOwnerOfOwnAnswer;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -20,7 +21,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         // Réservations : chaque étape prévient l'autre partie (décision 2026-11-19-notifications-reservations).
         BookingRequested::class => [NotifyOwnerOfBookingRequest::class],
-        BookingAnswered::class => [NotifyGuestOfBookingAnswer::class],
+        BookingAnswered::class => [NotifyGuestOfBookingAnswer::class, NotifyOwnerOfOwnAnswer::class],
         BookingCancelled::class => [NotifyOwnerOfBookingCancellation::class],
     ];
 
