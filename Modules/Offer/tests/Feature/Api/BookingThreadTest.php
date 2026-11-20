@@ -285,10 +285,12 @@ class BookingThreadTest extends TestCase
         $this->assertSame([
             '2 mois de caution' => Number::currency(500000, 'XAF', 'fr'),
             '6 mois d’avance' => Number::currency(1500000, 'XAF', 'fr'),
-            'Total' => Number::currency(2000000, 'XAF', 'fr'),
+            // Avec des charges : « Total (sans charges) » (décision 2026-11-20-total-sans-charges).
+            'Total (sans charges)' => Number::currency(2000000, 'XAF', 'fr'),
         ], array_slice($lines(), -3));
         // Les charges, puis le loyer (décision 2026-11-20-loyer-apres-charges).
-        $this->assertSame(['Charges mensuelles', 'Loyer mensuel'], array_slice(array_keys($lines()), 1, 2));
+        // Avec des charges, « Loyer mensuel net » (décision 2026-11-20-total-sans-charges).
+        $this->assertSame(['Charges mensuelles', 'Loyer mensuel net'], array_slice(array_keys($lines()), 1, 2));
     }
 
     public function test_a_stay_shows_its_deposit_when_set_before_the_total_that_adds_it(): void

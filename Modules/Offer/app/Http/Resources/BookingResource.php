@@ -130,10 +130,12 @@ class BookingResource extends JsonResource
         return array_values(array_filter([
             // « Charges mensuelles » (décision 2026-11-20-loyer-mensuel).
             $charges <= 0 ? null : ['key' => 'charges', 'label' => __('offer::booking.lines.charges'), 'value' => $money($charges)],
-            $this->price($booking, $locale),
+            // Avec des charges : « Loyer mensuel net » (décision 2026-11-20-total-sans-charges).
+            $charges > 0 ? [...$this->price($booking, $locale), 'label' => __('offer::booking.lines.rent_net')] : $this->price($booking, $locale),
             $months('deposit', $deposit),
             $months('advance', $advance),
-            ['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
+            // Avec des charges, le total le dit : « Total (sans charges) » (décision 2026-11-20-total-sans-charges).
+            ['key' => 'total', 'label' => __($charges > 0 ? 'offer::booking.lines.total_without_charges' : 'offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
         ]));
     }
 
