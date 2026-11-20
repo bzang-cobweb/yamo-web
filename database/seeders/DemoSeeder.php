@@ -78,6 +78,7 @@ class DemoSeeder extends Seeder
         $this->reviews($member, $cameroon);
         $this->featuredAndFavorites($member);
         $this->amenities($member);
+        $this->hours($member);
         $this->bookings($member);
     }
 
@@ -331,6 +332,19 @@ class DemoSeeder extends Seeder
         Offer::query()->where('user_id', $member->getKey())->orderBy('id')->get()->values()->each(function (Offer $offer, int $index): void {
             if ($offer->detail('amenities') === null) {
                 $offer->update(['details' => [...($offer->details ?? []), 'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)]]]);
+            }
+        });
+    }
+
+    /**
+     * Les heures d'arrivée (14:00) et de départ (11:00) des meublés qui n'en ont pas encore
+     * (décision 2026-11-20-heures-arrivee-depart). Rejouable.
+     */
+    private function hours(User $member): void
+    {
+        Offer::query()->where('user_id', $member->getKey())->get()->each(function (Offer $offer): void {
+            if ($offer->detail('rental_type') === RentalTypeEnum::FURNISHED->value && $offer->detail('check_in_from') === null) {
+                $offer->update(['details' => [...($offer->details ?? []), 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
             }
         });
     }

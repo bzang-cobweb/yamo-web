@@ -6,6 +6,15 @@ return [
     'types' => ['stay' => 'Stay', 'visit' => 'Visit'],
     'actions' => ['stay' => 'Book', 'visit' => 'Request a visit'],
     'statuses' => ['pending' => 'Pending', 'accepted' => 'Accepted', 'refused' => 'Declined', 'cancelled' => 'Cancelled'],
+    // Les dates d'une demande, une par ligne (décision 2026-11-20-heures-arrivee-depart).
+    'dates' => [
+        'arrival' => 'Arrival on :date',
+        'arrival_from' => 'Arrival on :date from :time',
+        'departure' => 'Departure on :date',
+        'departure_until' => 'Departure on :date by :time',
+        'visit' => 'Visit on :date',
+        'visit_or' => 'Visit on :date or :second',
+    ],
     'period' => [
         'stay' => 'from :from to :to',
         'visit' => 'on :date',
@@ -81,11 +90,11 @@ return [
         'requested' => [
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
-            // Le texte de la demande, sans qui la fait : « Séjour du … », « Visite le … »
+            // Le texte de la demande, sans qui la fait : « Séjour (2 jours) pour … », « Visite pour … » ; les dates à part
             // (décision 2026-11-20-texte-sans-verbe).
-            'summary' => ':kind :period for “:offer”.',
-            'summary_stay' => ':kind :period (:days) for “:offer”, :price.',
-            'summary_visit' => ':kind :period for “:offer”, :price.',
+            'summary' => ':kind for “:offer”.',
+            'summary_stay' => ':kind (:days) for “:offer”, :price.',
+            'summary_visit' => ':kind for “:offer”, :price.',
             'sms' => ':app: :guest requests :type :period for “:offer”. Reply in the app.',
         ],
         'accepted' => [

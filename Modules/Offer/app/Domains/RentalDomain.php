@@ -154,10 +154,19 @@ class RentalDomain extends Domain
                 // Un meublé se loue charges comprises : pas de charges.
                 ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues())
                 ->rules(['min:0', 'max:100000']),
-            // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Les heures
-            // d'arrivée et de départ n'y sont plus : un bloc d'informations les dit (décision
-            // 2026-11-19-arrivee-depart-en-informations). Pas d'âge minimum propre à l'offre : celui
-            // de l'application vaut pour toutes (décision 2026-11-19-age-minimum-de-l-app).
+            // Règles, toutes facultatives (décision 2026-11-19-contrat-regles-informations). Pas d'âge
+            // minimum propre à l'offre : celui de l'application vaut pour toutes (décision
+            // 2026-11-19-age-minimum-de-l-app).
+            // Les heures d'arrivée et de départ d'un meublé, de retour (décision 2026-11-20-heures-arrivee-depart) :
+            // elles datent l'arrivée et le départ d'une demande.
+            Field::select('check_in_from')
+                ->label(__('offer::rental.rules.check_in_from'))
+                ->options($this->hourOptions())
+                ->visibleWhen('rental_type', RentalTypeEnum::FURNISHED->value),
+            Field::select('check_out_until')
+                ->label(__('offer::rental.rules.check_out_until'))
+                ->options($this->hourOptions())
+                ->visibleWhen('rental_type', RentalTypeEnum::FURNISHED->value),
             // Oui / Non plutôt qu'un interrupteur : « non renseigné » n'est pas « non ».
             ...array_map(fn (string $rule): Field => Field::select($rule)
                 ->label(__('offer::rental.rules.'.$rule))
@@ -174,7 +183,23 @@ class RentalDomain extends Domain
      */
     public function ruleAttributes(): array
     {
-        return ['pets', 'smoking', 'parties', 'documents'];
+        return ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'];
+    }
+
+    /**
+     * « 06:00 », « 06:30 »… « 23:00 » : les heures d'arrivée et de départ proposées.
+     *
+     * @return array<string, string>
+     */
+    private function hourOptions(): array
+    {
+        $hours = [];
+        for ($minutes = 6 * 60; $minutes <= 23 * 60; $minutes += 30) {
+            $time = sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+            $hours[$time] = $time;
+        }
+
+        return $hours;
     }
 
     /**

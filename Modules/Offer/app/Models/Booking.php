@@ -162,6 +162,42 @@ class Booking extends Model
     }
 
     /**
+     * Les dates de la demande, une par ligne, dans la langue `$locale` (décision
+     * 2026-11-20-heures-arrivee-depart) :
+     * - un séjour : l'arrivée, à partir de l'heure d'arrivée du logement, puis le départ,
+     *   avant son heure de départ (« Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le
+     *   7 déc. 2026 avant 11:00 ») ; sans heure renseignée, la date seule ;
+     * - une visite : sa date, et la seconde date proposée s'il y en a une (« Visite le
+     *   28 nov. 2026 ou le 30 nov. 2026 »).
+     *
+     * @return list<string>
+     */
+    public function dateLines(string $locale): array
+    {
+        $in = $this->check_in->copy()->locale($locale)->isoFormat('ll');
+        $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
+
+        if ($this->type === BookingTypeEnum::VISIT) {
+            return [$out === null
+                ? __('offer::booking.dates.visit', ['date' => $in], $locale)
+                : __('offer::booking.dates.visit_or', ['date' => $in, 'second' => $out], $locale)];
+        }
+
+        $from = $this->offer?->detail('check_in_from');
+        $until = $this->offer?->detail('check_out_until');
+        $lines = [is_string($from) && $from !== ''
+            ? __('offer::booking.dates.arrival_from', ['date' => $in, 'time' => $from], $locale)
+            : __('offer::booking.dates.arrival', ['date' => $in], $locale)];
+        if ($out !== null) {
+            $lines[] = is_string($until) && $until !== ''
+                ? __('offer::booking.dates.departure_until', ['date' => $out, 'time' => $until], $locale)
+                : __('offer::booking.dates.departure', ['date' => $out], $locale);
+        }
+
+        return $lines;
+    }
+
+    /**
      * « du 3 déc. 2026 au 6 déc. 2026 », « le 3 déc. 2026 » (visite), dans la langue `$locale`.
      */
     public function period(string $locale): string

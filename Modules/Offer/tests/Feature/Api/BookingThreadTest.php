@@ -165,13 +165,13 @@ class BookingThreadTest extends TestCase
 
             $this->assertSame('Demande de logement', $page['title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            $this->assertStringStartsWith('Séjour du ', $page['summary']);
+            $this->assertStringStartsWith('Séjour (2 jours) pour ', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
             // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
             $this->assertArrayNotHasKey('total', $page);
             $this->assertSame([
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
-                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'period_label' => Str::ucfirst($booking->period('fr')), 'guests' => 1, 'guests_label' => '1 personne', 'total' => $booking->formattedTotal('fr'),
+                'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'dates' => ['Arrivée le '.$booking->check_in->locale('fr')->isoFormat('ll'), 'Départ le '.$booking->check_out?->locale('fr')->isoFormat('ll')], 'guests' => 1, 'guests_label' => '1 personne', 'total' => $booking->formattedTotal('fr'),
             ], $page['booking']);
             $this->assertNotNull($page['booking']['total']);
         }
@@ -226,6 +226,22 @@ class BookingThreadTest extends TestCase
         $this->assertSame(1, $count(''));
         // La page : la pastille et la demande, une seule lecture.
         $this->assertSame(1, $count('/'.$this->cards($this->owner)[0]['id']));
+    }
+
+    public function test_the_dates_of_a_stay_use_the_home_hours_and_a_visit_its_second_date(): void
+    {
+        // Décision 2026-11-20-heures-arrivee-depart.
+        $stay = Booking::factory()->for($this->offer)->create(['check_in' => '2026-12-05', 'check_out' => '2026-12-07']);
+        $this->assertSame(['Arrivée le 5 déc. 2026', 'Départ le 7 déc. 2026'], $stay->dateLines('fr'));
+
+        $this->offer->update(['details' => [...$this->offer->details, 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
+        $this->assertSame(['Arrivée le 5 déc. 2026 à partir de 14:00', 'Départ le 7 déc. 2026 avant 11:00'], $stay->refresh()->dateLines('fr'));
+        $this->assertSame(['Arrival on Dec 5, 2026 from 14:00', 'Departure on Dec 7, 2026 by 11:00'], $stay->dateLines('en'));
+
+        $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
+        $this->assertSame(['Visite le 28 nov. 2026 ou le 30 nov. 2026'], $visit->dateLines('fr'));
+        $visit->update(['check_out' => null]);
+        $this->assertSame(['Visite le 28 nov. 2026'], $visit->refresh()->dateLines('fr'));
     }
 
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void

@@ -107,7 +107,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -184,7 +184,7 @@ class OfferApiTest extends TestCase
             ['property_type', 'rental_type', 'title', 'description'],
             ['surface', 'rooms', 'bedrooms', 'amenities'],
             ['price', 'charges', 'available_from', 'status'],
-            ['pets', 'smoking', 'parties', 'documents'],
+            ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],
             ['street', 'zip', 'city', 'indication'],
             ['photos'],
@@ -204,16 +204,17 @@ class OfferApiTest extends TestCase
         $user = $this->member();
         // Décision 2026-11-19-contrat-regles-informations.
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        // Plus d'heures d'arrivée ni de départ : un bloc d'informations les dit
-        // (décision 2026-11-19-arrivee-depart-en-informations).
-        $this->assertArrayNotHasKey('check_in_from', $fields);
-        $this->assertArrayNotHasKey('check_out_until', $fields);
+        // Les heures d'arrivée et de départ, pour un meublé seulement (décision 2026-11-20-heures-arrivee-depart).
+        foreach (['check_in_from', 'check_out_until'] as $name) {
+            $this->assertSame(['furnished'], $fields[$name]['visible_when']['values']);
+            $this->assertSame('06:00', $fields[$name]['options'][0]['value']);
+        }
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, [
-            'check_in_from' => '15:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'], 'pets' => 'no',
+            'rental_type' => 'furnished', 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'], 'pets' => 'no',
         ]))->assertNoContent();
         $offer = Offer::query()->sole();
-        $this->assertNull($offer->detail('check_in_from'));
+        $this->assertSame(['15:00', '11:00'], [$offer->detail('check_in_from'), $offer->detail('check_out_until')]);
         // Plus d'âge minimum propre à l'offre (décision 2026-11-19-age-minimum-de-l-app).
         $this->assertNull($offer->detail('min_age'));
         $this->assertSame('no', $offer->detail('pets'));

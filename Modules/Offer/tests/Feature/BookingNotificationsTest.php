@@ -203,7 +203,8 @@ class BookingNotificationsTest extends TestCase
         $this->assertSame($booking->user_id, (int) $notification->user_id);
         $this->assertArrayNotHasKey('actor_id', $notification->data);
         // Sans verbe ni qui la fait (décision 2026-11-20-texte-sans-verbe).
-        $this->assertStringStartsWith('Stay from ', $notification->data['summary']);
+        // Sans les dates : elles s'affichent à part (décision 2026-11-20-heures-arrivee-depart).
+        $this->assertStringStartsWith('Stay (1 day) for ', $notification->data['summary']);
         // Un séjour : sa durée après les dates, le prix par jour.
         $this->assertStringContainsString('(1 day) for', $notification->data['summary']);
         // Le nombre de personnes s'affiche à part (décision 2026-11-20-personnes-a-part).

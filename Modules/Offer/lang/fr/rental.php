@@ -83,6 +83,9 @@ return [
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [
+        // Les heures d'un meublé (décision 2026-11-20-heures-arrivee-depart).
+        'check_in_from' => 'Arrivée à partir de',
+        'check_out_until' => 'Départ avant',
         'documents' => 'Documents demandés',
         'document_options' => [
             'id_card' => "Pièce d'identité",

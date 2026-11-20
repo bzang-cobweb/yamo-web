@@ -83,6 +83,9 @@ return [
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [
+        // Les heures d'un meublé (décision 2026-11-20-heures-arrivee-depart).
+        'check_in_from' => 'Anreise ab',
+        'check_out_until' => 'Abreise bis',
         'documents' => 'Erforderliche Dokumente',
         'document_options' => [
             'id_card' => 'Personalausweis',
