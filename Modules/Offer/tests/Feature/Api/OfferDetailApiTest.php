@@ -135,6 +135,8 @@ class OfferDetailApiTest extends TestCase
         // Ni date de disponibilité (décision 2026-11-20-disponibilite-sans-meuble).
         $old = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'available_from' => '2026-12-01']]);
         $this->assertArrayNotHasKey('Disponible dès le', $facts($old));
+        // Sans caution : 0 (décision 2026-11-20-caution-meuble-toujours).
+        $this->assertSame(['Prix par jour' => '250 000 FCFA', 'Caution' => '0 FCFA'], array_slice($facts($old), -2));
     }
 
     public function test_texts_follow_the_language(): void

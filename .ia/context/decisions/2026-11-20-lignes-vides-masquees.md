@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-20-caution-meuble-toujours.md
+
 # Charges, caution et avance masquées quand elles sont vides
 
 - **Date** : 2026-11-20

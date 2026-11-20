@@ -238,7 +238,8 @@ class RentalDomain extends Domain
      */
     public function adjustFacts(Offer $offer, array $facts, string $locale): array
     {
-        foreach (['charges', 'deposit', 'deposit_months', 'advance_months'] as $name) {
+        // La caution d'un meublé, elle, s'affiche toujours, 0 sans montant (décision 2026-11-20-caution-meuble-toujours).
+        foreach (['charges', 'deposit_months', 'advance_months'] as $name) {
             if (! is_numeric($value = $offer->detail($name)) || (float) $value <= 0) {
                 unset($facts[$name]);
             }
@@ -262,14 +263,21 @@ class RentalDomain extends Domain
         };
 
         if (RentalTypeEnum::of($offer)?->isFurnished()) {
-            // Un meublé : « Prix par jour », avant sa caution, sinon à la fin (décision 2026-11-20-fiche-prix-par-jour).
-            $rent = ['label' => (string) __('offer::booking.lines.price_per', ['unit' => (string) $this->priceUnit($offer)]), 'value' => $money];
-            $at = $position('deposit') ?? count($keys);
-        } else {
-            $rent = ['label' => (string) __(isset($facts['charges']) ? 'offer::booking.lines.rent_net' : 'offer::booking.lines.rent'), 'value' => $money];
-            // Après les charges, sinon avant la caution et l'avance, sinon à la fin.
-            $at = isset($facts['charges']) ? array_search('charges', $keys, true) + 1 : ($position('deposit_months', 'advance_months') ?? count($keys));
+            // Un meublé : « Prix par jour » puis sa caution, toujours, à la fin (décisions
+            // 2026-11-20-fiche-prix-par-jour et 2026-11-20-caution-meuble-toujours).
+            $deposit = is_numeric($value = $offer->detail('deposit')) ? (float) $value : 0.0;
+            unset($facts['deposit']);
+
+            return [
+                ...$facts,
+                'rent' => ['label' => (string) __('offer::booking.lines.price_per', ['unit' => (string) $this->priceUnit($offer)]), 'value' => $money],
+                'deposit' => ['label' => (string) __('offer::rental.deposit'), 'value' => Number::currency($deposit, (string) ($offer->currency ?? $offer->country?->currency), $locale)],
+            ];
         }
+
+        $rent = ['label' => (string) __(isset($facts['charges']) ? 'offer::booking.lines.rent_net' : 'offer::booking.lines.rent'), 'value' => $money];
+        // Après les charges, sinon avant la caution et l'avance, sinon à la fin.
+        $at = isset($facts['charges']) ? array_search('charges', $keys, true) + 1 : ($position('deposit_months', 'advance_months') ?? count($keys));
 
         return [...array_slice($facts, 0, $at, true), 'rent' => $rent, ...array_slice($facts, $at, null, true)];
     }

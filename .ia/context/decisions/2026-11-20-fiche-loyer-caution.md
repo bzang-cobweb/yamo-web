@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-20-caution-meuble-toujours.md
+
 # Fiche d'un logement : loyer mensuel, caution et avance dans les caractéristiques
 
 - **Date** : 2026-11-20

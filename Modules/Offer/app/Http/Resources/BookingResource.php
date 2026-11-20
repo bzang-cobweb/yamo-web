@@ -160,8 +160,8 @@ class BookingResource extends JsonResource
     }
 
     /**
-     * Un séjour (meublé) : la caution, un montant, si renseignée et non nulle (décision
-     * 2026-11-20-lignes-vides-masquees), puis le total, le total
+     * Un séjour (meublé) : la caution, un montant, toujours, 0 sans montant (décision
+     * 2026-11-20-caution-meuble-toujours), puis le total, le total
      * figé de la demande plus la caution (décision 2026-11-20-caution-dans-le-total).
      *
      * @return list<array{key: string, label: string, value: string}>
@@ -172,7 +172,8 @@ class BookingResource extends JsonResource
         $money = fn (float $amount): string => Number::currency($amount, (string) $booking->currency, $locale);
 
         return [
-            ...($deposit <= 0 ? [] : [['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $money($deposit)]]),
+            // Toujours, 0 sans montant (décision 2026-11-20-caution-meuble-toujours).
+            ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => $money($deposit)],
             ...($booking->total === null ? [] : [['key' => 'total', 'label' => __('offer::booking.lines.total'), 'value' => $money((float) $booking->total + $deposit)]]),
         ];
     }

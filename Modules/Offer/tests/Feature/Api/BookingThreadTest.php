@@ -186,6 +186,8 @@ class BookingThreadTest extends TestCase
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
                 ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
                 ['key' => 'price', 'label' => 'Prix par jour', 'value' => Number::currency(45000, 'XAF', 'fr')],
+                // La caution du meublé, toujours (décision 2026-11-20-caution-meuble-toujours).
+                ['key' => 'deposit', 'label' => 'Caution', 'value' => Number::currency(0, 'XAF', 'fr')],
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
             ], $page['booking']['lines']);
         }
@@ -330,8 +332,8 @@ class BookingThreadTest extends TestCase
         $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2, 'total' => '255000', 'currency' => 'XAF']);
         $tail = fn (): array => array_slice(array_column((new BookingResource($stay->refresh()))->resolve(request())['lines'], 'value', 'label'), -2);
 
-        // Sans caution : pas de ligne (décision 2026-11-20-lignes-vides-masquees).
-        $this->assertSame(['Prix par jour' => Number::currency(85000, 'XAF', 'fr'), 'Total' => Number::currency(255000, 'XAF', 'fr')], $tail());
+        // Sans caution : la ligne à 0 (décision 2026-11-20-caution-meuble-toujours).
+        $this->assertSame(['Caution' => Number::currency(0, 'XAF', 'fr'), 'Total' => Number::currency(255000, 'XAF', 'fr')], $tail());
 
         $studio->update(['details' => [...$studio->details, 'deposit' => 100000]]);
         $this->assertSame(['Caution' => Number::currency(100000, 'XAF', 'fr'), 'Total' => Number::currency(355000, 'XAF', 'fr')], $tail());
