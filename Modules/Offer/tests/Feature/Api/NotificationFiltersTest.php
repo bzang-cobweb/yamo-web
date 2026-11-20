@@ -75,8 +75,7 @@ class NotificationFiltersTest extends TestCase
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
         $this->assertNull($filters['type']['default']);
-        // Mais choisie d'emblée : l'app l'applique à la première ouverture (décision 2026-11-20-type-unique-preselectionne).
-        $this->assertSame('booking', $filters['type']['selected']);
+        $this->assertArrayNotHasKey('selected', $filters['type']);
         // Statut, logement et type de location : pour ce type seulement.
         foreach (['status', 'offer', 'rental_type'] as $name) {
             $this->assertSame(['booking'], $filters[$name]['visible_when']['values']);

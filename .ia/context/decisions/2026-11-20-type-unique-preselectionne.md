@@ -2,7 +2,7 @@
 
 - **Date** : 2026-11-20
 - **Type** : décision
-- **Statut** : active
+- **Statut** : annulée le 2026-11-20 (« annuler la demande pour les filtres type ») ; le code est retiré
 - **Complète** : 2026-11-20-filtre-option-unique.md (qui reste : un filtre n'est jamais verrouillé et n'a pas de valeur par défaut)
 
 ## Décision

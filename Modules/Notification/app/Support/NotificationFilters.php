@@ -40,12 +40,10 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Demande de logement ») ; un seul :
-            // choisi d'emblée (décision 2026-11-20-type-unique-preselectionne).
+            // Le type, parmi ceux de ses notifications (« Demande de logement »).
             Field::select('type')
                 ->label(__('notification::notification.filter_type'))
-                ->options($types = $this->typeOptions($user))
-                ->selected(count($types) === 1 ? (string) array_key_first($types) : null),
+                ->options($this->typeOptions($user)),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
         ];
     }
