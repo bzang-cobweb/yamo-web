@@ -104,6 +104,19 @@ class OfferDetailApiTest extends TestCase
         $this->assertNotContains('Charges mensuelles', array_column($this->show($offer)->assertOk()->json('data.facts'), 'label'));
     }
 
+    public function test_the_features_show_the_deposit_and_the_rent_in_advance(): void
+    {
+        // Décision 2026-11-20-caution-affichee : en mois pour un non meublé, un montant pour un meublé.
+        $flat = $this->home(['details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2, 'charges' => 15000, 'deposit_months' => 2, 'advance_months' => 3]]);
+        $facts = fn (Offer $offer): array => array_map(fn (string $value): string => preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $value), array_column($this->show($offer)->assertOk()->json('data.facts'), 'value', 'label'));
+
+        $this->assertSame(['Charges mensuelles' => '15 000 FCFA', 'Caution' => '2 mois', 'Avance de loyer' => '3 mois'], array_slice($facts($flat), -3));
+
+        $studio = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'deposit' => 100000, 'deposit_months' => 2]]);
+        $this->assertSame('100 000 FCFA', $facts($studio)['Caution']);
+        $this->assertArrayNotHasKey('Avance de loyer', $facts($studio));
+    }
+
     public function test_texts_follow_the_language(): void
     {
         $data = $this->show($this->home(), 'en')->assertOk()->json('data');

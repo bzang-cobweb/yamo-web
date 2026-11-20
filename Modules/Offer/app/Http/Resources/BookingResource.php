@@ -67,6 +67,9 @@ class BookingResource extends JsonResource
             // Une visite : les charges du mois, puis le total du mois (prix + charges), toujours
             // (décision 2026-11-20-charges-visite) ; un séjour : son total figé.
             ...($booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : [$line('total', $booking->formattedTotal($locale))]),
+            // Après le total, la caution (et l'avance de loyer d'une visite), si le logement les
+            // renseigne (décision 2026-11-20-caution-affichee).
+            ...$this->deposit($booking, $locale),
         ];
 
         return array_values(array_filter($lines));
@@ -100,6 +103,32 @@ class BookingResource extends JsonResource
      *
      * @return list<array{key: string, label: string, value: string}>
      */
+    /**
+     * La caution du logement : en mois et l'avance de loyer pour une visite (non meublé),
+     * un montant pour un séjour (meublé) ; rien de ce qui n'est pas renseigné.
+     *
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function deposit(Booking $booking, string $locale): array
+    {
+        $offer = $booking->offer;
+        if ($offer === null) {
+            return [];
+        }
+
+        $months = fn (string $key, mixed $count): ?array => is_numeric($count)
+            ? ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => trans_choice('offer::booking.lines.months', (int) $count, ['count' => (int) $count])]
+            : null;
+
+        $lines = $booking->type === BookingTypeEnum::VISIT
+            ? [$months('deposit', $offer->detail('deposit_months')), $months('advance', $offer->detail('advance_months'))]
+            : [is_numeric($amount = $offer->detail('deposit'))
+                ? ['key' => 'deposit', 'label' => __('offer::booking.lines.deposit'), 'value' => Number::currency((float) $amount, (string) $offer->currency, $locale)]
+                : null];
+
+        return array_values(array_filter($lines));
+    }
+
     private function monthly(Booking $booking, string $locale): array
     {
         $offer = $booking->offer;

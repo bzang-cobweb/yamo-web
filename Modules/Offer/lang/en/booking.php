@@ -16,6 +16,9 @@ return [
         'total_per' => 'Total per :unit',
         'charges' => 'Charges',
         'charges_per' => 'Charges per :unit',
+        'deposit' => 'Deposit',
+        'advance' => 'Rent in advance',
+        'months' => '{0} :count months|{1} :count month|[2,*] :count months',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [

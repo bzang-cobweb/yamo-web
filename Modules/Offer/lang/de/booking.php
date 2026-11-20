@@ -16,6 +16,9 @@ return [
         'total_per' => 'Gesamt pro :unit',
         'charges' => 'Nebenkosten',
         'charges_per' => 'Nebenkosten pro :unit',
+        'deposit' => 'Kaution',
+        'advance' => 'Mietvorauszahlung',
+        'months' => '{0} :count Monate|{1} :count Monat|[2,*] :count Monate',
     ],
     // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [

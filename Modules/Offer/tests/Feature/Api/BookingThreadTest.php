@@ -285,6 +285,31 @@ class BookingThreadTest extends TestCase
         $this->assertSame(Number::currency(265000, 'XAF', 'fr'), $lines()['Total par mois']);
     }
 
+    public function test_the_lines_end_with_the_deposit_and_the_rent_in_advance_when_set(): void
+    {
+        // Décision 2026-11-20-caution-affichee.
+        app()->setLocale('fr');
+        $flat = Offer::factory()->for($this->owner, 'user')->create([
+            'status' => 'published', 'price' => '250000', 'currency' => 'XAF',
+            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2, 'deposit_months' => 2, 'advance_months' => 1],
+        ]);
+        $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
+        $lines = fn (Booking $booking): array => (new BookingResource($booking->refresh()))->resolve(request())['lines'];
+
+        $this->assertSame(['Caution' => '2 mois', 'Avance de loyer' => '1 mois'], array_slice(array_column($lines($visit), 'value', 'label'), -2));
+
+        $studio = Offer::factory()->for($this->owner, 'user')->create([
+            'status' => 'published', 'price' => '85000', 'currency' => 'XAF',
+            'details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'deposit' => 100000],
+        ]);
+        $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2]);
+        $this->assertSame(['key' => 'deposit', 'label' => 'Caution', 'value' => Number::currency(100000, 'XAF', 'fr')], last($lines($stay)));
+
+        // Sans caution renseignée : pas de ligne.
+        $studio->update(['details' => [...$studio->details, 'deposit' => null]]);
+        $this->assertNotContains('deposit', array_column($lines($stay), 'key'));
+    }
+
     public function test_unread_count_by_request_and_opening_reads_the_whole_request(): void
     {
         $this->travelTo(now()->setTime(9, 0));
