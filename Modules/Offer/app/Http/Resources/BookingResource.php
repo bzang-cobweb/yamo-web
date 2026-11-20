@@ -155,9 +155,7 @@ class BookingResource extends JsonResource
             $months('deposit', $deposit),
             $months('advance', $advance),
             // Avec des charges, le total le dit : « Total (sans charges) » (décision 2026-11-20-total-sans-charges).
-            // Le total, loyer × (caution + avance), seulement s'il y a une caution ou une avance
-            // (décision 2026-11-20-total-visite-si-caution).
-            $deposit + $advance <= 0 ? null : ['key' => 'total', 'label' => __($charges > 0 ? 'offer::booking.lines.total_without_charges' : 'offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
+            ['key' => 'total', 'label' => __($charges > 0 ? 'offer::booking.lines.total_without_charges' : 'offer::booking.lines.total'), 'value' => $money($rent * ($deposit + $advance))],
         ]));
     }
 
