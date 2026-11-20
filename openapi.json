@@ -4106,6 +4106,13 @@
                         "type": "string",
                         "format": "date-time"
                     },
+                    "check_out": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
                     "message": {
                         "type": [
                             "string",
