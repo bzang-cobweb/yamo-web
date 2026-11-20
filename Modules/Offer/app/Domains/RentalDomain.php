@@ -233,7 +233,8 @@ class RentalDomain extends Domain
     /**
      * Les montants vides ou nuls (charges, caution, avance) ne s'affichent pas ; une location non
      * meublée affiche son loyer mensuel après les charges, « (sans charges) » s'il y en a
-     * (décision 2026-11-20-fiche-loyer-caution).
+     * (décision 2026-11-20-fiche-loyer-caution) ; un meublé, son prix par jour avant sa caution
+     * (décision 2026-11-20-fiche-prix-par-jour).
      */
     public function adjustFacts(Offer $offer, array $facts, string $locale): array
     {
@@ -243,19 +244,32 @@ class RentalDomain extends Domain
             }
         }
 
-        if ($offer->price === null || ! in_array($offer->detail('rental_type'), RentalTypeEnum::unfurnishedValues(), true)) {
+        if ($offer->price === null) {
             return $facts;
         }
 
-        $rent = [
-            'label' => (string) __(isset($facts['charges']) ? 'offer::booking.lines.rent_net' : 'offer::booking.lines.rent'),
-            'value' => Number::currency((float) $offer->price, (string) ($offer->currency ?? $offer->country?->currency), $locale),
-        ];
-        // Après les charges, sinon avant la caution et l'avance, sinon à la fin.
+        $money = Number::currency((float) $offer->price, (string) ($offer->currency ?? $offer->country?->currency), $locale);
         $keys = array_keys($facts);
-        $at = isset($facts['charges'])
-            ? array_search('charges', $keys, true) + 1
-            : (array_search('deposit_months', $keys, true) !== false ? array_search('deposit_months', $keys, true) : (array_search('advance_months', $keys, true) !== false ? array_search('advance_months', $keys, true) : count($keys)));
+        // La place du premier de ces noms parmi les caractéristiques, `null` si aucun.
+        $position = function (string ...$names) use ($keys): ?int {
+            foreach ($names as $name) {
+                if (($index = array_search($name, $keys, true)) !== false) {
+                    return $index;
+                }
+            }
+
+            return null;
+        };
+
+        if (RentalTypeEnum::of($offer)?->isFurnished()) {
+            // Un meublé : « Prix par jour », avant sa caution, sinon à la fin (décision 2026-11-20-fiche-prix-par-jour).
+            $rent = ['label' => (string) __('offer::booking.lines.price_per', ['unit' => (string) $this->priceUnit($offer)]), 'value' => $money];
+            $at = $position('deposit') ?? count($keys);
+        } else {
+            $rent = ['label' => (string) __(isset($facts['charges']) ? 'offer::booking.lines.rent_net' : 'offer::booking.lines.rent'), 'value' => $money];
+            // Après les charges, sinon avant la caution et l'avance, sinon à la fin.
+            $at = isset($facts['charges']) ? array_search('charges', $keys, true) + 1 : ($position('deposit_months', 'advance_months') ?? count($keys));
+        }
 
         return [...array_slice($facts, 0, $at, true), 'rent' => $rent, ...array_slice($facts, $at, null, true)];
     }
