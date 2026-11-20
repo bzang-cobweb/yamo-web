@@ -42,6 +42,11 @@ click se fera sur le nom et le cercle dans la conversation ».
   `body`). Demande de l'humain : « Ne plus mettre l'utilisateur dans le summary de la
   notification ».
 
+- Le type de la notification (« Demande de logement ») est le titre de la barre du
+  haut, à la place de « Notification » ; la zone fixe garde le texte, la pastille à sa
+  droite, et le total. Demande de l'humain : « le type de la notification est affiché
+  sur la barre du haut à la place de "Notification" ».
+
 ## Portée
 
 La page d'une notification dans l'app. Pas les cartes de la liste.
