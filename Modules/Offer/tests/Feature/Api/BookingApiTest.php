@@ -12,12 +12,10 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestCancelled;
-use Modules\Offer\Notifications\BookingRequestReceived;
-use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Notifications\BookingRequested;
 use Tests\TestCase;
 
 /**
@@ -131,8 +129,7 @@ class BookingApiTest extends TestCase
         $this->assertSame('Bonjour !', $booking->message);
 
         // Le propriétaire, par e-mail et SMS (adresse et numéro vérifiés).
-        Notification::assertSentTo($offer->user, BookingRequestReceived::class,
-            fn (BookingRequestReceived $notification, array $channels): bool => $notification->booking->is($booking) && $channels === ['database', 'mail', SmsChannel::class]);
+        Notification::assertSentTo($offer->user, BookingRequested::class, fn (BookingRequested $notification, array $channels): bool => $notification->step === BookingStepEnum::RECEIVED && $notification->booking->is($booking) && $channels === ['database', 'mail', SmsChannel::class]);
         Notification::assertCount(1);
     }
 
@@ -205,8 +202,7 @@ class BookingApiTest extends TestCase
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'refuse', 'refusal_message' => 'Déjà loué.'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::REFUSED, $booking->fresh()->status);
         $this->assertSame('Déjà loué.', $booking->fresh()->refusal_message);
-        Notification::assertSentTo($guest, BookingRequestRefused::class,
-            fn (BookingRequestRefused $notification, array $channels): bool => $channels === ['database', 'mail', SmsChannel::class]);
+        Notification::assertSentTo($guest, BookingRequested::class, fn (BookingRequested $notification, array $channels): bool => $notification->step === BookingStepEnum::REFUSED && $channels === ['database', 'mail', SmsChannel::class]);
 
         // Plus en attente : plus de réponse possible, plus de boutons.
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertForbidden();
@@ -230,7 +226,7 @@ class BookingApiTest extends TestCase
         $cancel = $items[(string) $pending->getKey()]['delete'];
         $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::CANCELLED, $pending->fresh()->status);
-        Notification::assertSentTo($pending->offer->user, BookingRequestCancelled::class);
+        Notification::assertSentTo($pending->offer->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::CANCELLED);
 
         $this->asUser($guest)->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertForbidden();
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertNotFound();
@@ -244,7 +240,7 @@ class BookingApiTest extends TestCase
         $this->asUser($this->member())->postJson("/api/v1/offers/{$offer->getKey()}/bookings", $this->stay())->assertNoContent();
 
         // Ni e-mail ni SMS : l'onglet « Notifications » seulement (décision 2026-11-19-contrat-centre-notifications).
-        Notification::assertSentTo($owner, BookingRequestReceived::class, fn (BookingRequestReceived $notification, array $channels): bool => $channels === ['database']);
+        Notification::assertSentTo($owner, BookingRequested::class, fn (BookingRequested $notification, array $channels): bool => $notification->step === BookingStepEnum::RECEIVED && $channels === ['database']);
     }
 
     public function test_accepting_from_the_card_and_the_counter_of_each_home(): void
@@ -281,7 +277,7 @@ class BookingApiTest extends TestCase
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNotFound();
         $this->asUser($owner)->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNoContent();
         $this->assertSame(BookingStatusEnum::ACCEPTED, $first->fresh()->status);
-        Notification::assertSentTo($first->user, BookingRequestAccepted::class);
+        Notification::assertSentTo($first->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::ACCEPTED);
         $this->assertSame('1 demande en attente', collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id')[(string) $offer->getKey()]['counter']['label']);
     }
 

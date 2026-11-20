@@ -16,11 +16,11 @@ use Modules\Form\Support\Field;
 interface NotificationFilter
 {
     /**
-     * Les types de notification du module, regroupés pour le filtre « Type » : clé du
-     * groupe => son libellé et ses classes de notification (« booking » => « Demande de
-     * logement », les quatre étapes d'une demande).
+     * Les types de notification du module, pour le filtre « Type » : clé => son libellé
+     * et sa classe de notification, la valeur de la colonne `type` (« booking » =>
+     * « Demande de logement », `BookingRequested`).
      *
-     * @return array<string, array{label: string, types: list<class-string>}>
+     * @return array<string, array{label: string, type: class-string}>
      */
     public function types(): array;
 

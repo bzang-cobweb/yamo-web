@@ -11,6 +11,7 @@ use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -18,7 +19,7 @@ use Modules\Offer\Models\Offer;
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
- * - un seul type, « Demande de logement », pour les quatre étapes d'une demande ;
+ * - un type, « Demande de logement » : la notification `BookingRequested`, toutes étapes ;
  * - pour ce type : le statut réel de la demande, le logement, le type de location ;
  * - la recherche, dans le titre du logement.
  *
@@ -26,9 +27,6 @@ use Modules\Offer\Models\Offer;
  */
 class OfferNotificationFilter implements NotificationFilter
 {
-    /** Les quatre étapes d'une demande : un seul type pour le filtre, « Demande de logement ». */
-    public const BOOKING_TYPES = [BookingRequestReceived::class, BookingRequestAccepted::class, BookingRequestRefused::class, BookingRequestCancelled::class];
-
     /** La clé du groupe « Demande de logement » dans le filtre « Type ». */
     public const BOOKING = 'booking';
 
@@ -40,7 +38,7 @@ class OfferNotificationFilter implements NotificationFilter
         // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
         $label = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
 
-        return [self::BOOKING => ['label' => $label, 'types' => self::BOOKING_TYPES]];
+        return [self::BOOKING => ['label' => $label, 'type' => BookingRequested::class]];
     }
 
     /**
@@ -50,18 +48,14 @@ class OfferNotificationFilter implements NotificationFilter
      */
     public function tag(DatabaseNotification $notification): ?array
     {
-        $type = (string) $notification->getAttribute('type');
-        if (! in_array($type, self::BOOKING_TYPES, true)) {
+        if ($notification->getAttribute('type') !== BookingRequested::class) {
             return null;
         }
 
-        $id = ((array) $notification->data)['booking_id'] ?? null;
-        $status = (is_int($id) ? $this->status($id) : null) ?? match ($type) {
-            BookingRequestAccepted::class => BookingStatusEnum::ACCEPTED,
-            BookingRequestRefused::class => BookingStatusEnum::REFUSED,
-            BookingRequestCancelled::class => BookingStatusEnum::CANCELLED,
-            default => BookingStatusEnum::PENDING,
-        };
+        $data = (array) $notification->data;
+        $id = $data['booking_id'] ?? null;
+        $step = BookingStepEnum::tryFrom(is_string($data['step'] ?? null) ? $data['step'] : '') ?? BookingStepEnum::RECEIVED;
+        $status = (is_int($id) ? $this->status($id) : null) ?? $step->status();
 
         return self::statusTag($status);
     }

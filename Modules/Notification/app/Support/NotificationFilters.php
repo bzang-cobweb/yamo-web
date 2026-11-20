@@ -40,7 +40,7 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Demande de logement acceptée »).
+            // Le type, parmi ceux de ses notifications (« Demande de logement »).
             Field::select('type')
                 ->label(__('notification::notification.filter_type'))
                 ->options($this->typeOptions($user)),
@@ -66,9 +66,9 @@ class NotificationFilters
     }
 
     /**
-     * Les groupes de types inscrits par les modules (clé => libellé et classes).
+     * Les types inscrits par les modules (clé => libellé et classe de notification).
      *
-     * @return array<string, array{label: string, types: list<class-string>}>
+     * @return array<string, array{label: string, type: class-string}>
      */
     private function types(): array
     {
@@ -76,7 +76,7 @@ class NotificationFilters
     }
 
     /**
-     * Les groupes présents dans ses notifications (clé => libellé), dans l'ordre des modules.
+     * Les types présents dans ses notifications (clé => libellé), dans l'ordre des modules.
      *
      * @return array<string, string>
      */
@@ -84,9 +84,9 @@ class NotificationFilters
     {
         $present = $user->notifications()->getQuery()->distinct()->pluck('type')->all();
         $options = [];
-        foreach ($this->types() as $key => $group) {
-            if (array_intersect($group['types'], $present) !== []) {
-                $options[$key] = $group['label'];
+        foreach ($this->types() as $key => $type) {
+            if (in_array($type['type'], $present, true)) {
+                $options[$key] = $type['label'];
             }
         }
 
@@ -116,7 +116,7 @@ class NotificationFilters
     {
         $type = $filters['type'] ?? null;
         if (is_string($type) && array_key_exists($type, $this->types())) {
-            $query->whereIn('type', $this->types()[$type]['types']);
+            $query->where('type', $this->types()[$type]['type']);
         }
 
         $member = $filters['user'] ?? null;

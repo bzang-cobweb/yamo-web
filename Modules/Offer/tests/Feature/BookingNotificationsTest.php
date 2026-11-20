@@ -13,14 +13,13 @@ use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingAnswered;
 use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestReceived;
-use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Notifications\BookingRequested as BookingRequestedNotification;
 use Modules\Offer\Services\BookingService;
 use Tests\TestCase;
 
@@ -75,7 +74,7 @@ class BookingNotificationsTest extends TestCase
 
     public function test_notifications_are_queued_after_commit(): void
     {
-        $notification = new BookingRequestReceived($this->booking());
+        $notification = new BookingRequestedNotification($this->booking(), BookingStepEnum::RECEIVED);
 
         $this->assertInstanceOf(ShouldQueue::class, $notification);
         $this->assertTrue($notification->afterCommit);
@@ -100,14 +99,14 @@ class BookingNotificationsTest extends TestCase
         $booking = $this->booking();
 
         app()->setLocale('fr');
-        $mail = (new BookingRequestReceived($booking))->toMail($booking->offer->user);
+        $mail = (new BookingRequestedNotification($booking, BookingStepEnum::RECEIVED))->toMail($booking->offer->user);
         $this->assertSame('Nouvelle demande : '.$booking->offer->getTranslation('title', 'fr'), $mail->subject);
         $this->assertStringContainsString('Marie Curie demande un séjour du 3 mars 2027 au 6 mars 2027', $mail->introLines[0]);
         $this->assertSame('Message : Bonjour !', $mail->introLines[1]);
         $this->assertStringContainsString('« Réservations reçues »', $mail->introLines[2]);
 
         app()->setLocale('en');
-        $this->assertStringContainsString('your request for', (new BookingRequestAccepted($booking))->toSms($booking->user));
+        $this->assertStringContainsString('your request for', (new BookingRequestedNotification($booking, BookingStepEnum::ACCEPTED))->toSms($booking->user));
     }
 
     public function test_the_real_send_reaches_the_sms_sender_in_the_recipient_language(): void
@@ -125,12 +124,13 @@ class BookingNotificationsTest extends TestCase
     public function test_the_notification_keeps_the_status_at_send_time(): void
     {
         $booking = $this->booking();
-        $notification = new BookingRequestReceived($booking);
+        $notification = new BookingRequestedNotification($booking, BookingStepEnum::RECEIVED);
         $booking->forceFill(['status' => BookingStatusEnum::ACCEPTED])->save();
 
         $data = unserialize(serialize($notification))->toArray($booking->offer->user);
 
         $this->assertSame('pending', $data['booking_status']);
+        $this->assertSame('received', $data['step']);
         $this->assertSame('Demande de logement', $data['title']);
     }
 
@@ -141,10 +141,10 @@ class BookingNotificationsTest extends TestCase
         $booking = $this->booking();
         $create = fn (string $type, array $data) => $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => $type, 'data' => ['title' => 'Demande', 'body' => 'Texte', ...$data]]);
         // Reçue en attente, puis acceptée : la pastille suit la demande, pas l'étape.
-        $create(BookingRequestReceived::class, ['title' => 'Reçue', 'booking_id' => $booking->getKey()]);
+        $create(BookingRequestedNotification::class, ['step' => 'received', 'title' => 'Reçue', 'booking_id' => $booking->getKey()]);
         $booking->forceFill(['status' => BookingStatusEnum::ACCEPTED])->save();
         // Sans demande connue (ancienne notification) : le statut que nomme l'étape.
-        $create(BookingRequestRefused::class, ['title' => 'Ancienne']);
+        $create(BookingRequestedNotification::class, ['step' => 'refused', 'title' => 'Ancienne']);
         $create('Autre', ['title' => 'Autre', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]);
 
         $tags = collect($this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'en', 'X-Country' => 'CM'])

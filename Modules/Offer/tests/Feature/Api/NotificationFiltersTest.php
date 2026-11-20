@@ -10,8 +10,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequestAccepted;
-use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequested;
 use Tests\TestCase;
 
 /**
@@ -60,10 +59,10 @@ class NotificationFiltersTest extends TestCase
             'id' => (string) Str::uuid(), 'type' => $type,
             'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($booking === null ? [] : ['booking_id' => $booking->getKey()])],
         ]);
-        $create(BookingRequestReceived::class, 'Demande studio', $studio, $pending);
+        $create(BookingRequested::class, 'Demande studio', $studio, $pending);
         // Reçue en attente, acceptée depuis : son statut réel est « Acceptée ».
-        $create(BookingRequestReceived::class, 'Demande appartement', $flat, $accepted);
-        $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat, $accepted);
+        $create(BookingRequested::class, 'Demande appartement', $flat, $accepted);
+        $create(BookingRequested::class, 'Acceptée appartement', $flat, $accepted);
         $create('Autre', 'Sans logement', null, null);
 
         $this->app['auth']->forgetGuards();

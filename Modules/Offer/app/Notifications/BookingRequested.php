@@ -10,6 +10,7 @@ use Modules\Auth\Models\User;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
@@ -17,21 +18,23 @@ use Modules\Offer\Support\BookingText;
 
 /**
  * Une étape d'une demande, notifiée à l'autre partie (décision
- * 2026-11-19-notifications-reservations) : mise en file, envoyée après
+ * 2026-11-19-notifications-reservations). Une seule classe pour toutes les étapes,
+ * nommée par `$step` et enregistrée dans `data.step` : le filtre « Type » porte sur la
+ * seule colonne `type` (décision 2026-11-20-notification-demande-unique). La notification est mise en file, envoyée après
  * l'enregistrement, toujours dans l'onglet « Notifications » de l'app (canal
  * `database`, décision 2026-11-19-contrat-centre-notifications), et sur les
  * canaux que le destinataire peut recevoir (`User::notificationChannels()`),
  * dans sa langue (`HasLocalePreference`).
  * Les textes sont dans `offer::booking.notify.<clé>` (fr, en, de).
  */
-abstract class BookingNotification extends Notification implements HasNotificationUser, ShouldQueue
+class BookingRequested extends Notification implements HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
     /** Le statut à l'envoi : la demande, rechargée quand la file traite la notification, a pu changer depuis. */
     public readonly BookingStatusEnum $status;
 
-    public function __construct(public readonly Booking $booking)
+    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step)
     {
         $this->status = $booking->status;
 
@@ -40,15 +43,25 @@ abstract class BookingNotification extends Notification implements HasNotificati
     }
 
     /** La clé des textes : `requested`, `accepted`, `refused`, `cancelled`. */
-    abstract protected function key(): string;
+    private function key(): string
+    {
+        return $this->step->textKey();
+    }
 
     /** La liste où retrouver la demande : `mine` (le membre) ou `received` (le propriétaire). */
-    abstract protected function section(): string;
-
-    /** Un message à joindre (celui du membre, ou le motif d'un refus) ; aucun par défaut. */
-    protected function note(): ?string
+    private function section(): string
     {
-        return null;
+        return $this->step->section();
+    }
+
+    /** Le message à joindre : celui du membre pour une nouvelle demande, le motif d'un refus. */
+    private function note(): ?string
+    {
+        return match ($this->step) {
+            BookingStepEnum::RECEIVED => $this->booking->message,
+            BookingStepEnum::REFUSED => $this->booking->refusal_message,
+            default => null,
+        };
     }
 
     /**
@@ -66,7 +79,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
-     * @return array{title: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, step: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -74,6 +87,8 @@ abstract class BookingNotification extends Notification implements HasNotificati
 
         return [
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
+            // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`.
+            'step' => $this->step->value,
             // La demande et son statut à l'envoi.
             'booking_id' => (int) $this->booking->getKey(),
             'booking_status' => $this->status->value,
@@ -157,7 +172,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      *
      * @return array<string, string>
      */
-    protected function replacements(): array
+    private function replacements(): array
     {
         return BookingText::replacements($this->booking);
     }
