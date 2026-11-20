@@ -69,19 +69,6 @@ class NotificationFilters
      * Le libellé d'une étape d'un fil, donné par le module qui l'inscrit ; à défaut, le
      * titre de la notification.
      */
-    /** Le côté d'une étape dans le suivi : `start` ou `end` ; `start` à défaut. */
-    public function side(DatabaseNotification $notification): string
-    {
-        foreach ($this->filters as $filter) {
-            $side = app($filter)->side($notification);
-            if ($side !== null) {
-                return $side;
-            }
-        }
-
-        return 'start';
-    }
-
     public function step(DatabaseNotification $notification): string
     {
         foreach ($this->filters as $filter) {

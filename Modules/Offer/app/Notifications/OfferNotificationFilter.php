@@ -61,18 +61,6 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
-    /** Le propriétaire à droite (sa réponse), le membre à gauche (sa demande, son annulation). */
-    public function side(DatabaseNotification $notification): ?string
-    {
-        if ($notification->getAttribute('type') !== BookingRequested::class) {
-            return null;
-        }
-
-        $step = ((array) $notification->data)['step'] ?? null;
-
-        return (BookingStepEnum::tryFrom(is_string($step) ? $step : '') ?? BookingStepEnum::RECEIVED)->section() === 'mine' ? 'end' : 'start';
-    }
-
     public function step(DatabaseNotification $notification): ?string
     {
         if ($notification->getAttribute('type') !== BookingRequested::class) {

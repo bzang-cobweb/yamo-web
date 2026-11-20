@@ -87,8 +87,6 @@ class BookingThreadTest extends TestCase
             $history = $this->api($reader, 'GET', '/'.$id)->assertOk()->json('data.history');
             // Les deux côtés, de la plus ancienne étape à la plus récente.
             $this->assertSame($expected, array_column($history, 'label'));
-            // Le membre à gauche, le propriétaire à droite (décision 2026-11-20-suivi-conversation).
-            $this->assertSame(['start', 'end', 'start'], array_column($history, 'side'));
             $this->assertSame([(string) $this->guest->getKey(), (string) $this->owner->getKey(), (string) $this->guest->getKey()], array_column(array_column($history, 'actor'), 'id'));
             $this->assertSame(['Bonjour !', null, null], array_column($history, 'message'));
             $this->assertSame(array_column($history, 'created_at'), collect($history)->pluck('created_at')->sort()->values()->all());

@@ -40,13 +40,6 @@ interface NotificationFilter
     public function step(DatabaseNotification $notification): ?string;
 
     /**
-     * Le côté d'une étape dans le suivi (décision 2026-11-20-suivi-conversation) :
-     * `start` (à gauche) ou `end` (à droite, le propriétaire d'une demande) ; `null`
-     * pour une notification qui n'est pas la sienne.
-     */
-    public function side(DatabaseNotification $notification): ?string;
-
-    /**
      * Les champs du filtre, pour le compte `$user`.
      *
      * @return list<Field>
