@@ -345,6 +345,10 @@ class OfferApiTest extends TestCase
     {
         $user = $this->member();
 
+        // Le type de location est obligatoire (décision 2026-11-20-contrat-type-de-location).
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => null]))->assertJsonValidationErrors('rental_type');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rental_type' => 'castle']))->assertJsonValidationErrors('rental_type');
+
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user))->assertNoContent();
 
         $offer = Offer::query()->sole();
