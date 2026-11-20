@@ -162,36 +162,30 @@ class Booking extends Model
     }
 
     /**
-     * Les dates de la demande, une par ligne, dans la langue `$locale` (décision
-     * 2026-11-20-heures-arrivee-depart) :
-     * - un séjour : l'arrivée, à partir de l'heure d'arrivée du logement, puis le départ,
-     *   avant son heure de départ (« Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le
-     *   7 déc. 2026 avant 11:00 ») ; sans heure renseignée, la date seule ;
-     * - une visite : sa date, et la seconde date proposée s'il y en a une (« Visite le
-     *   28 nov. 2026 ou le 30 nov. 2026 »).
+     * Les dates de la demande, une par ligne, libellé et valeur, dans la langue `$locale`
+     * (décision 2026-11-20-heures-arrivee-depart) :
+     * - un séjour : « Arrivée » — « 5 déc. 2026 à partir de 14:00 », puis « Départ » —
+     *   « 7 déc. 2026 au plus tard à 11:00 » ; sans heure renseignée, la date seule ;
+     * - une visite : « Visite » — « 28 nov. 2026 », et « Seconde date » — « 30 nov. 2026 »
+     *   s'il y en a une.
      *
-     * @return list<string>
+     * @return list<array{label: string, value: string}>
      */
     public function dateLines(string $locale): array
     {
         $in = $this->check_in->copy()->locale($locale)->isoFormat('ll');
         $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
+        $line = fn (string $label, string $value): array => ['label' => __('offer::booking.dates.'.$label, [], $locale), 'value' => $value];
 
         if ($this->type === BookingTypeEnum::VISIT) {
-            return [$out === null
-                ? __('offer::booking.dates.visit', ['date' => $in], $locale)
-                : __('offer::booking.dates.visit_or', ['date' => $in, 'second' => $out], $locale)];
+            return $out === null ? [$line('visit', $in)] : [$line('visit', $in), $line('second', $out)];
         }
 
         $from = $this->offer?->detail('check_in_from');
         $until = $this->offer?->detail('check_out_until');
-        $lines = [is_string($from) && $from !== ''
-            ? __('offer::booking.dates.arrival_from', ['date' => $in, 'time' => $from], $locale)
-            : __('offer::booking.dates.arrival', ['date' => $in], $locale)];
+        $lines = [$line('arrival', is_string($from) && $from !== '' ? __('offer::booking.dates.from', ['date' => $in, 'time' => $from], $locale) : $in)];
         if ($out !== null) {
-            $lines[] = is_string($until) && $until !== ''
-                ? __('offer::booking.dates.departure_until', ['date' => $out, 'time' => $until], $locale)
-                : __('offer::booking.dates.departure', ['date' => $out], $locale);
+            $lines[] = $line('departure', is_string($until) && $until !== '' ? __('offer::booking.dates.until', ['date' => $out, 'time' => $until], $locale) : $out);
         }
 
         return $lines;

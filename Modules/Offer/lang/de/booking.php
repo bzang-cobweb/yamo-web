@@ -6,14 +6,14 @@ return [
     'types' => ['stay' => 'Aufenthalt', 'visit' => 'Besichtigung'],
     'actions' => ['stay' => 'Buchen', 'visit' => 'Besichtigung anfragen'],
     'statuses' => ['pending' => 'Ausstehend', 'accepted' => 'Angenommen', 'refused' => 'Abgelehnt', 'cancelled' => 'Storniert'],
-    // Les dates d'une demande, une par ligne (décision 2026-11-20-heures-arrivee-depart).
+    // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [
-        'arrival' => 'Anreise am :date',
-        'arrival_from' => 'Anreise am :date ab :time',
-        'departure' => 'Abreise am :date',
-        'departure_until' => 'Abreise am :date bis :time',
-        'visit' => 'Besichtigung am :date',
-        'visit_or' => 'Besichtigung am :date oder am :second',
+        'arrival' => 'Anreise',
+        'departure' => 'Abreise',
+        'visit' => 'Besichtigung',
+        'second' => 'Zweiter Termin',
+        'from' => ':date ab :time',
+        'until' => ':date bis :time',
     ],
     'period' => [
         'stay' => 'vom :from bis :to',

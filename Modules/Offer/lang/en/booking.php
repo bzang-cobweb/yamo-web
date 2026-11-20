@@ -6,14 +6,14 @@ return [
     'types' => ['stay' => 'Stay', 'visit' => 'Visit'],
     'actions' => ['stay' => 'Book', 'visit' => 'Request a visit'],
     'statuses' => ['pending' => 'Pending', 'accepted' => 'Accepted', 'refused' => 'Declined', 'cancelled' => 'Cancelled'],
-    // Les dates d'une demande, une par ligne (décision 2026-11-20-heures-arrivee-depart).
+    // Les dates d'une demande, libellé et valeur (décision 2026-11-20-heures-arrivee-depart).
     'dates' => [
-        'arrival' => 'Arrival on :date',
-        'arrival_from' => 'Arrival on :date from :time',
-        'departure' => 'Departure on :date',
-        'departure_until' => 'Departure on :date by :time',
-        'visit' => 'Visit on :date',
-        'visit_or' => 'Visit on :date or :second',
+        'arrival' => 'Arrival',
+        'departure' => 'Departure',
+        'visit' => 'Visit',
+        'second' => 'Second date',
+        'from' => ':date from :time',
+        'until' => ':date by :time',
     ],
     'period' => [
         'stay' => 'from :from to :to',

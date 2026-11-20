@@ -23,6 +23,13 @@
   est remplacé par `dates`.
 - Données de démo : les meublés reçoivent 14:00 et 11:00 (`DemoSeeder::hours()`, rejouable).
 
+**Mise en forme** (demande de l'humain : « pour la ligne du checkin mettre label checkin à
+gauche et date à droite ; faire la même pour checkout ; même principe pour les autres types de
+location ») : chaque ligne est un libellé et une valeur (`booking.dates[] = {label, value}`) —
+« Arrivée » | « 5 déc. 2026 à partir de 14:00 », « Départ » | « 7 déc. 2026 au plus tard à 11:00 »,
+« Visite » | « 28 nov. 2026 », « Seconde date » | « 30 nov. 2026 » (la seconde date d'une visite
+sur sa propre ligne : décidé seul).
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « Pour un meublé : check_in => date d'arrivée au plus tôt
