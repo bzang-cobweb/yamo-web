@@ -14,8 +14,8 @@
   (formulaire de l'app, section « Règles » de la fiche, onglet du back-office).
 - **Les dates d'une demande**, une par ligne (`Booking::dateLines()`, servies dans
   `booking.dates` sur la page d'une notification), après le texte :
-  - un séjour : « Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le 7 déc. 2026 avant
-    11:00 » ; sans heure renseignée, la date seule ;
+  - un séjour : « Arrivée le 5 déc. 2026 à partir de 14:00 », « Départ le 7 déc. 2026 au plus
+    tard à 11:00 » (« au plus tard à » plutôt que « avant », demande de l'humain) ; sans heure renseignée, la date seule ;
   - une visite : « Visite le 28 nov. 2026 », ou « Visite le 28 nov. 2026 ou le 30 nov. 2026 »
     quand une seconde date est proposée (`check_out`).
 - **Le texte de la demande** ne contient plus les dates : « Séjour (2 jours) pour « Studio »,

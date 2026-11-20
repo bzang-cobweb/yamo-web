@@ -11,7 +11,7 @@ return [
         'arrival' => 'Arrivée le :date',
         'arrival_from' => 'Arrivée le :date à partir de :time',
         'departure' => 'Départ le :date',
-        'departure_until' => 'Départ le :date avant :time',
+        'departure_until' => 'Départ le :date au plus tard à :time',
         'visit' => 'Visite le :date',
         'visit_or' => 'Visite le :date ou le :second',
     ],

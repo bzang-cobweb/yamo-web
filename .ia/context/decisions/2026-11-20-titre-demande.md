@@ -26,6 +26,10 @@ après la pastille, le nom de l'offre en lien, puis les lignes (dates, durée, p
 total) ; après le nom, le type de location (« mettez le type de location après le titre »).
 `booking.offer` garde `title` et `rental_type`. Une notification sans demande garde son texte.
 
+**Mise en page finale de la zone fixe** (demandes successives de l'humain) : le type de
+location en gras à gauche et la pastille à droite ; le nom de l'offre en lien, en gras ; le
+nombre de personnes ; les dates ; la durée à gauche et le prix à droite ; le total en gras.
+
 ## Motif
 
 Demande de l'humain du 2026-11-20 : « mettez le titre composé du type de l'offre, du type

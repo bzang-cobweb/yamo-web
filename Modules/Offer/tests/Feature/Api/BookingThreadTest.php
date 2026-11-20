@@ -236,7 +236,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Arrivée le 5 déc. 2026', 'Départ le 7 déc. 2026'], $stay->dateLines('fr'));
 
         $this->offer->update(['details' => [...$this->offer->details, 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
-        $this->assertSame(['Arrivée le 5 déc. 2026 à partir de 14:00', 'Départ le 7 déc. 2026 avant 11:00'], $stay->refresh()->dateLines('fr'));
+        $this->assertSame(['Arrivée le 5 déc. 2026 à partir de 14:00', 'Départ le 7 déc. 2026 au plus tard à 11:00'], $stay->refresh()->dateLines('fr'));
         $this->assertSame(['Arrival on Dec 5, 2026 from 14:00', 'Departure on Dec 7, 2026 by 11:00'], $stay->dateLines('en'));
 
         $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
