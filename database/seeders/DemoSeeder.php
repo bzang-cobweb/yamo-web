@@ -212,6 +212,14 @@ class DemoSeeder extends Seeder
         'visit_refused' => [3, 2, 8, null, null, null],
     ];
 
+    /**
+     * Les logements sans charges, caution ni avance : la maison de la visite refusée et le
+     * studio du séjour annulé (décision 2026-11-20-lignes-vides-masquees).
+     *
+     * @var list<int>
+     */
+    private const WITHOUT_FEES = [2, 10];
+
     /** Un message répété jusqu'à la longueur maximale d'un message de demande. */
     private const LONG_MESSAGE = 'Bonjour, je viens à Douala pour une mission de travail de trois jours et je cherche un logement calme, proche d’Akwa, avec une bonne connexion internet pour travailler le soir. ';
 
@@ -239,6 +247,7 @@ class DemoSeeder extends Seeder
         $addresses = $this->addresses($member, $cameroon);
         foreach (self::OFFERS as $index => [$fr, $en, $rentalType, $type, $surface, $rooms, $bedrooms, $price, $charges]) {
             $furnished = $rentalType === RentalTypeEnum::FURNISHED->value;
+            $bare = in_array($index, self::WITHOUT_FEES, true);
             $offer = Offer::query()->create([
                 'user_id' => $member->getKey(),
                 'country_id' => $cameroon->getKey(),
@@ -262,12 +271,14 @@ class DemoSeeder extends Seeder
                     'rooms' => $rooms,
                     'bedrooms' => $bedrooms,
                     'available_from' => now()->addDays(7 * ($index % 6))->toDateString(),
-                    'charges' => $furnished ? null : $charges,
+                    // Les logements de `WITHOUT_FEES` n'en ont aucun : un exemple de lignes vides masquées
+                    // (décision 2026-11-20-lignes-vides-masquees).
+                    'charges' => $furnished || $bare ? null : $charges,
                     // Caution et avance de loyer d'une location non meublée (décision 2026-11-20-caution-avance-loyer).
-                    'deposit_months' => $furnished ? null : 2,
-                    'advance_months' => $furnished ? null : [3, 6, 12][$index % 3],
+                    'deposit_months' => $furnished || $bare ? null : 2,
+                    'advance_months' => $furnished || $bare ? null : [3, 6, 12][$index % 3],
                     // La caution d'un meublé, un montant (décision 2026-11-20-caution-meuble).
-                    'deposit' => $furnished ? [50000, 100000][$index % 2] : null,
+                    'deposit' => $furnished && ! $bare ? [50000, 100000][$index % 2] : null,
                     'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
                 ],
             ]);

@@ -17,3 +17,9 @@ si le logement les renseigne avec une valeur non nulle. Le total, lui, reste tou
 
 Demande de l'humain du 2026-11-20 : « ne pas afficher ces champs s'ils sont vides : charges
 mensuelles, caution, avance ». Une valeur 0 compte comme vide : décidé seul.
+
+## Corollaires
+
+- La démo (`DemoSeeder::WITHOUT_FEES`) en donne un exemple : la « Maison familiale à Bonamoussadi »
+  (visite refusée) et le « Studio meublé pour courts séjours » (séjour annulé) n'ont ni
+  charges, ni caution, ni avance.
