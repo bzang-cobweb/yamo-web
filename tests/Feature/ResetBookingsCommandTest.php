@@ -37,14 +37,14 @@ class ResetBookingsCommandTest extends TestCase
     {
         $member = User::query()->where('email', DemoSeeder::EMAIL)->sole();
         $demo = Booking::query()->pluck('id')->all();
-        $this->assertCount(9, $demo);
+        $this->assertCount(11, $demo);
         // Une demande et une notification hors démo : effacées aussi.
         $other = Booking::factory()->for(Offer::factory()->create())->create();
         $member->notifications()->create(['id' => (string) Str::uuid(), 'type' => 'Autre', 'data' => ['title' => 'Autre', 'body' => 'Texte']]);
 
         $this->artisan('booking:reset', ['--force' => true])->assertSuccessful();
 
-        $this->assertSame(9, Booking::query()->count());
+        $this->assertSame(11, Booking::query()->count());
         $this->assertSame([], array_intersect([...$demo, $other->getKey()], Booking::query()->pluck('id')->all()));
         // Des réponses du propriétaire lues par leur visiteur (décision 2026-11-20-demo-reponses-lues),
         // pas toutes : on voit les coches vertes et les grises.
@@ -55,8 +55,8 @@ class ResetBookingsCommandTest extends TestCase
         $this->assertNotEmpty($answers->whereNull('read_at'));
         $this->assertSame(0, DatabaseNotification::query()->where('type', 'Autre')->count());
         // Chaque demande recréée a ses notifications, au membre (propriétaire) et aux visiteurs.
-        $this->assertGreaterThan(9, DatabaseNotification::query()->count());
-        $this->assertSame(9, $member->notifications()->distinct()->count('thread'));
+        $this->assertGreaterThan(11, DatabaseNotification::query()->count());
+        $this->assertSame(11, $member->notifications()->distinct()->count('thread'));
         // Le reste n'est pas touché.
         $this->assertSame(20, Offer::query()->where('user_id', $member->getKey())->count());
     }
@@ -64,10 +64,10 @@ class ResetBookingsCommandTest extends TestCase
     public function test_without_confirmation_nothing_changes(): void
     {
         $this->artisan('booking:reset')
-            ->expectsConfirmation('Supprimer 9 demandes et '.DatabaseNotification::query()->count().' notifications, puis remettre les demandes de démonstration ?', 'no')
+            ->expectsConfirmation('Supprimer 11 demandes et '.DatabaseNotification::query()->count().' notifications, puis remettre les demandes de démonstration ?', 'no')
             ->assertSuccessful();
 
-        $this->assertSame(9, Booking::query()->count());
+        $this->assertSame(11, Booking::query()->count());
     }
 
     public function test_refused_in_production(): void
@@ -75,6 +75,6 @@ class ResetBookingsCommandTest extends TestCase
         $this->app['env'] = 'production';
 
         $this->artisan('booking:reset', ['--force' => true])->assertFailed();
-        $this->assertSame(9, Booking::query()->count());
+        $this->assertSame(11, Booking::query()->count());
     }
 }

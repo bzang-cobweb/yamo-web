@@ -210,6 +210,10 @@ class DemoSeeder extends Seeder
     private const BOOKINGS = [
         // Le message le plus long admis (`Booking::MESSAGE_MAX_LENGTH`) : voir son rendu partout.
         'studio_pending' => [1, 1, 10, 13, 1, self::LONG_MESSAGE],
+        // Deux autres demandes en attente sur le même studio, qui chevauchent la première et entre
+        // elles (décision 2026-11-21-demo-demandes-chevauchement) : accepter l'une refuse les autres.
+        'studio_overlap' => [2, 1, 11, 14, 2, 'Arrivée possible un jour plus tôt si besoin.'],
+        'studio_overlap_late' => [3, 1, 12, 16, 1, null],
         'view_accepted' => [2, 4, 5, 9, 2, 'Nous serons deux, arrivée en soirée.'],
         'view_overlap' => [3, 4, 7, 10, 3, 'Séjour en famille, est-ce possible ?'],
         'flat_refused' => [1, 9, 20, 24, 2, null],
