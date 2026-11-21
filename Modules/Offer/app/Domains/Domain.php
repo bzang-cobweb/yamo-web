@@ -249,6 +249,18 @@ abstract class Domain
     public function applyFilters(Builder $query, array $filters): void {}
 
     /**
+     * Les types de l'offre (pour la location : type de logement, type de location), en listes
+     * déroulantes : les filtres « type » des listes de demandes, appliqués par `applyFilters`
+     * (décision 2026-11-21-reservations-filtre-type). Aucun par défaut.
+     *
+     * @return list<Field>
+     */
+    public function offerTypeFilters(): array
+    {
+        return [];
+    }
+
+    /**
      * Attributs placés dans l'onglet « Annonce » du back-office, avant la catégorie
      * (décision 2026-11-19-backoffice-loyer-type-annonce). Aucun par défaut : tous
      * vont dans « Caractéristiques ».

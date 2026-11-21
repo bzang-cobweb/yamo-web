@@ -339,6 +339,18 @@ class RentalDomain extends Domain
         ];
     }
 
+    public function offerTypeFilters(): array
+    {
+        return [
+            Field::select('property_type')
+                ->label(__('offer::rental.property_type'))
+                ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all()),
+            Field::select('rental_type')
+                ->label(__('offer::rental.rental_type'))
+                ->options(RentalTypeEnum::options()),
+        ];
+    }
+
     public function applyFilters(Builder $query, array $filters): void
     {
         if (isset($filters['property_type'])) {

@@ -412,7 +412,7 @@ class BookingApiTest extends TestCase
         $this->assertSame([], $items[(string) $other->getKey()]['counters']);
     }
 
-    public function test_my_bookings_are_filtered_by_status_city_and_type_with_a_search_button(): void
+    public function test_my_bookings_are_filtered_by_status_city_and_offer_types_with_a_search_button(): void
     {
         $guest = $this->member();
         $pending = Booking::factory()->for($this->home(true), 'offer')->for($guest)->create();
@@ -425,7 +425,7 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-21-reservations-filtre-statut : le statut réel, puis la période, en listes déroulantes.
         $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
         $filters = collect($data['filters'])->keyBy('name');
-        $this->assertSame(['status', 'period', 'city', 'type'], $filters->keys()->all());
+        $this->assertSame(['status', 'period', 'city', 'property_type', 'rental_type'], $filters->keys()->all());
         $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
         $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée'], array_column($filters['status']['options'], 'label'));
         $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
@@ -435,8 +435,18 @@ class BookingApiTest extends TestCase
         $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=accepted'));
         $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused'));
         $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status]=cancelled'));
-        $this->assertSame([(string) $refused->getKey()], $ids('?filter[type]=visit'));
-        $this->assertCount(4, $ids());
+        // Décision 2026-11-21-reservations-filtre-type : les types réels de l'offre, plus séjour / visite.
+        $this->assertSame(['Type de logement', 'select'], [$filters['property_type']['label'], $filters['property_type']['type']]);
+        $this->assertSame(['apartment', 'house', 'studio', 'room'], array_column($filters['property_type']['options'], 'value'));
+        $this->assertSame(['Type de location', 'select'], [$filters['rental_type']['label'], $filters['rental_type']['type']]);
+        $house = $this->home(true);
+        $house->update(['details' => [...$house->details, 'property_type' => 'house']]);
+        $inHouse = Booking::factory()->for($house, 'offer')->for($guest)->create();
+        $house->delete();
+        $this->assertSame([(string) $inHouse->getKey()], $ids('?filter[property_type]=house'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[rental_type]=long_term'));
+        $this->assertSame([], $ids('?filter[property_type]=house&filter[rental_type]=long_term'));
+        $this->assertCount(5, $ids('?filter[type]=visit'));
     }
 
     public function test_my_bookings_period_follows_the_dates_only(): void

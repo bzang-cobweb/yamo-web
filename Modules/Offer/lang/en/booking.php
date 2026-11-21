@@ -195,7 +195,6 @@ return [
         'filter_pending' => 'Pending',
         'filter_past' => 'Past',
         'filter_city' => 'City',
-        'filter_type' => 'Type',
         'filter_offer' => 'Home',
         'search_home' => 'Find a home',
         'requests_title' => 'Requests · :offer',

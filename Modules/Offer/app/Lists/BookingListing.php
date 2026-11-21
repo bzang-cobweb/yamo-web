@@ -16,7 +16,6 @@ use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
-use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\OfferAddress;
@@ -74,8 +73,10 @@ class BookingListing extends Listing
 
     /**
      * Statut réel de la demande (en attente, acceptée, refusée, annulée), période d'après les dates
-     * (à venir, en cours, passées), ville du logement, type (séjour, visite) ; tous en liste
-     * déroulante (décisions 2026-11-21-reservations-filtre-statut et 2026-11-21-reservations-periode-dates).
+     * (à venir, en cours, passées), ville du logement, puis les types de l'offre servis par le domaine
+     * (type de logement, type de location) ; tous en liste déroulante (décisions
+     * 2026-11-21-reservations-filtre-statut, 2026-11-21-reservations-periode-dates et
+     * 2026-11-21-reservations-filtre-type).
      */
     public function filters(): array
     {
@@ -87,9 +88,7 @@ class BookingListing extends Listing
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 ->options($this->cities()),
-            Field::select('type')
-                ->label(__('offer::booking.profile.filter_type'))
-                ->options(BookingTypeEnum::options()),
+            ...app(DomainRegistry::class)->require()->offerTypeFilters(),
         ];
     }
 
@@ -103,9 +102,20 @@ class BookingListing extends Listing
         if (isset($filters['city'])) {
             $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
         }
-        if (isset($filters['type'])) {
-            $query->where('type', $filters['type']);
+        $types = array_intersect_key($filters, array_flip($this->offerTypeNames()));
+        if ($types !== []) {
+            $query->whereHas('offer', fn (Builder $offer) => app(DomainRegistry::class)->require()->applyFilters($offer->withTrashed(), $types));
         }
+    }
+
+    /**
+     * Les noms des filtres de type servis par le domaine.
+     *
+     * @return list<string>
+     */
+    private function offerTypeNames(): array
+    {
+        return array_map(fn (Field $field): string => $field->name, app(DomainRegistry::class)->require()->offerTypeFilters());
     }
 
     /**

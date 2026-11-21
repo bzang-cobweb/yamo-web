@@ -195,7 +195,6 @@ return [
         'filter_pending' => 'En attente',
         'filter_past' => 'Passée',
         'filter_city' => 'Ville',
-        'filter_type' => 'Type',
         'filter_offer' => 'Logement',
         'search_home' => 'Rechercher un logement',
         'requests_title' => 'Demandes · :offer',

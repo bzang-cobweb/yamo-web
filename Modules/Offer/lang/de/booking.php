@@ -195,7 +195,6 @@ return [
         'filter_pending' => 'Ausstehend',
         'filter_past' => 'Vergangen',
         'filter_city' => 'Stadt',
-        'filter_type' => 'Typ',
         'filter_offer' => 'Unterkunft',
         'search_home' => 'Unterkunft suchen',
         'requests_title' => 'Anfragen · :offer',
