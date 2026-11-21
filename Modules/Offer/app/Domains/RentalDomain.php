@@ -74,7 +74,7 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Type de location, type de logement et ville : « Location meublée · Studio · Douala ».
+     * Type de location et type de logement, sans la ville : « Location meublée · Studio ».
      */
     public function bookingItemTitle(Offer $offer, string $locale): ?string
     {
@@ -88,7 +88,6 @@ class RentalDomain extends Domain
         return implode(' · ', array_filter([
             $rental === null ? null : __('offer::rental.rental_types.'.$rental->value, [], $locale),
             in_array($type, self::PROPERTY_TYPES, true) ? __('offer::rental.property_types.'.$type, [], $locale) : null,
-            $offer->address?->city,
         ]));
     }
 

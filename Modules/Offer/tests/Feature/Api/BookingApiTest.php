@@ -311,9 +311,8 @@ class BookingApiTest extends TestCase
         // Titres inversés, sans prix (décision 2026-11-21-reservations-titres-inverses-sans-prix).
         $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['title']);
         $this->assertNull($items[(string) $pending->getKey()]['highlight']);
-        // Sous le titre saisi : type de location, type de logement et ville, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
-        $city = $pending->offer->address?->city;
-        $this->assertStringStartsWith('Location meublée · Studio'.($city === null ? '' : ' · '.$city)."\n", $items[(string) $pending->getKey()]['subtitle']);
+        // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
+        $this->assertStringStartsWith("Location meublée · Studio\n", $items[(string) $pending->getKey()]['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
         $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
