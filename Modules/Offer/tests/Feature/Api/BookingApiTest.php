@@ -444,7 +444,11 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-21-reservations-filtre-statut : le statut réel, puis la période, en listes déroulantes.
         $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
         $filters = collect($data['filters'])->keyBy('name');
-        $this->assertSame(['status', 'period', 'city', 'property_type', 'rental_type'], $filters->keys()->all());
+        $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], $filters->keys()->all());
+        // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
+        $this->assertSame(['Logement', 'select'], [$filters['offer']['label'], $filters['offer']['type']]);
+        $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[offer]='.$upcoming->offer_id));
         $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
         $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée'], array_column($filters['status']['options'], 'label'));
         $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
