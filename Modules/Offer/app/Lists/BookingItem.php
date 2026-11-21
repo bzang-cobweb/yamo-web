@@ -16,7 +16,7 @@ final class BookingItem
 {
     /**
      * `$mine` : la carte de « Mes réservations » — le titre saisi de l'offre en titre ; en
-     * dessous, le titre de carte du domaine (« Location meublée · Studio »), puis le type de demande
+     * dessous, le titre de carte du domaine (« Location meublée · Studio · Douala »), puis le type de demande
      * et les dates, sans le nombre de personnes ni le total (décisions 2026-11-21-reservations-vrai-titre,
      * 2026-11-21-reservations-type-de-location-titre, 2026-11-21-reservations-sans-nombre-personnes
      * et 2026-11-21-reservations-titres-inverses-sans-prix).

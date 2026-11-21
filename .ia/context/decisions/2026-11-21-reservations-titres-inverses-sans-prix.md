@@ -7,7 +7,7 @@
 
 ## Décision
 Sur une carte de « Mes réservations », le titre est le titre saisi de l'offre (« Studio meublé à
-Bonanjo ») ; la première ligne grise est « Location meublée · Studio », puis le type de demande
+Bonanjo ») ; la première ligne grise est « Location meublée · Studio · Douala », puis le type de demande
 et les dates. Le total n'est plus sur la carte : il reste sur la page de la demande. Sans titre
 saisi, « Location meublée · Studio » devient le titre.
 
