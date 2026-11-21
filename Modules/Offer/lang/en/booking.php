@@ -178,6 +178,7 @@ return [
         'check_in' => 'Arrival',
         'check_out' => 'Departure',
         'guests' => 'Guests',
+        'show_address' => 'Address shown to the guest',
         'message' => 'Message',
         'total' => 'Total',
         'status' => 'Status',

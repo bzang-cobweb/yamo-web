@@ -178,6 +178,7 @@ return [
         'check_in' => 'Anreise',
         'check_out' => 'Abreise',
         'guests' => 'Gäste',
+        'show_address' => 'Adresse für den Gast sichtbar',
         'message' => 'Nachricht',
         'total' => 'Gesamt',
         'status' => 'Status',

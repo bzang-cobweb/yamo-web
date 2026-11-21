@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Filament\Resources\BookingResource\InfoLists;
 
+use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -43,6 +44,8 @@ abstract class BookingInfolist
                             ->label(__('offer::booking.resource.total'))
                             ->state(fn (Booking $record): ?string => $record->formattedTotal(app()->getLocale()))
                             ->placeholder('—'),
+                        // L'adresse visible du demandeur, choisie par le propriétaire dans l'app (décision 2026-11-21-afficher-adresse).
+                        IconEntry::make('show_address')->label(__('offer::booking.resource.show_address'))->boolean(),
                         TextEntry::make('message')->label(__('offer::booking.resource.message'))->placeholder('—')->columnSpanFull(),
                         TextEntry::make('created_at')->label(__('offer::booking.resource.created_at'))->dateTime(),
                         TextEntry::make('answered_at')->label(__('offer::booking.resource.answered_at'))->dateTime()->placeholder('—'),

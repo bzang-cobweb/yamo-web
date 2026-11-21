@@ -128,6 +128,26 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertCanNotSeeTableRecords([$other]);
     }
 
+    public function test_an_admin_chooses_to_show_the_address_or_not(): void
+    {
+        // Décision 2026-11-21-afficher-adresse : le même interrupteur que dans l'app.
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleEnum::ADMIN);
+        $this->actingAs($admin);
+        $offer = Offer::factory()->at(Address::factory()->create())->create([
+            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
+            'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 0],
+        ]);
+
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->assertFormSet(['show_address' => true])
+            ->fillForm(['show_address' => false])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertFalse($offer->fresh()->show_address);
+    }
+
     public function test_the_domain_schema_validates_in_the_back_office_too(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::CREATE_OFFERS);

@@ -27,6 +27,11 @@ Les modèles ont la même valeur par défaut. Rien ne change pour l'existant.
   autre membre, elles répondent 404.
 - L'action apparaît aussi dans le panneau d'un jour du calendrier, qui reprend ces cartes.
 
+### Back-office
+- Le formulaire d'une offre a le même interrupteur, sous l'adresse et son indication.
+- La fiche d'une demande montre en lecture seule si l'adresse est affichée au voyageur. Ce
+  réglage se change dans l'app.
+
 ### Ordre des lignes d'une demande
 1. Adresse : la première information après le titre. Pour le demandeur, elle est retirée si la
    demande la masque ; le propriétaire la voit toujours.
@@ -44,9 +49,9 @@ Demandes de l'humain du 2026-11-21 :
   l'offre » ;
 - « mettre adresse avant nombre de personnes », puis « adresse si visible dans booking est la
   première information dans détail réservation après le titre » ;
-- « l'hôte ou le membre, puis téléphone, puis email apparaissent après l'adresse ».
+- « l'hôte ou le membre, puis téléphone, puis email apparaissent après l'adresse » ;
+- « Oui, ajoute-le » (le champ dans le back-office).
 
 ## Ce que j'ai décidé seul
 - Le propriétaire voit toujours l'adresse, sur la fiche comme sur la demande.
 - Le geste pour la demande : une action sur la carte de « Réservations reçues ».
-- Le back-office Filament n'a pas encore ce champ.

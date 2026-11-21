@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Tabs;
@@ -164,6 +165,13 @@ abstract class OfferForm
                                     ], 'indication')->columnSpanFull(),
                                 ])
                                     ->relationship('offerAddress', condition: fn (?array $state): bool => filled($state['address_id'] ?? null))
+                                    ->visible($domain->hasAddress())
+                                    ->columnSpanFull(),
+                                // Afficher l'adresse sur la fiche, comme dans l'app (décision 2026-11-21-afficher-adresse).
+                                Toggle::make('show_address')
+                                    ->label(__('offer::offer.show_address'))
+                                    ->helperText(__('offer::offer.show_address_help'))
+                                    ->default(true)
                                     ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
                             ]),
