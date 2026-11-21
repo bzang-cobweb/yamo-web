@@ -2,7 +2,6 @@
 
 namespace Modules\Offer\Lists;
 
-use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
@@ -14,24 +13,21 @@ use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Forms\BookingRefuseForm;
-use Modules\Offer\Lists\Concerns\FiltersBookings;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\OfferAvailability;
 
 /**
- * « Demandes » (décision 2026-11-19-contrat-reservations) : les demandes sur les offres du compte dans le
- * pays courant, la plus récente en tête ; « Répondre » tant qu'elle attend. Ouverte par « Demandes » d'une
- * carte de « Mes logements », le logement déjà choisi dans le filtre. Les mêmes cartes et les mêmes filtres
- * que « Mes réservations », le membre en plus (décision 2026-11-21-demandes-comme-mes-reservations).
+ * « Demandes » d'une offre (décision 2026-11-21-demandes-d-une-offre) : les demandes reçues sur un logement
+ * du compte, ouvertes par « Demandes » de sa carte dans « Mes logements », la plus récente en tête. Une liste
+ * à elle, qui ne reprend plus « Mes réservations » : sous les filtres, le titre du logement et sa ligne du
+ * type ; des cartes sans le logement (type de demande et dates, statut sur la photo) ; filtres : statut et
+ * période, le logement en champ caché. « Répondre » tant qu'elle attend.
  */
 class ReceivedBookingListing extends Listing
 {
-    use FiltersBookings {
-        filters as bookingFilters;
-    }
-
     public static function name(): string
     {
         return 'offer.bookings.received';
@@ -48,29 +44,55 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Filtrée sur un logement : le titre de sa carte, sous les filtres ; la barre du haut reste « Demandes »
-     * (décision 2026-11-21-demandes-titre-sous-filtres).
+     * Le logement choisi, sous les filtres : son titre, et dessous sa ligne du type (« Location · Appartement ·
+     * Douala ») ; sans logement, rien (décisions 2026-11-21-demandes-titre-sous-filtres et
+     * 2026-11-21-demandes-d-une-offre).
+     *
+     * @return array{title: string, subtitle: string|null}|null
      */
-    public function headingFor(array $filters): ?string
+    public function headingFor(array $filters): ?array
     {
-        $offer = isset($filters['offer']) && is_scalar($filters['offer']) ? ($this->bookedOfferOptions()[(string) $filters['offer']] ?? null) : null;
+        $offer = $this->chosenOffer($filters);
+        if ($offer === null) {
+            return null;
+        }
 
-        return $offer === null || $offer === '' ? null : $offer;
+        [$title, $line] = OfferCardTitle::of($offer, $this->locale());
+
+        return ['title' => $title, 'subtitle' => $line];
     }
 
     /**
-     * Les filtres de « Mes réservations », mais le logement en champ caché : choisi par « Demandes » de sa
-     * carte, il filtre sans s'afficher dans les filtres (décision 2026-11-21-demandes-filtre-logement-cache).
+     * Le statut réel, la période d'après les dates ; le logement en champ caché, choisi par « Demandes » de
+     * sa carte (décision 2026-11-21-demandes-filtre-logement-cache).
      *
      * @return list<Field>
      */
     public function filters(): array
     {
-        return array_map(fn (Field $field): Field => $field->name === 'offer' ? Field::hidden('offer') : $field, $this->bookingFilters());
+        return [
+            Field::select('status')
+                ->label(__('offer::booking.profile.filter_status'))
+                ->options(BookingStatusEnum::options()),
+            BookingFilters::period(),
+            Field::hidden('offer'),
+        ];
+    }
+
+    protected function applyFilters(Builder $query, array $filters): void
+    {
+        $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+        BookingFilters::applyPeriod($query, $filters);
+        if (isset($filters['offer']) && is_scalar($filters['offer'])) {
+            $query->where('offer_id', (string) $filters['offer']);
+        }
     }
 
     /**
-     * Les actions dans le menu trois points, comme « Mes réservations ».
+     * Les actions dans le menu trois points.
      */
     public function actionsMenu(): bool
     {
@@ -78,25 +100,32 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Ses logements du pays courant, supprimés compris.
+     * Le logement des filtres, s'il est au compte et dans le pays courant (supprimé compris).
      *
-     * @return Builder<Offer>
+     * @param  array<string, mixed>  $filters
      */
-    protected function bookedOffers(): Builder
+    private function chosenOffer(array $filters): ?Offer
     {
+        if (! isset($filters['offer']) || ! is_scalar($filters['offer'])) {
+            return null;
+        }
+
         return Offer::query()->withTrashed()
+            ->with('address')
+            ->whereKey((string) $filters['offer'])
             ->where('user_id', $this->user?->getAuthIdentifier())
-            ->where('country_id', CurrentCountry::require()->getKey());
+            ->where('country_id', CurrentCountry::require()->getKey())
+            ->first();
+    }
+
+    private function locale(): string
+    {
+        return $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
     }
 
     public function emptyText(): string
     {
         return __('offer::booking.list.received_empty');
-    }
-
-    public function searchPlaceholder(): string
-    {
-        return __('offer::booking.list.search');
     }
 
     /**
@@ -105,9 +134,8 @@ class ReceivedBookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            // La note et le nombre d'avis du logement, comme dans « Mes réservations ».
-            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary(), 'user'])
-            // Sa dernière notification du fil de la demande : la carte ouvre sa page, comme dans « Mes réservations ».
+            ->with(['offer.media', 'user'])
+            // Sa dernière notification du fil de la demande : la carte ouvre sa page.
             ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
                 ->select('id')
                 ->where('notifiable_type', (new User)->getMorphClass())
@@ -122,24 +150,15 @@ class ReceivedBookingListing extends Listing
             ->orderByDesc('id');
     }
 
-    protected function search(Builder $query, string $term): void
-    {
-        $query->orWhereHas('offer', fn (Builder $offer) => $offer->withTrashed()->where(
-            fn (Builder $columns) => $this->orWhereContains($columns, array_map(fn (string $locale): string => "title->{$locale}", Locales::values()), $term),
-        ));
-    }
-
     public function item(Model $record): ListItem
     {
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
-        // La carte de « Mes réservations », sans le nom du membre (décision 2026-11-21-demandes-sans-membre) ; elle ouvre la page de la demande,
-        // où se lit son message ; sans notification dans son fil, la fiche du logement ; le statut sur la photo
-        // (décision 2026-11-21-demandes-comme-mes-reservations).
+        // Sa carte à elle, sans le logement, déjà nommé sous les filtres ; elle ouvre la page de la demande, où se
+        // lit son message ; sans notification dans son fil, la fiche du logement (décision 2026-11-21-demandes-d-une-offre).
         $notification = $record->getAttribute('thread_notification_id');
-        $item = BookingItem::make($record, $locale, mine: true)
-            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
-            ->tag($record->status->label(), $record->status->tone(), onImage: true);
+        $item = OfferRequestItem::make($record, $locale)
+            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
 
         if ($record->isAwaitingAnswer()) {
             // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message

@@ -15,6 +15,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;
@@ -265,12 +266,13 @@ class BookingApiTest extends TestCase
         $this->assertNotContains('offer.bookings.received', array_column($this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
         // Sur la carte : « Accepter » (confirmation, envoi) et « Refuser » (formulaire du refus).
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
-        // La carte de « Mes réservations » (décision 2026-11-21-demandes-comme-mes-reservations) : le statut en
-        // pastille orange sur la photo, le membre en tête du sous-titre, le prix en gras, les actions en menu.
+        // Sa carte à elle (décision 2026-11-21-demandes-d-une-offre) : le statut en pastille orange sur la photo ;
+        // en titre, le type de demande et les dates, sans le logement ni le membre ; le total en gras ; les actions en menu.
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $item['tag']);
-        // Sans le nom du membre (décision 2026-11-21-demandes-sans-membre).
-        $this->assertStringNotContainsString((string) $guest->full_name, (string) $item['subtitle']);
-        $this->assertNotNull($item['highlight']);
+        $this->assertSame($booking->type->label().' · '.$booking->period('fr'), $item['title']);
+        $this->assertNull($item['subtitle']);
+        $this->assertNull($item['rating']);
+        $this->assertStringStartsWith('135', (string) $item['highlight']);
         $this->assertTrue($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
         [$accept, $refuse] = $item['actions'];
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
@@ -385,14 +387,16 @@ class BookingApiTest extends TestCase
 
         // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
-        // Titrée « Demandes », les mêmes filtres que « Mes réservations » ; sans message cité : il se lit sur la page
-        // de la demande (décision 2026-11-21-demandes-comme-mes-reservations).
-        // Titrée « Demandes » ; le nom du logement sous les filtres (décision 2026-11-21-demandes-titre-sous-filtres) ;
-        // sans logement, pas d'intitulé.
+        // Titrée « Demandes » ; sous les filtres, le titre du logement et sa ligne du type ; sans logement, pas
+        // d'intitulé ; sans recherche ; filtres : statut, période, logement caché (décisions
+        // 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre).
         $this->assertSame('Demandes', $requests['title']);
-        $this->assertSame($offer->getTranslation('title', 'fr'), $requests['heading']);
+        [$cardTitle, $cardLine] = OfferCardTitle::of($offer, 'fr');
+        $this->assertSame(['title' => $cardTitle, 'subtitle' => $cardLine], $requests['heading']);
+        $this->assertNotNull($cardLine);
         $this->assertNull($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.heading'));
-        $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], array_column($requests['filters'], 'name'));
+        $this->assertNull($requests['search']);
+        $this->assertSame(['status', 'period', 'offer'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);
         $this->assertCount(2, $requests['items']);

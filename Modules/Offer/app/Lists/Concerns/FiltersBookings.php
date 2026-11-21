@@ -15,8 +15,8 @@ use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 
 /**
- * Les filtres d'une liste de demandes, les mêmes dans « Mes réservations » et dans « Demandes » (les
- * demandes reçues, décision 2026-11-21-demandes-comme-mes-reservations) : statut réel, période d'après
+ * Les filtres de « Mes réservations » (« Demandes » d'une offre a les siens, décision
+ * 2026-11-21-demandes-d-une-offre) : statut réel, période d'après
  * les dates, ville du logement, le logement (avec une recherche), puis les types de l'offre servis par le
  * domaine ; tous en liste déroulante (décisions 2026-11-21-reservations-filtre-statut,
  * 2026-11-21-reservations-periode-dates, 2026-11-21-reservations-filtre-type,

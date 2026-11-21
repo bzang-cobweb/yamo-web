@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-demandes-d-une-offre.md (cartes et filtres)
+
 # « Demandes » d'un logement : la liste des demandes reçues, comme « Mes réservations »
 
 Remplace : 2026-11-21-lien-notifications.md (pour l'action « Demandes » des cartes de « Mes logements »)

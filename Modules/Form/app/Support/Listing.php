@@ -288,12 +288,14 @@ abstract class Listing
     }
 
     /**
-     * Un intitulé affiché sous les filtres, en tête des items, selon les filtres choisis (le logement des
-     * « Demandes », décision 2026-11-21-demandes-titre-sous-filtres) ; `null` par défaut : aucun.
+     * Un intitulé affiché sous les filtres, en tête des items, selon les filtres choisis : un titre et, dessous,
+     * un sous-titre facultatif (le logement des « Demandes » et sa ligne du type, décisions
+     * 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre) ; `null` par défaut : aucun.
      *
      * @param  array<string, mixed>  $filters  filtres validés
+     * @return array{title: string, subtitle: string|null}|null
      */
-    public function headingFor(array $filters): ?string
+    public function headingFor(array $filters): ?array
     {
         return null;
     }
