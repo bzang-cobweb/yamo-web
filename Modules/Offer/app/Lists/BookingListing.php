@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
-use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Lists\Concerns\FiltersBookings;
 use Modules\Offer\Models\Booking;
@@ -132,16 +131,13 @@ class BookingListing extends Listing
             $item->action(__('offer::booking.form.edit'), form: BookingEditForm::name(), record: $record->getKey());
         }
 
-        return ! $record->isCancellable() ? $item : $item->delete(
-            __('offer::booking.cancel.label'),
-            __('offer::booking.cancel.confirm'),
-            Submission::toRoute(
-                'api.v1.bookings.cancel',
-                SuccessAction::BACK,
-                __('offer::booking.cancel.done'),
-                destructive: true,
-                parameters: ['booking' => $record->getKey()],
-            ),
-        );
+        // « Annuler », en dernier, tant qu'elle peut l'être : il ouvre le formulaire d'annulation, comme le bouton
+        // « Annuler » de la page de la demande (décisions 2026-11-21-annuler-depuis-le-detail et
+        // 2026-11-22-reservations-menu-annuler).
+        if ($record->isCancellable()) {
+            $item->action(__('offer::booking.cancel.button'), 'destructive', form: BookingCancelForm::name(), record: $record->getKey());
+        }
+
+        return $item;
     }
 }

@@ -314,15 +314,19 @@ class BookingApiTest extends TestCase
             ->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today(), 'check_out' => today()->addDays(2)]);
 
         $items = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->assertOk()->json('data.items'))->keyBy('id');
-        $this->assertSame('Annuler la demande', $items[(string) $pending->getKey()]['delete']['label']);
+        // Dans le menu, en dernier, « Annuler » (en rouge) ouvre le formulaire d'annulation ; plus de retrait direct
+        // (décision 2026-11-22-reservations-menu-annuler).
+        $cancelAction = collect($items[(string) $pending->getKey()]['actions'])->last();
+        $this->assertSame(['Annuler', 'destructive', ['form' => 'offer.booking.cancel', 'record' => (string) $pending->getKey()]], [$cancelAction['label'], $cancelAction['style'], $cancelAction['form']]);
+        $this->assertNull($items[(string) $pending->getKey()]['delete']);
         // Sans notification dans son fil : la fiche du logement.
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
         // Avec : la page de sa dernière notification du fil (décision 2026-11-21-reservation-comme-notification).
         $copy = $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => now(),
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
-        // Acceptée et commencée : plus annulable.
-        $this->assertNull($items[(string) $started->getKey()]['delete']);
+        // Acceptée et commencée : plus annulable, plus de « Annuler ».
+        $this->assertNotContains('Annuler', array_column($items[(string) $started->getKey()]['actions'], 'label'));
         // En titre, la ligne du type ; dessous, le titre saisi puis la demande (décision 2026-11-21-cartes-titre-compose-en-tete).
         [$cardTitle, $cardLine] = OfferCardTitle::composedFirst($pending->offer, 'fr');
         $this->assertSame($cardTitle, $items[(string) $pending->getKey()]['title']);
@@ -352,8 +356,7 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $pending->getKey()]['favorite']);
         $this->assertTrue($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
 
-        $cancel = $items[(string) $pending->getKey()]['delete'];
-        $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();
+        $this->asUser($guest)->postJson("/api/v1/bookings/{$pending->getKey()}/cancel")->assertNoContent();
         $this->assertSame(BookingStatusEnum::CANCELLED, $pending->fresh()->status);
         Notification::assertSentTo($pending->offer->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::CANCELLED);
 
