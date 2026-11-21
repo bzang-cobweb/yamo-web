@@ -53,7 +53,7 @@ return [
         'check_in' => "Date d'arrivée",
         'check_out' => 'Date de départ',
         'visit_date' => 'Date souhaitée',
-        'visit_second_date' => 'Seconde date (facultatif)',
+        'visit_second_date' => 'Autre visite (facultatif)',
         'guests' => 'Voyageurs',
         'message' => 'Message au propriétaire',
         'message_placeholder' => 'Présentez-vous, précisez vos besoins…',
