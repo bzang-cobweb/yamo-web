@@ -135,7 +135,7 @@ class ReceivedBookingListing extends Listing
 
     /**
      * Le membre (prénom, nom, pseudonyme) ou son message : il n'y a qu'un logement (décision
-     * 2026-11-21-demandes-recherche-membre).
+     * 2026-11-21-demandes-nombre).
      */
     protected function search(Builder $query, string $term): void
     {

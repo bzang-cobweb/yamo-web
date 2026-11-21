@@ -397,7 +397,7 @@ class BookingApiTest extends TestCase
         $this->assertSame('Aucune demande', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.subtitle'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
         $this->assertSame(['Demandes', '3 demandes'], [$all['title'], $all['heading']['subtitle']]);
-        // Une recherche sur le membre ou son message, comptée dans le nombre (décision 2026-11-21-demandes-recherche-membre).
+        // Une recherche sur le membre ou son message, comptée dans le nombre (décision 2026-11-21-demandes-nombre).
         $this->assertSame('Rechercher un membre, un message…', $requests['search']);
         $found = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=travail")->json('data');
         $this->assertSame([(string) $first->getKey()], array_column($found['items'], 'id'));
