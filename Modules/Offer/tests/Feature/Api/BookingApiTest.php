@@ -273,6 +273,8 @@ class BookingApiTest extends TestCase
         $this->assertNull($item['image']);
         // Après le statut, le nom du membre ; dessous, le type de demande et les dates (décision 2026-11-21-demandes-nom-membre).
         $this->assertSame((string) $guest->full_name, $item['title']);
+        // En lien vers sa page (décision 2026-11-21-demandes-lien-membre).
+        $this->assertSame('/members/'.$guest->getKey(), $item['title_link']);
         $this->assertSame($booking->type->label().' · '.$booking->period('fr'), $item['subtitle']);
         $this->assertNull($item['rating']);
         $this->assertStringStartsWith('135', (string) $item['highlight']);
