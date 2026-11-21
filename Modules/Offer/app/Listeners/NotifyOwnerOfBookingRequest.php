@@ -16,10 +16,8 @@ class NotifyOwnerOfBookingRequest
 {
     public function handle(BookingRequested|BookingUpdated $event): void
     {
-        $notification = $event instanceof BookingUpdated
-            ? new BookingRequestedNotification($event->booking, BookingStepEnum::UPDATED, createdAt: $event->createdAt)
-            : new BookingRequestedNotification($event->booking, BookingStepEnum::RECEIVED);
+        $step = $event instanceof BookingUpdated ? BookingStepEnum::UPDATED : BookingStepEnum::RECEIVED;
 
-        $event->booking->offer->user?->notify($notification);
+        $event->booking->offer->user?->notify(new BookingRequestedNotification($event->booking, $step));
     }
 }

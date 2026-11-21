@@ -91,8 +91,7 @@ class NotificationController
      */
     public function readAll(Request $request): Response
     {
-        // Sans toucher `updated_at`, réservé à une modification (décision 2026-11-21-etape-modifiee-date).
-        $this->user($request)->unreadNotifications()->getQuery()->toBase()->update(['read_at' => now()]);
+        $this->user($request)->unreadNotifications()->update(['read_at' => now()]);
 
         return response()->noContent();
     }

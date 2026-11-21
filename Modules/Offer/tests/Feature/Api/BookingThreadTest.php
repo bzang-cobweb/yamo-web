@@ -90,10 +90,6 @@ class BookingThreadTest extends TestCase
         $this->assertCount(1, $this->cards($this->guest));
 
         $expected = ['Demande envoyée', 'Demande acceptée', 'Demande annulée'];
-        // Lire ne touche pas `updated_at` : aucune étape n'est « modifiée » (décision 2026-11-21-etape-modifiee-date).
-        $this->travel(5)->minutes();
-        $this->api($this->owner, 'POST', '/'.$owner[0]['id'].'/read')->assertNoContent();
-        $this->api($this->guest, 'POST', '/read')->assertNoContent();
         foreach ([[$this->owner, $owner[0]['id']], [$this->guest, $this->cards($this->guest)[0]['id']]] as [$reader, $id]) {
             $history = $this->api($reader, 'GET', '/'.$id)->assertOk()->json('data.history');
             // Les deux côtés, de la plus ancienne étape à la plus récente.
@@ -403,14 +399,11 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Demande modifiée'], array_column($history, 'label'));
         // « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date).
         $this->assertSame([true], array_column($history, 'edited'));
-        // Sa date reste celle de la demande ; la modification est dans `updated_at`.
-        $this->assertSame(today()->setTime(9, 0)->toIso8601String(), $history[0]['created_at']);
         $this->assertSame(['Message modifié'], array_column($history, 'message'));
         // Le membre : sa copie réécrite sur place (la page ouverte reste la même), déjà lue.
         $copy = $this->guest->notifications()->sole();
         $mine = $this->cards($this->guest)[0];
         $this->assertSame($copy->getKey(), $mine['id']);
-        $this->assertTrue($copy->created_at->lessThan($copy->updated_at));
         $this->assertStringContainsString('Vous avez modifié votre demande', $mine['body']);
         $this->assertTrue($mine['read']);
         $this->assertSame(['Message modifié'], array_column($this->api($this->guest, 'GET', '/'.$mine['id'])->json('data.history'), 'message'));

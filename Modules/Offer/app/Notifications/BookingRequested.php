@@ -2,13 +2,11 @@
 
 namespace Modules\Offer\Notifications;
 
-use Carbon\CarbonInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
-use Modules\Notification\Contracts\HasNotificationCreatedAt;
 use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Notification\Contracts\SentAsRead;
@@ -36,18 +34,14 @@ use Modules\Offer\Support\BookingText;
  * son texte « Vous avez accepté la demande de … ». Le suivi ne la montre pas : la
  * notification du membre porte déjà l'étape.
  */
-class BookingRequested extends Notification implements HasNotificationCreatedAt, HasNotificationThread, HasNotificationUser, SentAsRead, ShouldQueue
+class BookingRequested extends Notification implements HasNotificationThread, HasNotificationUser, SentAsRead, ShouldQueue
 {
     use Queueable;
 
     /** Le statut à l'envoi : la demande, rechargée quand la file traite la notification, a pu changer depuis. */
     public readonly BookingStatusEnum $status;
 
-    /**
-     * `$createdAt` : la date de l'étape qu'elle remplace (« Demande modifiée », décision
-     * 2026-11-21-etape-modifiee-date) ; `null` : maintenant.
-     */
-    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step, public readonly bool $own = false, public readonly ?CarbonInterface $createdAt = null)
+    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step, public readonly bool $own = false)
     {
         $this->status = $booking->status;
 
@@ -123,7 +117,7 @@ class BookingRequested extends Notification implements HasNotificationCreatedAt,
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
-     * @return array{title: string, step: string, own: bool, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, step: string, own: bool, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -144,6 +138,8 @@ class BookingRequested extends Notification implements HasNotificationCreatedAt,
             // Le total figé de la demande (« 255 000 FCFA »), en gras sur la page de la notification ; `null` pour une visite.
             'total' => $this->booking->formattedTotal(app()->getLocale()),
             'message' => $this->note(),
+            // Une demande modifiée : « Modifié » près de sa date dans le suivi (décision 2026-11-21-etape-modifiee-date).
+            'edited' => $this->step === BookingStepEnum::UPDATED,
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
             'link' => $this->section() === 'received'
@@ -170,11 +166,6 @@ class BookingRequested extends Notification implements HasNotificationCreatedAt,
     public function sentAsRead(object $notifiable): bool
     {
         return $this->own;
-    }
-
-    public function notificationCreatedAt(object $notifiable): ?CarbonInterface
-    {
-        return $this->createdAt;
     }
 
     /** Le fil de la demande : toutes ses étapes, des deux côtés (décision 2026-11-20-suivi-demande). */
