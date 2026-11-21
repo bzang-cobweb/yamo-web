@@ -234,7 +234,7 @@ class BookingApiTest extends TestCase
         $this->assertSame([], $card['counters']);
         // Deux notifications non lues de la demande, une lue : « 2 notifications non lues », les mêmes filtres plus « Non lues ».
         foreach ([null, null, now()] as $readAt) {
-            $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => $readAt,
+            $guest->notifications()->create(['id' => (string) \Illuminate\Support\Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => $readAt,
                 'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
         }
         $counter = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['counters'][0];
