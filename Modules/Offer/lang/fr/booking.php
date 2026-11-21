@@ -53,7 +53,7 @@ return [
         'guests' => 'Voyageurs',
         'message' => 'Message au propriétaire',
         'message_placeholder' => 'Présentez-vous, précisez vos besoins…',
-        'price_help' => ':price ; le total figure dans « Mes réservations » une fois la demande envoyée.',
+        'price_help' => ':price ; le total figure dans le détail de la réservation une fois la demande envoyée.',
         'submit_stay' => 'Envoyer la demande',
         'submit_visit' => 'Envoyer la demande',
         'sent_stay' => 'Demande envoyée. Retrouvez-la, avec son total, dans « Mes réservations ».',

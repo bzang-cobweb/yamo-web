@@ -53,7 +53,7 @@ return [
         'guests' => 'Gäste',
         'message' => 'Nachricht an den Eigentümer',
         'message_placeholder' => 'Stellen Sie sich vor, nennen Sie Ihre Wünsche…',
-        'price_help' => ':price; der Gesamtbetrag steht nach dem Senden unter „Meine Buchungen“.',
+        'price_help' => ':price; der Gesamtbetrag steht nach dem Senden in den Buchungsdetails.',
         'submit_stay' => 'Anfrage senden',
         'submit_visit' => 'Anfrage senden',
         'sent_stay' => 'Anfrage gesendet. Sie finden sie mit dem Gesamtbetrag unter „Meine Buchungen“.',

@@ -101,7 +101,7 @@ class BookingApiTest extends TestCase
         $this->assertSame(['check_in', 'check_out', 'guests', 'message'], array_column($stay->json('data.fields'), 'name'));
         $stay->assertJsonPath('data.title', 'Réserver')
             // Le prix par jour, tel que la fiche l'affiche (espaces insécables compris).
-            ->assertJsonPath('data.fields.1.help', app(DomainRegistry::class)->require()->formattedPrice($offer, 'fr').' ; le total figure dans « Mes réservations » une fois la demande envoyée.');
+            ->assertJsonPath('data.fields.1.help', app(DomainRegistry::class)->require()->formattedPrice($offer, 'fr').' ; le total figure dans le détail de la réservation une fois la demande envoyée.');
 
         // Le calendrier : à partir d'aujourd'hui (le départ, de demain), un an au plus (décision 2026-11-19-bornes-des-dates).
         $stay->assertJsonPath('data.fields.0.date_range', ['min' => today()->toDateString(), 'max' => today()->addDays(365)->toDateString()])
@@ -308,10 +308,11 @@ class BookingApiTest extends TestCase
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
-        // Type de location et type de logement, sans la ville (décision 2026-11-21-reservations-type-de-location-titre).
-        $this->assertSame('Location meublée · Studio', $items[(string) $pending->getKey()]['title']);
-        // Sous le titre construit, le titre saisi de l'offre, puis les dates (décision 2026-11-21-reservations-vrai-titre).
-        $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $items[(string) $pending->getKey()]['subtitle']);
+        // Titres inversés, sans prix (décision 2026-11-21-reservations-titres-inverses-sans-prix).
+        $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['title']);
+        $this->assertNull($items[(string) $pending->getKey()]['highlight']);
+        // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
+        $this->assertStringStartsWith("Location meublée · Studio\n", $items[(string) $pending->getKey()]['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
         $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).

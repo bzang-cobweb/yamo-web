@@ -53,7 +53,7 @@ return [
         'guests' => 'Guests',
         'message' => 'Message to the owner',
         'message_placeholder' => 'Introduce yourself, tell them what you need…',
-        'price_help' => ':price; the total appears under “My bookings” once the request is sent.',
+        'price_help' => ':price; the total appears in the booking details once the request is sent.',
         'submit_stay' => 'Send request',
         'submit_visit' => 'Send request',
         'sent_stay' => 'Request sent. Find it, with its total, under “My bookings”.',
