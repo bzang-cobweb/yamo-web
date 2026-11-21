@@ -41,11 +41,12 @@ final class BookingItem
         }
 
         $domain = app(DomainRegistry::class)->require();
-        // Le titre et la ligne du type comme toute carte d'offre ; puis les dates.
+        // Le titre et le sous-titre comme toute carte d'offre ; puis, sur sa ligne, le type de demande et les dates
+        // (décision 2026-11-22-reservations-ligne-dates).
         [$title, $line] = OfferCardTitle::composedFirst($offer, $locale);
-        $subtitle = implode("\n", array_filter([$line, $subtitle], fn (?string $part): bool => $part !== null && $part !== ''));
 
-        return ListItem::make($booking->getKey(), $title, $subtitle)
+        return ListItem::make($booking->getKey(), $title, $line)
+            ->detail($subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
             ->tag($booking->status->label(), $booking->status->tone())
             // La note des avis à droite, comme à l'accueil (décision 2026-11-21-reservations-note).

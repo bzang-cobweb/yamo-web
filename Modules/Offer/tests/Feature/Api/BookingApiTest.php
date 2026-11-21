@@ -326,7 +326,10 @@ class BookingApiTest extends TestCase
         // En titre, la ligne du type ; dessous, le titre saisi puis la demande (décision 2026-11-21-cartes-titre-compose-en-tete).
         [$cardTitle, $cardLine] = OfferCardTitle::composedFirst($pending->offer, 'fr');
         $this->assertSame($cardTitle, $items[(string) $pending->getKey()]['title']);
-        $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", (string) $items[(string) $pending->getKey()]['subtitle']);
+        // Le sous-titre de l'accueil, le titre saisi ; le type de demande et les dates sur leur ligne (décision
+        // 2026-11-22-reservations-ligne-dates).
+        $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['subtitle']);
+        $this->assertSame($pending->type->label().' · '.$pending->period('fr'), $items[(string) $pending->getKey()]['detail']);
         // Sans avis : pas de note (décision 2026-11-21-reservations-note).
         $this->assertNull($items[(string) $pending->getKey()]['rating']);
         OfferReview::factory()->for($pending->offer)->create(['rating' => 4]);
@@ -341,9 +344,9 @@ class BookingApiTest extends TestCase
         $pending->offer->offerAddress()->create(['address_id' => Address::factory()->create(['city' => 'Douala'])->getKey()]);
         $card = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()];
         $this->assertSame('Location meublée · Studio · Douala', $card['title']);
-        $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $card['subtitle']);
+        $this->assertSame($pending->offer->getTranslation('title', 'fr'), $card['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
-        $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
+        $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['detail']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
         $this->assertNull($items[(string) $pending->getKey()]['favorite']);

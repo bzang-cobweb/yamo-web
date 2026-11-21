@@ -29,6 +29,9 @@ final class ListItem
     /** Message cité sur la carte (celui d'un membre) ; aucun par défaut. */
     private ?string $quote = null;
 
+    /** Une ligne sous le sous-titre, à part (« Séjour · du 2 au 6 déc. ») ; `null` : aucune. */
+    private ?string $detail = null;
+
     /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
     private ?bool $favoriteActive = null;
 
@@ -144,6 +147,17 @@ final class ListItem
     }
 
     /**
+     * Une ligne à part, sous le sous-titre, avec son propre style (le type de demande et les dates d'une
+     * réservation, décision 2026-11-22-reservations-ligne-dates) ; le sous-titre reste celui de l'accueil.
+     */
+    public function detail(?string $detail): self
+    {
+        $this->detail = $detail === '' ? null : $detail;
+
+        return $this;
+    }
+
+    /**
      * Toucher le titre seul ouvre cet écran de l'app (« /members/3 »), le reste de la carte gardant son lien ;
      * le titre s'affiche alors en lien (décision 2026-11-21-demandes-lien-membre).
      */
@@ -243,6 +257,8 @@ final class ListItem
             'id' => $this->id,
             'title' => $this->title,
             'subtitle' => $this->subtitle,
+            /** Ligne sous le sous-titre, à part ; absente : aucune. */
+            ...($this->detail === null ? [] : ['detail' => $this->detail]),
             'image' => $this->image,
             /** Note moyenne (1 à 5, au dixième) et nombre de notes ; `null` sans note. */
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
