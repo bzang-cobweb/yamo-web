@@ -106,6 +106,8 @@ return [
         'requested' => [
             'subject' => 'Neue Anfrage: :offer',
             'body' => ':guest fragt :type :period für „:offer“ an.',
+            // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
+            'own' => 'Sie haben :type :period für „:offer“ angefragt.',
             // Le texte de la demande (décision 2026-11-20-texte-demande-location) : « Demande de location
             // « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » ; une visite, sans personnes.
             'summary' => 'Besichtigungsanfrage für „:offer“ :period.',
@@ -133,6 +135,7 @@ return [
         'cancelled' => [
             'subject' => 'Anfrage storniert: :offer',
             'body' => ':guest hat die Anfrage für „:offer“ (:period) storniert.',
+            'own' => 'Sie haben Ihre Anfrage für „:offer“ (:period) storniert.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'hat die Anfrage für „:offer“ (:period) storniert.',
             'sms' => ':app: :guest hat die Anfrage für „:offer“ (:period) storniert.',

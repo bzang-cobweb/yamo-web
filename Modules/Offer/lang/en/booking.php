@@ -106,6 +106,8 @@ return [
         'requested' => [
             'subject' => 'New request: :offer',
             'body' => ':guest requests :type :period for “:offer”.',
+            // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
+            'own' => 'You requested :type :period for “:offer”.',
             // Le texte de la demande (décision 2026-11-20-texte-demande-location) : « Demande de location
             // « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » ; une visite, sans personnes.
             'summary' => 'Visit request for “:offer” :period.',
@@ -133,6 +135,7 @@ return [
         'cancelled' => [
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their request for “:offer” (:period).',
+            'own' => 'You cancelled your request for “:offer” (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'cancelled their request for “:offer” (:period).',
             'sms' => ':app: :guest cancelled their request for “:offer” (:period).',

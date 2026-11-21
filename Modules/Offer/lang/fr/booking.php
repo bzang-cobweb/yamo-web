@@ -106,6 +106,8 @@ return [
         'requested' => [
             'subject' => 'Nouvelle demande : :offer',
             'body' => ':guest demande :type :period pour « :offer ».',
+            // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
+            'own' => 'Vous avez demandé :type :period pour « :offer ».',
             // Le texte de la demande (décision 2026-11-20-texte-demande-location) : « Demande de location
             // « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » ; une visite, sans personnes.
             'summary' => 'Demande de visite « :offer » :period.',
@@ -133,6 +135,7 @@ return [
         'cancelled' => [
             'subject' => 'Demande annulée : :offer',
             'body' => ':guest a annulé sa demande pour « :offer » (:period).',
+            'own' => 'Vous avez annulé votre demande pour « :offer » (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'a annulé sa demande pour « :offer » (:period).',
             'sms' => ':app : :guest a annulé sa demande pour « :offer » (:period).',

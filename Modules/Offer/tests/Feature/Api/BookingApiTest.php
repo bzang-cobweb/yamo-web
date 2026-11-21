@@ -131,7 +131,9 @@ class BookingApiTest extends TestCase
 
         // Le propriétaire, par e-mail et SMS (adresse et numéro vérifiés).
         Notification::assertSentTo($offer->user, BookingRequested::class, fn (BookingRequested $notification, array $channels): bool => $notification->step === BookingStepEnum::RECEIVED && $notification->booking->is($booking) && $channels === ['database', 'mail', SmsChannel::class]);
-        Notification::assertCount(1);
+        // Le membre garde sa demande dans son fil, dans l'onglet seulement, déjà lue (décision 2026-11-21-reservation-comme-notification).
+        Notification::assertSentTo($guest, BookingRequested::class, fn (BookingRequested $notification, array $channels): bool => $notification->own && $notification->step === BookingStepEnum::RECEIVED && $channels === ['database']);
+        Notification::assertCount(2);
     }
 
     public function test_invalid_requests_are_refused(): void
@@ -233,7 +235,12 @@ class BookingApiTest extends TestCase
 
         $items = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->assertOk()->json('data.items'))->keyBy('id');
         $this->assertSame('Annuler la demande', $items[(string) $pending->getKey()]['delete']['label']);
+        // Sans notification dans son fil : la fiche du logement.
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
+        // Avec : la page de sa dernière notification du fil (décision 2026-11-21-reservation-comme-notification).
+        $copy = $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => now(),
+            'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
+        $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
         // Sous le titre construit, le titre saisi de l'offre, puis les dates (décision 2026-11-21-reservations-vrai-titre).

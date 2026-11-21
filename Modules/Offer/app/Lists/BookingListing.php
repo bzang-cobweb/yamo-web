@@ -5,6 +5,7 @@ namespace Modules\Offer\Lists;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
@@ -119,6 +120,16 @@ class BookingListing extends Listing
     {
         return Booking::query()
             ->with(['offer.media', 'offer.address'])
+            // Sa dernière notification du fil de la demande : la carte ouvre sa page (décision
+            // 2026-11-21-reservation-comme-notification).
+            ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
+                ->select('id')
+                ->where('notifiable_type', (new User)->getMorphClass())
+                ->where('notifiable_id', $this->user?->getAuthIdentifier())
+                ->whereColumn('data->booking_id', 'bookings.id')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(1)])
             ->where('user_id', $this->user?->getAuthIdentifier())
             ->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->where('country_id', CurrentCountry::require()->getKey()))
             ->orderByDesc('id');
@@ -136,7 +147,12 @@ class BookingListing extends Listing
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
-        $item = BookingItem::make($record, $locale, withTypedTitle: true)->link('/offers/'.$record->offer_id);
+        // La page de sa demande, comme celle d'une notification : suivi, lignes, conversation ; sans
+        // notification dans son fil (une demande d'avant), la fiche du logement
+        // (décision 2026-11-21-reservation-comme-notification).
+        $notification = $record->getAttribute('thread_notification_id');
+        $item = BookingItem::make($record, $locale, withTypedTitle: true)
+            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
         // Le statut sur la photo, comme dans « Mes logements » ; à droite, le menu des actions à la place du
         // cœur (décisions 2026-11-21-reservations-statut-coeur et 2026-11-21-reservations-menu).
         $item->tag($record->status->label(), $record->status->tone(), onImage: true);

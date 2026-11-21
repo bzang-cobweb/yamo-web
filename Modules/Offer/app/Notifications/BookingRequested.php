@@ -55,10 +55,18 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
         return $this->step->textKey();
     }
 
-    /** La liste où retrouver la demande : `mine` (le membre) ou `received` (le propriétaire, aussi pour sa propre réponse). */
+    /**
+     * La liste où retrouver la demande : `mine` (le membre) ou `received` (le propriétaire, aussi pour sa
+     * propre réponse). La copie de sa demande ou de son annulation, gardée par le membre : `mine`
+     * (décision 2026-11-21-reservation-comme-notification).
+     */
     private function section(): string
     {
-        return $this->own ? 'received' : $this->step->section();
+        if ($this->own) {
+            return in_array($this->step, [BookingStepEnum::RECEIVED, BookingStepEnum::CANCELLED], true) ? 'mine' : 'received';
+        }
+
+        return $this->step->section();
     }
 
     /** Le texte : celui de la notification, ou celui de sa propre réponse (`<clé>.own`). */
