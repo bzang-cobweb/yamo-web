@@ -256,8 +256,45 @@ class DemoSeeder extends Seeder
         $booking->user()->first()?->forceFill(['last_seen_at' => now()])->saveQuietly();
     }
 
-    /** Le logement d'un autre membre (le premier visiteur), titre fr et en. */
-    private const OTHER_OFFER = ['fr' => 'Studio meublé à Bonanjo', 'en' => 'Furnished studio in Bonanjo'];
+    /**
+     * Les logements d'un autre membre (le premier visiteur) : titre fr et en, description fr et en, prix,
+     * détails. Un par type de location (décisions 2026-11-21-demo-logement-autre-membre et
+     * 2026-11-21-demo-autre-membre-location-colocation).
+     *
+     * @var list<array{array{fr: string, en: string}, array{fr: string, en: string}, int, array<string, mixed>}>
+     */
+    private const OTHER_OFFERS = [
+        [
+            ['fr' => 'Studio meublé à Bonanjo', 'en' => 'Furnished studio in Bonanjo'],
+            ['fr' => 'Logement de démonstration d’un autre membre, au cœur de Bonanjo.', 'en' => 'Demo home of another member, in the heart of Bonanjo.'],
+            30000,
+            [
+                'property_type' => 'studio', 'rental_type' => 'furnished', 'surface' => 28, 'rooms' => 1, 'bedrooms' => 0,
+                'deposit' => 60000, 'check_in_from' => '14:00', 'check_out_until' => '11:00',
+                'amenities' => ['wifi', 'air_conditioning', 'hot_water'],
+            ],
+        ],
+        [
+            ['fr' => 'Appartement deux chambres à Bonanjo', 'en' => 'Two-bedroom flat in Bonanjo'],
+            ['fr' => 'Appartement de démonstration d’un autre membre, à louer au mois.', 'en' => 'Demo flat of another member, rented by the month.'],
+            180000,
+            [
+                'property_type' => 'apartment', 'rental_type' => 'long_term', 'surface' => 75, 'rooms' => 4, 'bedrooms' => 2,
+                'charges' => 15000, 'deposit_months' => 2, 'advance_months' => 6,
+                'amenities' => ['parking', 'hot_water', 'security', 'balcony'],
+            ],
+        ],
+        [
+            ['fr' => 'Chambre en colocation à Bonanjo', 'en' => 'Room in a flatshare in Bonanjo'],
+            ['fr' => 'Chambre de démonstration d’un autre membre, dans un appartement partagé.', 'en' => 'Demo room of another member, in a shared flat.'],
+            60000,
+            [
+                'property_type' => 'room', 'rental_type' => 'shared', 'surface' => 14, 'rooms' => 1, 'bedrooms' => 1,
+                'charges' => 10000, 'deposit_months' => 1, 'advance_months' => 3,
+                'amenities' => ['wifi', 'equipped_kitchen', 'washing_machine'],
+            ],
+        ],
+    ];
 
     /** Un message répété jusqu'à la longueur maximale d'un message de demande. */
     private const LONG_MESSAGE = 'Bonjour, je viens à Douala pour une mission de travail de trois jours et je cherche un logement calme, proche d’Akwa, avec une bonne connexion internet pour travailler le soir. ';
@@ -327,43 +364,41 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * Un logement publié d'un autre membre, le premier visiteur : le compte de démonstration
-     * peut le voir sans en être propriétaire, le mettre en favori, y faire une demande
-     * (décision 2026-11-21-demo-logement-autre-membre). Rejouable : créé une seule fois.
+     * Les logements publiés d'un autre membre, le premier visiteur : un meublé, une location et une
+     * colocation. Le compte de démonstration peut les voir sans en être propriétaire, les mettre en
+     * favori, y faire une demande (décisions 2026-11-21-demo-logement-autre-membre et
+     * 2026-11-21-demo-autre-membre-location-colocation). Rejouable : chacun créé une seule fois,
+     * tous à la même adresse.
      */
     private function otherOffer(Country $cameroon): void
     {
         $owner = User::query()->where('email', 'demo-visiteur-1@example.test')->firstOrFail();
+        $addressId = Offer::query()->where('user_id', $owner->getKey())->where('title->fr', self::OTHER_OFFERS[0][0]['fr'])->first()?->offerAddress?->address_id;
 
-        if (! Offer::query()->where('user_id', $owner->getKey())->where('title->fr', self::OTHER_OFFER['fr'])->exists()) {
-            $address = app(UserAddressService::class)->attach($owner, [
-                'gender' => 'male', 'first_name' => $owner->first_name, 'last_name' => $owner->last_name,
-                'country_id' => $cameroon->getKey(), 'street' => 'Rue Joss 8', 'zip' => '', 'city' => 'Douala',
-            ]);
+        foreach (self::OTHER_OFFERS as [$title, $description, $price, $details]) {
+            if (Offer::query()->where('user_id', $owner->getKey())->where('title->fr', $title['fr'])->exists()) {
+                continue;
+            }
+
+            if ($addressId === null) {
+                $address = app(UserAddressService::class)->attach($owner, [
+                    'gender' => 'male', 'first_name' => $owner->first_name, 'last_name' => $owner->last_name,
+                    'country_id' => $cameroon->getKey(), 'street' => 'Rue Joss 8', 'zip' => '', 'city' => 'Douala',
+                ]);
+                $addressId = $address->address_id;
+            }
+
             $offer = Offer::query()->create([
                 'user_id' => $owner->getKey(),
                 'country_id' => $cameroon->getKey(),
-                'title' => ['fr' => self::OTHER_OFFER['fr'], 'en' => self::OTHER_OFFER['en']],
-                'description' => [
-                    'fr' => 'Logement de démonstration d’un autre membre, au cœur de Bonanjo.',
-                    'en' => 'Demo home of another member, in the heart of Bonanjo.',
-                ],
+                'title' => $title,
+                'description' => $description,
                 'status' => OfferStatusEnum::PUBLISHED,
-                'price' => 30000,
+                'price' => $price,
                 'currency' => $cameroon->currency,
-                'details' => [
-                    'property_type' => 'studio',
-                    'rental_type' => RentalTypeEnum::FURNISHED->value,
-                    'surface' => 28,
-                    'rooms' => 1,
-                    'bedrooms' => 0,
-                    'deposit' => 60000,
-                    'check_in_from' => '14:00',
-                    'check_out_until' => '11:00',
-                    'amenities' => ['wifi', 'air_conditioning', 'hot_water'],
-                ],
+                'details' => $details,
             ]);
-            $offer->offerAddress()->create(['address_id' => $address->address_id]);
+            $offer->offerAddress()->create(['address_id' => $addressId]);
         }
 
         $this->photos($owner);
