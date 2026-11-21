@@ -8,6 +8,7 @@ return [
         'loading' => 'Loading form…',
         'submitting' => 'Sending…',
         'selectPlaceholder' => 'Choose…',
+        'none' => 'None',
         'showPassword' => 'Show password',
         'hidePassword' => 'Hide password',
         'clearDate' => 'Clear',

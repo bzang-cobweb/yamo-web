@@ -8,6 +8,7 @@ return [
         'loading' => 'Formular wird geladen…',
         'submitting' => 'Wird gesendet…',
         'selectPlaceholder' => 'Auswählen…',
+        'none' => 'Keine Angabe',
         'showPassword' => 'Passwort anzeigen',
         'hidePassword' => 'Passwort verbergen',
         'clearDate' => 'Löschen',

@@ -107,7 +107,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -156,6 +156,18 @@ class OfferApiTest extends TestCase
         $this->assertFalse($offer->show_address);
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['show_address' => true]))->assertNoContent();
         $this->assertTrue($offer->fresh()->show_address);
+    }
+
+    public function test_an_optional_yes_no_rule_can_be_cleared(): void
+    {
+        // Décision 2026-11-21-choix-facultatif-effacable : « Aucun » envoie une valeur vide.
+        $user = $this->member();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['smoking' => 'no']))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $this->assertSame('no', $offer->detail('smoking'));
+
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['smoking' => '']))->assertNoContent();
+        $this->assertNull($offer->fresh()->detail('smoking'));
     }
 
     public function test_an_offer_has_its_own_contact_phone_and_email(): void
@@ -259,7 +271,7 @@ class OfferApiTest extends TestCase
         $this->assertSame([
             // Sans catégorie créée, pas de champ « Catégorie ».
             ['property_type', 'rental_type', 'title', 'description'],
-            ['surface', 'rooms', 'bedrooms', 'amenities'],
+            ['surface', 'rooms', 'bedrooms', 'bathrooms', 'amenities'],
             ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status'],
             ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],

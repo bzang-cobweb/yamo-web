@@ -164,6 +164,10 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.bedrooms'))
                 ->required()
                 ->rules(['integer', 'min:0', 'max:50']),
+            // Facultatif (décision 2026-11-21-salles-de-bain).
+            Field::number('bathrooms')
+                ->label(__('offer::rental.bathrooms'))
+                ->rules(['integer', 'min:0', 'max:20']),
             // Pas pour un meublé, qui se réserve par dates (décision 2026-11-20-disponibilite-sans-meuble).
             Field::date('available_from')
                 ->label(__('offer::rental.available_from'))
@@ -316,7 +320,7 @@ class RentalDomain extends Domain
         return [
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
-            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'amenities']],
+            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'bathrooms', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],
@@ -344,6 +348,10 @@ class RentalDomain extends Domain
             Field::select('bedrooms')
                 ->label(__('offer::rental.filters.bedrooms'))
                 ->options(collect([1, 2, 3, 4])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
+            // Au moins tant de salles de bain, comme les chambres (décision 2026-11-21-salles-de-bain).
+            Field::select('bathrooms')
+                ->label(__('offer::rental.filters.bathrooms'))
+                ->options(collect([1, 2, 3])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
             Field::date('available_from')
                 ->label(__('offer::rental.filters.available_from'))
                 ->help(__('offer::rental.filters.available_from_help')),
@@ -382,6 +390,9 @@ class RentalDomain extends Domain
         }
         if (isset($filters['bedrooms'])) {
             $query->where('details->bedrooms', '>=', (int) $filters['bedrooms']);
+        }
+        if (isset($filters['bathrooms'])) {
+            $query->where('details->bathrooms', '>=', (int) $filters['bathrooms']);
         }
         // Libre à cette date : disponible avant ou ce jour-là, ou sans date (libre tout de suite) ;
         // un meublé n'a pas de date de disponibilité (décision 2026-11-20-disponibilite-sans-meuble).

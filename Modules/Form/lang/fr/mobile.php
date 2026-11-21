@@ -8,6 +8,7 @@ return [
         'loading' => 'Chargement du formulaire…',
         'submitting' => 'Envoi…',
         'selectPlaceholder' => 'Choisir…',
+        'none' => 'Aucun',
         'showPassword' => 'Afficher le mot de passe',
         'hidePassword' => 'Masquer le mot de passe',
         'clearDate' => 'Effacer',

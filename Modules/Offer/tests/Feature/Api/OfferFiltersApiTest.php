@@ -55,7 +55,7 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
-        $this->assertSame(['city', 'price', 'property_type', 'rental_type', 'bedrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
+        $this->assertSame(['city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
         // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
@@ -96,7 +96,7 @@ class OfferFiltersApiTest extends TestCase
         $match = $this->home('Douala', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1], ['title' => ['fr' => 'Studio Akwa']]);
         $tooExpensive = $this->home('Douala', 200000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
         $otherCity = $this->home('Yaoundé', 80000, ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 1]);
-        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'rental_type' => 'long_term', 'bedrooms' => 3, 'available_from' => '2027-01-15']);
+        $house = $this->home('Douala', 80000, ['property_type' => 'house', 'rental_type' => 'long_term', 'bedrooms' => 3, 'bathrooms' => 2, 'available_from' => '2027-01-15']);
         // Une ancienne date sur un meublé ne compte pas (décision 2026-11-20-disponibilite-sans-meuble).
         $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'rental_type' => 'furnished', 'bedrooms' => 2, 'available_from' => '2027-01-15']);
 
@@ -106,6 +106,8 @@ class OfferFiltersApiTest extends TestCase
         $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[rental_type]=long_term'));
         $this->assertCount(5, $this->ids('?filter[furnished]=any'));
         $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $furnished->getKey()]), $this->ids('?filter[bedrooms]=2'));
+        // Au moins tant de salles de bain ; non renseigné : écarté (décision 2026-11-21-salles-de-bain).
+        $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms]=2'));
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
         // Libre le 1er janvier : pas celui qui se libère le 15.
