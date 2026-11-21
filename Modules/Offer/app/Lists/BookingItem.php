@@ -24,9 +24,7 @@ final class BookingItem
     public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $mine = false): ListItem
     {
         $offer = $booking->offer;
-        $domain = app(DomainRegistry::class)->require();
-        $typed = (string) $offer->getTranslation('title', $locale);
-        $built = $domain->itemTitle($offer);
+        $built = app(DomainRegistry::class)->require()->itemTitle($offer) ?? (string) $offer->getTranslation('title', $locale);
         $subtitle = implode(' · ', array_filter([
             $withGuest ? (string) $booking->user->full_name : null,
             $booking->type->label(),
@@ -35,20 +33,16 @@ final class BookingItem
         ]));
 
         if (! $mine) {
-            return ListItem::make($booking->getKey(), $built ?? $typed, $subtitle)
+            return ListItem::make($booking->getKey(), $built, $subtitle)
                 ->image(MediaUrl::onRequestHost($offer->photoUrl()))
                 // Le statut en pastille de couleur ; en gras, le total.
                 ->tag($booking->status->label(), $booking->status->tone())
                 ->highlight($booking->formattedTotal($locale));
         }
 
-        $card = $domain->bookingItemTitle($offer, $locale) ?? $built;
-        $title = $typed !== '' ? $typed : ($card ?? '');
-        // Sous le titre : le type, puis les dates.
-        $subtitle = implode("\n", array_filter([
-            $card !== null && $card !== $title ? $card : null,
-            $subtitle,
-        ], fn (?string $line): bool => $line !== null && $line !== ''));
+        // Le titre et la ligne du type comme toute carte d'offre ; puis les dates.
+        [$title, $line] = OfferCardTitle::of($offer, $locale);
+        $subtitle = implode("\n", array_filter([$line, $subtitle], fn (?string $part): bool => $part !== null && $part !== ''));
 
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))

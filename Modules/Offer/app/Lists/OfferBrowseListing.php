@@ -145,13 +145,11 @@ class OfferBrowseListing extends Listing
         // « 60 000 FCFA / jour » : le prix et son unité, selon le domaine.
         $price = $domain->formattedPrice($record, app()->getLocale());
 
-        $typed = (string) $record->getTranslation('title', app()->getLocale());
-        $title = $domain->itemTitle($record) ?? $typed;
-
-        // Titre construit par le domaine (« Studio · meublé · Douala »), sinon le titre saisi ;
-        // en sous-titre, le titre saisi ; en gras, les détails puis le prix
-        // (« 80 000 FCFA / mois », décisions 2026-11-19-item-titre-saisi-details et 2026-11-19-ombre-coeur-onglets-offre).
-        $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
+        // Le titre saisi ; dessous, la ligne du type (« Location meublée · Studio · Douala ») ; en gras,
+        // les détails puis le prix (« 80 000 FCFA / mois », décisions 2026-11-21-cartes-titre-saisi-ligne-type
+        // et 2026-11-19-ombre-coeur-onglets-offre).
+        [$title, $line] = OfferCardTitle::of($record, app()->getLocale());
+        $item = ListItem::make($record->getKey(), $title, $line)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null)

@@ -77,7 +77,7 @@ class RentalDomain extends Domain
      * Type de location, type de logement et ville : « Location meublée · Studio · Douala » (décision
      * 2026-11-21-reservations-ville-ligne-du-type).
      */
-    public function bookingItemTitle(Offer $offer, string $locale): ?string
+    public function itemTypeLine(Offer $offer, string $locale): ?string
     {
         $type = (string) $offer->detail('property_type');
         $rental = RentalTypeEnum::of($offer);

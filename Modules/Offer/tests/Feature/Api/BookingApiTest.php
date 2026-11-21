@@ -493,6 +493,9 @@ class BookingApiTest extends TestCase
 
         $data = $this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data');
         $this->assertSame('status', $data['filters'][0]['name']);
+        // Le titre saisi ; dessous, la ligne du type, comme à l'accueil (décision 2026-11-21-cartes-titre-saisi-ligne-type).
+        $card = collect($data['items'])->firstWhere('id', (string) $draft->getKey());
+        $this->assertSame([$draft->getTranslation('title', 'fr'), 'Location meublée · Studio'], [$card['title'], $card['subtitle']]);
         $this->assertContains('price', array_column($data['filters'], 'name'));
         $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status]=draft')->json('data.items'), 'id'));
     }

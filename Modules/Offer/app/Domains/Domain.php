@@ -92,10 +92,12 @@ abstract class Domain
     }
 
     /**
-     * Titre d'une offre sur une carte de « Mes réservations », en `$locale` (décision
-     * 2026-11-21-reservations-type-de-location-titre) ; `null` : celui de `itemTitle()`.
+     * La ligne sous le titre saisi d'une carte d'offre, en `$locale` (« Location meublée · Studio ·
+     * Douala ») : accueil, « Mes logements », « Mes réservations » (décisions
+     * 2026-11-21-reservations-ville-ligne-du-type et 2026-11-21-cartes-titre-saisi-ligne-type) ;
+     * `null` : celle de `itemTitle()`.
      */
-    public function bookingItemTitle(Offer $offer, string $locale): ?string
+    public function itemTypeLine(Offer $offer, string $locale): ?string
     {
         return null;
     }

@@ -160,10 +160,10 @@ class OfferListing extends Listing
 
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
-        // Le titre construit par le domaine (« Studio · meublé · Douala »), sinon le titre saisi.
+        // Le titre saisi ; dessous, la ligne du type (« Location meublée · Studio · Douala »), comme à
+        // l'accueil (décision 2026-11-21-cartes-titre-saisi-ligne-type).
         $domain = app(DomainRegistry::class)->require();
-        $typed = (string) $record->getTranslation('title', $locale);
-        $title = $domain->itemTitle($record) ?? $typed;
+        [$title, $line] = OfferCardTitle::of($record, $locale);
 
         // La date d'expiration, après le statut (décision 2026-11-19-expiration-mes-logements) :
         // « Expire le 30 juin 2027 », « Expirée le 2 janvier 2026 » ; sans date, rien.
@@ -173,9 +173,9 @@ class OfferListing extends Listing
             $locale,
         );
 
-        // En sous-titre, le titre saisi ; en gras, « Publiée · 80 000 FCFA / mois »
-        // (décision 2026-11-19-item-titre-saisi-details). La note, tant qu'elle est publiée.
-        $item = ListItem::make($record->getKey(), $title, $typed === $title ? null : $typed)
+        // En gras, « Publiée · 80 000 FCFA / mois » (décision 2026-11-19-item-titre-saisi-details).
+        // La note, tant qu'elle est publiée.
+        $item = ListItem::make($record->getKey(), $title, $line)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
             // Le statut en pastille de couleur (décision 2026-11-19-statut-carte-logement), sur la photo à la
