@@ -190,7 +190,7 @@ class OfferListing extends Listing
             // Puis ses notifications : les demandes de ce logement, sans autre filtre (décision 2026-11-21-lien-notifications).
             ->action(
                 __('offer::booking.profile.notifications'),
-                link: '/notifications',
+                link: '/notifications/filtered',
                 filter: ['type' => OfferNotificationFilter::BOOKING, 'offer' => (string) $record->getKey()],
                 list: 'notifications',
             )
@@ -210,13 +210,14 @@ class OfferListing extends Listing
         $pending = (int) ($record->pending_bookings_count ?? 0);
 
         // Il ouvre les notifications, filtrées sur les demandes de logement réellement en attente de ce logement
-        // (décision 2026-11-20-compteur-vers-notifications).
+        // (décision 2026-11-20-compteur-vers-notifications), par-dessus les onglets, avec un retour vers la carte
+        // (`/notifications/filtered`, décision 2026-11-21-notifications-avec-retour).
         if ($pending > 0) {
             $item->counter(
                 trans_choice('offer::booking.profile.pending_count', $pending, ['count' => $pending]),
                 'notifications',
                 ['type' => OfferNotificationFilter::BOOKING, 'status' => BookingStatusEnum::PENDING->value, 'offer' => (string) $record->getKey()],
-                link: '/notifications',
+                link: '/notifications/filtered',
             );
         }
 
@@ -228,7 +229,7 @@ class OfferListing extends Listing
                 trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread]),
                 'notifications',
                 ['type' => OfferNotificationFilter::BOOKING, 'offer' => (string) $record->getKey(), 'unread' => 'yes'],
-                link: '/notifications',
+                link: '/notifications/filtered',
             );
         }
 

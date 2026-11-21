@@ -261,7 +261,7 @@ class BookingApiTest extends TestCase
             'label' => '2 demandes en attente',
             'list' => 'notifications',
             'filter' => ['type' => 'booking', 'status' => 'pending', 'offer' => (string) $offer->getKey()],
-            'link' => '/notifications',
+            'link' => '/notifications/filtered',
         ], $items[(string) $offer->getKey()]['counter']);
         $this->assertNull($items[(string) $other->getKey()]['counter']);
         // Le même, premier de la liste des compteurs (décision 2026-11-21-compteur-non-lues).
@@ -316,7 +316,7 @@ class BookingApiTest extends TestCase
             'list' => 'notifications',
             // Demandes de ce logement, non lues, sans filtre de statut.
             'filter' => ['type' => 'booking', 'offer' => (string) $offer->getKey(), 'unread' => 'yes'],
-            'link' => '/notifications',
+            'link' => '/notifications/filtered',
         ]], array_slice($items[(string) $offer->getKey()]['counters'], 1));
         $this->assertSame([], $items[(string) $other->getKey()]['counters']);
     }
