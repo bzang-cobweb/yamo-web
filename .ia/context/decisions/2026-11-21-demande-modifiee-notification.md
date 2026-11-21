@@ -24,3 +24,9 @@ prévenu que dans l'app, sans push ni e-mail.
 ## Corollaires
 `BookingStepEnum::UPDATED`, événement `BookingUpdated`, textes `offer::booking.notify.updated`
 et `history.updated` (fr, en, de).
+
+## Complément : l'onglet écrit sans attendre la file
+Au retour du formulaire, l'app relisait la page avant que la file n'ait écrit la nouvelle étape
+du propriétaire : le suivi était vide et la page montrait le message seul. Le canal `database`
+de `BookingRequested` passe par la connexion `sync` (`viaConnections`) : l'étape est écrite avant
+la réponse de l'API. Push, e-mail et SMS restent en file.

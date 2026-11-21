@@ -86,6 +86,18 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
     }
 
     /**
+     * Dans l'onglet, écrite avant la réponse de l'API (file `sync`) : la page qu'on retrouve
+     * après une modification montre déjà sa nouvelle étape (décision
+     * 2026-11-21-demande-modifiee-notification). Push, e-mail et SMS restent en file.
+     *
+     * @return array<string, string>
+     */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
+
+    /**
      * @return list<string>
      */
     public function via(object $notifiable): array

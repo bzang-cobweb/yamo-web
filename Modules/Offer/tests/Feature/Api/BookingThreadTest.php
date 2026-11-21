@@ -406,6 +406,22 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Message modifié'], array_column($this->api($this->guest, 'GET', '/'.$mine['id'])->json('data.history'), 'message'));
     }
 
+    public function test_the_in_app_step_is_written_before_the_api_answers_and_the_other_channels_are_queued(): void
+    {
+        $booking = $this->request(3);
+        // Une vraie file, sans travailleur : ce qui y part n'est pas traité.
+        config(['queue.default' => 'database']);
+
+        app(BookingService::class)->update($booking, [
+            'check_in' => today()->addDays(5)->toDateString(), 'check_out' => today()->addDays(9)->toDateString(), 'guests' => 1, 'message' => 'Message modifié',
+        ]);
+
+        // Sans travailleur de file : la nouvelle étape est déjà dans le fil du propriétaire.
+        $this->assertSame('updated', $this->owner->notifications()->sole()->data['step']);
+        // Les autres canaux du propriétaire (e-mail) attendent en file.
+        $this->assertGreaterThan(0, DB::table('jobs')->count());
+    }
+
     public function test_a_stranger_gets_no_follow_up(): void
     {
         $this->request(3);
