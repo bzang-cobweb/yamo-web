@@ -19,9 +19,15 @@
   logements » (`RentalDomain::filters`).
 - Un logement sans nombre de salles de bain renseigné est écarté dès que ce filtre est choisi.
 
+### Données de démonstration
+`DemoSeeder::bathrooms()` donne une salle de bain aux logements de démonstration jusqu'à deux
+chambres, et deux à partir de trois chambres, là où le nombre manque. Rejouable ; appliqué à la
+base locale (25 logements).
+
 ## Motif
 Demande de l'humain du 2026-11-21 : « ajouter le champ nombre de salles de bain et rajouter comme
-filtre partout où il y a le filtre du nombre de chambres dans l'offre ».
+filtre partout où il y a le filtre du nombre de chambres dans l'offre », puis « mettre le
+nombre de salles de bain dans les données de démo ».
 
 ## Ce que j'ai décidé seul
 - Le champ est facultatif, alors que les chambres sont obligatoires.

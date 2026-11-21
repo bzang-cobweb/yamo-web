@@ -48,6 +48,8 @@ class DemoSeederTest extends TestCase
         $this->assertCount(1, $others->map(fn (Offer $offer) => $offer->offerAddress?->address_id)->unique());
         $others->each(fn (Offer $offer) => $this->assertCount(2, $offer->getMedia(Offer::PHOTOS)));
         $this->assertSame(['XAF'], Offer::query()->distinct()->pluck('currency')->all());
+        // Le nombre de salles de bain, partout : 1, ou 2 à partir de trois chambres (décision 2026-11-21-salles-de-bain).
+        Offer::query()->get()->each(fn (Offer $offer) => $this->assertSame((int) $offer->detail('bedrooms') >= 3 ? 2 : 1, $offer->detail('bathrooms')));
         // Le téléphone et l'e-mail de démonstration de leur propriétaire (décision 2026-11-21-contact-offre).
         $this->assertSame([[DemoSeeder::PHONES[0], DemoSeeder::EMAIL]], Offer::query()->where('user_id', $member->getKey())->get()->map(fn (Offer $offer): array => [$offer->phone, $offer->email])->unique()->values()->all());
         $this->assertSame([[DemoSeeder::PHONES[1], 'demo-visiteur-1@example.test']], $others->map(fn (Offer $offer): array => [$offer->phone, $offer->email])->unique()->values()->all());

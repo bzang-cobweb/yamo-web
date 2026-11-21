@@ -82,6 +82,8 @@ class DemoSeeder extends Seeder
         $this->amenities($member);
         $this->hours($member);
         $this->contacts($member);
+        $this->bathrooms($member);
+        $this->bathrooms(User::query()->where('email', 'demo-visiteur-1@example.test')->firstOrFail());
         $this->contacts(User::query()->where('email', 'demo-visiteur-1@example.test')->firstOrFail());
         $this->bookings($member);
     }
@@ -484,6 +486,22 @@ class DemoSeeder extends Seeder
             if ($offer->detail('rental_type') === RentalTypeEnum::FURNISHED->value && $offer->detail('check_in_from') === null) {
                 $offer->update(['details' => [...($offer->details ?? []), 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
             }
+        });
+    }
+
+    /**
+     * Le nombre de salles de bain des logements de `$owner`, là où il manque (décision 2026-11-21-salles-de-bain) :
+     * une pour un studio, une chambre ou jusqu'à deux chambres ; deux à partir de trois chambres. Rejouable.
+     */
+    private function bathrooms(User $owner): void
+    {
+        Offer::query()->where('user_id', $owner->getKey())->get()->each(function (Offer $offer): void {
+            if ($offer->detail('bathrooms') !== null) {
+                return;
+            }
+
+            $bedrooms = (int) $offer->detail('bedrooms');
+            $offer->update(['details' => [...($offer->details ?? []), 'bathrooms' => $bedrooms >= 3 ? 2 : 1]]);
         });
     }
 
