@@ -102,9 +102,7 @@ class BookingApiTest extends TestCase
         $offer = $this->home(true);
         $stay = $this->asUser($guest)->getJson('/api/v1/forms/offer.booking?record='.$offer->getKey())->assertOk();
         $this->assertSame(['check_in', 'check_out', 'guests', 'message'], array_column($stay->json('data.fields'), 'name'));
-        // En titre, celui de l'offre ; dessous, « Réserver » (décision 2026-11-22-formulaire-demande-titre-offre).
-        $stay->assertJsonPath('data.title', $offer->getTranslation('title', 'fr'))
-            ->assertJsonPath('data.subtitle', 'Réserver')
+        $stay->assertJsonPath('data.title', 'Réserver')
             // Le prix par jour, tel que la fiche l'affiche (espaces insécables compris).
             ->assertJsonPath('data.fields.1.help', app(DomainRegistry::class)->require()->formattedPrice($offer, 'fr').' ; le total figure dans le détail de la réservation une fois la demande envoyée.');
 
@@ -116,7 +114,7 @@ class BookingApiTest extends TestCase
         // Une visite : sa date, et une seconde date facultative.
         $this->assertSame(['check_in', 'check_out', 'message'], array_column($visit->json('data.fields'), 'name'));
         $visit->assertJsonPath('data.fields.1.label', 'Autre visite (facultatif)')->assertJsonPath('data.fields.1.required', false);
-        $visit->assertJsonPath('data.subtitle', 'Demander une visite')->assertJsonPath('data.fields.0.label', 'Date souhaitée');
+        $visit->assertJsonPath('data.title', 'Demander une visite')->assertJsonPath('data.fields.0.label', 'Date souhaitée');
     }
 
     public function test_a_stay_request_freezes_the_price_and_tells_the_owner_by_mail_and_sms(): void
@@ -176,7 +174,7 @@ class BookingApiTest extends TestCase
         $offer->update(['title' => ['fr' => 'Studio meublé à Bonanjo', 'en' => 'Furnished studio in Bonanjo']]);
 
         $this->asUser($this->member())->getJson("/api/v1/forms/offer.booking?record={$offer->getKey()}")->assertOk()
-            ->assertJsonPath('data.title', 'Studio meublé à Bonanjo');
+            ->assertJsonPath('data.subtitle', 'Studio meublé à Bonanjo');
     }
 
     public function test_the_guest_edits_a_pending_request_from_its_card(): void
@@ -195,7 +193,7 @@ class BookingApiTest extends TestCase
 
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
-        $this->assertSame([$offer->getTranslation('title', 'fr'), 'Modifier la demande'], [$form['title'], $form['subtitle']]);
+        $this->assertSame('Modifier la demande', $form['title']);
         $this->assertSame('Enregistrer', $form['submit']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         $defaults = array_column($form['fields'], 'default', 'name');

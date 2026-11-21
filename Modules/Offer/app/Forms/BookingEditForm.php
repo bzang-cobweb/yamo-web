@@ -50,10 +50,7 @@ class BookingEditForm extends OfferBookingForm
         return array_map(fn (Field $field): Field => array_key_exists($field->name, $values) ? $field->default($values[$field->name]) : $field, parent::fields());
     }
 
-    /**
-     * « Modifier la demande », sous le titre de l'offre (décision 2026-11-22-formulaire-demande-titre-offre).
-     */
-    protected function action(): string
+    public function title(): string
     {
         return __('offer::booking.form.edit_title');
     }

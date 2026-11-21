@@ -1,5 +1,3 @@
-Remplacée par : 2026-11-22-formulaire-demande-titre-offre.md (pour la place du titre)
-
 # Le titre de l'offre dans le formulaire de réservation
 
 - **Date** : 2026-11-21
