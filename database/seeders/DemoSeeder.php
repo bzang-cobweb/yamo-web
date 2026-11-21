@@ -81,6 +81,8 @@ class DemoSeeder extends Seeder
         $this->featuredAndFavorites($member);
         $this->amenities($member);
         $this->hours($member);
+        $this->contacts($member);
+        $this->contacts(User::query()->where('email', 'demo-visiteur-1@example.test')->firstOrFail());
         $this->bookings($member);
     }
 
@@ -483,6 +485,16 @@ class DemoSeeder extends Seeder
                 $offer->update(['details' => [...($offer->details ?? []), 'check_in_from' => '14:00', 'check_out_until' => '11:00']]);
             }
         });
+    }
+
+    /**
+     * Le téléphone et l'e-mail de contact des logements de `$owner` : ses coordonnées de démonstration, là où
+     * ils manquent (décision 2026-11-21-contact-offre). Rejouable.
+     */
+    private function contacts(User $owner): void
+    {
+        Offer::query()->where('user_id', $owner->getKey())->whereNull('phone')->update(['phone' => $owner->phone]);
+        Offer::query()->where('user_id', $owner->getKey())->whereNull('email')->update(['email' => $owner->email]);
     }
 
     /** @var list<array{string, string}> prénom, nom des visiteurs */

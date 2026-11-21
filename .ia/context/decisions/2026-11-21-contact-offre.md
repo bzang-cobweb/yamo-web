@@ -17,10 +17,16 @@
   manque, il voit celui du propriétaire à la place.
 - L'hôte voit toujours les coordonnées du membre.
 
+## Données de démonstration
+`DemoSeeder::contacts()` donne à chaque logement de démonstration le téléphone et l'e-mail de
+démonstration de son propriétaire, là où ils manquent : le compte de démonstration et le premier
+visiteur. Rejouable ; appliqué à la base locale.
+
 ## Motif
 L'humain a demandé si l'offre avait déjà ces champs (réponse : l'adresse oui, le téléphone et
 l'e-mail non). Le 2026-11-21, il a répondu : « oui ajoute téléphone et email à l'offre et
-utilise-les dans la vue détail par le membre ».
+utilise-les dans la vue détail par le membre », puis « mettre le téléphone et l'email de
+démo sur les offres ».
 
 ## Ce que j'ai décidé seul
 - Le repli sur les coordonnées du propriétaire quand l'offre n'en a pas.
