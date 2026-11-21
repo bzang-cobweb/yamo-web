@@ -56,7 +56,7 @@ class OfferDetailApiTest extends TestCase
             // Une vraie catégorie reste possible, à côté du type de location (décision 2026-11-20-type-de-location-garder-categories).
             'category_id' => OfferCategory::query()->firstOrCreate(['slug' => 'standing'], ['name' => ['fr' => 'Standing', 'en' => 'Upscale'], 'position' => 0])->getKey(),
             'published_at' => '2026-11-18 10:00:00',
-            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'available_from' => '2026-12-01', 'charges' => 15000],
+            'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'bathrooms' => 1, 'available_from' => '2026-12-01', 'charges' => 15000],
             ...$overrides,
         ]);
     }
@@ -90,6 +90,8 @@ class OfferDetailApiTest extends TestCase
             ['label' => 'Surface', 'value' => '85 m²'],
             ['label' => 'Pièces', 'value' => '3,5'],
             ['label' => 'Chambres', 'value' => '2'],
+            // Après les chambres (décision 2026-11-21-salles-de-bain).
+            ['label' => 'Salles de bain', 'value' => '1'],
             ['label' => 'Disponible dès le', 'value' => '1 décembre 2026'],
             // Un montant, avec le symbole de la devise (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
             ['label' => 'Charges mensuelles', 'value' => '15 000 FCFA'],
