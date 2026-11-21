@@ -17,9 +17,9 @@ final class BookingItem
     /**
      * `$mine` : la carte de « Mes réservations » — le titre saisi de l'offre en titre ; en
      * dessous, le titre de carte du domaine (« Location meublée · Studio · Douala »), puis le type de demande
-     * et les dates, sans le nombre de personnes ; le total en gras (décisions 2026-11-21-reservations-vrai-titre,
+     * et les dates, sans le nombre de personnes ; en gras, le prix et son unité (décisions 2026-11-21-reservations-vrai-titre,
      * 2026-11-21-reservations-type-de-location-titre, 2026-11-21-reservations-sans-nombre-personnes
-     * et 2026-11-21-reservations-titres-inverses-sans-prix et 2026-11-21-reservations-total-remis).
+     * et 2026-11-21-reservations-titres-inverses-sans-prix et 2026-11-21-reservations-prix-comme-accueil).
      */
     public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $mine = false): ListItem
     {
@@ -40,6 +40,7 @@ final class BookingItem
                 ->highlight($booking->formattedTotal($locale));
         }
 
+        $domain = app(DomainRegistry::class)->require();
         // Le titre et la ligne du type comme toute carte d'offre ; puis les dates.
         [$title, $line] = OfferCardTitle::of($offer, $locale);
         $subtitle = implode("\n", array_filter([$line, $subtitle], fn (?string $part): bool => $part !== null && $part !== ''));
@@ -47,7 +48,8 @@ final class BookingItem
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
             ->tag($booking->status->label(), $booking->status->tone())
-            // Le total en gras (décision 2026-11-21-reservations-total-remis).
-            ->highlight($booking->formattedTotal($locale));
+            // En gras, comme à l'accueil : les détails puis le prix et son unité (« 45 000 FCFA / jour »,
+            // décision 2026-11-21-reservations-prix-comme-accueil).
+            ->highlight(implode(' · ', array_filter([...$domain->itemDetails($offer), $domain->formattedPrice($offer, $locale)])) ?: null);
     }
 }

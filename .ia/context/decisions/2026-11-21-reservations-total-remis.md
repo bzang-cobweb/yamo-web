@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-21-reservations-prix-comme-accueil.md
 # « Mes réservations » : le total remis sur les cartes
 
 - **Date** : 2026-11-21

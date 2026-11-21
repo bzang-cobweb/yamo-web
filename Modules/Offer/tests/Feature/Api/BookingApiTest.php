@@ -312,8 +312,8 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $started->getKey()]['delete']);
         // Titres inversés (décision 2026-11-21-reservations-titres-inverses-sans-prix).
         $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['title']);
-        // Le total, remis en gras (décision 2026-11-21-reservations-total-remis).
-        $this->assertSame('135 000 FCFA', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $items[(string) $pending->getKey()]['highlight']));
+        // En gras, le prix et son unité, comme à l'accueil (décision 2026-11-21-reservations-prix-comme-accueil).
+        $this->assertSame('45 000 FCFA / jour', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $items[(string) $pending->getKey()]['highlight']));
         // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
         $this->assertStringStartsWith("Location meublée · Studio\n", $items[(string) $pending->getKey()]['subtitle']);
         // La ville sur la ligne du type (décision 2026-11-21-reservations-ville-ligne-du-type).
