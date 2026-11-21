@@ -268,7 +268,9 @@ class BookingApiTest extends TestCase
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
         // Sa carte à elle (décision 2026-11-21-demandes-d-une-offre) : le statut en pastille orange sur la photo ;
         // en titre, le type de demande et les dates, sans le logement ni le membre ; le total en gras ; les actions en menu.
-        $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $item['tag']);
+        // Sans photo, le statut au-dessus du titre (décision 2026-11-21-demandes-sans-photo).
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $item['tag']);
+        $this->assertNull($item['image']);
         $this->assertSame($booking->type->label().' · '.$booking->period('fr'), $item['title']);
         $this->assertNull($item['subtitle']);
         $this->assertNull($item['rating']);

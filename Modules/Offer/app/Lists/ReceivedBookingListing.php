@@ -23,7 +23,7 @@ use Modules\Offer\Services\OfferAvailability;
  * « Demandes » d'une offre (décision 2026-11-21-demandes-d-une-offre) : les demandes reçues sur un logement
  * du compte, ouvertes par « Demandes » de sa carte dans « Mes logements », la plus récente en tête. Une liste
  * à elle, qui ne reprend plus « Mes réservations » : sous les filtres, le titre du logement et sa ligne du
- * type ; des cartes sans le logement (type de demande et dates, statut sur la photo) ; filtres : statut et
+ * type ; des cartes sans le logement ni photo (type de demande et dates, statut) ; filtres : statut et
  * période, le logement en champ caché. « Répondre » tant qu'elle attend.
  */
 class ReceivedBookingListing extends Listing
@@ -155,7 +155,7 @@ class ReceivedBookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            ->with(['offer.media', 'user'])
+            ->with(['offer', 'user'])
             // Sa dernière notification du fil de la demande : la carte ouvre sa page.
             ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
                 ->select('id')
