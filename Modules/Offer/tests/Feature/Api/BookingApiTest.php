@@ -390,11 +390,14 @@ class BookingApiTest extends TestCase
         // Titrée « Demandes » ; sous les filtres, le titre du logement et sa ligne du type ; sans logement, pas
         // d'intitulé ; sans recherche ; filtres : statut, période, logement caché (décisions
         // 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre).
-        $this->assertSame('Demandes', $requests['title']);
+        // Le titre du logement dans la barre du haut, sa ligne du type seule sous les filtres
+        // (décision 2026-11-21-demandes-titre-logement-barre).
         [$cardTitle, $cardLine] = OfferCardTitle::of($offer, 'fr');
-        $this->assertSame(['title' => $cardTitle, 'subtitle' => $cardLine], $requests['heading']);
+        $this->assertSame($cardTitle, $requests['title']);
+        $this->assertSame(['title' => null, 'subtitle' => $cardLine], $requests['heading']);
         $this->assertNotNull($cardLine);
-        $this->assertNull($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.heading'));
+        $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
+        $this->assertSame(['Demandes', null], [$all['title'], $all['heading']]);
         $this->assertNull($requests['search']);
         $this->assertSame(['status', 'period', 'offer'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).

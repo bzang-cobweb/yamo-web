@@ -293,7 +293,7 @@ abstract class Listing
      * 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre) ; `null` par défaut : aucun.
      *
      * @param  array<string, mixed>  $filters  filtres validés
-     * @return array{title: string, subtitle: string|null}|null
+     * @return array{title: string|null, subtitle: string|null}|null
      */
     public function headingFor(array $filters): ?array
     {

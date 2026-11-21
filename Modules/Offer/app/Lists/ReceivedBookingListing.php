@@ -44,22 +44,28 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Le logement choisi, sous les filtres : son titre, et dessous sa ligne du type (« Location · Appartement ·
-     * Douala ») ; sans logement, rien (décisions 2026-11-21-demandes-titre-sous-filtres et
-     * 2026-11-21-demandes-d-une-offre).
+     * Le logement choisi : son titre dans la barre du haut, à la place de « Demandes » (décision
+     * 2026-11-21-demandes-titre-logement-barre) ; sans logement, « Demandes ».
+     */
+    public function titleFor(array $filters): string
+    {
+        $offer = $this->chosenOffer($filters);
+
+        return $offer === null ? $this->title() : OfferCardTitle::of($offer, $this->locale())[0];
+    }
+
+    /**
+     * Sous les filtres, sa ligne du type seule (« Location · Appartement · Douala ») ; sans logement ou sans
+     * ligne, rien (décisions 2026-11-21-demandes-d-une-offre et 2026-11-21-demandes-titre-logement-barre).
      *
-     * @return array{title: string, subtitle: string|null}|null
+     * @return array{title: string|null, subtitle: string|null}|null
      */
     public function headingFor(array $filters): ?array
     {
         $offer = $this->chosenOffer($filters);
-        if ($offer === null) {
-            return null;
-        }
+        $line = $offer === null ? null : OfferCardTitle::of($offer, $this->locale())[1];
 
-        [$title, $line] = OfferCardTitle::of($offer, $this->locale());
-
-        return ['title' => $title, 'subtitle' => $line];
+        return $line === null ? null : ['title' => null, 'subtitle' => $line];
     }
 
     /**
