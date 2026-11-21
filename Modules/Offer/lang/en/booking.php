@@ -208,7 +208,7 @@ return [
         'requests_count' => '{0} No requests received|{1} :count request received|[2,*] :count requests received',
         'pending_count' => '{1} :count pending request|[2,*] :count pending requests',
         'unread_count' => '{1} :count unread notification|[2,*] :count unread notifications',
-        'notifications' => 'Requests',
+        'notifications' => 'Requests received',
         'show_address' => 'Show the address',
         'hide_address' => 'Hide the address',
         'address_shown' => 'Address shown to the guest.',

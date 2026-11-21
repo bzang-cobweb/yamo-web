@@ -124,10 +124,10 @@ class OfferCalendarApiTest extends TestCase
 
         $card = collect($this->asUser($offer->user)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->firstWhere('id', (string) $offer->getKey());
         $this->assertSame(['label' => 'Calendrier', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => "/offers/{$offer->getKey()}/calendar"], $card['actions'][0]);
-        // Puis « Demandes » : la liste des demandes reçues, ce logement déjà choisi dans le filtre
+        // Puis « Demandes reçues » (décision 2026-11-22-menu-demandes-recues) : la liste des demandes reçues, ce logement déjà choisi dans le filtre
         // (décision 2026-11-21-demandes-comme-mes-reservations).
         $this->assertSame([
-            'label' => 'Demandes', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => null,
+            'label' => 'Demandes reçues', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => null,
             'list' => 'offer.bookings.received', 'filter' => ['offer' => (string) $offer->getKey()],
         ], $card['actions'][1]);
     }

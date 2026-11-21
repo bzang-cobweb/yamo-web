@@ -208,7 +208,7 @@ return [
         'requests_count' => '{0} Keine Anfragen erhalten|{1} :count Anfrage erhalten|[2,*] :count Anfragen erhalten',
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'unread_count' => '{1} :count ungelesene Benachrichtigung|[2,*] :count ungelesene Benachrichtigungen',
-        'notifications' => 'Anfragen',
+        'notifications' => 'Erhaltene Anfragen',
         'show_address' => 'Adresse anzeigen',
         'hide_address' => 'Adresse ausblenden',
         'address_shown' => 'Adresse für den Gast sichtbar.',
