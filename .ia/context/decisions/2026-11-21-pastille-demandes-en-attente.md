@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-pastille-sur-la-photo.md (pour la place de la pastille)
+
 # Mes logements : pastille orange « N demandes en attente » sous le titre
 
 - **Date** : 2026-11-21
