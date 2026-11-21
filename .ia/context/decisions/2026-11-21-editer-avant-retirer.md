@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-sans-editer-adresses.md
+
 # « Éditer » avant « Retirer » sur les cartes du profil
 
 - **Date** : 2026-11-21
