@@ -209,13 +209,17 @@ class OfferBookingForm extends Form
         return __('offer::booking.form.'.$this->type()->value.'_title');
     }
 
+    /**
+     * Le titre de l'offre, tel que saisi (« Studio meublé à Bonanjo »), sous le titre du formulaire
+     * (décision 2026-11-21-titre-offre-reservation).
+     */
     public function subtitle(): ?string
     {
         if ($this->offer === null) {
             return null;
         }
 
-        return app(DomainRegistry::class)->require()->itemTitle($this->offer) ?? (string) $this->offer->getTranslation('title', app()->getLocale());
+        return (string) $this->offer->getTranslation('title', app()->getLocale()) ?: null;
     }
 
     /**

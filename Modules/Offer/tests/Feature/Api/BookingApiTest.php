@@ -162,6 +162,16 @@ class BookingApiTest extends TestCase
         $this->assertSame(2, Booking::query()->count());
     }
 
+    public function test_the_booking_form_shows_the_offer_title(): void
+    {
+        // Décision 2026-11-21-titre-offre-reservation.
+        $offer = $this->home(true);
+        $offer->update(['title' => ['fr' => 'Studio meublé à Bonanjo', 'en' => 'Furnished studio in Bonanjo']]);
+
+        $this->asUser($this->member())->getJson("/api/v1/forms/offer.booking?record={$offer->getKey()}")->assertOk()
+            ->assertJsonPath('data.subtitle', 'Studio meublé à Bonanjo');
+    }
+
     public function test_a_visit_keeps_one_date_and_no_price(): void
     {
         $offer = $this->home(false);
