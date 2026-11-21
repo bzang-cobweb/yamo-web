@@ -162,7 +162,7 @@ class BookingThreadTest extends TestCase
 
     public function test_each_side_sees_the_other_ones_name_then_phone_and_email_once_accepted(): void
     {
-        // Décision 2026-11-21-detail-reservation-contact : après les lignes de la demande.
+        // Décision 2026-11-21-detail-reservation-contact.
         $this->owner->forceFill(['first_name' => 'Paul', 'last_name' => 'Hôte', 'email' => 'hote@example.test', 'phone' => '+237690000001'])->save();
         $this->guest->forceFill(['first_name' => 'Léa', 'last_name' => 'Membre', 'email' => 'membre@example.test', 'phone' => null])->save();
         $booking = $this->request(3);
@@ -187,9 +187,9 @@ class BookingThreadTest extends TestCase
             ['key' => 'member', 'label' => 'Membre', 'value' => 'Léa Membre', 'link' => '/members/'.$this->guest->getKey()],
             ['key' => 'email', 'label' => 'E-mail', 'value' => 'membre@example.test'],
         ], $contact($this->owner));
-        // Toujours à la fin.
+        // Juste après les dates (décision 2026-11-21-detail-reservation-hote-apres-dates).
         $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
-        $this->assertSame(['total', 'host', 'phone', 'email'], array_slice(array_column($lines, 'key'), -4));
+        $this->assertSame(['guests', 'arrival', 'departure', 'host', 'phone', 'email', 'days'], array_slice(array_column($lines, 'key'), 0, 7));
     }
 
     public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void

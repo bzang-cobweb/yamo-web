@@ -46,6 +46,26 @@ class AddBookingToNotificationThread
         ]));
     }
 
+    /**
+     * Place `$contact` juste après la dernière date de la demande (arrivée, départ, visite, seconde date) ;
+     * sans date, à la fin.
+     *
+     * @param  list<array<string, mixed>>  $lines
+     * @param  list<array<string, mixed>>  $contact
+     * @return list<array<string, mixed>>
+     */
+    private function afterDates(array $lines, array $contact): array
+    {
+        $at = count($lines);
+        foreach ($lines as $index => $line) {
+            if (in_array($line['key'] ?? null, ['arrival', 'departure', 'visit', 'second'], true)) {
+                $at = $index + 1;
+            }
+        }
+
+        return [...array_slice($lines, 0, $at), ...$contact, ...array_slice($lines, $at)];
+    }
+
     public function handle(NotificationThreadSerializing $event): void
     {
         if (! str_starts_with($event->thread, Booking::THREAD_PREFIX)) {
@@ -59,14 +79,14 @@ class AddBookingToNotificationThread
 
         $mine = $booking !== null && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier();
 
-        // L'autre partie, après les lignes de la demande : pour le membre qui l'a faite, l'hôte ; pour l'hôte,
+        // L'autre partie, juste après les dates (décision 2026-11-21-detail-reservation-hote-apres-dates) : pour le membre qui l'a faite, l'hôte ; pour l'hôte,
         // le membre ; son nom vers sa page, son téléphone et son e-mail (décision 2026-11-21-detail-reservation-contact).
         $host = $booking?->offer?->user;
         $hosting = $host !== null && (string) $host->getKey() === (string) request()->user()?->getAuthIdentifier();
         if ($booking !== null && is_array($event->data['booking']) && ($mine || $hosting)) {
             $other = $mine ? $host : $booking->user;
             // Le téléphone et l'e-mail une fois la demande acceptée (décision 2026-11-21-contact-apres-acceptation).
-            $event->data['booking']['lines'] = [...$event->data['booking']['lines'], ...$this->contactLines($other, $mine ? 'host' : 'member', $booking->status === BookingStatusEnum::ACCEPTED)];
+            $event->data['booking']['lines'] = $this->afterDates($event->data['booking']['lines'], $this->contactLines($other, $mine ? 'host' : 'member', $booking->status === BookingStatusEnum::ACCEPTED));
         }
 
         if ($mine && $booking->isCancellable()) {

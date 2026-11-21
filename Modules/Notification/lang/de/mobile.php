@@ -19,6 +19,8 @@ return [
         'you' => 'Du',
         // Près de la date d'une étape modifiée (décision 2026-11-21-etape-modifiee-date).
         'edited' => 'Bearbeitet',
+        'more' => 'Mehr anzeigen',
+        'less' => 'Weniger anzeigen',
         // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
         'delivery' => ['sent' => 'Gesendet', 'delivered' => 'Zugestellt', 'read' => 'Gelesen'],
         'open' => 'Öffnen',
