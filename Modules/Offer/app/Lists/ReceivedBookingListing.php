@@ -135,12 +135,11 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Le membre (prénom, nom, pseudonyme) ou son message : il n'y a qu'un logement (décision
-     * 2026-11-21-demandes-nombre).
+     * Le nom du membre seul (prénom, nom, pseudonyme) : il n'y a qu'un logement (décisions
+     * 2026-11-21-demandes-nombre et 2026-11-21-demandes-recherche-nom).
      */
     protected function search(Builder $query, string $term): void
     {
-        $this->orWhereContains($query, ['bookings.message'], $term);
         $query->orWhereHas('user', fn (Builder $user) => $user->where(fn (Builder $columns) => $this->orWhereContains($columns, ['first_name', 'last_name', 'name'], $term)));
     }
 
