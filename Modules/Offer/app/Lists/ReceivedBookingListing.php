@@ -48,6 +48,17 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
+     * Filtrée sur un logement : « Demandes · Studio meublé à Akwa », le titre de sa carte ; sinon « Demandes »
+     * (décision 2026-11-21-demandes-titre-logement).
+     */
+    public function titleFor(array $filters): string
+    {
+        $offer = isset($filters['offer']) && is_scalar($filters['offer']) ? ($this->bookedOfferOptions()[(string) $filters['offer']] ?? null) : null;
+
+        return $offer === null || $offer === '' ? $this->title() : __('offer::booking.profile.requests_title', ['offer' => $offer]);
+    }
+
+    /**
      * Les filtres de « Mes réservations », mais le logement en champ caché : choisi par « Demandes » de sa
      * carte, il filtre sans s'afficher dans les filtres (décision 2026-11-21-demandes-filtre-logement-cache).
      *

@@ -386,7 +386,9 @@ class BookingApiTest extends TestCase
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
         // Titrée « Demandes », les mêmes filtres que « Mes réservations » ; sans message cité : il se lit sur la page
         // de la demande (décision 2026-11-21-demandes-comme-mes-reservations).
-        $this->assertSame('Demandes', $requests['title']);
+        // Le nom du logement dans le titre (décision 2026-11-21-demandes-titre-logement) ; sans logement : « Demandes ».
+        $this->assertSame('Demandes · '.$offer->getTranslation('title', 'fr'), $requests['title']);
+        $this->assertSame('Demandes', $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.title'));
         $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);
