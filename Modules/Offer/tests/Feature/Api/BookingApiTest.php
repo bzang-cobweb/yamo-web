@@ -384,13 +384,12 @@ class BookingApiTest extends TestCase
 
         // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
-        // Le filtre « Logement », avec une recherche (décision 2026-11-21-filtre-logement-recherche).
-        $this->assertTrue(collect($requests['filters'])->keyBy('name')['offer']['searchable']);
         // Titrée « Demandes », les mêmes filtres que « Mes réservations » ; sans message cité : il se lit sur la page
         // de la demande (décision 2026-11-21-demandes-comme-mes-reservations).
         $this->assertSame('Demandes', $requests['title']);
         $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], array_column($requests['filters'], 'name'));
-        $this->assertSame([(string) $offer->getKey(), (string) $other->getKey()], array_column(collect($requests['filters'])->keyBy('name')['offer']['options'], 'value'));
+        // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
+        $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);
         $this->assertCount(2, $requests['items']);
         $this->assertSame([null, null], array_column($requests['items'], 'quote'));
 

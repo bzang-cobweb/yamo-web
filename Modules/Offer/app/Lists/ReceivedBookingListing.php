@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
+use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
@@ -27,7 +28,9 @@ use Modules\Offer\Services\OfferAvailability;
  */
 class ReceivedBookingListing extends Listing
 {
-    use FiltersBookings;
+    use FiltersBookings {
+        filters as bookingFilters;
+    }
 
     public static function name(): string
     {
@@ -42,6 +45,17 @@ class ReceivedBookingListing extends Listing
     public function title(): string
     {
         return __('offer::booking.profile.requests_all');
+    }
+
+    /**
+     * Les filtres de « Mes réservations », mais le logement en champ caché : choisi par « Demandes » de sa
+     * carte, il filtre sans s'afficher dans les filtres (décision 2026-11-21-demandes-filtre-logement-cache).
+     *
+     * @return list<Field>
+     */
+    public function filters(): array
+    {
+        return array_map(fn (Field $field): Field => $field->name === 'offer' ? Field::hidden('offer') : $field, $this->bookingFilters());
     }
 
     /**
