@@ -43,6 +43,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $price
  * @property string|null $currency
  * @property array<string, mixed>|null $details
+ * @property bool $show_address afficher l'adresse sur la fiche (décision 2026-11-21-afficher-adresse)
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
  * @property Carbon|null $expires_at date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis)
@@ -56,10 +57,13 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'published_at', 'featured_until', 'expires_at'])]
+#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'published_at', 'featured_until', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
+    /** L'adresse affichée par défaut, comme la colonne (décision 2026-11-21-afficher-adresse). */
+    protected $attributes = ['show_address' => true];
+
     /** @use HasFactory<OfferFactory> */
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
@@ -106,6 +110,7 @@ class Offer extends Model implements HasMedia
             'status' => OfferStatusEnum::class,
             'price' => 'decimal:2',
             'details' => 'array',
+            'show_address' => 'boolean',
             'published_at' => 'datetime',
             'featured_until' => 'datetime',
             'expires_at' => 'datetime',

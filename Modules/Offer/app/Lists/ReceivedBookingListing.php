@@ -74,20 +74,28 @@ class ReceivedBookingListing extends Listing
             ->quote($record->message)
             ->link('/offers/'.$record->offer_id);
 
-        if (! $record->isAwaitingAnswer()) {
-            return $item;
-        }
-
-        // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message
-        // facultatif (décision 2026-11-19-contrat-reservations-logements-profil).
-        return $item
-            ->action(
+        if ($record->isAwaitingAnswer()) {
+            // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message
+            // facultatif (décision 2026-11-19-contrat-reservations-logements-profil).
+            $item->action(
                 __('offer::booking.profile.accept'),
                 'primary',
                 $this->acceptConfirm($record, $locale),
                 Submission::toRoute('api.v1.bookings.accept', SuccessAction::BACK, __('offer::booking.profile.accepted_notice'), parameters: ['booking' => $record->getKey()]),
             )
-            ->action(__('offer::booking.profile.refuse'), 'destructive', form: BookingRefuseForm::name());
+                ->action(__('offer::booking.profile.refuse'), 'destructive', form: BookingRefuseForm::name());
+        }
+
+        // Puis, quel que soit le statut, afficher ou masquer l'adresse au demandeur (décision 2026-11-21-afficher-adresse).
+        return $item->action(
+            __('offer::booking.profile.'.($record->show_address ? 'hide_address' : 'show_address')),
+            submission: Submission::toRoute(
+                'api.v1.bookings.address.'.($record->show_address ? 'hide' : 'show'),
+                SuccessAction::BACK,
+                __('offer::booking.profile.'.($record->show_address ? 'address_hidden' : 'address_shown')),
+                parameters: ['booking' => $record->getKey()],
+            ),
+        );
     }
 
     /**

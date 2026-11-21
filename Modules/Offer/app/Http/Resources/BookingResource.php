@@ -62,9 +62,10 @@ class BookingResource extends JsonResource
         $line = fn (string $key, mixed $value): ?array => $value === null || $value === '' ? null : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => (string) $value];
 
         $lines = [
-            $line('guests', $booking->guests),
-            // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).
+            // L'adresse du logement, la première ligne (décisions 2026-11-21-detail-reservation-adresse et
+            // 2026-11-21-afficher-adresse) ; retirée pour le demandeur si le propriétaire la masque.
             $line('address', $booking->offer?->fullAddress()),
+            $line('guests', $booking->guests),
             // La date de disponibilité du logement, si renseignée, avant la visite
             // (décisions 2026-11-20-disponibilite-demande et 2026-11-20-disponibilite-sans-meuble).
             $this->availableFrom($booking, $locale),

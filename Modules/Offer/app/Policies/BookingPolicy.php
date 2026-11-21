@@ -93,4 +93,13 @@ class BookingPolicy
 
         return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__('offer::booking.already_answered'));
     }
+
+    /**
+     * Afficher ou masquer l'adresse au demandeur : sur une de ses offres (sinon 404), quel que soit le statut
+     * (décision 2026-11-21-afficher-adresse).
+     */
+    public function manageAddress(User $user, Booking $booking): Response
+    {
+        return (int) $booking->offer->user_id === (int) $user->getKey() ? Response::allow() : Response::denyAsNotFound();
+    }
 }

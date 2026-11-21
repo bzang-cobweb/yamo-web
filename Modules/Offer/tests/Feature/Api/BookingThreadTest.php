@@ -160,22 +160,43 @@ class BookingThreadTest extends TestCase
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
-    public function test_each_side_sees_the_other_ones_name_then_phone_and_email_once_accepted(): void
+    public function test_the_owner_shows_or_hides_the_address_to_the_requester(): void
+    {
+        // Décision 2026-11-21-afficher-adresse : la demande part du choix de l'offre ; le propriétaire le change.
+        $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
+        $this->offer->update(['show_address' => false]);
+        $booking = $this->request(3);
+        $this->assertFalse($booking->show_address);
+        $keys = fn (User $reader): array => array_column($this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->json('data.booking.lines'), 'key');
+
+        // Masquée : pas de ligne pour le demandeur ; le propriétaire la voit, en tête.
+        $this->assertNotContains('address', $keys($this->guest));
+        $this->assertSame('address', $keys($this->owner)[0]);
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->guest->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/show")->assertNotFound();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->owner->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/show")->assertNoContent();
+        $this->assertTrue($booking->fresh()->show_address);
+        $this->assertSame(['address', 'host'], array_slice($keys($this->guest), 0, 2));
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->owner->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/hide")->assertNoContent();
+        $this->assertFalse($booking->fresh()->show_address);
+    }
+
+    public function test_each_side_always_sees_the_other_ones_name_phone_and_email(): void
     {
         // Décision 2026-11-21-detail-reservation-contact.
         $this->owner->forceFill(['first_name' => 'Paul', 'last_name' => 'Hôte', 'email' => 'hote@example.test', 'phone' => '+237690000001'])->save();
         $this->guest->forceFill(['first_name' => 'Léa', 'last_name' => 'Membre', 'email' => 'membre@example.test', 'phone' => null])->save();
-        $booking = $this->request(3);
+        $this->request(3);
         $contact = fn (User $reader): array => array_values(array_filter(
             $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data.booking.lines'),
             fn (array $line): bool => in_array($line['key'], ['host', 'member', 'phone', 'email'], true),
         ));
 
-        // En attente : le nom seul (décision 2026-11-21-contact-apres-acceptation).
-        $this->assertSame([['key' => 'host', 'label' => 'Hôte', 'value' => 'Paul Hôte', 'link' => '/members/'.$this->owner->getKey()]], $contact($this->guest));
-        $this->assertSame(['member'], array_column($contact($this->owner), 'key'));
-        app(BookingService::class)->answer($booking, true);
-
+        // Toujours, même en attente (décision 2026-11-21-contact-toujours).
         $host = $contact($this->guest);
         $this->assertSame([
             ['key' => 'host', 'label' => 'Hôte', 'value' => 'Paul Hôte', 'link' => '/members/'.$this->owner->getKey()],
@@ -187,9 +208,9 @@ class BookingThreadTest extends TestCase
             ['key' => 'member', 'label' => 'Membre', 'value' => 'Léa Membre', 'link' => '/members/'.$this->guest->getKey()],
             ['key' => 'email', 'label' => 'E-mail', 'value' => 'membre@example.test'],
         ], $contact($this->owner));
-        // Juste après les dates (décision 2026-11-21-detail-reservation-hote-apres-dates).
+        // Après l'adresse ; sans adresse, en tête (décision 2026-11-21-afficher-adresse).
         $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
-        $this->assertSame(['guests', 'arrival', 'departure', 'host', 'phone', 'email', 'days'], array_slice(array_column($lines, 'key'), 0, 7));
+        $this->assertSame(['host', 'phone', 'email', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 5));
     }
 
     public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void
@@ -230,9 +251,10 @@ class BookingThreadTest extends TestCase
         // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).
         $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
         $lines = (new BookingResource($booking->refresh()))->resolve(request())['lines'];
-        $this->assertSame(['guests', 'address', 'arrival'], array_slice(array_column($lines, 'key'), 0, 3));
-        $this->assertSame('Adresse', $lines[1]['label']);
-        $this->assertStringStartsWith('Rue Joss, Douala', $lines[1]['value']);
+        // La première ligne (décision 2026-11-21-afficher-adresse).
+        $this->assertSame(['address', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 3));
+        $this->assertSame('Adresse', $lines[0]['label']);
+        $this->assertStringStartsWith('Rue Joss, Douala', $lines[0]['value']);
     }
 
     public function test_the_reader_steps_say_whether_the_other_party_got_and_read_them(): void

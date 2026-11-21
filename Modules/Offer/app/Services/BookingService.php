@@ -68,6 +68,9 @@ class BookingService
                 'total' => $unitPrice === null || $days === null ? null : number_format((float) $unitPrice * $days, 2, '.', ''),
                 'currency' => $unitPrice === null ? null : ($offer->currency ?? $offer->country?->currency),
                 'status' => BookingStatusEnum::PENDING,
+                // L'adresse visible du demandeur, d'après le choix fait sur l'offre ; le propriétaire peut
+                // la changer ensuite (décision 2026-11-21-afficher-adresse).
+                'show_address' => $offer->show_address,
             ]);
             BookingRequested::dispatch($booking);
 
@@ -237,5 +240,15 @@ class BookingService
 
             return $booking;
         });
+    }
+
+    /**
+     * Afficher ou masquer l'adresse du logement au demandeur (décision 2026-11-21-afficher-adresse).
+     */
+    public function showAddress(Booking $booking, bool $show): Booking
+    {
+        $booking->forceFill(['show_address' => $show])->save();
+
+        return $booking;
     }
 }

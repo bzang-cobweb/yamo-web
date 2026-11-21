@@ -111,6 +111,12 @@ class OfferForm extends Form
                 ->translatable()
                 ->default($offer?->offerAddress?->getTranslation('indication', $this->locale()) ?: null)
                 ->maxLength(OfferAddress::INDICATION_MAX_LENGTH),
+            // Afficher l'adresse ou non : sinon, la fiche n'a pas de bloc « Localisation » (décision
+            // 2026-11-21-afficher-adresse) ; chaque demande part de ce choix.
+            ! $domain->hasAddress() ? null : Field::switch('show_address')
+                ->label(__('offer::offer.show_address'))
+                ->help(__('offer::offer.show_address_help'))
+                ->default($offer === null ? true : $offer->show_address),
             Field::select('status')
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())

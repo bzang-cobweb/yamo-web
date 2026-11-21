@@ -214,6 +214,8 @@ class OfferService
             'status' => $data['status'],
             'price' => $price,
             'currency' => $price === null ? null : $country?->currency,
+            // Afficher l'adresse (décision 2026-11-21-afficher-adresse) : absent de l'envoi, gardé.
+            'show_address' => array_key_exists('show_address', $data) ? filter_var($data['show_address'], FILTER_VALIDATE_BOOL) : ($offer === null ? true : $offer->show_address),
             // Attributs d'un autre domaine gardés tels quels ; ceux du domaine actif remplacés.
             'details' => [
                 ...($offer?->details ?? []),

@@ -68,6 +68,26 @@ class BookingController
     }
 
     /**
+     * Afficher l'adresse du logement au demandeur (décision 2026-11-21-afficher-adresse).
+     */
+    public function showAddress(Booking $booking): Response
+    {
+        $this->bookings->showAddress($booking, true);
+
+        return response()->noContent();
+    }
+
+    /**
+     * Masquer l'adresse du logement au demandeur (décision 2026-11-21-afficher-adresse).
+     */
+    public function hideAddress(Booking $booking): Response
+    {
+        $this->bookings->showAddress($booking, false);
+
+        return response()->noContent();
+    }
+
+    /**
      * Annuler sa demande, en attente ou acceptée et pas encore commencée.
      */
     public function cancel(BookingCancelRequest $request, Booking $booking): Response

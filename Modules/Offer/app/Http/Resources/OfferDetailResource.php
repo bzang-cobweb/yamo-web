@@ -37,7 +37,11 @@ class OfferDetailResource extends JsonResource
         $domain = app(DomainRegistry::class)->require();
         $locale = app()->getLocale();
         $owner = (int) $request->user('sanctum')?->getAuthIdentifier() === (int) $offer->user_id;
-        $address = $this->address($offer);
+        // Adresse masquée par le propriétaire : ni adresse, ni indication, donc pas de bloc « Localisation » ;
+        // lui les voit toujours (décision 2026-11-21-afficher-adresse).
+        $located = $owner || $offer->show_address;
+        $address = $located ? $this->address($offer) : null;
+        $indication = $located ? $this->indication($offer, $locale) : null;
         $facts = $this->facts($offer, $domain, $locale);
         $rules = [...$this->minimumAge(), ...array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)))];
         $informations = $this->informations($offer, $locale);
@@ -57,7 +61,7 @@ class OfferDetailResource extends JsonResource
             // L'adresse complète, rue comprise (décision 2026-11-19-fiche-localisation).
             'address' => $address,
             // L'indication propre à l'offre (décision 2026-11-19-contrat-adresse-offre-table).
-            'indication' => $this->indication($offer, $locale),
+            'indication' => $indication,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
             'description' => $offer->getTranslation('description', $locale) ?: null,
@@ -82,7 +86,7 @@ class OfferDetailResource extends JsonResource
              * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
              * d'informations est une section `text` à lui seul.
              */
-            'sections' => $this->sections($address, $this->indication($offer, $locale), $facts, $rules, $informations, $reviews !== null),
+            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */

@@ -289,7 +289,8 @@ class BookingApiTest extends TestCase
         // Plus en attente : plus de réponse possible, plus de boutons.
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertForbidden();
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/accept")->assertForbidden();
-        $this->assertSame([], $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.actions'));
+        // Reste « Masquer l'adresse », quel que soit le statut (décision 2026-11-21-afficher-adresse).
+        $this->assertSame(["Masquer l'adresse"], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.actions'), 'label'));
     }
 
     public function test_the_guest_follows_and_cancels_their_bookings(): void

@@ -94,6 +94,8 @@ return [
     'zip' => 'Postal code',
     'city' => 'City',
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
+    'show_address' => 'Show the address',
+    'show_address_help' => 'Otherwise, the listing page does not show its location.',
     'indication' => 'Directions to the address',
     'indication_placeholder' => 'E.g. behind the market, blue gate',
     // Blocs d'informations (décision 2026-11-19-contrat-offer-informations).

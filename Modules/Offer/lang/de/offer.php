@@ -94,6 +94,8 @@ return [
     'zip' => 'Postleitzahl',
     'city' => 'Stadt',
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
+    'show_address' => 'Adresse anzeigen',
+    'show_address_help' => 'Sonst zeigt die Seite der Unterkunft ihren Standort nicht.',
     'indication' => 'Wegbeschreibung',
     'indication_placeholder' => 'Z. B. hinter dem Markt, blaues Tor',
     // Blocs d'informations (décision 2026-11-19-contrat-offer-informations).

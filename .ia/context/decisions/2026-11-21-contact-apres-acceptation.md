@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-21-contact-toujours.md
 # Détail d'une réservation : téléphone et e-mail une fois la demande acceptée
 
 - **Date** : 2026-11-21

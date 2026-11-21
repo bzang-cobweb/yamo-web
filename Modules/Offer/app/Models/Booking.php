@@ -33,15 +33,19 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property BookingStatusEnum $status
  * @property string|null $refusal_message
  * @property string|null $cancel_message
+ * @property bool $show_address l'adresse du logement visible du demandeur (décision 2026-11-21-afficher-adresse)
  * @property Carbon|null $answered_at
  * @property Carbon|null $cancelled_at
  * @property-read Offer $offer
  * @property-read User $user
  */
-#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'answered_at', 'cancelled_at'])]
+#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'show_address', 'answered_at', 'cancelled_at'])]
 #[UseFactory(BookingFactory::class)]
 class Booking extends Model
 {
+    /** L'adresse affichée par défaut, comme la colonne (décision 2026-11-21-afficher-adresse). */
+    protected $attributes = ['show_address' => true];
+
     /** @use HasFactory<BookingFactory> */
     use HasFactory;
 
@@ -75,6 +79,7 @@ class Booking extends Model
             'total' => 'decimal:2',
             'answered_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'show_address' => 'boolean',
         ];
     }
 
