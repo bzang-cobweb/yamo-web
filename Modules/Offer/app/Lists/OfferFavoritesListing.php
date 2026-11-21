@@ -104,11 +104,11 @@ class OfferFavoritesListing extends Listing
         /** @var OfferFavorite $record */
         $offer = $record->offer;
         $domain = app(DomainRegistry::class)->require();
-        $typed = (string) $offer->getTranslation('title', app()->getLocale());
-        $title = $domain->itemTitle($offer) ?? $typed;
+        // Comme la vitrine (titre saisi, ligne du type dessous, décision 2026-11-21-favoris-titre-saisi-ligne-type),
+        // avec un cœur plein.
+        [$title, $line] = OfferCardTitle::of($offer, app()->getLocale());
 
-        // Comme la vitrine, avec un cœur plein.
-        return ListItem::make($offer->getKey(), $title, $typed === $title ? null : $typed)
+        return ListItem::make($offer->getKey(), $title, $line)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
             ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($offer), $domain->formattedPrice($offer, app()->getLocale())])) ?: null)
