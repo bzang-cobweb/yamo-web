@@ -160,16 +160,21 @@ class BookingThreadTest extends TestCase
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
-    public function test_each_side_sees_the_other_ones_name_phone_and_email(): void
+    public function test_each_side_sees_the_other_ones_name_then_phone_and_email_once_accepted(): void
     {
         // Décision 2026-11-21-detail-reservation-contact : après les lignes de la demande.
         $this->owner->forceFill(['first_name' => 'Paul', 'last_name' => 'Hôte', 'email' => 'hote@example.test', 'phone' => '+237690000001'])->save();
         $this->guest->forceFill(['first_name' => 'Léa', 'last_name' => 'Membre', 'email' => 'membre@example.test', 'phone' => null])->save();
-        $this->request(3);
+        $booking = $this->request(3);
         $contact = fn (User $reader): array => array_values(array_filter(
             $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data.booking.lines'),
             fn (array $line): bool => in_array($line['key'], ['host', 'member', 'phone', 'email'], true),
         ));
+
+        // En attente : le nom seul (décision 2026-11-21-contact-apres-acceptation).
+        $this->assertSame([['key' => 'host', 'label' => 'Hôte', 'value' => 'Paul Hôte', 'link' => '/members/'.$this->owner->getKey()]], $contact($this->guest));
+        $this->assertSame(['member'], array_column($contact($this->owner), 'key'));
+        app(BookingService::class)->answer($booking, true);
 
         $host = $contact($this->guest);
         $this->assertSame([

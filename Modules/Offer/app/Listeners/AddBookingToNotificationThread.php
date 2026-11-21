@@ -24,11 +24,12 @@ use Modules\Offer\Support\BookingCache;
 class AddBookingToNotificationThread
 {
     /**
-     * « Hôte » ou « Membre » (avec le lien de sa page), « Téléphone », « E-mail » ; une ligne sans valeur est omise.
+     * « Hôte » ou « Membre » (avec le lien de sa page) ; avec `$reachable`, « Téléphone » et « E-mail » ;
+     * une ligne sans valeur est omise.
      *
      * @return list<array{key: string, label: string, value: string, link?: string}>
      */
-    private function contactLines(?User $person, string $role): array
+    private function contactLines(?User $person, string $role, bool $reachable): array
     {
         if ($person === null) {
             return [];
@@ -40,8 +41,8 @@ class AddBookingToNotificationThread
 
         return array_values(array_filter([
             $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
-            $line('phone', $person->phone === null ? null : PhoneNumbers::international($person->phone)),
-            $line('email', $person->email),
+            $reachable && $person->phone !== null ? $line('phone', PhoneNumbers::international($person->phone)) : null,
+            $reachable ? $line('email', $person->email) : null,
         ]));
     }
 
@@ -64,7 +65,8 @@ class AddBookingToNotificationThread
         $hosting = $host !== null && (string) $host->getKey() === (string) request()->user()?->getAuthIdentifier();
         if ($booking !== null && is_array($event->data['booking']) && ($mine || $hosting)) {
             $other = $mine ? $host : $booking->user;
-            $event->data['booking']['lines'] = [...$event->data['booking']['lines'], ...$this->contactLines($other, $mine ? 'host' : 'member')];
+            // Le téléphone et l'e-mail une fois la demande acceptée (décision 2026-11-21-contact-apres-acceptation).
+            $event->data['booking']['lines'] = [...$event->data['booking']['lines'], ...$this->contactLines($other, $mine ? 'host' : 'member', $booking->status === BookingStatusEnum::ACCEPTED)];
         }
 
         if ($mine && $booking->isCancellable()) {
