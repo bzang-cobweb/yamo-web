@@ -58,6 +58,7 @@ return [
         'sent_stay' => 'Anfrage gesendet. Sie finden sie mit dem Gesamtbetrag unter „Meine Buchungen“.',
         'sent_visit' => 'Besichtigungsanfrage gesendet. Der Eigentümer antwortet Ihnen.',
         'pending_exists' => 'Sie haben für dieses Angebot bereits eine ausstehende Anfrage.',
+        'own_overlap' => 'Sie haben für diese Unterkunft bereits eine Anfrage an diesen Daten.',
         'too_far' => 'Wählen Sie ein Datum innerhalb der nächsten :days Tage.',
     ],
     'answer' => [

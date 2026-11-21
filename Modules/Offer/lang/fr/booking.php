@@ -58,6 +58,7 @@ return [
         'sent_stay' => 'Demande envoyée. Retrouvez-la, avec son total, dans « Mes réservations ».',
         'sent_visit' => 'Demande de visite envoyée. Le propriétaire vous répondra.',
         'pending_exists' => 'Vous avez déjà une demande en attente pour cette offre.',
+        'own_overlap' => 'Vous avez déjà une demande pour ce logement sur ces dates.',
         'too_far' => 'Choisissez une date dans les :days prochains jours.',
     ],
     'answer' => [

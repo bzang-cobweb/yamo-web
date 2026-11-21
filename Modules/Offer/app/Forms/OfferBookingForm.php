@@ -3,6 +3,8 @@
 namespace Modules\Offer\Forms;
 
 use Closure;
+use Illuminate\Contracts\Validation\DataAwareRule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Modules\Form\Enums\SuccessAction;
@@ -91,7 +93,9 @@ class OfferBookingForm extends Form
                 ->dateRange(today()->toDateString(), $latest)
                 ->calendar($unavailable)
                 ->required()
-                ->rules([...$dates, $this->onePending()]),
+                // Un meublé se réserve encore à d'autres dates : seules ses propres demandes qui chevauchent
+                // sont refusées (décision 2026-11-21-meuble-plusieurs-reservations).
+                ->rules([...$dates, $this->noOwnOverlap()]),
             Field::date('check_out')
                 ->label(__('offer::booking.form.check_out'))
                 ->dateRange(today()->addDay()->toDateString(), $latest)
@@ -117,7 +121,59 @@ class OfferBookingForm extends Form
     }
 
     /**
-     * Pas plus d'une demande en attente sur l'offre.
+     * Un séjour : pas sur des dates où le membre a déjà une demande en attente ou acceptée sur
+     * l'offre ; à d'autres dates, oui (décision 2026-11-21-meuble-plusieurs-reservations).
+     */
+    private function noOwnOverlap(): ValidationRule
+    {
+        $offer = $this->offer;
+        $userId = $this->user?->getAuthIdentifier();
+
+        return new class($offer, $userId) implements DataAwareRule, ValidationRule
+        {
+            /** @var array<string, mixed> */
+            private array $data = [];
+
+            public function __construct(private readonly ?Offer $offer, private readonly int|string|null $userId) {}
+
+            /** @param  array<string, mixed>  $data */
+            public function setData(array $data): static
+            {
+                $this->data = $data;
+
+                return $this;
+            }
+
+            public function validate(string $attribute, mixed $value, Closure $fail): void
+            {
+                $out = $this->data['check_out'] ?? null;
+                if ($this->offer === null || ! is_string($value) || ! is_string($out)) {
+                    return;
+                }
+
+                try {
+                    [$from, $to] = [Carbon::parse($value), Carbon::parse($out)];
+                } catch (\Throwable) {
+                    return;
+                }
+
+                if ($to->lessThanOrEqualTo($from)) {
+                    return;
+                }
+
+                if ($this->offer->bookings()
+                    ->where('user_id', $this->userId)
+                    ->whereIn('status', [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED])
+                    ->overlapping($from, $to)
+                    ->exists()) {
+                    $fail(__('offer::booking.form.own_overlap'));
+                }
+            }
+        };
+    }
+
+    /**
+     * Une visite : pas plus d'une demande en attente sur l'offre.
      */
     private function onePending(): Closure
     {

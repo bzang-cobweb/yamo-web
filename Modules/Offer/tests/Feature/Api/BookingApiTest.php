@@ -147,16 +147,19 @@ class BookingApiTest extends TestCase
         // Le nombre de voyageurs est obligatoire pour un séjour (logement meublé).
         $this->asUser($guest)->postJson($url, $this->stay(['guests' => '']))->assertJsonValidationErrors('guests');
 
-        // Une seule demande en attente par offre.
+        // Un meublé : une autre demande à d'autres dates, oui ; sur des dates qui chevauchent les siennes,
+        // non (décision 2026-11-21-meuble-plusieurs-reservations).
         $this->asUser($guest)->postJson($url, $this->stay())->assertNoContent();
-        $this->asUser($guest)->postJson($url, $this->stay())->assertJsonValidationErrors(['check_in' => 'Vous avez déjà une demande en attente pour cette offre.']);
+        $this->asUser($guest)->postJson($url, $this->stay(['check_in' => today()->addDays(7)->toDateString(), 'check_out' => today()->addDays(10)->toDateString()]))
+            ->assertJsonValidationErrors(['check_in' => 'Vous avez déjà une demande pour ce logement sur ces dates.']);
+        $this->asUser($guest)->postJson($url, $this->stay(['check_in' => today()->addDays(8)->toDateString(), 'check_out' => today()->addDays(11)->toDateString()]))->assertNoContent();
 
         // Pas la sienne ; pas une offre non publiée.
         $this->asUser($offer->user)->postJson($url, $this->stay())->assertForbidden();
         $draft = $this->home(true);
         $draft->update(['status' => 'draft']);
         $this->asUser($guest)->postJson("/api/v1/offers/{$draft->getKey()}/bookings", $this->stay())->assertNotFound();
-        $this->assertSame(1, Booking::query()->count());
+        $this->assertSame(2, Booking::query()->count());
     }
 
     public function test_a_visit_keeps_one_date_and_no_price(): void

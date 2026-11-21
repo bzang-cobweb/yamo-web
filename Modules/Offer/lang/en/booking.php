@@ -58,6 +58,7 @@ return [
         'sent_stay' => 'Request sent. Find it, with its total, under “My bookings”.',
         'sent_visit' => 'Visit request sent. The owner will reply.',
         'pending_exists' => 'You already have a pending request for this offer.',
+        'own_overlap' => 'You already have a request for this home on these dates.',
         'too_far' => 'Choose a date within the next :days days.',
     ],
     'answer' => [
