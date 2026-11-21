@@ -268,7 +268,8 @@ class BookingApiTest extends TestCase
         // La carte de « Mes réservations » (décision 2026-11-21-demandes-comme-mes-reservations) : le statut en
         // pastille orange sur la photo, le membre en tête du sous-titre, le prix en gras, les actions en menu.
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $item['tag']);
-        $this->assertStringContainsString((string) $guest->full_name.' · ', (string) $item['subtitle']);
+        // Sans le nom du membre (décision 2026-11-21-demandes-sans-membre).
+        $this->assertStringNotContainsString((string) $guest->full_name, (string) $item['subtitle']);
         $this->assertNotNull($item['highlight']);
         $this->assertTrue($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
         [$accept, $refuse] = $item['actions'];
@@ -386,9 +387,11 @@ class BookingApiTest extends TestCase
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
         // Titrée « Demandes », les mêmes filtres que « Mes réservations » ; sans message cité : il se lit sur la page
         // de la demande (décision 2026-11-21-demandes-comme-mes-reservations).
-        // Le nom du logement dans le titre (décision 2026-11-21-demandes-titre-logement) ; sans logement : « Demandes ».
-        $this->assertSame('Demandes · '.$offer->getTranslation('title', 'fr'), $requests['title']);
-        $this->assertSame('Demandes', $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.title'));
+        // Titrée « Demandes » ; le nom du logement sous les filtres (décision 2026-11-21-demandes-titre-sous-filtres) ;
+        // sans logement, pas d'intitulé.
+        $this->assertSame('Demandes', $requests['title']);
+        $this->assertSame($offer->getTranslation('title', 'fr'), $requests['heading']);
+        $this->assertNull($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.heading'));
         $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);

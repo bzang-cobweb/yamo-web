@@ -48,14 +48,14 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Filtrée sur un logement : « Demandes · Studio meublé à Akwa », le titre de sa carte ; sinon « Demandes »
-     * (décision 2026-11-21-demandes-titre-logement).
+     * Filtrée sur un logement : le titre de sa carte, sous les filtres ; la barre du haut reste « Demandes »
+     * (décision 2026-11-21-demandes-titre-sous-filtres).
      */
-    public function titleFor(array $filters): string
+    public function headingFor(array $filters): ?string
     {
         $offer = isset($filters['offer']) && is_scalar($filters['offer']) ? ($this->bookedOfferOptions()[(string) $filters['offer']] ?? null) : null;
 
-        return $offer === null || $offer === '' ? $this->title() : __('offer::booking.profile.requests_title', ['offer' => $offer]);
+        return $offer === null || $offer === '' ? null : $offer;
     }
 
     /**
@@ -133,11 +133,11 @@ class ReceivedBookingListing extends Listing
     {
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
-        // La carte de « Mes réservations », le membre en tête du sous-titre ; elle ouvre la page de la demande,
+        // La carte de « Mes réservations », sans le nom du membre (décision 2026-11-21-demandes-sans-membre) ; elle ouvre la page de la demande,
         // où se lit son message ; sans notification dans son fil, la fiche du logement ; le statut sur la photo
         // (décision 2026-11-21-demandes-comme-mes-reservations).
         $notification = $record->getAttribute('thread_notification_id');
-        $item = BookingItem::make($record, $locale, withGuest: true, mine: true)
+        $item = BookingItem::make($record, $locale, mine: true)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
             ->tag($record->status->label(), $record->status->tone(), onImage: true);
 

@@ -202,7 +202,6 @@ return [
         'filter_city' => 'Stadt',
         'filter_offer' => 'Unterkunft',
         'search_home' => 'Unterkunft suchen',
-        'requests_title' => 'Anfragen · :offer',
         'requests_all' => 'Anfragen',
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'unread_count' => '{1} :count ungelesene Benachrichtigung|[2,*] :count ungelesene Benachrichtigungen',

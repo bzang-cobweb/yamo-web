@@ -202,7 +202,6 @@ return [
         'filter_city' => 'Ville',
         'filter_offer' => 'Logement',
         'search_home' => 'Rechercher un logement',
-        'requests_title' => 'Demandes · :offer',
         'requests_all' => 'Demandes',
         'pending_count' => '{1} :count demande en attente|[2,*] :count demandes en attente',
         'unread_count' => '{1} :count notification non lue|[2,*] :count notifications non lues',

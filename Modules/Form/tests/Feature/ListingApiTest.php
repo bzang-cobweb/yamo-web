@@ -38,6 +38,7 @@ class ListingApiTest extends TestCase
             ->assertExactJson(['data' => [
                 'name' => 'test.cards',
                 'title' => 'Cartes',
+                'heading' => null,
                 'empty' => null,
                 'create' => null,
                 'footer' => null,

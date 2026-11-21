@@ -288,6 +288,17 @@ abstract class Listing
     }
 
     /**
+     * Un intitulé affiché sous les filtres, en tête des items, selon les filtres choisis (le logement des
+     * « Demandes », décision 2026-11-21-demandes-titre-sous-filtres) ; `null` par défaut : aucun.
+     *
+     * @param  array<string, mixed>  $filters  filtres validés
+     */
+    public function headingFor(array $filters): ?string
+    {
+        return null;
+    }
+
+    /**
      * La liste est-elle proposée ? Indisponible, elle répond comme une liste
      * inconnue (404). Disponible par défaut.
      */
