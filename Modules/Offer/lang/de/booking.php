@@ -8,6 +8,10 @@ return [
     'statuses' => ['pending' => 'Ausstehend', 'accepted' => 'Angenommen', 'refused' => 'Abgelehnt', 'cancelled' => 'Storniert'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
+        'member' => 'Mitglied',
+        'host' => 'Gastgeber',
+        'phone' => 'Telefon',
+        'email' => 'E-Mail',
         'address' => 'Adresse',
         'guests' => 'Personen',
         'price' => 'Preis',

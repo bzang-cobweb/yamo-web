@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\User;
 use Modules\Auth\Sms\SmsSender;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -159,6 +160,33 @@ class BookingThreadTest extends TestCase
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
+    public function test_each_side_sees_the_other_ones_name_phone_and_email(): void
+    {
+        // Décision 2026-11-21-detail-reservation-contact : après les lignes de la demande.
+        $this->owner->forceFill(['first_name' => 'Paul', 'last_name' => 'Hôte', 'email' => 'hote@example.test', 'phone' => '+237690000001'])->save();
+        $this->guest->forceFill(['first_name' => 'Léa', 'last_name' => 'Membre', 'email' => 'membre@example.test', 'phone' => null])->save();
+        $this->request(3);
+        $contact = fn (User $reader): array => array_values(array_filter(
+            $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data.booking.lines'),
+            fn (array $line): bool => in_array($line['key'], ['host', 'member', 'phone', 'email'], true),
+        ));
+
+        $host = $contact($this->guest);
+        $this->assertSame([
+            ['key' => 'host', 'label' => 'Hôte', 'value' => 'Paul Hôte', 'link' => '/members/'.$this->owner->getKey()],
+            ['key' => 'phone', 'label' => 'Téléphone', 'value' => PhoneNumbers::international('+237690000001')],
+            ['key' => 'email', 'label' => 'E-mail', 'value' => 'hote@example.test'],
+        ], $host);
+        // Sans téléphone : pas de ligne.
+        $this->assertSame([
+            ['key' => 'member', 'label' => 'Membre', 'value' => 'Léa Membre', 'link' => '/members/'.$this->guest->getKey()],
+            ['key' => 'email', 'label' => 'E-mail', 'value' => 'membre@example.test'],
+        ], $contact($this->owner));
+        // Toujours à la fin.
+        $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
+        $this->assertSame(['total', 'host', 'phone', 'email'], array_slice(array_column($lines, 'key'), -4));
+    }
+
     public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void
     {
         // Décision 2026-11-20-entete-premiere-etape : sur les deux côtés, quelle que soit l'étape ouverte.
@@ -191,7 +219,7 @@ class BookingThreadTest extends TestCase
                 // La caution du meublé, toujours (décision 2026-11-20-caution-meuble-toujours).
                 ['key' => 'deposit', 'label' => 'Caution', 'value' => Number::currency(0, 'XAF', 'fr')],
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
-            ], $page['booking']['lines']);
+            ], array_values(array_filter($page['booking']['lines'], fn (array $line): bool => ! in_array($line['key'], ['host', 'member', 'phone', 'email'], true))));
         }
 
         // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).

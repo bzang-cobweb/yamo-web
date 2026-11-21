@@ -3,6 +3,8 @@
 namespace Modules\Offer\Listeners;
 
 use Illuminate\Support\Str;
+use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Forms\BookingCancelForm;
@@ -21,6 +23,28 @@ use Modules\Offer\Support\BookingCache;
  */
 class AddBookingToNotificationThread
 {
+    /**
+     * « Hôte » ou « Membre » (avec le lien de sa page), « Téléphone », « E-mail » ; une ligne sans valeur est omise.
+     *
+     * @return list<array{key: string, label: string, value: string, link?: string}>
+     */
+    private function contactLines(?User $person, string $role): array
+    {
+        if ($person === null) {
+            return [];
+        }
+
+        $line = fn (string $key, ?string $value, ?string $link = null): ?array => $value === null || $value === ''
+            ? null
+            : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => $value, ...($link === null ? [] : ['link' => $link])];
+
+        return array_values(array_filter([
+            $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
+            $line('phone', $person->phone === null ? null : PhoneNumbers::international($person->phone)),
+            $line('email', $person->email),
+        ]));
+    }
+
     public function handle(NotificationThreadSerializing $event): void
     {
         if (! str_starts_with($event->thread, Booking::THREAD_PREFIX)) {
@@ -33,6 +57,15 @@ class AddBookingToNotificationThread
         $event->data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
 
         $mine = $booking !== null && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier();
+
+        // L'autre partie, après les lignes de la demande : pour le membre qui l'a faite, l'hôte ; pour l'hôte,
+        // le membre ; son nom vers sa page, son téléphone et son e-mail (décision 2026-11-21-detail-reservation-contact).
+        $host = $booking?->offer?->user;
+        $hosting = $host !== null && (string) $host->getKey() === (string) request()->user()?->getAuthIdentifier();
+        if ($booking !== null && is_array($event->data['booking']) && ($mine || $hosting)) {
+            $other = $mine ? $host : $booking->user;
+            $event->data['booking']['lines'] = [...$event->data['booking']['lines'], ...$this->contactLines($other, $mine ? 'host' : 'member')];
+        }
 
         if ($mine && $booking->isCancellable()) {
             $event->data['secondary_link'] = '/profile/'.BookingCancelForm::name().'?record='.$booking->getKey();
