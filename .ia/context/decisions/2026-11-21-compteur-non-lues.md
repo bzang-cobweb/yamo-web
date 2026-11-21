@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-21-compteur-non-lues-sans-statut.md
+
 # « Mes logements » : un second bouton « x notifications non lues »
 
 - **Date** : 2026-11-21

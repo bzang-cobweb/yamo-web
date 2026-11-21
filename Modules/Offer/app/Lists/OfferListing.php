@@ -6,9 +6,7 @@ use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Support\Facades\DB;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
@@ -136,19 +134,15 @@ class OfferListing extends Listing
             ->withReviewSummary()
             // Les demandes en attente, pour le compteur de la carte.
             ->withCount(['bookings as pending_bookings_count' => fn (Builder $bookings) => $bookings->where('status', BookingStatusEnum::PENDING)])
-            // Ses notifications non lues des demandes en attente, une demande (un fil) comptant pour une, pour le
-            // second compteur : les filtres du premier, plus « Non lues » (décision 2026-11-21-compteur-non-lues).
+            // Ses notifications non lues de ce logement, quel que soit le statut de la demande, une demande (un fil)
+            // comptant pour une, pour le second compteur (décision 2026-11-21-compteur-non-lues-sans-statut).
             ->addSelect(['unread_notifications_count' => DatabaseNotification::query()
                 ->selectRaw('count(distinct thread)')
                 ->where('notifiable_type', (new User)->getMorphClass())
                 ->where('notifiable_id', $this->user?->getAuthIdentifier())
                 ->whereNull('read_at')
                 ->whereNotNull('thread')
-                ->whereColumn('data->offer_id', 'offers.id')
-                ->whereExists(fn (QueryBuilder $pending) => $pending->select(DB::raw(1))
-                    ->from('bookings')
-                    ->whereColumn('bookings.id', 'notifications.data->booking_id')
-                    ->where('bookings.status', BookingStatusEnum::PENDING->value))])
+                ->whereColumn('data->offer_id', 'offers.id')])
             ->orderBy('id');
     }
 
@@ -219,14 +213,14 @@ class OfferListing extends Listing
             );
         }
 
-        // Ses notifications non lues : un second compteur, avec les filtres du premier plus « Non lues : Oui »
-        // (décision 2026-11-21-compteur-non-lues).
+        // Ses notifications non lues : un second compteur, demandes de ce logement, non lues, sans filtre de statut
+        // (décision 2026-11-21-compteur-non-lues-sans-statut).
         $unread = (int) ($record->unread_notifications_count ?? 0);
         if ($unread > 0) {
             $item->counter(
                 trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread]),
                 'notifications',
-                ['type' => OfferNotificationFilter::BOOKING, 'status' => BookingStatusEnum::PENDING->value, 'offer' => (string) $record->getKey(), 'unread' => 'yes'],
+                ['type' => OfferNotificationFilter::BOOKING, 'offer' => (string) $record->getKey(), 'unread' => 'yes'],
                 link: '/notifications',
             );
         }

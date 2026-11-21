@@ -298,23 +298,24 @@ class BookingApiTest extends TestCase
         $second = Booking::factory()->for($offer)->create(['check_in' => today()->addDays(20), 'check_out' => today()->addDays(22)]);
         $read = Booking::factory()->for($offer)->create(['check_in' => today()->addDays(30), 'check_out' => today()->addDays(32)]);
         $accepted = Booking::factory()->for($offer)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(40), 'check_out' => today()->addDays(42)]);
-        // Deux étapes non lues d'une même demande en attente, une autre en attente non lue : 2.
+        // Deux étapes non lues d'une même demande, une autre en attente non lue, une acceptée non lue : 3,
+        // quel que soit le statut (décision 2026-11-21-compteur-non-lues-sans-statut).
         $notify($first, false);
         $notify($first, false);
         $notify($second, false);
-        // Lue, ou d'une demande qui n'est plus en attente : pas comptée.
-        $notify($read, true);
         $notify($accepted, false);
+        // Lue : pas comptée.
+        $notify($read, true);
         $notify(Booking::factory()->for($other)->status(BookingStatusEnum::REFUSED)->create(), true);
         // Celles d'un autre membre ne comptent pas.
         $notify($first, false, $this->member());
 
         $items = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id');
         $this->assertSame([[
-            'label' => '2 notifications non lues',
+            'label' => '3 notifications non lues',
             'list' => 'notifications',
-            // Les filtres de « x demandes en attente », plus « Non lues : Oui ».
-            'filter' => ['type' => 'booking', 'status' => 'pending', 'offer' => (string) $offer->getKey(), 'unread' => 'yes'],
+            // Demandes de ce logement, non lues, sans filtre de statut.
+            'filter' => ['type' => 'booking', 'offer' => (string) $offer->getKey(), 'unread' => 'yes'],
             'link' => '/notifications',
         ]], array_slice($items[(string) $offer->getKey()]['counters'], 1));
         $this->assertSame([], $items[(string) $other->getKey()]['counters']);
