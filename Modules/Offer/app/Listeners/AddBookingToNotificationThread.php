@@ -4,6 +4,8 @@ namespace Modules\Offer\Listeners;
 
 use Illuminate\Support\Str;
 use Modules\Notification\Events\NotificationThreadSerializing;
+use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Support\BookingCache;
@@ -11,7 +13,9 @@ use Modules\Offer\Support\BookingCache;
 /**
  * Sur la page d'une notification du fil d'une demande (`booking:12`), la demande en
  * léger, sous `booking` (décision 2026-11-20-notification-generique). Une demande
- * supprimée : `booking` vaut `null`.
+ * supprimée : `booking` vaut `null`. Pour le membre qui l'a faite, tant qu'elle est en
+ * attente, le bouton du bas ouvre « Modifier la demande » au lieu de « Mes réservations »
+ * (décision 2026-11-21-detail-reservation-modifier).
  */
 class AddBookingToNotificationThread
 {
@@ -25,5 +29,12 @@ class AddBookingToNotificationThread
         $booking = ctype_digit($id) ? app(BookingCache::class)->find((int) $id) : null;
 
         $event->data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
+
+        if ($booking !== null
+            && $booking->status === BookingStatusEnum::PENDING
+            && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier()) {
+            $event->data['link'] = '/profile/'.BookingEditForm::name().'?record='.$booking->getKey();
+            $event->data['link_label'] = __('offer::booking.form.edit');
+        }
     }
 }

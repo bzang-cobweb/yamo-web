@@ -360,6 +360,23 @@ class BookingThreadTest extends TestCase
         $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande de logement']['read']);
     }
 
+    public function test_the_requester_button_edits_the_request_while_it_is_pending(): void
+    {
+        $booking = $this->request(3);
+        $page = fn (User $reader): array => $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data');
+
+        // Le membre, demande en attente : « Modifier » ouvre le formulaire prérempli.
+        $this->assertSame('/profile/offer.booking.edit?record='.$booking->getKey(), $page($this->guest)['link']);
+        $this->assertSame('Modifier', $page($this->guest)['link_label']);
+        // Le propriétaire garde « Traiter la demande ».
+        $this->assertSame('Traiter la demande', $page($this->owner)['link_label']);
+
+        // Une fois répondue : « Mes réservations » revient.
+        app(BookingService::class)->answer($booking, true);
+        $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
+        $this->assertSame('Mes réservations', $page($this->guest)['link_label']);
+    }
+
     public function test_a_stranger_gets_no_follow_up(): void
     {
         $this->request(3);
