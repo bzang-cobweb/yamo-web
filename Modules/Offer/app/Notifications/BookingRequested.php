@@ -41,7 +41,8 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
     /** Le statut à l'envoi : la demande, rechargée quand la file traite la notification, a pu changer depuis. */
     public readonly BookingStatusEnum $status;
 
-    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step, public readonly bool $own = false)
+    /** `$edited` : une demande modifiée dont le message diffère du précédent (décision 2026-11-21-etape-modifiee-date). */
+    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step, public readonly bool $own = false, public readonly bool $edited = false)
     {
         $this->status = $booking->status;
 
@@ -138,8 +139,9 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
             // Le total figé de la demande (« 255 000 FCFA »), en gras sur la page de la notification ; `null` pour une visite.
             'total' => $this->booking->formattedTotal(app()->getLocale()),
             'message' => $this->note(),
-            // Une demande modifiée : « Modifié » près de sa date dans le suivi (décision 2026-11-21-etape-modifiee-date).
-            'edited' => $this->step === BookingStepEnum::UPDATED,
+            // Une demande modifiée dont le message a changé : « Modifié » près de sa date dans le suivi
+            // (décision 2026-11-21-etape-modifiee-date).
+            'edited' => $this->edited,
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
             'link' => $this->section() === 'received'

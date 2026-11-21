@@ -425,6 +425,26 @@ class BookingThreadTest extends TestCase
         $this->assertGreaterThan(0, DB::table('jobs')->count());
     }
 
+    public function test_an_edited_request_is_marked_edited_only_when_its_message_changes(): void
+    {
+        $booking = $this->request(3, 'Bonjour !');
+        $history = fn (): array => $this->api($this->owner, 'GET', '/'.$this->cards($this->owner)[0]['id'])->json('data.history');
+        $edit = fn (string $message, int $from) => app(BookingService::class)->update($booking->refresh(), [
+            'check_in' => today()->addDays($from)->toDateString(), 'check_out' => today()->addDays($from + 2)->toDateString(), 'guests' => 1, 'message' => $message,
+        ]);
+
+        // Dates changées, même message : pas « Modifié ».
+        $edit('Bonjour !', 5);
+        $this->assertSame([false], array_column($history(), 'edited'));
+        // Message changé : « Modifié ».
+        $edit('Bonsoir !', 5);
+        $this->assertSame([true], array_column($history(), 'edited'));
+        // Déjà modifiée, elle le reste.
+        $edit('Bonsoir !', 7);
+        $this->assertSame([true], array_column($history(), 'edited'));
+        $this->assertTrue($this->guest->notifications()->sole()->data['edited']);
+    }
+
     public function test_a_stranger_gets_no_follow_up(): void
     {
         $this->request(3);

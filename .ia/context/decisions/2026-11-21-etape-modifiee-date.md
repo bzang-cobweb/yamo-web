@@ -10,8 +10,14 @@ Dans le suivi d'une demande (page d'une notification), une étape « Demande mod
 `notification::mobile.notifications.edited` (fr « Modifié », en « Edited », de « Bearbeitet »).
 
 ## Mécanisme
-Générique : la notification porte `data.edited` (vrai pour l'étape `updated` de
-`BookingRequested`) ; l'API le sert par étape (`history[].edited`), l'app l'affiche.
+Générique : la notification porte `data.edited` ; l'API le sert par étape (`history[].edited`),
+l'app l'affiche. Pour `BookingRequested`, `edited` est vrai à une modification seulement si le
+message diffère de celui de l'étape remplacée ; une étape déjà modifiée le reste. Changer
+seulement les dates ou les voyageurs ne la marque pas.
+
+## Écartée
+« Modifié » d'après un `updated_at` différent du `created_at` (essayé puis annulé à la demande
+de l'humain) : les lectures touchaient `updated_at`, et la demande ne remontait plus en tête.
 
 ## Portée
 Le suivi seulement ; les cartes de la liste ne changent pas.

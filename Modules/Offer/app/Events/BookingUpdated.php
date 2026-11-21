@@ -13,5 +13,6 @@ class BookingUpdated
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public readonly Booking $booking) {}
+    /** `$edited` : son message diffère du précédent (décision 2026-11-21-etape-modifiee-date). */
+    public function __construct(public readonly Booking $booking, public readonly bool $edited = false) {}
 }
