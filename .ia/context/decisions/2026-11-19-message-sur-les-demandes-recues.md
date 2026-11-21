@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-demandes-comme-mes-reservations.md (en partie)
+
 # Le message du membre cité sur la carte d'une demande reçue
 
 - **Type** : décision de conception

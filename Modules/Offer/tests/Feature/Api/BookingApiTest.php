@@ -265,9 +265,12 @@ class BookingApiTest extends TestCase
         $this->assertNotContains('offer.bookings.received', array_column($this->asUser($owner)->getJson('/api/v1/auth/me/menu')->json('data'), 'list'));
         // Sur la carte : « Accepter » (confirmation, envoi) et « Refuser » (formulaire du refus).
         $item = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->assertOk()->json('data.items.0');
-        // Le statut en pastille orange ; le total en gras.
-        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $item['tag']);
-        $this->assertStringStartsWith('135', (string) $item['highlight']);
+        // La carte de « Mes réservations » (décision 2026-11-21-demandes-comme-mes-reservations) : le statut en
+        // pastille orange sur la photo, le membre en tête du sous-titre, le prix en gras, les actions en menu.
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $item['tag']);
+        $this->assertStringContainsString((string) $guest->full_name.' · ', (string) $item['subtitle']);
+        $this->assertNotNull($item['highlight']);
+        $this->assertTrue($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
         [$accept, $refuse] = $item['actions'];
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
         $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);
@@ -383,12 +386,13 @@ class BookingApiTest extends TestCase
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
         // Le filtre « Logement », avec une recherche (décision 2026-11-21-filtre-logement-recherche).
         $this->assertTrue(collect($requests['filters'])->keyBy('name')['offer']['searchable']);
-        $this->assertStringStartsWith('Demandes · ', $requests['title']);
+        // Titrée « Demandes », les mêmes filtres que « Mes réservations » ; sans message cité : il se lit sur la page
+        // de la demande (décision 2026-11-21-demandes-comme-mes-reservations).
+        $this->assertSame('Demandes', $requests['title']);
+        $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], array_column($requests['filters'], 'name'));
+        $this->assertSame([(string) $offer->getKey(), (string) $other->getKey()], array_column(collect($requests['filters'])->keyBy('name')['offer']['options'], 'value'));
         $this->assertCount(2, $requests['items']);
-        // Le message du membre, cité sur sa carte (décision 2026-11-19-message-sur-les-demandes-recues).
-        $quotes = collect($requests['items'])->pluck('quote', 'id');
-        $this->assertSame('Bonjour, je viens pour le travail.', $quotes[(string) $first->getKey()]);
-        $this->assertSame([null], $quotes->except((string) $first->getKey())->values()->all());
+        $this->assertSame([null, null], array_column($requests['items'], 'quote'));
 
         // Accepter d'un geste ; un autre que le propriétaire : 404.
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNotFound();

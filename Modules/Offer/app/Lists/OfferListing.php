@@ -187,12 +187,12 @@ class OfferListing extends Listing
             ->link('/offers/'.$record->getKey())
             // Son calendrier : occupation, demandes, jours bloqués (décision 2026-11-19-contrat-calendrier-offre).
             ->action(__('offer::booking.calendar.button'), link: '/offers/'.$record->getKey().'/calendar')
-            // Puis ses notifications : les demandes de ce logement, sans autre filtre (décision 2026-11-21-lien-notifications).
+            // Puis « Demandes » : la liste des demandes reçues, comme « Mes réservations », ce logement déjà choisi
+            // dans le filtre « Logement » (décision 2026-11-21-demandes-comme-mes-reservations).
             ->action(
                 __('offer::booking.profile.notifications'),
-                link: '/notifications/filtered',
-                filter: ['type' => OfferNotificationFilter::BOOKING, 'offer' => (string) $record->getKey()],
-                list: 'notifications',
+                filter: ['offer' => (string) $record->getKey()],
+                list: ReceivedBookingListing::name(),
             )
             ->delete(
                 __('offer::offer.list.remove'),

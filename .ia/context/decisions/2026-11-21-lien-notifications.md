@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-demandes-comme-mes-reservations.md (en partie)
+
 # « Notifications » dans le menu d'une carte de « Mes logements »
 
 - **Date** : 2026-11-21

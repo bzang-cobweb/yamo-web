@@ -5,26 +5,30 @@ namespace Modules\Offer\Lists;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\BookingRefuseForm;
+use Modules\Offer\Lists\Concerns\FiltersBookings;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\OfferAvailability;
 
 /**
- * « Réservations reçues » (décision 2026-11-19-contrat-reservations) : les demandes
- * sur les offres du compte dans le pays courant, la plus récente en tête ; le
- * membre, l'offre, les dates, le statut ; « Répondre » tant qu'elle attend.
+ * « Demandes » (décision 2026-11-19-contrat-reservations) : les demandes sur les offres du compte dans le
+ * pays courant, la plus récente en tête ; « Répondre » tant qu'elle attend. Ouverte par « Demandes » d'une
+ * carte de « Mes logements », le logement déjà choisi dans le filtre. Les mêmes cartes et les mêmes filtres
+ * que « Mes réservations », le membre en plus (décision 2026-11-21-demandes-comme-mes-reservations).
  */
 class ReceivedBookingListing extends Listing
 {
+    use FiltersBookings;
+
     public static function name(): string
     {
         return 'offer.bookings.received';
@@ -33,6 +37,31 @@ class ReceivedBookingListing extends Listing
     public static function isAvailable(): bool
     {
         return app(DomainRegistry::class)->active() !== null;
+    }
+
+    public function title(): string
+    {
+        return __('offer::booking.profile.requests_all');
+    }
+
+    /**
+     * Les actions dans le menu trois points, comme « Mes réservations ».
+     */
+    public function actionsMenu(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Ses logements du pays courant, supprimés compris.
+     *
+     * @return Builder<Offer>
+     */
+    protected function bookedOffers(): Builder
+    {
+        return Offer::query()->withTrashed()
+            ->where('user_id', $this->user?->getAuthIdentifier())
+            ->where('country_id', CurrentCountry::require()->getKey());
     }
 
     public function emptyText(): string
@@ -51,7 +80,17 @@ class ReceivedBookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            ->with(['offer.media', 'offer.address', 'user'])
+            // La note et le nombre d'avis du logement, comme dans « Mes réservations ».
+            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary(), 'user'])
+            // Sa dernière notification du fil de la demande : la carte ouvre sa page, comme dans « Mes réservations ».
+            ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
+                ->select('id')
+                ->where('notifiable_type', (new User)->getMorphClass())
+                ->where('notifiable_id', $this->user?->getAuthIdentifier())
+                ->whereColumn('data->booking_id', 'bookings.id')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(1)])
             ->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()
                 ->where('user_id', $this->user?->getAuthIdentifier())
                 ->where('country_id', CurrentCountry::require()->getKey()))
@@ -69,10 +108,13 @@ class ReceivedBookingListing extends Listing
     {
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
-        // Le message du membre, cité sur la carte (décision 2026-11-19-message-sur-les-demandes-recues).
-        $item = BookingItem::make($record, $locale, withGuest: true)
-            ->quote($record->message)
-            ->link('/offers/'.$record->offer_id);
+        // La carte de « Mes réservations », le membre en tête du sous-titre ; elle ouvre la page de la demande,
+        // où se lit son message ; sans notification dans son fil, la fiche du logement ; le statut sur la photo
+        // (décision 2026-11-21-demandes-comme-mes-reservations).
+        $notification = $record->getAttribute('thread_notification_id');
+        $item = BookingItem::make($record, $locale, withGuest: true, mine: true)
+            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
+            ->tag($record->status->label(), $record->status->tone(), onImage: true);
 
         if ($record->isAwaitingAnswer()) {
             // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message
@@ -114,62 +156,5 @@ class ReceivedBookingListing extends Listing
         $names = $others->map(fn (Booking $other): string => $other->user->full_name.' ('.$other->period($locale).')')->implode(', ');
 
         return $confirm.' '.trans_choice('offer::booking.profile.accept_overlaps', $others->count(), ['requests' => $names], $locale);
-    }
-
-    /**
-     * Le logement concerné, puis le statut (« En attente » ouvert depuis le compteur d'un logement).
-     */
-    public function filters(): array
-    {
-        return [
-            Field::select('offer')
-                ->label(__('offer::booking.profile.filter_offer'))
-                ->options($this->offers())
-                // Avec une recherche (décision 2026-11-21-filtre-logement-recherche).
-                ->searchable(),
-            BookingFilters::status(),
-        ];
-    }
-
-    protected function applyFilters(Builder $query, array $filters): void
-    {
-        if (isset($filters['offer'])) {
-            $query->where('offer_id', $filters['offer']);
-        }
-        BookingFilters::applyStatus($query, $filters);
-    }
-
-    /**
-     * Filtrée sur un logement : « Demandes · Studio meublé » ; sinon « Demandes reçues ».
-     */
-    public function titleFor(array $filters): string
-    {
-        $offers = $this->offers();
-        $offer = isset($filters['offer']) ? ($offers[(string) $filters['offer']] ?? null) : null;
-
-        return $offer === null ? $this->title() : __('offer::booking.profile.requests_title', ['offer' => $offer]);
-    }
-
-    public function title(): string
-    {
-        return __('offer::booking.profile.requests_all');
-    }
-
-    /**
-     * Ses logements du pays courant, par titre.
-     *
-     * @return array<string, string>
-     */
-    private function offers(): array
-    {
-        $domain = app(DomainRegistry::class)->require();
-
-        return Offer::query()->withTrashed()
-            ->where('user_id', $this->user?->getAuthIdentifier())
-            ->where('country_id', CurrentCountry::require()->getKey())
-            ->orderBy('id')
-            ->get()
-            ->mapWithKeys(fn (Offer $offer): array => [(string) $offer->getKey() => $domain->itemTitle($offer) ?? (string) $offer->getTranslation('title', app()->getLocale())])
-            ->all();
     }
 }

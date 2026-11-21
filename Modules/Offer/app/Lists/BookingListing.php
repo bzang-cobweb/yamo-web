@@ -8,18 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
-use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Forms\BookingEditForm;
+use Modules\Offer\Lists\Concerns\FiltersBookings;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferAddress;
 
 /**
  * « Mes réservations » (décision 2026-11-19-contrat-reservations) : les demandes du
@@ -29,6 +26,8 @@ use Modules\Offer\Models\OfferAddress;
  */
 class BookingListing extends Listing
 {
+    use FiltersBookings;
+
     public static function name(): string
     {
         return 'offer.bookings';
@@ -73,94 +72,15 @@ class BookingListing extends Listing
     }
 
     /**
-     * Statut réel de la demande (en attente, acceptée, refusée, annulée), période d'après les dates
-     * (à venir, en cours, passées), ville du logement, le logement lui-même, puis les types de l'offre servis par le domaine
-     * (type de logement, type de location) ; tous en liste déroulante (décisions
-     * 2026-11-21-reservations-filtre-statut, 2026-11-21-reservations-periode-dates et
-     * 2026-11-21-reservations-filtre-type).
-     */
-    public function filters(): array
-    {
-        return [
-            Field::select('status')
-                ->label(__('offer::booking.profile.filter_status'))
-                ->options(BookingStatusEnum::options()),
-            BookingFilters::period(),
-            Field::select('city')
-                ->label(__('offer::booking.profile.filter_city'))
-                ->options($this->cities()),
-            // Le logement demandé, par son titre, avec une recherche (décisions 2026-11-21-reservations-filtre-logement
-            // et 2026-11-21-filtre-logement-recherche).
-            Field::select('offer')
-                ->label(__('offer::booking.profile.filter_offer'))
-                ->options($this->offers())
-                ->searchable(),
-            ...app(DomainRegistry::class)->require()->offerTypeFilters(),
-        ];
-    }
-
-    protected function applyFilters(Builder $query, array $filters): void
-    {
-        $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
-        if ($status !== null) {
-            $query->where('status', $status);
-        }
-        BookingFilters::applyPeriod($query, $filters);
-        if (isset($filters['city'])) {
-            $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
-        }
-        if (isset($filters['offer']) && is_scalar($filters['offer'])) {
-            $query->where('offer_id', (string) $filters['offer']);
-        }
-        $types = array_intersect_key($filters, array_flip($this->offerTypeNames()));
-        if ($types !== []) {
-            $query->whereHas('offer', fn (Builder $offer) => app(DomainRegistry::class)->require()->applyFilters($offer->withTrashed(), $types));
-        }
-    }
-
-    /**
-     * Les noms des filtres de type servis par le domaine.
+     * Les logements qu'il a demandés dans le pays courant, supprimés compris.
      *
-     * @return list<string>
+     * @return Builder<Offer>
      */
-    private function offerTypeNames(): array
+    protected function bookedOffers(): Builder
     {
-        return array_map(fn (Field $field): string => $field->name, app(DomainRegistry::class)->require()->offerTypeFilters());
-    }
-
-    /**
-     * Les logements qu'il a demandés dans le pays courant, supprimés compris, par leur titre de carte.
-     *
-     * @return array<string, string>
-     */
-    private function offers(): array
-    {
-        $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
-
         return Offer::query()->withTrashed()
             ->whereIn('id', Booking::query()->select('offer_id')->where('user_id', $this->user?->getAuthIdentifier()))
-            ->where('country_id', CurrentCountry::require()->getKey())
-            ->with('address')
-            ->orderBy('id')
-            ->get()
-            ->mapWithKeys(fn (Offer $offer): array => [(string) $offer->getKey() => OfferCardTitle::of($offer, $locale)[0]])
-            ->all();
-    }
-
-    /**
-     * Les villes des logements qu'il a demandés.
-     *
-     * @return array<string, string>
-     */
-    private function cities(): array
-    {
-        return Address::query()
-            ->whereIn('id', OfferAddress::query()->select('address_id')->whereIn('offer_id', Booking::query()->select('offer_id')->where('user_id', $this->user?->getAuthIdentifier())))
-            ->whereNotNull('city')
-            ->distinct()
-            ->orderBy('city')
-            ->pluck('city', 'city')
-            ->all();
+            ->where('country_id', CurrentCountry::require()->getKey());
     }
 
     /**
