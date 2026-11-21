@@ -4,6 +4,7 @@ namespace Modules\Offer\Services;
 
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
@@ -215,6 +216,11 @@ class OfferService
             'price' => $price,
             'currency' => $price === null ? null : $country?->currency,
             // Afficher l'adresse (décision 2026-11-21-afficher-adresse) : absent de l'envoi, gardé.
+            // Le contact de l'offre (décision 2026-11-21-contact-offre) : absent de l'envoi, gardé ; vide, effacé.
+            'phone' => array_key_exists('phone', $data)
+                ? (filled($data['phone']) ? PhoneNumbers::toE164((string) $data['phone'], (string) ($data['phone_country'] ?? '')) : null)
+                : $offer?->phone,
+            'email' => array_key_exists('email', $data) ? (filled($data['email']) ? trim((string) $data['email']) : null) : $offer?->email,
             'show_address' => array_key_exists('show_address', $data) ? filter_var($data['show_address'], FILTER_VALIDATE_BOOL) : ($offer === null ? true : $offer->show_address),
             // Attributs d'un autre domaine gardés tels quels ; ceux du domaine actif remplacés.
             'details' => [

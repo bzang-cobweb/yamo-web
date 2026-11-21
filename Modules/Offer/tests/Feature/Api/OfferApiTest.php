@@ -107,7 +107,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'show_address', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -156,6 +156,20 @@ class OfferApiTest extends TestCase
         $this->assertFalse($offer->show_address);
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['show_address' => true]))->assertNoContent();
         $this->assertTrue($offer->fresh()->show_address);
+    }
+
+    public function test_an_offer_has_its_own_contact_phone_and_email(): void
+    {
+        // Décision 2026-11-21-contact-offre : facultatifs ; le téléphone en E.164 ; vides, effacés.
+        $user = $this->member();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['phone' => '0791234567', 'phone_country' => 'CH', 'email' => 'contact@example.test']))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $this->assertSame(['+41791234567', 'contact@example.test'], [$offer->phone, $offer->email]);
+        $fields = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer?record='.$offer->getKey())->json('data.fields'))->keyBy('name');
+        $this->assertSame('CH', $fields['phone']['default']['country'] ?? null);
+
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['phone' => '', 'phone_country' => 'CH', 'email' => '']))->assertNoContent();
+        $this->assertSame([null, null], [$offer->fresh()->phone, $offer->fresh()->email]);
     }
 
     public function test_a_furnished_home_has_no_charges(): void
@@ -249,7 +263,7 @@ class OfferApiTest extends TestCase
             ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status'],
             ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],
-            ['street', 'zip', 'city', 'indication', 'show_address'],
+            ['street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email'],
             ['photos'],
         ], array_column($steps, 'fields'));
 

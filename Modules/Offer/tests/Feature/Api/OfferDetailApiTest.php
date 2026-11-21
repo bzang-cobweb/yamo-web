@@ -255,20 +255,21 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
     }
 
-    public function test_a_hidden_address_has_no_location_block_except_for_its_owner(): void
+    public function test_a_hidden_address_shows_only_the_city_except_to_its_owner(): void
     {
         // Décision 2026-11-21-afficher-adresse.
         $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished']]);
         $offer->update(['show_address' => false]);
 
+        // La ville seule, sans indication (décision 2026-11-21-adresse-masquee-ville).
         $data = $this->show($offer)->json('data');
-        $this->assertNull($data['address']);
+        $this->assertSame($offer->address->city, $data['address']);
         $this->assertNull($data['indication']);
-        $this->assertNotContains('location', array_column($data['sections'], 'key'));
+        $this->assertSame($offer->address->city, collect($data['sections'])->firstWhere('key', 'location')['text']);
 
         app('auth')->forgetGuards();
         $mine = $this->withToken($offer->user->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson("/api/v1/offers/{$offer->getKey()}")->json('data');
-        $this->assertContains('location', array_column($mine['sections'], 'key'));
+        $this->assertStringStartsWith('Rue Njo-Njo 12', (string) $mine['address']);
     }
 
     /**

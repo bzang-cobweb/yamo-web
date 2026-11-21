@@ -160,6 +160,21 @@ class BookingThreadTest extends TestCase
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
+    public function test_the_member_sees_the_offer_contact_or_else_the_owner_one(): void
+    {
+        // Décision 2026-11-21-contact-offre.
+        $this->owner->forceFill(['email' => 'hote@example.test', 'phone' => '+237670000001'])->save();
+        $this->request(3);
+        $contact = fn (): array => array_column(array_filter(
+            $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines'),
+            fn (array $line): bool => in_array($line['key'], ['phone', 'email'], true),
+        ), 'value', 'key');
+
+        $this->assertSame(['phone' => PhoneNumbers::international('+237670000001'), 'email' => 'hote@example.test'], $contact());
+        $this->offer->update(['phone' => '+237690000002', 'email' => 'logement@example.test']);
+        $this->assertSame(['phone' => PhoneNumbers::international('+237690000002'), 'email' => 'logement@example.test'], $contact());
+    }
+
     public function test_the_owner_shows_or_hides_the_address_to_the_requester(): void
     {
         // Décision 2026-11-21-afficher-adresse : la demande part du choix de l'offre ; le propriétaire le change.
@@ -169,8 +184,10 @@ class BookingThreadTest extends TestCase
         $this->assertFalse($booking->show_address);
         $keys = fn (User $reader): array => array_column($this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->json('data.booking.lines'), 'key');
 
-        // Masquée : pas de ligne pour le demandeur ; le propriétaire la voit, en tête.
-        $this->assertNotContains('address', $keys($this->guest));
+        // Masquée : la ville seule pour le demandeur (décision 2026-11-21-adresse-masquee-ville) ; le
+        // propriétaire voit l'adresse entière, en tête.
+        $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
+        $this->assertSame(['address', 'Douala'], [$lines[0]['key'], $lines[0]['value']]);
         $this->assertSame('address', $keys($this->owner)[0]);
 
         $this->app['auth']->forgetGuards();

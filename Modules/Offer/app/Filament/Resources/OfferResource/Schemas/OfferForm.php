@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Filament\FieldComponent;
 use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
@@ -31,6 +32,7 @@ use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 /**
  * Formulaire d'une offre dans le back-office : champs communs, attributs du
@@ -174,6 +176,21 @@ abstract class OfferForm
                                     ->default(true)
                                     ->visible($domain->hasAddress())
                                     ->columnSpanFull(),
+                                // Le contact de l'offre, facultatif ; le téléphone saisi au format international et
+                                // enregistré en E.164 (décision 2026-11-21-contact-offre).
+                                TextInput::make('phone')
+                                    ->label(__('offer::offer.phone'))
+                                    ->helperText(__('offer::offer.contact_help'))
+                                    ->tel()
+                                    ->placeholder('+237 6 70 00 00 00')
+                                    ->rule('phone:INTERNATIONAL')
+                                    ->formatStateUsing(fn (?string $state): ?string => $state === null ? null : PhoneNumbers::international($state))
+                                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? (new PhoneNumber((string) $state))->formatE164() : null),
+                                TextInput::make('email')
+                                    ->label(__('offer::offer.email'))
+                                    ->helperText(__('offer::offer.contact_help'))
+                                    ->email()
+                                    ->maxLength(255),
                             ]),
                         // Le prix et ce qui l'accompagne (décision 2026-11-19-onglet-prix) ; pas d'onglet
                         // pour un domaine sans prix.

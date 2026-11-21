@@ -5,6 +5,7 @@ namespace Modules\Offer\Forms;
 use App\Support\Currency;
 use App\Support\Locales;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -19,6 +20,7 @@ use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Services\OfferPhotoService;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 /**
  * Une offre du compte, depuis « Mes logements » (ou le libellé du domaine) :
@@ -117,6 +119,20 @@ class OfferForm extends Form
                 ->label(__('offer::offer.show_address'))
                 ->help(__('offer::offer.show_address_help'))
                 ->default($offer === null ? true : $offer->show_address),
+            // Le téléphone et l'e-mail de contact de l'offre, facultatifs : montrés au membre qui la demande ;
+            // vides, ceux du compte (décision 2026-11-21-contact-offre).
+            Field::phone('phone')
+                ->label(__('offer::offer.phone'))
+                ->help(__('offer::offer.contact_help'))
+                ->options(PhoneNumbers::countryOptions())
+                ->default($offer?->phone === null
+                    ? ['country' => CurrentCountry::get()?->code, 'number' => null]
+                    : ['country' => (new PhoneNumber($offer->phone))->getCountry(), 'number' => PhoneNumbers::national($offer->phone)]),
+            Field::email('email')
+                ->label(__('offer::offer.email'))
+                ->help(__('offer::offer.contact_help'))
+                ->default($offer?->email)
+                ->rules(['nullable', 'max:255']),
             Field::select('status')
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())

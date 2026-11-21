@@ -37,10 +37,10 @@ class OfferDetailResource extends JsonResource
         $domain = app(DomainRegistry::class)->require();
         $locale = app()->getLocale();
         $owner = (int) $request->user('sanctum')?->getAuthIdentifier() === (int) $offer->user_id;
-        // Adresse masquée par le propriétaire : ni adresse, ni indication, donc pas de bloc « Localisation » ;
-        // lui les voit toujours (décision 2026-11-21-afficher-adresse).
+        // Adresse masquée par le propriétaire : la ville seule, sans indication ; lui voit toujours tout
+        // (décisions 2026-11-21-afficher-adresse et 2026-11-21-adresse-masquee-ville).
         $located = $owner || $offer->show_address;
-        $address = $located ? $this->address($offer) : null;
+        $address = $located ? $this->address($offer) : $offer->address?->city;
         $indication = $located ? $this->indication($offer, $locale) : null;
         $facts = $this->facts($offer, $domain, $locale);
         $rules = [...$this->minimumAge(), ...array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)))];

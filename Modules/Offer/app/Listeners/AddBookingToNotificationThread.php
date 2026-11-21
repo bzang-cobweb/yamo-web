@@ -24,25 +24,21 @@ use Modules\Offer\Support\BookingCache;
 class AddBookingToNotificationThread
 {
     /**
-     * « Membre » (avec le lien de sa page) si `$role` est donné, puis « Téléphone » et « E-mail » ; une ligne sans
-     * valeur est omise.
+     * Le nom (avec le lien de sa page, si `$role` est donné), le téléphone et l'e-mail ; une ligne sans valeur
+     * est omise.
      *
      * @return list<array{key: string, label: string, value: string, link?: string}>
      */
-    private function contactLines(?User $person, ?string $role): array
+    private function contactLines(?string $role, ?User $person, ?string $phone, ?string $email): array
     {
-        if ($person === null) {
-            return [];
-        }
-
         $line = fn (string $key, ?string $value, ?string $link = null): ?array => $value === null || $value === ''
             ? null
             : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => $value, ...($link === null ? [] : ['link' => $link])];
 
         return array_values(array_filter([
-            $role === null ? null : $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
-            $person->phone === null ? null : $line('phone', PhoneNumbers::international($person->phone)),
-            $line('email', $person->email),
+            $role === null || $person === null ? null : $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
+            $phone === null || $phone === '' ? null : $line('phone', PhoneNumbers::international($phone)),
+            $line('email', $email),
         ]));
     }
 
@@ -78,22 +74,28 @@ class AddBookingToNotificationThread
 
         $mine = $booking !== null && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier();
 
-        // L'adresse masquée par le propriétaire : pas de ligne « Adresse » pour le demandeur
-        // (décision 2026-11-21-afficher-adresse).
+        // L'adresse masquée par le propriétaire : la ville seule pour le demandeur ; sans ville, pas de ligne
+        // (décisions 2026-11-21-afficher-adresse et 2026-11-21-adresse-masquee-ville).
         if ($mine && ! $booking->show_address && is_array($event->data['booking'])) {
-            $event->data['booking']['lines'] = array_values(array_filter($event->data['booking']['lines'], fn (array $line): bool => ($line['key'] ?? null) !== 'address'));
+            $city = $booking->offer?->address?->city;
+            $event->data['booking']['lines'] = array_values(array_filter(array_map(
+                fn (array $line): ?array => ($line['key'] ?? null) !== 'address' ? $line : ($city === null || $city === '' ? null : [...$line, 'value' => $city]),
+                $event->data['booking']['lines'],
+            )));
         }
 
-        // L'autre partie, juste après l'adresse (décision 2026-11-21-afficher-adresse) : pour le membre qui l'a faite, l'hôte ; pour l'hôte,
-        // le membre ; son nom vers sa page, son téléphone et son e-mail (décision 2026-11-21-detail-reservation-contact).
+        // L'autre partie, juste après l'adresse, toujours (décisions 2026-11-21-afficher-adresse,
+        // 2026-11-21-contact-toujours et 2026-11-21-detail-reservation-contact-ordre) : pour le membre qui l'a faite,
+        // le téléphone et l'e-mail de l'offre, sinon ceux de l'hôte (décision 2026-11-21-contact-offre) ; pour
+        // l'hôte, le nom du membre vers sa page, son téléphone et son e-mail.
         $host = $booking?->offer?->user;
         $hosting = $host !== null && (string) $host->getKey() === (string) request()->user()?->getAuthIdentifier();
         if ($booking !== null && is_array($event->data['booking']) && ($mine || $hosting)) {
-            $other = $mine ? $host : $booking->user;
-            // Le téléphone et l'e-mail, toujours (décision 2026-11-21-contact-toujours).
-            // Pour le membre, le téléphone et l'e-mail de l'offre (ceux de l'hôte), sans son nom ; pour l'hôte, le nom
-            // du membre, puis son téléphone et son e-mail (décision 2026-11-21-detail-reservation-contact-ordre).
-            $event->data['booking']['lines'] = $this->afterAddress($event->data['booking']['lines'], $this->contactLines($other, $mine ? null : 'member'));
+            $offer = $booking->offer;
+            $contact = $mine
+                ? $this->contactLines(null, null, $offer?->phone ?? $host?->phone, $offer?->email ?? $host?->email)
+                : $this->contactLines('member', $booking->user, $booking->user?->phone, $booking->user?->email);
+            $event->data['booking']['lines'] = $this->afterAddress($event->data['booking']['lines'], $contact);
         }
 
         if ($mine && $booking->isCancellable()) {

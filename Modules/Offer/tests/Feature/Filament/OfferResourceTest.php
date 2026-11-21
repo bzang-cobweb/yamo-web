@@ -146,6 +146,13 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors();
 
         $this->assertFalse($offer->fresh()->show_address);
+
+        // Le contact de l'offre (décision 2026-11-21-contact-offre) : saisi en international, gardé en E.164.
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->fillForm(['phone' => '+41 79 123 45 67', 'email' => 'contact@example.test'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(['+41791234567', 'contact@example.test'], [$offer->fresh()->phone, $offer->fresh()->email]);
     }
 
     public function test_the_domain_schema_validates_in_the_back_office_too(): void

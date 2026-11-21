@@ -96,6 +96,9 @@ return [
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
     'show_address' => 'Afficher l\'adresse',
     'show_address_help' => 'Sinon, la fiche du logement ne montre pas sa localisation.',
+    'phone' => 'Téléphone de contact',
+    'email' => 'E-mail de contact',
+    'contact_help' => 'Montré au voyageur dans sa réservation ; vide, celui de votre compte.',
     'indication' => "Indications sur l'adresse",
     'indication_placeholder' => 'Ex. : derrière le marché, portail bleu',
     // Blocs d'informations (décision 2026-11-19-contrat-offer-informations).
