@@ -77,6 +77,7 @@ class DemoSeeder extends Seeder
 
         $this->photos($member);
         $this->reviews($member, $cameroon);
+        $this->otherOffer($cameroon);
         $this->featuredAndFavorites($member);
         $this->amenities($member);
         $this->hours($member);
@@ -255,6 +256,9 @@ class DemoSeeder extends Seeder
         $booking->user()->first()?->forceFill(['last_seen_at' => now()])->saveQuietly();
     }
 
+    /** Le logement d'un autre membre (le premier visiteur), titre fr et en. */
+    private const OTHER_OFFER = ['fr' => 'Studio meublé à Bonanjo', 'en' => 'Furnished studio in Bonanjo'];
+
     /** Un message répété jusqu'à la longueur maximale d'un message de demande. */
     private const LONG_MESSAGE = 'Bonjour, je viens à Douala pour une mission de travail de trois jours et je cherche un logement calme, proche d’Akwa, avec une bonne connexion internet pour travailler le soir. ';
 
@@ -320,6 +324,49 @@ class DemoSeeder extends Seeder
             ]);
             $offer->offerAddress()->create(['address_id' => $addresses[$index % count($addresses)]]);
         }
+    }
+
+    /**
+     * Un logement publié d'un autre membre, le premier visiteur : le compte de démonstration
+     * peut le voir sans en être propriétaire, le mettre en favori, y faire une demande
+     * (décision 2026-11-21-demo-logement-autre-membre). Rejouable : créé une seule fois.
+     */
+    private function otherOffer(Country $cameroon): void
+    {
+        $owner = User::query()->where('email', 'demo-visiteur-1@example.test')->firstOrFail();
+
+        if (! Offer::query()->where('user_id', $owner->getKey())->where('title->fr', self::OTHER_OFFER['fr'])->exists()) {
+            $address = app(UserAddressService::class)->attach($owner, [
+                'gender' => 'male', 'first_name' => $owner->first_name, 'last_name' => $owner->last_name,
+                'country_id' => $cameroon->getKey(), 'street' => 'Rue Joss 8', 'zip' => '', 'city' => 'Douala',
+            ]);
+            $offer = Offer::query()->create([
+                'user_id' => $owner->getKey(),
+                'country_id' => $cameroon->getKey(),
+                'title' => ['fr' => self::OTHER_OFFER['fr'], 'en' => self::OTHER_OFFER['en']],
+                'description' => [
+                    'fr' => 'Logement de démonstration d’un autre membre, au cœur de Bonanjo.',
+                    'en' => 'Demo home of another member, in the heart of Bonanjo.',
+                ],
+                'status' => OfferStatusEnum::PUBLISHED,
+                'price' => 30000,
+                'currency' => $cameroon->currency,
+                'details' => [
+                    'property_type' => 'studio',
+                    'rental_type' => RentalTypeEnum::FURNISHED->value,
+                    'surface' => 28,
+                    'rooms' => 1,
+                    'bedrooms' => 0,
+                    'deposit' => 60000,
+                    'check_in_from' => '14:00',
+                    'check_out_until' => '11:00',
+                    'amenities' => ['wifi', 'air_conditioning', 'hot_water'],
+                ],
+            ]);
+            $offer->offerAddress()->create(['address_id' => $address->address_id]);
+        }
+
+        $this->photos($owner);
     }
 
     /**

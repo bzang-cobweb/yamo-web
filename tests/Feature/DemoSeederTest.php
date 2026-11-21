@@ -39,11 +39,16 @@ class DemoSeederTest extends TestCase
         $member = User::query()->where('email', DemoSeeder::EMAIL)->sole();
         $this->assertSame(['member'], $member->getRoleNames()->all());
         $this->assertSame(20, Offer::query()->where('user_id', $member->getKey())->count());
-        $this->assertSame(16, Offer::query()->where('status', 'published')->count());
+        // 16 du membre, plus celui d'un autre membre (décision 2026-11-21-demo-logement-autre-membre).
+        $this->assertSame(17, Offer::query()->where('status', 'published')->count());
+        $other = Offer::query()->where('user_id', '!=', $member->getKey())->sole();
+        $this->assertSame('demo-visiteur-1@example.test', $other->user->email);
+        $this->assertSame('furnished', $other->detail('rental_type'));
+        $this->assertCount(2, $other->getMedia(Offer::PHOTOS));
         $this->assertSame(['XAF'], Offer::query()->distinct()->pluck('currency')->all());
         $this->assertSame(5, $member->addresses()->count());
         // Deux photos dessinées par logement, pas plus au second passage.
-        $this->assertSame(40, Media::query()->count());
+        $this->assertSame(42, Media::query()->count());
         $this->assertStringStartsWith("\xFF\xD8", Storage::disk('public')->get(Media::query()->first()->getPathRelativeToRoot()));
     }
 
