@@ -85,7 +85,7 @@ class OfferDetailApiTest extends TestCase
         // Type, type de location, catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville).
         $this->assertSame([
             ['label' => 'Type de logement', 'value' => 'Appartement'],
-            ['label' => 'Type de location', 'value' => 'Location longue durée'],
+            ['label' => 'Type de location', 'value' => 'Location'],
             ['label' => 'Catégorie', 'value' => 'Standing'],
             ['label' => 'Surface', 'value' => '85 m²'],
             ['label' => 'Pièces', 'value' => '3,5'],
@@ -147,7 +147,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('3-room flat in Bonapriso', $data['title']);
         $this->assertSame('Rent', $data['price']['label']);
         $this->assertStringEndsWith(' / month', $data['price']['value']);
-        $this->assertContains(['label' => 'Rental type', 'value' => 'Long-term rental'], $data['facts']);
+        $this->assertContains(['label' => 'Rental type', 'value' => 'Rental'], $data['facts']);
         $this->assertContains(['label' => 'Area', 'value' => '85 m²'], $data['facts']);
     }
 

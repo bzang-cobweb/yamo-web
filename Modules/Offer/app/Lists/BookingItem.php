@@ -5,7 +5,6 @@ namespace Modules\Offer\Lists;
 use App\Support\MediaUrl;
 use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -18,8 +17,8 @@ final class BookingItem
     /**
      * `$withTypedTitle` : le titre saisi de l'offre sur la première ligne sous le titre, s'il en
      * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre). `$withRentalType` :
-     * le type de location de l'offre en tête du titre (« Location meublée · Studio · meublé · Douala »,
-     * décision 2026-11-21-reservations-type-de-location-titre).
+     * le titre de carte du domaine (« Location meublée · Studio · Douala », décision
+     * 2026-11-21-reservations-type-de-location-titre).
      */
     public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false, bool $withRentalType = false): ListItem
     {
@@ -38,7 +37,7 @@ final class BookingItem
         }
 
         if ($withRentalType) {
-            $title = implode(' · ', array_filter([($type = RentalTypeEnum::of($offer)) === null ? null : __('offer::rental.rental_types.'.$type->value, [], $locale), $title]));
+            $title = app(DomainRegistry::class)->require()->bookingItemTitle($offer, $locale) ?? $title;
         }
 
         return ListItem::make($booking->getKey(), $title, $subtitle)

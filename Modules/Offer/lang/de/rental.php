@@ -12,7 +12,7 @@ return [
     // Type de location (décision 2026-11-20-contrat-type-de-location).
     'rental_type' => 'Art der Vermietung',
     'rental_types' => [
-        'long_term' => 'Langzeitmiete',
+        'long_term' => 'Miete',
         'furnished' => 'Möblierte Vermietung',
         'shared' => 'Wohngemeinschaft',
     ],

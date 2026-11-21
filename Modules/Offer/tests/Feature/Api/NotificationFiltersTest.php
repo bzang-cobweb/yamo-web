@@ -81,7 +81,7 @@ class NotificationFiltersTest extends TestCase
             $this->assertSame(['booking'], $filters[$name]['visible_when']['values']);
         }
         $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters['status']['options'], 'value'));
-        $this->assertSame(['long_term' => 'Location longue durée', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
+        $this->assertSame(['long_term' => 'Location', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 

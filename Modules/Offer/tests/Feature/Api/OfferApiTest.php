@@ -116,7 +116,7 @@ class OfferApiTest extends TestCase
         $this->assertSame(['field' => 'rental_type', 'suffixes' => ['furnished' => 'CHF / jour', 'long_term' => 'CHF / mois', 'shared' => 'CHF / mois']], $fields['price']['suffix_when']);
         // Le type de location, obligatoire, avec ses trois valeurs.
         $this->assertTrue($fields['rental_type']['required']);
-        $this->assertSame(['Location longue durée', 'Location meublée', 'Colocation'], array_column($fields['rental_type']['options'], 'label'));
+        $this->assertSame(['Location', 'Location meublée', 'Colocation'], array_column($fields['rental_type']['options'], 'label'));
         $this->assertSame('Surface', $fields['surface']['label']);
         $this->assertSame('m²', $fields['surface']['suffix']);
         // La rue propose des adresses ; le code postal est facultatif (décision 2026-11-19-contrat-adresse-offre-recherche).

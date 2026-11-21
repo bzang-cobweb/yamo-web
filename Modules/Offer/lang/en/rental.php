@@ -12,7 +12,7 @@ return [
     // Type de location (décision 2026-11-20-contrat-type-de-location).
     'rental_type' => 'Rental type',
     'rental_types' => [
-        'long_term' => 'Long-term rental',
+        'long_term' => 'Rental',
         'furnished' => 'Furnished rental',
         'shared' => 'Flat share',
     ],

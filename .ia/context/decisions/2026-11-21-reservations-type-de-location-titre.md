@@ -1,4 +1,4 @@
-# « Mes réservations » : le type de location en tête du titre de la carte
+# « Mes réservations » : titre de la carte, type de location, type de logement et ville
 
 - **Date** : 2026-11-21
 - **Type** : décision
@@ -6,16 +6,16 @@
 - **Complète** : 2026-11-21-reservations-vrai-titre.md, 2026-11-20-titre-carte.md
 
 ## Décision
-Sur une carte de « Mes réservations », le titre commence par le type de location de l'offre,
-dans la langue du membre, avant le titre construit : « Location meublée · Studio · meublé ·
-Douala ». Sans type de location, le titre ne change pas. Les cartes n'ont pas de ligne au-dessus
-du titre : le type de location est donc ajouté dans le titre lui-même, côté serveur, sans
-changement dans l'app.
+Sur une carte de « Mes réservations », le titre est le type de location, le type de logement et
+la ville, dans la langue du membre : « Location meublée · Studio · Douala ». « meublé » n'est
+plus répété. Le domaine le sert (`Domain::bookingItemTitle()`, `null` : le titre construit
+habituel). Les cartes n'ont pas de ligne au-dessus du titre : tout est dans le titre, côté
+serveur, sans changement dans l'app.
 
 ## Motif
-Demande de l'humain du 2026-11-21 : « mes réservations cards mettre le type de location avant
-le titre ».
+Demandes de l'humain du 2026-11-21 : « mes réservations cards mettre le type de location avant
+le titre », puis « changer le titre par type de location type et ville ».
 
 ## Portée
-« Mes réservations » seulement. Le titre des cartes de « Réservations reçues » ne change pas.
-« meublé » reste dans le titre construit, même s'il répète « Location meublée ».
+« Mes réservations » seulement. Les cartes de « Réservations reçues », de la vitrine et de « Mes
+logements » gardent leur titre.

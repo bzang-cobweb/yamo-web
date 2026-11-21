@@ -92,6 +92,15 @@ abstract class Domain
     }
 
     /**
+     * Titre d'une offre sur une carte de « Mes réservations », en `$locale` (décision
+     * 2026-11-21-reservations-type-de-location-titre) ; `null` : celui de `itemTitle()`.
+     */
+    public function bookingItemTitle(Offer $offer, string $locale): ?string
+    {
+        return null;
+    }
+
+    /**
      * Unité du prix d'une offre (« jour », « mois »), affichée après le prix :
      * « 60 000 FCFA / jour » (décision 2026-11-18-prix-par-nuit-ou-mois) ;
      * `null` : aucune.
