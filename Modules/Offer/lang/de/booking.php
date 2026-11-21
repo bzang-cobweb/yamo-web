@@ -205,7 +205,7 @@ return [
         'filter_offer' => 'Unterkunft',
         'search_home' => 'Unterkunft suchen',
         'requests_all' => 'Anfragen',
-        'requests_count' => '{0} Keine Anfragen|{1} :count Anfrage|[2,*] :count Anfragen',
+        'requests_count' => '{0} Keine Anfragen erhalten|{1} :count Anfrage erhalten|[2,*] :count Anfragen erhalten',
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'unread_count' => '{1} :count ungelesene Benachrichtigung|[2,*] :count ungelesene Benachrichtigungen',
         'notifications' => 'Anfragen',

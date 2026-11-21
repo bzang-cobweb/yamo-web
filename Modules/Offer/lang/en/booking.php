@@ -205,7 +205,7 @@ return [
         'filter_offer' => 'Home',
         'search_home' => 'Find a home',
         'requests_all' => 'Requests',
-        'requests_count' => '{0} No requests|{1} :count request|[2,*] :count requests',
+        'requests_count' => '{0} No requests received|{1} :count request received|[2,*] :count requests received',
         'pending_count' => '{1} :count pending request|[2,*] :count pending requests',
         'unread_count' => '{1} :count unread notification|[2,*] :count unread notifications',
         'notifications' => 'Requests',

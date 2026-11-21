@@ -402,16 +402,16 @@ class BookingApiTest extends TestCase
         // Le titre du logement dans la barre du haut (décision 2026-11-21-demandes-titre-logement-barre) ; sous les
         // filtres, le nombre de demandes, filtres compris, sans la ligne du type (décision 2026-11-21-demandes-nombre).
         $this->assertSame(OfferCardTitle::of($offer, 'fr')[0], $requests['title']);
-        $this->assertSame(['title' => '2 demandes', 'subtitle' => null], $requests['heading']);
-        $this->assertSame('Aucune demande', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.title'));
+        $this->assertSame(['title' => '2 demandes reçues', 'subtitle' => null], $requests['heading']);
+        $this->assertSame('Aucune demande reçue', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.title'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
-        $this->assertSame(['Demandes', '3 demandes'], [$all['title'], $all['heading']['title']]);
+        $this->assertSame(['Demandes', '3 demandes reçues'], [$all['title'], $all['heading']['title']]);
         // Une recherche sur le nom du membre seul, comptée dans le nombre (décision 2026-11-21-demandes-recherche-nom).
         $this->assertSame('Rechercher un membre…', $requests['search']);
         $this->assertSame([], $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=travail")->json('data.items'));
         $found = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=".urlencode((string) $first->user->last_name))->json('data');
         $this->assertContains((string) $first->getKey(), array_column($found['items'], 'id'));
-        $this->assertStringEndsWith(count($found['items']) === 1 ? ' demande' : ' demandes', $found['heading']['title']);
+        $this->assertStringEndsWith(count($found['items']) === 1 ? ' demande reçue' : ' demandes reçues', $found['heading']['title']);
         $this->assertSame(['status', 'period', 'offer'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);

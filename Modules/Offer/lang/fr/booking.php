@@ -205,7 +205,7 @@ return [
         'filter_offer' => 'Logement',
         'search_home' => 'Rechercher un logement',
         'requests_all' => 'Demandes',
-        'requests_count' => '{0} Aucune demande|{1} :count demande|[2,*] :count demandes',
+        'requests_count' => '{0} Aucune demande reçue|{1} :count demande reçue|[2,*] :count demandes reçues',
         'pending_count' => '{1} :count demande en attente|[2,*] :count demandes en attente',
         'unread_count' => '{1} :count notification non lue|[2,*] :count notifications non lues',
         'notifications' => 'Demandes',
