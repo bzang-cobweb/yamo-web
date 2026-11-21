@@ -68,7 +68,7 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type'], $filters->keys()->all());
+        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'unread'], $filters->keys()->all());
         // Un seul type pour les quatre étapes d'une demande ; un type inconnu des modules n'est pas proposé.
         $this->assertSame(['booking' => 'Demande de logement'], array_column($filters['type']['options'], 'label', 'value'));
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
@@ -131,5 +131,34 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame(['Awa Ngono', 'Paul Etoa'], array_column(collect($filters)->firstWhere('name', 'user')['options'], 'label'));
 
         $this->assertSame(['De Paul'], $this->titles($user, "?filter[user]={$paul->getKey()}"));
+    }
+
+    public function test_notifications_are_filtered_by_unread_a_thread_counting_as_one_card(): void
+    {
+        // Décision 2026-11-21-filtre-non-lues.
+        $user = User::factory()->create(['locale' => 'fr']);
+        $make = fn (string $title, ?string $thread, bool $read, int $minutes) => $user->notifications()->create([
+            'id' => (string) Str::uuid(), 'type' => 'Test', 'thread' => $thread, 'read_at' => $read ? now() : null,
+            'created_at' => now()->subMinutes($minutes), 'data' => ['title' => $title, 'body' => 'Texte'],
+        ]);
+        $make('Seule lue', null, true, 50);
+        $make('Seule non lue', null, false, 40);
+        // Un fil dont la dernière étape est lue mais une plus ancienne ne l'est pas : la carte est non lue.
+        $make('Fil ancienne', 'booking:1', false, 30);
+        $make('Fil dernière', 'booking:1', true, 20);
+        // Un fil tout lu.
+        $make('Fil lu', 'booking:2', true, 10);
+
+        $this->app['auth']->forgetGuards();
+        $filter = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
+            ->getJson('/api/v1/notifications')->json('data.filters'))->firstWhere('name', 'unread');
+        $this->assertSame('segmented', $filter['type']);
+        $this->assertSame('Non lues', $filter['label']);
+        $this->assertSame('any', $filter['default']);
+        $this->assertSame(['any' => 'Tous', 'yes' => 'Oui', 'no' => 'Non'], array_column($filter['options'], 'label', 'value'));
+
+        $this->assertEqualsCanonicalizing(['Fil dernière', 'Seule non lue'], $this->titles($user, '?filter[unread]=yes'));
+        $this->assertEqualsCanonicalizing(['Fil lu', 'Seule lue'], $this->titles($user, '?filter[unread]=no'));
+        $this->assertCount(4, $this->titles($user, '?filter[unread]=any'));
     }
 }
