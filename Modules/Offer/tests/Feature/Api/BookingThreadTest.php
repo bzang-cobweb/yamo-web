@@ -11,6 +11,7 @@ use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\User;
 use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
+use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
@@ -192,6 +193,13 @@ class BookingThreadTest extends TestCase
                 ['key' => 'total', 'label' => 'Total', 'value' => (string) $booking->formattedTotal('fr')],
             ], $page['booking']['lines']);
         }
+
+        // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).
+        $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
+        $lines = (new BookingResource($booking->refresh()))->resolve(request())['lines'];
+        $this->assertSame(['guests', 'address', 'arrival'], array_slice(array_column($lines, 'key'), 0, 3));
+        $this->assertSame('Adresse', $lines[1]['label']);
+        $this->assertStringStartsWith('Rue Joss, Douala', $lines[1]['value']);
     }
 
     public function test_the_reader_steps_say_whether_the_other_party_got_and_read_them(): void
