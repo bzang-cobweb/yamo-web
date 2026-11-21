@@ -83,6 +83,11 @@ return [
         'label' => 'Annuler la demande',
         'confirm' => 'Annuler cette demande ? Le propriétaire sera prévenu.',
         'done' => 'Demande annulée.',
+        // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
+        'button' => 'Annuler',
+        'submit' => 'Confirmer',
+        'message' => 'Message au propriétaire',
+        'message_placeholder' => 'Expliquez pourquoi vous annulez (facultatif)…',
     ],
     'list' => [
         'mine' => 'Mes réservations',

@@ -208,6 +208,37 @@ class BookingApiTest extends TestCase
         $this->asUser($this->member())->putJson('/api/v1/bookings/'.$pending->getKey(), $this->stay())->assertNotFound();
     }
 
+    public function test_the_guest_cancels_from_a_form_with_only_the_message_to_write(): void
+    {
+        // Décision 2026-11-21-annuler-depuis-le-detail.
+        $offer = $this->home(true);
+        $guest = $this->member();
+        $accepted = Booking::factory()->for($offer)->for($guest)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(8), 'guests' => 2, 'message' => 'Bonjour !']);
+
+        $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertOk()->json('data');
+        $this->assertSame('Annuler la demande', $form['title']);
+        $this->assertSame('Confirmer', $form['submit']['label']);
+        $this->assertSame(['method' => 'POST', 'endpoint' => '/v1/bookings/'.$accepted->getKey().'/cancel'], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
+        $fields = collect($form['fields'])->keyBy('name');
+        // Les champs de « Modifier », remplis, en lecture seule ; le message, vide, à écrire.
+        $this->assertSame(['check_in', 'check_out', 'guests', 'message'], $fields->keys()->all());
+        $this->assertSame([true, true, true, false], $fields->pluck('readonly')->all());
+        $this->assertSame(today()->addDays(5)->toDateString(), $fields['check_in']['default']);
+        $this->assertNull($fields['message']['default']);
+
+        // Les dates envoyées ne comptent pas ; le message est gardé pour le propriétaire.
+        $this->asUser($guest)->postJson('/api/v1/bookings/'.$accepted->getKey().'/cancel', ['check_in' => today()->toDateString(), 'message' => '  Empêchement.  '])->assertNoContent();
+        $accepted->refresh();
+        $this->assertSame([BookingStatusEnum::CANCELLED, 'Empêchement.', today()->addDays(5)->toDateString()], [$accepted->status, $accepted->cancel_message, $accepted->check_in->toDateString()]);
+
+        // Plus annulable : le formulaire est refusé.
+        $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertForbidden();
+        // Sans message (le menu de la carte) : toujours possible.
+        $pending = Booking::factory()->for($offer)->for($guest)->create(['check_in' => today()->addDays(30), 'check_out' => today()->addDays(31)]);
+        $this->asUser($guest)->postJson('/api/v1/bookings/'.$pending->getKey().'/cancel')->assertNoContent();
+        $this->assertNull($pending->refresh()->cancel_message);
+    }
+
     public function test_a_visit_keeps_one_date_and_no_price(): void
     {
         $offer = $this->home(false);

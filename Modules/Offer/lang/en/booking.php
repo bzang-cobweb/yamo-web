@@ -83,6 +83,11 @@ return [
         'label' => 'Cancel request',
         'confirm' => 'Cancel this request? The owner will be told.',
         'done' => 'Request cancelled.',
+        // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
+        'button' => 'Cancel',
+        'submit' => 'Confirm',
+        'message' => 'Message to the owner',
+        'message_placeholder' => 'Explain why you are cancelling (optional)…',
     ],
     'list' => [
         'mine' => 'My bookings',

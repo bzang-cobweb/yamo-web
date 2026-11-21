@@ -83,6 +83,11 @@ return [
         'label' => 'Anfrage stornieren',
         'confirm' => 'Diese Anfrage stornieren? Der Eigentümer wird benachrichtigt.',
         'done' => 'Anfrage storniert.',
+        // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
+        'button' => 'Stornieren',
+        'submit' => 'Bestätigen',
+        'message' => 'Nachricht an den Eigentümer',
+        'message_placeholder' => 'Erklären Sie, warum Sie stornieren (optional)…',
     ],
     'list' => [
         'mine' => 'Meine Buchungen',

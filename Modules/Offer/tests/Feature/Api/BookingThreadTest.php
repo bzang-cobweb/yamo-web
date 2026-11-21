@@ -372,10 +372,22 @@ class BookingThreadTest extends TestCase
         // Le propriétaire garde « Traiter la demande ».
         $this->assertSame('Traiter la demande', $page($this->owner)['link_label']);
 
+        // « Annuler », second bouton, ouvre le formulaire d'annulation (décision 2026-11-21-annuler-depuis-le-detail).
+        $this->assertSame(['/profile/offer.booking.cancel?record='.$booking->getKey(), 'Annuler'], [$page($this->guest)['secondary_link'], $page($this->guest)['secondary_link_label']]);
+        $this->assertArrayNotHasKey('secondary_link', $page($this->owner));
+
         // Une fois répondue : « Mes réservations » revient.
         app(BookingService::class)->answer($booking, true);
         $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
         $this->assertSame('Mes réservations', $page($this->guest)['link_label']);
+        // Acceptée, pas encore commencée : toujours annulable.
+        $this->assertSame('Annuler', $page($this->guest)['secondary_link_label']);
+
+        // Annulée avec un message : plus de bouton, le message dans le suivi du propriétaire.
+        $this->travel(5)->minutes();
+        app(BookingService::class)->cancel($booking->refresh(), 'Empêchement.');
+        $this->assertArrayNotHasKey('secondary_link', $page($this->guest));
+        $this->assertSame('Empêchement.', collect($page($this->owner)['history'])->last()['message']);
     }
 
     public function test_an_edited_request_replaces_its_step_by_a_new_unread_one_for_the_owner(): void

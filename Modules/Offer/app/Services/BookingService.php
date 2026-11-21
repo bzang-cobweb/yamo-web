@@ -226,10 +226,13 @@ class BookingService
     /**
      * Le membre annule sa demande ; le propriétaire est prévenu.
      */
-    public function cancel(Booking $booking): Booking
+    public function cancel(Booking $booking, ?string $message = null): Booking
     {
-        return DB::transaction(function () use ($booking): Booking {
-            $booking->fill(['status' => BookingStatusEnum::CANCELLED, 'cancelled_at' => now()])->save();
+        $message = trim((string) $message);
+
+        return DB::transaction(function () use ($booking, $message): Booking {
+            // Le message joint, pour le propriétaire (décision 2026-11-21-annuler-depuis-le-detail).
+            $booking->fill(['status' => BookingStatusEnum::CANCELLED, 'cancelled_at' => now(), 'cancel_message' => $message === '' ? null : $message])->save();
             BookingCancelled::dispatch($booking);
 
             return $booking;

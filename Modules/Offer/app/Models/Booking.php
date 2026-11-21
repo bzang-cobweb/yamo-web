@@ -32,12 +32,13 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property string|null $currency
  * @property BookingStatusEnum $status
  * @property string|null $refusal_message
+ * @property string|null $cancel_message
  * @property Carbon|null $answered_at
  * @property Carbon|null $cancelled_at
  * @property-read Offer $offer
  * @property-read User $user
  */
-#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'answered_at', 'cancelled_at'])]
+#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'answered_at', 'cancelled_at'])]
 #[UseFactory(BookingFactory::class)]
 class Booking extends Model
 {

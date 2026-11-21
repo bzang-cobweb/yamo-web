@@ -6,6 +6,7 @@ use Illuminate\Http\Response;
 use Modules\Auth\Models\User;
 use Modules\Offer\Forms\BookingAnswerForm;
 use Modules\Offer\Http\Requests\BookingAnswerRequest;
+use Modules\Offer\Http\Requests\BookingCancelRequest;
 use Modules\Offer\Http\Requests\BookingUpdateRequest;
 use Modules\Offer\Http\Requests\OfferBookingRequest;
 use Modules\Offer\Models\Booking;
@@ -69,9 +70,10 @@ class BookingController
     /**
      * Annuler sa demande, en attente ou acceptée et pas encore commencée.
      */
-    public function cancel(Booking $booking): Response
+    public function cancel(BookingCancelRequest $request, Booking $booking): Response
     {
-        $this->bookings->cancel($booking);
+        $message = $request->validated('message');
+        $this->bookings->cancel($booking, is_string($message) ? $message : null);
 
         return response()->noContent();
     }

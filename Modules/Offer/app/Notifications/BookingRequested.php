@@ -76,12 +76,14 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
         return __("offer::booking.notify.{$this->key()}.".($this->own ? 'own' : 'body'), $this->replacements());
     }
 
-    /** Le message à joindre : celui du membre pour une nouvelle demande, le motif d'un refus. */
+    /** Le message à joindre : celui du membre pour une demande, le motif d'un refus ou d'une annulation. */
     private function note(): ?string
     {
         return match ($this->step) {
             BookingStepEnum::RECEIVED, BookingStepEnum::UPDATED => $this->booking->message,
             BookingStepEnum::REFUSED => $this->booking->refusal_message,
+            // Le message joint à une annulation (décision 2026-11-21-annuler-depuis-le-detail).
+            BookingStepEnum::CANCELLED => $this->booking->cancel_message,
             default => null,
         };
     }
