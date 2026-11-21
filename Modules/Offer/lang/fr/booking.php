@@ -98,6 +98,7 @@ return [
         'accepted' => 'Demande acceptée',
         'refused' => 'Demande refusée',
         'cancelled' => 'Demande annulée',
+        'updated' => 'Demande modifiée',
     ],
     'notify' => [
         'filter_rental_type' => 'Type de location',
@@ -144,6 +145,15 @@ return [
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'a annulé sa demande pour « :offer » (:period).',
             'sms' => ':app : :guest a annulé sa demande pour « :offer » (:period).',
+        ],
+        // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
+        'updated' => [
+            'subject' => 'Demande modifiée : :offer',
+            'body' => ':guest a modifié sa demande : :type :period pour « :offer ».',
+            'own' => 'Vous avez modifié votre demande : :type :period pour « :offer ».',
+            'summary' => 'Demande de visite modifiée « :offer » :period.',
+            'summary_stay' => 'Demande de location modifiée « :offer » :period pour :people.',
+            'sms' => ':app : :guest a modifié sa demande pour « :offer » (:period). Répondez dans l\'app.',
         ],
         'message' => 'Message : :message',
         'open_app' => 'Retrouvez vos demandes dans l\'app, rubrique « :section ».',

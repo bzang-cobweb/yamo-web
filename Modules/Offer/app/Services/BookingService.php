@@ -2,18 +2,23 @@
 
 namespace Modules\Offer\Services;
 
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Traits\Localizable;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Events\BookingAnswered;
 use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested;
+use Modules\Offer\Events\BookingUpdated;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequested as BookingRequestedNotification;
 
 /**
  * La règle des demandes (décision 2026-11-19-contrat-reservations) : le membre
@@ -24,6 +29,8 @@ use Modules\Offer\Models\Offer;
  */
 class BookingService
 {
+    use Localizable;
+
     public function __construct(private readonly OfferAvailability $availability) {}
 
     /**
@@ -97,8 +104,40 @@ class BookingService
                 'total' => $booking->unit_price === null || $days === null ? null : number_format((float) $booking->unit_price * $days, 2, '.', ''),
             ])->save();
 
+            $this->replaceRequestStep($booking);
+            BookingUpdated::dispatch($booking);
+
             return $booking;
         });
+    }
+
+    /**
+     * L'étape précédente (« Demande envoyée » ou « Demande modifiée ») devient « Demande modifiée »
+     * (décision 2026-11-21-demande-modifiee-notification) : celle du propriétaire est supprimée, la
+     * nouvelle lui est envoyée (`BookingUpdated`) ; la copie du membre est réécrite sur place,
+     * remontée et lue, pour que la page qu'il a ouverte reste la sienne.
+     */
+    private function replaceRequestStep(Booking $booking): void
+    {
+        DatabaseNotification::query()
+            ->where('thread', $booking->thread())
+            ->whereIn('data->step', [BookingStepEnum::RECEIVED->value, BookingStepEnum::UPDATED->value])
+            ->with('notifiable')
+            ->get()
+            ->each(function (DatabaseNotification $notification) use ($booking): void {
+                $notifiable = $notification->notifiable;
+                if (! (bool) (((array) $notification->data)['own'] ?? false) || ! $notifiable instanceof User) {
+                    $notification->delete();
+
+                    return;
+                }
+
+                $data = $this->withLocale(
+                    $notifiable->preferredLocale(),
+                    fn (): array => (new BookingRequestedNotification($booking, BookingStepEnum::UPDATED, own: true))->toArray($notifiable),
+                );
+                $notification->forceFill(['data' => $data, 'read_at' => now(), 'created_at' => now()])->save();
+            });
     }
 
     /**

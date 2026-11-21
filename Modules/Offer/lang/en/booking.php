@@ -98,6 +98,7 @@ return [
         'accepted' => 'Request accepted',
         'refused' => 'Request declined',
         'cancelled' => 'Request cancelled',
+        'updated' => 'Request changed',
     ],
     'notify' => [
         'filter_rental_type' => 'Rental type',
@@ -144,6 +145,15 @@ return [
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'cancelled their request for “:offer” (:period).',
             'sms' => ':app: :guest cancelled their request for “:offer” (:period).',
+        ],
+        // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
+        'updated' => [
+            'subject' => 'Request changed: :offer',
+            'body' => ':guest changed their request: :type :period for “:offer”.',
+            'own' => 'You changed your request: :type :period for “:offer”.',
+            'summary' => 'Changed visit request for “:offer” :period.',
+            'summary_stay' => 'Changed rental request for “:offer” :period for :people.',
+            'sms' => ':app: :guest changed their request for “:offer” (:period). Reply in the app.',
         ],
         'message' => 'Message: :message',
         'open_app' => 'Find your requests in the app, under “:section”.',

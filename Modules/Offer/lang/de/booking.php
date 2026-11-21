@@ -98,6 +98,7 @@ return [
         'accepted' => 'Anfrage angenommen',
         'refused' => 'Anfrage abgelehnt',
         'cancelled' => 'Anfrage storniert',
+        'updated' => 'Anfrage geändert',
     ],
     'notify' => [
         'filter_rental_type' => 'Art der Vermietung',
@@ -144,6 +145,15 @@ return [
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
             'summary' => 'hat die Anfrage für „:offer“ (:period) storniert.',
             'sms' => ':app: :guest hat die Anfrage für „:offer“ (:period) storniert.',
+        ],
+        // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
+        'updated' => [
+            'subject' => 'Anfrage geändert: :offer',
+            'body' => ':guest hat die Anfrage geändert: :type :period für „:offer“.',
+            'own' => 'Sie haben Ihre Anfrage geändert: :type :period für „:offer“.',
+            'summary' => 'Geänderte Besichtigungsanfrage für „:offer“ :period.',
+            'summary_stay' => 'Geänderte Mietanfrage für „:offer“ :period für :people.',
+            'sms' => ':app: :guest hat die Anfrage für „:offer“ (:period) geändert. Antworten Sie in der App.',
         ],
         'message' => 'Nachricht: :message',
         'open_app' => 'Ihre Anfragen finden Sie in der App unter „:section“.',

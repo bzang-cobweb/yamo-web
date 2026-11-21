@@ -377,6 +377,35 @@ class BookingThreadTest extends TestCase
         $this->assertSame('Mes réservations', $page($this->guest)['link_label']);
     }
 
+    public function test_an_edited_request_replaces_its_step_by_a_new_unread_one_for_the_owner(): void
+    {
+        $this->travelTo(now()->setTime(9, 0));
+        $booking = $this->request(3, 'Premier message');
+        $this->api($this->owner, 'POST', '/'.$this->cards($this->owner)[0]['id'].'/read')->assertNoContent();
+        $this->travel(5)->minutes();
+
+        app(BookingService::class)->update($booking, [
+            'check_in' => today()->addDays(5)->toDateString(), 'check_out' => today()->addDays(9)->toDateString(), 'guests' => 2, 'message' => 'Message modifié',
+        ]);
+
+        // Le propriétaire : une notification « Demande modifiée », non lue, à la place de la première.
+        $this->assertSame(1, $this->owner->notifications()->count());
+        $card = $this->cards($this->owner)[0];
+        $this->assertFalse($card['read']);
+        $this->assertStringContainsString('modifiée', (string) $card['summary']);
+        $this->assertStringContainsString('pour 2 personnes', (string) $card['summary']);
+        $history = $this->api($this->owner, 'GET', '/'.$card['id'])->json('data.history');
+        $this->assertSame(['Demande modifiée'], array_column($history, 'label'));
+        $this->assertSame(['Message modifié'], array_column($history, 'message'));
+        // Le membre : sa copie réécrite sur place (la page ouverte reste la même), déjà lue.
+        $copy = $this->guest->notifications()->sole();
+        $mine = $this->cards($this->guest)[0];
+        $this->assertSame($copy->getKey(), $mine['id']);
+        $this->assertStringContainsString('Vous avez modifié votre demande', $mine['body']);
+        $this->assertTrue($mine['read']);
+        $this->assertSame(['Message modifié'], array_column($this->api($this->guest, 'GET', '/'.$mine['id'])->json('data.history'), 'message'));
+    }
+
     public function test_a_stranger_gets_no_follow_up(): void
     {
         $this->request(3);

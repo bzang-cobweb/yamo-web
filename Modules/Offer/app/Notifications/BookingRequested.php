@@ -63,7 +63,7 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
     private function section(): string
     {
         if ($this->own) {
-            return in_array($this->step, [BookingStepEnum::RECEIVED, BookingStepEnum::CANCELLED], true) ? 'mine' : 'received';
+            return in_array($this->step, [BookingStepEnum::RECEIVED, BookingStepEnum::CANCELLED, BookingStepEnum::UPDATED], true) ? 'mine' : 'received';
         }
 
         return $this->step->section();
@@ -79,7 +79,7 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
     private function note(): ?string
     {
         return match ($this->step) {
-            BookingStepEnum::RECEIVED => $this->booking->message,
+            BookingStepEnum::RECEIVED, BookingStepEnum::UPDATED => $this->booking->message,
             BookingStepEnum::REFUSED => $this->booking->refusal_message,
             default => null,
         };
@@ -113,7 +113,7 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
 
         return [
             'title' => app(DomainRegistry::class)->require()->requestLabel(),
-            // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`.
+            // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`, `updated`.
             'step' => $this->step->value,
             // La demande et son statut à l'envoi.
             'booking_id' => (int) $this->booking->getKey(),
