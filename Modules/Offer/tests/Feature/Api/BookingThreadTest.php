@@ -212,7 +212,7 @@ class BookingThreadTest extends TestCase
             $this->assertSame([
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
                 'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'guests' => 1,
-                'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée'],
+                'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée', 'property_type' => 'Studio'],
             ], array_diff_key($page['booking'], ['lines' => true]));
             // Les lignes, libellé et valeur, dans l'ordre ; sans chambres renseignées, pas de ligne (décision 2026-11-20-lignes-demande).
             $this->assertSame([

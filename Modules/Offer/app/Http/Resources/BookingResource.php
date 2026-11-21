@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
@@ -23,7 +24,7 @@ use Modules\Offer\Models\Offer;
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, guests: int|null, offer: array{title: string|null, rental_type: string|null}, lines: list<array{key: string, label: string, value: string}>}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, guests: int|null, offer: array{title: string|null, rental_type: string|null, property_type: string|null}, lines: list<array{key: string, label: string, value: string}>}
      */
     public function toArray(Request $request): array
     {
@@ -40,7 +41,7 @@ class BookingResource extends JsonResource
             /** Le départ d'un séjour, la seconde date proposée d'une visite, ou `null`. */
             'check_out' => $booking->check_out?->toDateString(),
             'guests' => $booking->guests,
-            /** L'offre : son titre saisi et son type de location, rédigé (`null` s'ils manquent). */
+            /** L'offre : son titre saisi, son type de location et son type de logement, rédigés (`null` s'ils manquent). */
             'offer' => $this->offer($booking->offer),
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
@@ -192,6 +193,16 @@ class BookingResource extends JsonResource
             'title' => $offer === null ? null : (string) $offer->getTranslation('title', app()->getLocale()),
             // Le type de location, rédigé (« Location meublée »), ou `null`.
             'rental_type' => $offer === null ? null : RentalTypeEnum::of($offer)?->label(),
+            // Le type de logement, rédigé (« Appartement »), ou `null` : à côté du type de location
+            // (décision 2026-11-21-detail-reservation-type-logement).
+            'property_type' => $this->propertyType($offer),
         ];
+    }
+
+    private function propertyType(?Offer $offer): ?string
+    {
+        $type = $offer?->detail('property_type');
+
+        return is_string($type) && in_array($type, RentalDomain::PROPERTY_TYPES, true) ? __('offer::rental.property_types.'.$type) : null;
     }
 }
