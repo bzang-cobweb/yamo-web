@@ -314,10 +314,12 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $pending->getKey()]['highlight']);
         // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
         $this->assertStringStartsWith("Location meublée · Studio\n", $items[(string) $pending->getKey()]['subtitle']);
-        // La ville sur sa propre ligne, sous le type (décision 2026-11-21-reservations-ville-en-dessous).
+        // La ville au bout du titre (décision 2026-11-21-reservations-ville-sur-le-titre).
         $pending->offer->offerAddress()->create(['address_id' => Address::factory()->create(['city' => 'Douala'])->getKey()]);
-        $lines = explode("\n", (string) collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['subtitle']);
-        $this->assertSame(['Location meublée · Studio', 'Douala'], array_slice($lines, 0, 2));
+        $card = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()];
+        $this->assertSame($pending->offer->getTranslation('title', 'fr').' · Douala', $card['title']);
+        $this->assertStringStartsWith("Location meublée · Studio\n", $card['subtitle']);
+        $this->assertStringNotContainsString('Douala', $card['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
         $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).

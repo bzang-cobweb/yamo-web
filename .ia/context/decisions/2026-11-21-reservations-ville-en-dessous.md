@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-21-reservations-ville-sur-le-titre.md
 # « Mes réservations » : la ville sur sa propre ligne, sous le type
 
 - **Date** : 2026-11-21
