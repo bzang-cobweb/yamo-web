@@ -172,7 +172,7 @@ class BookingListing extends Listing
         // notification dans son fil (une demande d'avant), la fiche du logement
         // (décision 2026-11-21-reservation-comme-notification).
         $notification = $record->getAttribute('thread_notification_id');
-        $item = BookingItem::make($record, $locale, withTypedTitle: true, withRentalType: true)
+        $item = BookingItem::make($record, $locale, withTypedTitle: true, withRentalType: true, withGuestCount: false)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
         // Le statut sur la photo, comme dans « Mes logements » ; à droite, le menu des actions à la place du
         // cœur (décisions 2026-11-21-reservations-statut-coeur et 2026-11-21-reservations-menu).

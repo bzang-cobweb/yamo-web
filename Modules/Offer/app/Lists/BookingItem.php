@@ -18,9 +18,10 @@ final class BookingItem
      * `$withTypedTitle` : le titre saisi de l'offre sur la première ligne sous le titre, s'il en
      * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre). `$withRentalType` :
      * le titre de carte du domaine (« Location meublée · Studio », décision
-     * 2026-11-21-reservations-type-de-location-titre).
+     * 2026-11-21-reservations-type-de-location-titre). `$withGuestCount` à faux : sans le nombre de
+     * personnes (« Mes réservations », décision 2026-11-21-reservations-sans-nombre-personnes).
      */
-    public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false, bool $withRentalType = false): ListItem
+    public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false, bool $withRentalType = false, bool $withGuestCount = true): ListItem
     {
         $offer = $booking->offer;
         $typed = (string) $offer->getTranslation('title', $locale);
@@ -29,7 +30,7 @@ final class BookingItem
             $withGuest ? (string) $booking->user->full_name : null,
             $booking->type->label(),
             $booking->period($locale),
-            $booking->guests === null ? null : __('offer::booking.list.guests', ['count' => $booking->guests], $locale),
+            ! $withGuestCount || $booking->guests === null ? null : __('offer::booking.list.guests', ['count' => $booking->guests], $locale),
         ]));
 
         if ($withTypedTitle && $typed !== '' && $typed !== $title) {

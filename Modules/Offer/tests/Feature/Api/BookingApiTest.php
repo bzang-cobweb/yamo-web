@@ -312,6 +312,8 @@ class BookingApiTest extends TestCase
         $this->assertSame('Location meublée · Studio', $items[(string) $pending->getKey()]['title']);
         // Sous le titre construit, le titre saisi de l'offre, puis les dates (décision 2026-11-21-reservations-vrai-titre).
         $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $items[(string) $pending->getKey()]['subtitle']);
+        // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
+        $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
         $this->assertNull($items[(string) $pending->getKey()]['favorite']);
