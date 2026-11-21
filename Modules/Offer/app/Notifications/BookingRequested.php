@@ -117,7 +117,7 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
-     * @return array{title: string, step: string, own: bool, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, step: string, own: bool, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -138,6 +138,8 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
             // Le total figé de la demande (« 255 000 FCFA »), en gras sur la page de la notification ; `null` pour une visite.
             'total' => $this->booking->formattedTotal(app()->getLocale()),
             'message' => $this->note(),
+            // Une demande modifiée : « Modifié » près de sa date dans le suivi (décision 2026-11-21-etape-modifiee-date).
+            'edited' => $this->step === BookingStepEnum::UPDATED,
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
             'link' => $this->section() === 'received'

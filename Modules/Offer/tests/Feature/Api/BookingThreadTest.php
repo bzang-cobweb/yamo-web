@@ -96,6 +96,7 @@ class BookingThreadTest extends TestCase
             $this->assertSame($expected, array_column($history, 'label'));
             $this->assertSame([(string) $this->guest->getKey(), (string) $this->owner->getKey(), (string) $this->guest->getKey()], array_column(array_column($history, 'actor'), 'id'));
             $this->assertSame(['Bonjour !', null, null], array_column($history, 'message'));
+            $this->assertSame([false, false, false], array_column($history, 'edited'));
             $this->assertSame(array_column($history, 'created_at'), collect($history)->pluck('created_at')->sort()->values()->all());
         }
     }
@@ -396,6 +397,8 @@ class BookingThreadTest extends TestCase
         $this->assertStringContainsString('pour 2 personnes', (string) $card['summary']);
         $history = $this->api($this->owner, 'GET', '/'.$card['id'])->json('data.history');
         $this->assertSame(['Demande modifiée'], array_column($history, 'label'));
+        // « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date).
+        $this->assertSame([true], array_column($history, 'edited'));
         $this->assertSame(['Message modifié'], array_column($history, 'message'));
         // Le membre : sa copie réécrite sur place (la page ouverte reste la même), déjà lue.
         $copy = $this->guest->notifications()->sole();

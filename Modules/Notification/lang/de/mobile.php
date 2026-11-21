@@ -17,6 +17,8 @@ return [
         'history' => 'Verlauf der Anfrage',
         // Le lecteur, dans le suivi d'une demande (décision 2026-11-20-suivi-conversation).
         'you' => 'Du',
+        // Près de la date d'une étape modifiée (décision 2026-11-21-etape-modifiee-date).
+        'edited' => 'Bearbeitet',
         // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
         'delivery' => ['sent' => 'Gesendet', 'delivered' => 'Zugestellt', 'read' => 'Gelesen'],
         'open' => 'Öffnen',

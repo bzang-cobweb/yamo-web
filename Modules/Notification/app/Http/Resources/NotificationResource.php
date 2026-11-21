@@ -136,7 +136,7 @@ class NotificationResource extends JsonResource
      * (connecté depuis, pas lue), `read` (lue) ; `null` pour une étape de l'autre.
      *
      * @param  list<DatabaseNotification>  $steps
-     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, message: string|null, created_at: string|null, delivery: string|null}>
+     * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, message: string|null, created_at: string|null, edited: bool, delivery: string|null}>
      */
     private function history(array $steps): array
     {
@@ -152,6 +152,8 @@ class NotificationResource extends JsonResource
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
+                /** Une étape modifiée (`data.edited`) : « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date). */
+                'edited' => (bool) (((array) $step->data)['edited'] ?? false),
                 'delivery' => (int) $step->getAttribute('user_id') === $reader
                     ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id')))
                     : null,
