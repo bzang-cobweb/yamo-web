@@ -186,11 +186,11 @@ class ReceivedBookingListing extends Listing
         $notification = $record->getAttribute('thread_notification_id');
         $item = OfferRequestItem::make($record, $locale)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
-        // Ses notifications non lues : un compteur en bas de la carte, qui ouvre la page de la demande
-        // (décision 2026-11-21-demandes-non-lues).
+        // Ses notifications non lues : une pastille rouge sous le titre, pour information (décisions
+        // 2026-11-21-demandes-non-lues et 2026-11-21-demandes-pastille-non-lues-total).
         $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
         if ($unread > 0 && is_string($notification) && $notification !== '') {
-            $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification);
+            $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification, tone: 'danger');
         }
 
         if ($record->isAwaitingAnswer()) {

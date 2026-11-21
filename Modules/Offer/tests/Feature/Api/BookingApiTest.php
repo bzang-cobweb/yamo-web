@@ -277,7 +277,8 @@ class BookingApiTest extends TestCase
         $this->assertSame('/members/'.$guest->getKey(), $item['title_link']);
         $this->assertSame($booking->type->label().' · '.$booking->period('fr'), $item['subtitle']);
         $this->assertNull($item['rating']);
-        $this->assertStringStartsWith('135', (string) $item['highlight']);
+        // Avec son libellé (décision 2026-11-21-demandes-pastille-non-lues-total).
+        $this->assertStringStartsWith('Total : 135', (string) $item['highlight']);
         $this->assertTrue($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
         [$accept, $refuse] = $item['actions'];
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
@@ -462,7 +463,8 @@ class BookingApiTest extends TestCase
         // demande (décision 2026-11-21-demandes-non-lues).
         $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
         $firstCard = $cards[(string) $first->getKey()];
-        $this->assertSame([['label' => '2 notifications non lues', 'list' => 'notifications', 'filter' => [], 'link' => $firstCard['link']]], $firstCard['counters']);
+        // En pastille rouge (décision 2026-11-21-demandes-pastille-non-lues-total).
+        $this->assertSame([['label' => '2 notifications non lues', 'list' => 'notifications', 'filter' => [], 'link' => $firstCard['link'], 'tone' => 'danger']], $firstCard['counters']);
         $this->assertStringStartsWith('/notifications/', $firstCard['link']);
         $this->assertSame('1 notification non lue', $cards[(string) $second->getKey()]['counters'][0]['label']);
         $this->assertSame([], $cards[(string) $read->getKey()]['counters']);
