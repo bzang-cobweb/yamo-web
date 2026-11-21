@@ -59,6 +59,7 @@ class ListingApiTest extends TestCase
                     'actions' => [],
                     'tag' => null,
                     'counter' => null,
+                    'counters' => [],
                     'delete' => [
                         'label' => 'Retirer', 'confirm' => 'Sûr ?', 'method' => 'DELETE', 'endpoint' => "/v1/test/cards/{$user->getKey()}",
                         'destructive' => true, 'success' => ['action' => 'back', 'message' => 'Retirée.'],

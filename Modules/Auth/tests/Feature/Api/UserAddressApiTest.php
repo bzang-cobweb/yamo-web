@@ -103,6 +103,7 @@ class UserAddressApiTest extends TestCase
             'actions' => [],
             'tag' => null,
             'counter' => null,
+            'counters' => [],
             'delete' => [
                 'label' => 'Retirer',
                 'confirm' => 'Retirer cette adresse ?',

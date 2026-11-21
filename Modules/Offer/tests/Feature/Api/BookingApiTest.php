@@ -4,6 +4,7 @@ namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
@@ -263,6 +264,8 @@ class BookingApiTest extends TestCase
             'link' => '/notifications',
         ], $items[(string) $offer->getKey()]['counter']);
         $this->assertNull($items[(string) $other->getKey()]['counter']);
+        // Le même, premier de la liste des compteurs (décision 2026-11-21-compteur-non-lues).
+        $this->assertSame($items[(string) $offer->getKey()]['counter'], $items[(string) $offer->getKey()]['counters'][0]);
 
         // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
@@ -279,6 +282,42 @@ class BookingApiTest extends TestCase
         $this->assertSame(BookingStatusEnum::ACCEPTED, $first->fresh()->status);
         Notification::assertSentTo($first->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::ACCEPTED);
         $this->assertSame('1 demande en attente', collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id')[(string) $offer->getKey()]['counter']['label']);
+    }
+
+    public function test_each_home_card_counts_its_unread_notifications_a_request_counting_as_one(): void
+    {
+        // Décision 2026-11-21-compteur-non-lues.
+        $offer = $this->home(true);
+        $owner = $offer->user;
+        $other = $this->home(true, $owner);
+        $notify = fn (Booking $booking, bool $read, ?User $to = null) => ($to ?? $owner)->notifications()->create([
+            'id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $booking->thread(),
+            'read_at' => $read ? now() : null, 'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $booking->offer_id, 'booking_id' => $booking->getKey()],
+        ]);
+        $first = Booking::factory()->for($offer)->create();
+        $second = Booking::factory()->for($offer)->create(['check_in' => today()->addDays(20), 'check_out' => today()->addDays(22)]);
+        $read = Booking::factory()->for($offer)->create(['check_in' => today()->addDays(30), 'check_out' => today()->addDays(32)]);
+        $accepted = Booking::factory()->for($offer)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(40), 'check_out' => today()->addDays(42)]);
+        // Deux étapes non lues d'une même demande en attente, une autre en attente non lue : 2.
+        $notify($first, false);
+        $notify($first, false);
+        $notify($second, false);
+        // Lue, ou d'une demande qui n'est plus en attente : pas comptée.
+        $notify($read, true);
+        $notify($accepted, false);
+        $notify(Booking::factory()->for($other)->status(BookingStatusEnum::REFUSED)->create(), true);
+        // Celles d'un autre membre ne comptent pas.
+        $notify($first, false, $this->member());
+
+        $items = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id');
+        $this->assertSame([[
+            'label' => '2 notifications non lues',
+            'list' => 'notifications',
+            // Les filtres de « x demandes en attente », plus « Non lues : Oui ».
+            'filter' => ['type' => 'booking', 'status' => 'pending', 'offer' => (string) $offer->getKey(), 'unread' => 'yes'],
+            'link' => '/notifications',
+        ]], array_slice($items[(string) $offer->getKey()]['counters'], 1));
+        $this->assertSame([], $items[(string) $other->getKey()]['counters']);
     }
 
     public function test_my_bookings_are_filtered_by_status_city_and_type_with_a_search_button(): void

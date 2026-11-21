@@ -50,6 +50,9 @@ final class ListItem
     /** @var array{label: string, list: string, filter: array<string, string>, link: string|null}|null */
     private ?array $counter = null;
 
+    /** @var list<array{label: string, list: string, filter: array<string, string>, link: string|null}> */
+    private array $counters = [];
+
     /** @var array{label: string, tone: string, on_image?: bool}|null */
     private ?array $tag = null;
 
@@ -190,7 +193,10 @@ final class ListItem
      */
     public function counter(string $label, string $list, array $filter = [], ?string $link = null): self
     {
-        $this->counter = ['label' => $label, 'list' => $list, 'filter' => $filter, 'link' => $link];
+        // Plusieurs compteurs possibles, dans l'ordre d'appel (`counters`) ; `counter` reste le premier,
+        // pour une app qui n'en connaît qu'un (décision 2026-11-21-compteur-non-lues).
+        $this->counters[] = ['label' => $label, 'list' => $list, 'filter' => $filter, 'link' => $link];
+        $this->counter ??= $this->counters[0];
 
         return $this;
     }
@@ -241,6 +247,7 @@ final class ListItem
             'tag' => $this->tag,
             /** Compteur de la carte : son libellé, la liste qu'il ouvre (ou l'écran `link`) et les filtres déjà choisis ; `null` : aucun. */
             'counter' => $this->counter,
+            'counters' => $this->counters,
             'delete' => $this->deleteSubmission === null ? null : [
                 'label' => (string) $this->deleteLabel,
                 'confirm' => (string) $this->deleteConfirm,
