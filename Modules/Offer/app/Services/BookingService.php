@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Services;
 
+use Carbon\CarbonInterface;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -104,8 +105,7 @@ class BookingService
                 'total' => $booking->unit_price === null || $days === null ? null : number_format((float) $booking->unit_price * $days, 2, '.', ''),
             ])->save();
 
-            $this->replaceRequestStep($booking);
-            BookingUpdated::dispatch($booking);
+            BookingUpdated::dispatch($booking, $this->replaceRequestStep($booking));
 
             return $booking;
         });
@@ -114,19 +114,25 @@ class BookingService
     /**
      * L'étape précédente (« Demande envoyée » ou « Demande modifiée ») devient « Demande modifiée »
      * (décision 2026-11-21-demande-modifiee-notification) : celle du propriétaire est supprimée, la
-     * nouvelle lui est envoyée (`BookingUpdated`) ; la copie du membre est réécrite sur place,
-     * remontée et lue, pour que la page qu'il a ouverte reste la sienne.
+     * nouvelle lui est envoyée (`BookingUpdated`) ; la copie du membre est réécrite sur place, lue,
+     * pour que la page qu'il a ouverte reste la sienne. Les deux gardent leur date de création ;
+     * `updated_at` est l'heure de la modification (décision 2026-11-21-etape-modifiee-date).
+     *
+     * @return CarbonInterface|null La date de création de l'étape du propriétaire remplacée.
      */
-    private function replaceRequestStep(Booking $booking): void
+    private function replaceRequestStep(Booking $booking): ?CarbonInterface
     {
+        $createdAt = null;
+
         DatabaseNotification::query()
             ->where('thread', $booking->thread())
             ->whereIn('data->step', [BookingStepEnum::RECEIVED->value, BookingStepEnum::UPDATED->value])
             ->with('notifiable')
             ->get()
-            ->each(function (DatabaseNotification $notification) use ($booking): void {
+            ->each(function (DatabaseNotification $notification) use ($booking, &$createdAt): void {
                 $notifiable = $notification->notifiable;
                 if (! (bool) (((array) $notification->data)['own'] ?? false) || ! $notifiable instanceof User) {
+                    $createdAt ??= $notification->created_at;
                     $notification->delete();
 
                     return;
@@ -136,8 +142,10 @@ class BookingService
                     $notifiable->preferredLocale(),
                     fn (): array => (new BookingRequestedNotification($booking, BookingStepEnum::UPDATED, own: true))->toArray($notifiable),
                 );
-                $notification->forceFill(['data' => $data, 'read_at' => now(), 'created_at' => now()])->save();
+                $notification->forceFill(['data' => $data, 'read_at' => $notification->read_at ?? now()])->save();
             });
+
+        return $createdAt;
     }
 
     /**

@@ -152,8 +152,8 @@ class NotificationResource extends JsonResource
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
-                /** Une étape modifiée (`data.edited`) : « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date). */
-                'edited' => (bool) (((array) $step->data)['edited'] ?? false),
+                /** Modifiée : `updated_at` diffère de `created_at` (décision 2026-11-21-etape-modifiee-date). */
+                'edited' => $step->created_at !== null && $step->updated_at !== null && ! $step->created_at->equalTo($step->updated_at),
                 'delivery' => (int) $step->getAttribute('user_id') === $reader
                     ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id')))
                     : null,

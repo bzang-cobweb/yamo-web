@@ -62,17 +62,16 @@ class NotificationThreads
             ->distinct()->pluck('thread')->map(fn (mixed $thread): string => (string) $thread)->values()->all();
     }
 
-    /** Marque lue la notification et, si elle a un fil, toutes celles de son fil chez ce destinataire. */
+    /**
+     * Marque lue la notification et, si elle a un fil, toutes celles de son fil chez ce destinataire.
+     * Sans toucher `updated_at`, réservé à une modification (décision 2026-11-21-etape-modifiee-date).
+     */
     public function markRead(User $user, DatabaseNotification $notification): void
     {
         $thread = $notification->getAttribute('thread');
-        if (! is_string($thread)) {
-            $notification->markAsRead();
-
-            return;
-        }
-
-        $user->unreadNotifications()->getQuery()->where('thread', $thread)->update(['read_at' => now()]);
+        $user->unreadNotifications()->getQuery()
+            ->when(is_string($thread), fn ($query) => $query->where('thread', $thread), fn ($query) => $query->whereKey($notification->getKey()))
+            ->toBase()->update(['read_at' => now()]);
     }
 
     /**
