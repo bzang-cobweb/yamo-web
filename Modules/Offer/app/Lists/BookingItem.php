@@ -15,8 +15,8 @@ use Modules\Offer\Models\Booking;
 final class BookingItem
 {
     /**
-     * `$mine` : la carte de « Mes réservations » — le titre saisi de l'offre et la ville en titre ; en
-     * dessous, le titre de carte du domaine (« Location meublée · Studio »), puis le type de demande
+     * `$mine` : la carte de « Mes réservations » — le titre saisi de l'offre en titre ; en
+     * dessous, le titre de carte du domaine (« Location meublée · Studio · Douala »), puis le type de demande
      * et les dates, sans le nombre de personnes ni le total (décisions 2026-11-21-reservations-vrai-titre,
      * 2026-11-21-reservations-type-de-location-titre, 2026-11-21-reservations-sans-nombre-personnes
      * et 2026-11-21-reservations-titres-inverses-sans-prix).
@@ -49,9 +49,6 @@ final class BookingItem
             $card !== null && $card !== $title ? $card : null,
             $subtitle,
         ], fn (?string $line): bool => $line !== null && $line !== ''));
-        // La ville au bout du titre : « Studio meublé à Bonanjo · Douala » (décision
-        // 2026-11-21-reservations-ville-sur-le-titre).
-        $title = implode(' · ', array_filter([$title, $offer->address?->city], fn (?string $part): bool => $part !== null && $part !== ''));
 
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))

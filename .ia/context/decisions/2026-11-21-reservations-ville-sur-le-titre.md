@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-21-reservations-ville-ligne-du-type.md
 Remplace : 2026-11-21-reservations-ville-en-dessous.md
 
 # « Mes réservations » : la ville au bout du titre
