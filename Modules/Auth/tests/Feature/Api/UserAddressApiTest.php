@@ -72,6 +72,7 @@ class UserAddressApiTest extends TestCase
                 // « Ajouter une adresse » en bouton dans la barre du bas (décision 2026-11-21-ajout-adresse-barre-du-bas).
                 'create' => null,
                 'footer' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address', 'link' => null],
+                'menu' => false,
                 'search' => 'Rechercher une adresse…',
                 'filters' => [],
                 'next_cursor' => null,

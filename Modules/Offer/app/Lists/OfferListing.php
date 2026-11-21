@@ -52,6 +52,14 @@ class OfferListing extends Listing
     }
 
     /**
+     * Voir, Éditer, Calendrier, Retirer : dans un menu déroulant (décision 2026-11-21-actions-en-menu).
+     */
+    public function actionsMenu(): bool
+    {
+        return true;
+    }
+
+    /**
      * « Ajouter un logement » dans la barre fixe en bas, plus sous la recherche
      * (décision 2026-11-19-contrat-reservations-logements-profil). Pas proposé à qui
      * ne peut pas créer, ni au-delà d'une offre quand le domaine l'impose.

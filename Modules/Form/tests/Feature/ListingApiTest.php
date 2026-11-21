@@ -41,6 +41,7 @@ class ListingApiTest extends TestCase
                 'empty' => null,
                 'create' => null,
                 'footer' => null,
+                'menu' => false,
                 'search' => null,
                 'filters' => [],
                 'next_cursor' => null,

@@ -36,6 +36,7 @@ class ListingResource extends JsonResource
             'create' => $this->resource->create(),
             /** Bouton de la barre fixe en bas : libellé, formulaire ou écran de l'app ouvert ; `null` : aucun. */
             'footer' => $this->resource->footer(),
+            'menu' => $this->resource->actionsMenu(),
             /** Texte d'aide du champ de recherche ; `null` : liste non cherchable, `?search=` ignoré. */
             'search' => $this->resource->searchPlaceholder(),
             /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`) ; vide : liste sans filtres. */

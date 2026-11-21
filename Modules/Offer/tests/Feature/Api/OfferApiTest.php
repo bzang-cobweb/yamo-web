@@ -556,6 +556,8 @@ class OfferApiTest extends TestCase
             // « Ajouter un logement » dans la barre du bas (décision 2026-11-19-contrat-reservations-logements-profil).
             ->assertJsonPath('data.create', null)
             ->assertJsonPath('data.footer', ['label' => 'Ajouter un logement', 'form' => 'offer.offer', 'link' => null])
+            // Les actions des cartes dans un menu déroulant (décision 2026-11-21-actions-en-menu).
+            ->assertJsonPath('data.menu', true)
             ->assertJsonPath('data.search', 'Rechercher par titre…')
             ->json('data.items');
 

@@ -150,6 +150,8 @@ class OfferCalendarApiTest extends TestCase
 
     public function test_visits_color_their_day_like_stays(): void
     {
+        // Une date fixe : les jours +40 à +42 restent dans le même mois (le 21 novembre, +41 passait en janvier).
+        $this->travelTo('2026-11-05 10:00:00');
         $offer = $this->home(false);
         Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40)]);
         Booking::factory()->for($offer)->for($this->member())->visit()->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(41)]);

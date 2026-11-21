@@ -268,6 +268,15 @@ abstract class Listing
     }
 
     /**
+     * Les actions de chaque carte (Voir, Éditer, ses boutons, Retirer) regroupées dans un menu
+     * déroulant « Actions » (décision 2026-11-21-actions-en-menu) ; non par défaut.
+     */
+    public function actionsMenu(): bool
+    {
+        return false;
+    }
+
+    /**
      * Le titre selon les filtres choisis (« Demandes · Studio meublé ») ; le titre
      * par défaut.
      *
