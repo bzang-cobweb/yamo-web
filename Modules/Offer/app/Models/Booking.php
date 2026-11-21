@@ -101,6 +101,32 @@ class Booking extends Model
     /** Les regroupements de statuts des filtres : à venir, en attente, passées. */
     public const STATUS_GROUPS = ['upcoming', 'pending', 'past'];
 
+    /** Les périodes d'une demande, d'après ses dates seulement (décision 2026-11-21-reservations-periode-dates). */
+    public const PERIODS = ['upcoming', 'ongoing', 'past'];
+
+    /**
+     * Restreint à une période, d'après les dates seulement, quel que soit le statut (décision
+     * 2026-11-21-reservations-periode-dates) : `upcoming` (pas encore commencée), `ongoing`
+     * (commencée, pas finie ; le jour du départ compris), `past` (finie). Un séjour va de
+     * l'arrivée au départ ; une visite, de la première à la dernière de ses dates proposées.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeInPeriod(Builder $query, string $period): void
+    {
+        $today = today()->toDateString();
+        // `date()` : une date enregistrée avec son heure (« 2026-11-21 00:00:00 ») se compare au jour.
+        $start = 'date(case when check_out is not null and check_out < check_in then check_out else check_in end)';
+        $end = 'date(case when check_out is not null and check_out > check_in then check_out else check_in end)';
+
+        match ($period) {
+            'upcoming' => $query->whereRaw("{$start} > ?", [$today]),
+            'ongoing' => $query->whereRaw("{$start} <= ?", [$today])->whereRaw("{$end} >= ?", [$today]),
+            'past' => $query->whereRaw("{$end} < ?", [$today]),
+            default => null,
+        };
+    }
+
     /**
      * Restreint à un regroupement de statuts (décision
      * 2026-11-19-contrat-reservations-logements-profil) : `upcoming` (acceptées, pas

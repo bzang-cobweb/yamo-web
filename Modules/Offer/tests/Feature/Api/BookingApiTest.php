@@ -429,17 +429,38 @@ class BookingApiTest extends TestCase
         $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
         $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée'], array_column($filters['status']['options'], 'label'));
         $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
-        $this->assertSame(['upcoming', 'pending', 'past'], array_column($filters['period']['options'], 'value'));
+        $this->assertSame(['upcoming', 'ongoing', 'past'], array_column($filters['period']['options'], 'value'));
 
         $this->assertSame([(string) $pending->getKey()], $ids('?filter[status]=pending'));
         $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=accepted'));
         $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused'));
         $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status]=cancelled'));
-        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[period]=upcoming'));
-        $this->assertSame([(string) $pending->getKey()], $ids('?filter[period]=pending'));
-        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused&filter[period]=past'));
         $this->assertSame([(string) $refused->getKey()], $ids('?filter[type]=visit'));
         $this->assertCount(4, $ids());
+    }
+
+    public function test_my_bookings_period_follows_the_dates_only(): void
+    {
+        // Décision 2026-11-21-reservations-periode-dates : quel que soit le statut.
+        $guest = $this->member();
+        $offer = $this->home(true);
+        $make = fn (int $in, ?int $out, BookingStatusEnum $status = BookingStatusEnum::ACCEPTED): string => (string) Booking::factory()->for($offer)->for($guest)->status($status)
+            ->create(['check_in' => today()->addDays($in), 'check_out' => $out === null ? null : today()->addDays($out)])->getKey();
+        $future = $make(5, 7, BookingStatusEnum::CANCELLED);
+        $ongoing = $make(-1, 2);
+        $leavingToday = $make(-3, 0);
+        $arrivingToday = $make(0, 3);
+        $done = $make(-6, -2, BookingStatusEnum::PENDING);
+        // Une visite : de sa première à sa dernière date proposée.
+        $visit = (string) Booking::factory()->for($this->home(false))->for($guest)->visit()->create(['check_in' => today()->addDays(3), 'check_out' => today()->subDay()])->getKey();
+        $ids = fn (string $period): array => collect($this->asUser($guest)->getJson("/api/v1/lists/offer.bookings?filter[period]={$period}")->json('data.items'))->pluck('id')->sort()->values()->all();
+        $sorted = fn (string ...$keys): array => collect($keys)->sort()->values()->all();
+
+        $filter = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.filters'))->firstWhere('name', 'period');
+        $this->assertSame(['À venir', 'En cours', 'Passées'], array_column($filter['options'], 'label'));
+        $this->assertSame([$future], $ids('upcoming'));
+        $this->assertSame($sorted($ongoing, $leavingToday, $arrivingToday, $visit), $ids('ongoing'));
+        $this->assertSame([$done], $ids('past'));
     }
 
     public function test_my_homes_are_filtered_like_the_home_plus_their_status(): void

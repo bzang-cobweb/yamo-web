@@ -73,9 +73,9 @@ class BookingListing extends Listing
     }
 
     /**
-     * Statut réel de la demande (en attente, acceptée, refusée, annulée), période (à venir, en
-     * attente, passées), ville du logement, type (séjour, visite) ; tous en liste déroulante
-     * (décision 2026-11-21-reservations-filtre-statut).
+     * Statut réel de la demande (en attente, acceptée, refusée, annulée), période d'après les dates
+     * (à venir, en cours, passées), ville du logement, type (séjour, visite) ; tous en liste
+     * déroulante (décisions 2026-11-21-reservations-filtre-statut et 2026-11-21-reservations-periode-dates).
      */
     public function filters(): array
     {
@@ -83,7 +83,7 @@ class BookingListing extends Listing
             Field::select('status')
                 ->label(__('offer::booking.profile.filter_status'))
                 ->options(BookingStatusEnum::options()),
-            BookingFilters::statusSelect('period', __('offer::booking.profile.filter_period')),
+            BookingFilters::period(),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 ->options($this->cities()),
@@ -99,7 +99,7 @@ class BookingListing extends Listing
         if ($status !== null) {
             $query->where('status', $status);
         }
-        BookingFilters::applyStatus($query, $filters, 'period');
+        BookingFilters::applyPeriod($query, $filters);
         if (isset($filters['city'])) {
             $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
         }
