@@ -15,6 +15,7 @@ use Modules\Form\Support\Submission;
 use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Models\Booking;
@@ -72,12 +73,17 @@ class BookingListing extends Listing
     }
 
     /**
-     * Statut (à venir, en attente, passées), ville du logement, type (séjour, visite).
+     * Statut réel de la demande (en attente, acceptée, refusée, annulée), période (à venir, en
+     * attente, passées), ville du logement, type (séjour, visite) ; tous en liste déroulante
+     * (décision 2026-11-21-reservations-filtre-statut).
      */
     public function filters(): array
     {
         return [
-            BookingFilters::status(),
+            Field::select('status')
+                ->label(__('offer::booking.profile.filter_status'))
+                ->options(BookingStatusEnum::options()),
+            BookingFilters::statusSelect('period', __('offer::booking.profile.filter_period')),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 ->options($this->cities()),
@@ -89,7 +95,11 @@ class BookingListing extends Listing
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        BookingFilters::applyStatus($query, $filters);
+        $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+        BookingFilters::applyStatus($query, $filters, 'period');
         if (isset($filters['city'])) {
             $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
         }

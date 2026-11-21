@@ -184,6 +184,8 @@ return [
     // Profil : réservations, logements, demandes par logement (décision 2026-11-19-contrat-reservations-logements-profil).
     'profile' => [
         'filter_status' => 'Statut',
+        // À venir, en attente, passées : l'ancien « Statut » de « Mes réservations » (décision 2026-11-21-reservations-filtre-statut).
+        'filter_period' => 'Période',
         'filter_any' => 'Tous',
         'filter_upcoming' => 'À venir',
         'filter_pending' => 'En attente',

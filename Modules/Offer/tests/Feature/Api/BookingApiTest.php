@@ -422,14 +422,24 @@ class BookingApiTest extends TestCase
 
         $data = $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data');
         $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/'], $data['footer']);
-        $this->assertSame(['status', 'city', 'type'], array_column($data['filters'], 'name'));
-        $this->assertSame(['any', 'upcoming', 'pending', 'past'], array_column($data['filters'][0]['options'], 'value'));
+        // Décision 2026-11-21-reservations-filtre-statut : le statut réel, puis la période, en listes déroulantes.
+        $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
+        $filters = collect($data['filters'])->keyBy('name');
+        $this->assertSame(['status', 'period', 'city', 'type'], $filters->keys()->all());
+        $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
+        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée'], array_column($filters['status']['options'], 'label'));
+        $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
+        $this->assertSame(['upcoming', 'pending', 'past'], array_column($filters['period']['options'], 'value'));
 
         $this->assertSame([(string) $pending->getKey()], $ids('?filter[status]=pending'));
-        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=upcoming'));
-        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=past'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=accepted'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused'));
+        $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status]=cancelled'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[period]=upcoming'));
+        $this->assertSame([(string) $pending->getKey()], $ids('?filter[period]=pending'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused&filter[period]=past'));
         $this->assertSame([(string) $refused->getKey()], $ids('?filter[type]=visit'));
-        $this->assertCount(3, $ids('?filter[status]=any'));
+        $this->assertCount(4, $ids());
     }
 
     public function test_my_homes_are_filtered_like_the_home_plus_their_status(): void
