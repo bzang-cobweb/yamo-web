@@ -89,7 +89,7 @@ return [
     'rules' => [
         // Les heures d'un meublé (décision 2026-11-20-heures-arrivee-depart).
         'check_in_from' => 'Check-in from',
-        'check_out_until' => 'Check-out before',
+        'check_out_until' => 'Check-out no later than',
         'documents' => 'Required documents',
         'document_options' => [
             'id_card' => 'ID card',
