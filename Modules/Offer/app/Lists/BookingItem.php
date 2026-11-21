@@ -48,6 +48,8 @@ final class BookingItem
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
             ->tag($booking->status->label(), $booking->status->tone())
+            // La note des avis à droite, comme à l'accueil (décision 2026-11-21-reservations-note).
+            ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)
             // En gras, comme à l'accueil : les détails puis le prix et son unité (« 45 000 FCFA / jour »,
             // décision 2026-11-21-reservations-prix-comme-accueil).
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($offer), $domain->formattedPrice($offer, $locale)])) ?: null);

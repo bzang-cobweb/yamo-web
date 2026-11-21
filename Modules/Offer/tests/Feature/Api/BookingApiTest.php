@@ -17,6 +17,7 @@ use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferReview;
 use Modules\Offer\Notifications\BookingRequested;
 use Tests\TestCase;
 
@@ -312,6 +313,11 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $started->getKey()]['delete']);
         // Titres inversés (décision 2026-11-21-reservations-titres-inverses-sans-prix).
         $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['title']);
+        // Sans avis : pas de note (décision 2026-11-21-reservations-note).
+        $this->assertNull($items[(string) $pending->getKey()]['rating']);
+        OfferReview::factory()->for($pending->offer)->create(['rating' => 4]);
+        $rated = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()];
+        $this->assertEquals(['average' => 4, 'count' => 1], $rated['rating']);
         // En gras, le prix et son unité, comme à l'accueil (décision 2026-11-21-reservations-prix-comme-accueil).
         $this->assertSame('45 000 FCFA / jour', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $items[(string) $pending->getKey()]['highlight']));
         // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).

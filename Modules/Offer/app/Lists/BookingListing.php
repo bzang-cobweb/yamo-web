@@ -140,7 +140,8 @@ class BookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            ->with(['offer.media', 'offer.address'])
+            // La note et le nombre d'avis du logement, comme à l'accueil (décision 2026-11-21-reservations-note).
+            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary()])
             // Sa dernière notification du fil de la demande : la carte ouvre sa page (décision
             // 2026-11-21-reservation-comme-notification).
             ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
