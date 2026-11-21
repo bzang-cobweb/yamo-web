@@ -172,6 +172,7 @@ return [
         'requests_all' => 'Requests received',
         'pending_count' => '{1} :count pending request|[2,*] :count pending requests',
         'unread_count' => '{1} :count unread notification|[2,*] :count unread notifications',
+        'notifications' => 'Notifications',
         'accept' => 'Accept',
         'accept_confirm' => 'Accept the request from :guest (:period)?',
         'accept_overlaps' => '{1} This pending request overlaps these dates and will be declined: :requests.|[2,*] These :count pending requests overlap these dates and will be declined: :requests.',

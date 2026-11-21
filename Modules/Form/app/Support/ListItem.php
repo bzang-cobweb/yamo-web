@@ -44,7 +44,7 @@ final class ListItem
 
     private ?Submission $deleteSubmission = null;
 
-    /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null, link: string|null}> */
+    /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null, link: string|null, list?: string|null, filter?: array<string, string>}> */
     private array $actions = [];
 
     /** @var array{label: string, list: string, filter: array<string, string>, link: string|null}|null */
@@ -154,9 +154,13 @@ final class ListItem
      * Un bouton sur la carte (décision 2026-11-19-contrat-reservations-logements-profil) :
      * il envoie `$submission` (après `$confirm`, s'il y en a une), ouvre le
      * formulaire `$form` lié à `$record`, ou ouvre l'écran de l'app `$link`
-     * (« /offers/12/calendar »). Style : `primary`, `destructive` ou `default`.
+     * (« /offers/12/calendar »). Style : `primary`, `destructive` ou `default`. Avec
+     * `$filter`, l'écran `$link` s'ouvre avec ces filtres déjà choisis, rangés sous le nom
+     * `$list` (« notifications »), comme un compteur (décision 2026-11-21-lien-notifications).
+     *
+     * @param  array<string, string>|null  $filter
      */
-    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null, ?string $link = null): self
+    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null, ?string $link = null, ?array $filter = null, ?string $list = null): self
     {
         $this->actions[] = [
             'label' => $label,
@@ -165,6 +169,7 @@ final class ListItem
             'submission' => $submission,
             'form' => $form === null ? null : ['form' => $form, 'record' => (string) ($record ?? $this->id)],
             'link' => $link,
+            ...($filter === null ? [] : ['list' => $list, 'filter' => $filter]),
         ];
 
         return $this;
@@ -242,6 +247,8 @@ final class ListItem
                 'submission' => $action['submission']?->toArray(),
                 'form' => $action['form'],
                 'link' => $action['link'],
+                // Les filtres déjà choisis de l'écran ouvert, s'il en a (décision 2026-11-21-lien-notifications).
+                ...(isset($action['filter']) ? ['list' => $action['list'], 'filter' => $action['filter']] : []),
             ], $this->actions),
             /** Pastille de couleur (un statut) : libellé et ton (`warning`, `success`, `danger`, `neutral`) ; `null` : aucune. */
             'tag' => $this->tag,

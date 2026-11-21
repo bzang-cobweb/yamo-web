@@ -124,6 +124,11 @@ class OfferCalendarApiTest extends TestCase
 
         $card = collect($this->asUser($offer->user)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->firstWhere('id', (string) $offer->getKey());
         $this->assertSame(['label' => 'Calendrier', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => "/offers/{$offer->getKey()}/calendar"], $card['actions'][0]);
+        // Puis « Notifications » : les demandes de ce logement, sans autre filtre (décision 2026-11-21-lien-notifications).
+        $this->assertSame([
+            'label' => 'Notifications', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => '/notifications',
+            'list' => 'notifications', 'filter' => ['type' => 'booking', 'offer' => (string) $offer->getKey()],
+        ], $card['actions'][1]);
     }
 
     public function test_each_day_shows_accepted_pending_overlap_blocked_past_and_free(): void

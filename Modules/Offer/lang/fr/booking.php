@@ -172,6 +172,7 @@ return [
         'requests_all' => 'Demandes reçues',
         'pending_count' => '{1} :count demande en attente|[2,*] :count demandes en attente',
         'unread_count' => '{1} :count notification non lue|[2,*] :count notifications non lues',
+        'notifications' => 'Notifications',
         'accept' => 'Accepter',
         'accept_confirm' => 'Accepter la demande de :guest (:period) ?',
         'accept_overlaps' => '{1} Cette demande en attente chevauche ces dates et sera refusée : :requests.|[2,*] Ces :count demandes en attente chevauchent ces dates et seront refusées : :requests.',
