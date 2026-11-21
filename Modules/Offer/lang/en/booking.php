@@ -9,7 +9,6 @@ return [
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
         'member' => 'Member',
-        'host' => 'Host',
         'phone' => 'Phone',
         'email' => 'Email',
         'address' => 'Address',

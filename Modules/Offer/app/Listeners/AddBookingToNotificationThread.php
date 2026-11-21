@@ -24,11 +24,12 @@ use Modules\Offer\Support\BookingCache;
 class AddBookingToNotificationThread
 {
     /**
-     * « Hôte » ou « Membre » (avec le lien de sa page), « Téléphone », « E-mail » ; une ligne sans valeur est omise.
+     * « Membre » (avec le lien de sa page) si `$role` est donné, puis « Téléphone » et « E-mail » ; une ligne sans
+     * valeur est omise.
      *
      * @return list<array{key: string, label: string, value: string, link?: string}>
      */
-    private function contactLines(?User $person, string $role): array
+    private function contactLines(?User $person, ?string $role): array
     {
         if ($person === null) {
             return [];
@@ -39,7 +40,7 @@ class AddBookingToNotificationThread
             : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => $value, ...($link === null ? [] : ['link' => $link])];
 
         return array_values(array_filter([
-            $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
+            $role === null ? null : $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
             $person->phone === null ? null : $line('phone', PhoneNumbers::international($person->phone)),
             $line('email', $person->email),
         ]));
@@ -90,7 +91,9 @@ class AddBookingToNotificationThread
         if ($booking !== null && is_array($event->data['booking']) && ($mine || $hosting)) {
             $other = $mine ? $host : $booking->user;
             // Le téléphone et l'e-mail, toujours (décision 2026-11-21-contact-toujours).
-            $event->data['booking']['lines'] = $this->afterAddress($event->data['booking']['lines'], $this->contactLines($other, $mine ? 'host' : 'member'));
+            // Pour le membre, le téléphone et l'e-mail de l'offre (ceux de l'hôte), sans son nom ; pour l'hôte, le nom
+            // du membre, puis son téléphone et son e-mail (décision 2026-11-21-detail-reservation-contact-ordre).
+            $event->data['booking']['lines'] = $this->afterAddress($event->data['booking']['lines'], $this->contactLines($other, $mine ? null : 'member'));
         }
 
         if ($mine && $booking->isCancellable()) {

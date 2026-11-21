@@ -178,7 +178,8 @@ class BookingThreadTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->withToken($this->owner->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/show")->assertNoContent();
         $this->assertTrue($booking->fresh()->show_address);
-        $this->assertSame(['address', 'host'], array_slice($keys($this->guest), 0, 2));
+        $this->assertSame('address', $keys($this->guest)[0]);
+        $this->assertNotContains('host', $keys($this->guest));
 
         $this->app['auth']->forgetGuards();
         $this->withToken($this->owner->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/hide")->assertNoContent();
@@ -196,10 +197,10 @@ class BookingThreadTest extends TestCase
             fn (array $line): bool => in_array($line['key'], ['host', 'member', 'phone', 'email'], true),
         ));
 
-        // Toujours, même en attente (décision 2026-11-21-contact-toujours).
+        // Toujours, même en attente (décision 2026-11-21-contact-toujours) ; pour le membre, le téléphone et l'e-mail de
+        // l'offre, sans le nom de l'hôte (décision 2026-11-21-detail-reservation-contact-ordre).
         $host = $contact($this->guest);
         $this->assertSame([
-            ['key' => 'host', 'label' => 'Hôte', 'value' => 'Paul Hôte', 'link' => '/members/'.$this->owner->getKey()],
             ['key' => 'phone', 'label' => 'Téléphone', 'value' => PhoneNumbers::international('+237690000001')],
             ['key' => 'email', 'label' => 'E-mail', 'value' => 'hote@example.test'],
         ], $host);
@@ -210,7 +211,7 @@ class BookingThreadTest extends TestCase
         ], $contact($this->owner));
         // Après l'adresse ; sans adresse, en tête (décision 2026-11-21-afficher-adresse).
         $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
-        $this->assertSame(['host', 'phone', 'email', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 5));
+        $this->assertSame(['phone', 'email', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 4));
     }
 
     public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void
