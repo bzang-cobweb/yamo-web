@@ -218,6 +218,8 @@ class OfferListing extends Listing
                 'notifications',
                 ['type' => OfferNotificationFilter::BOOKING, 'status' => BookingStatusEnum::PENDING->value, 'offer' => (string) $record->getKey()],
                 link: '/notifications/filtered',
+                // Une pastille orange, comme « En attente », sous le titre (décision 2026-11-21-pastille-demandes-en-attente).
+                tone: BookingStatusEnum::PENDING->tone(),
             );
         }
 

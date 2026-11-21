@@ -372,6 +372,8 @@ class BookingApiTest extends TestCase
             'list' => 'notifications',
             'filter' => ['type' => 'booking', 'status' => 'pending', 'offer' => (string) $offer->getKey()],
             'link' => '/notifications/filtered',
+            // Orange, comme « En attente » (décision 2026-11-21-pastille-demandes-en-attente).
+            'tone' => 'warning',
         ], $items[(string) $offer->getKey()]['counter']);
         $this->assertNull($items[(string) $other->getKey()]['counter']);
         // Le même, premier de la liste des compteurs (décision 2026-11-21-compteur-non-lues).

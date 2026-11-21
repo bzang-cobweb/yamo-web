@@ -192,15 +192,17 @@ final class ListItem
     /**
      * Un compteur sur la carte (« 2 demandes en attente ») qui ouvre la liste `$list`
      * avec ces filtres déjà choisis ; rien sans compteur. Avec `$link`, il ouvre cet
-     * écran de l'app (« /notifications ») et `$list` nomme ses filtres.
+     * écran de l'app (« /notifications ») et `$list` nomme ses filtres. Avec `$tone`
+     * (`warning`, `success`, `danger`, `neutral`), une pastille de cette couleur, sous le
+     * titre (décision 2026-11-21-pastille-demandes-en-attente).
      *
      * @param  array<string, string>  $filter
      */
-    public function counter(string $label, string $list, array $filter = [], ?string $link = null): self
+    public function counter(string $label, string $list, array $filter = [], ?string $link = null, ?string $tone = null): self
     {
         // Plusieurs compteurs possibles, dans l'ordre d'appel (`counters`) ; `counter` reste le premier,
         // pour une app qui n'en connaît qu'un (décision 2026-11-21-compteur-non-lues).
-        $this->counters[] = ['label' => $label, 'list' => $list, 'filter' => $filter, 'link' => $link];
+        $this->counters[] = ['label' => $label, 'list' => $list, 'filter' => $filter, 'link' => $link, ...($tone === null ? [] : ['tone' => $tone])];
         $this->counter ??= $this->counters[0];
 
         return $this;
