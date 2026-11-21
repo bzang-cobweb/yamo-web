@@ -11,7 +11,8 @@ Dans les formulaires de l'app, un champ facultatif peut revenir à « non rensei
   `OptionsModal`, l'option `clearable`.
 - **Boutons radio** : un second toucher sur l'option cochée la décoche.
 
-Un champ obligatoire ne change pas. Cela vaut pour tous les champs de ce type, dont les règles
+Un champ obligatoire ne change pas. Une liste qui a déjà une option vide, comme « Tous » dans un
+filtre, n'a pas de « Aucun » en plus. Cela vaut pour tous les champs de ce type, dont les règles
 Oui / Non du logement : fumeurs, animaux, fêtes.
 
 ## Motif
