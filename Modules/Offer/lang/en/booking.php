@@ -61,6 +61,7 @@ return [
         'pending_exists' => 'You already have a pending request for this offer.',
         'own_overlap' => 'You already have a request for this home on these dates.',
         'edit_title' => 'Edit the request',
+        'save' => 'Save',
         'updated' => 'Request updated.',
         'edit' => 'Edit',
         'too_far' => 'Choose a date within the next :days days.',

@@ -55,6 +55,12 @@ class BookingEditForm extends OfferBookingForm
         return __('offer::booking.form.edit_title');
     }
 
+    /** « Enregistrer », pas « Envoyer la demande » (décision 2026-11-21-modifier-reservation). */
+    public function submitLabel(): string
+    {
+        return __('offer::booking.form.save');
+    }
+
     public function submission(): ?Submission
     {
         return $this->editing === null ? null : Submission::toRoute(

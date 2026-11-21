@@ -191,6 +191,7 @@ class BookingApiTest extends TestCase
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
         $this->assertSame('Modifier la demande', $form['title']);
+        $this->assertSame('Enregistrer', $form['submit']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         $defaults = array_column($form['fields'], 'default', 'name');
         $this->assertSame([today()->addDays(5)->toDateString(), today()->addDays(8)->toDateString(), '2'], [$defaults['check_in'], $defaults['check_out'], $defaults['guests']]);

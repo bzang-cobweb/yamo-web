@@ -61,6 +61,7 @@ return [
         'pending_exists' => 'Vous avez déjà une demande en attente pour cette offre.',
         'own_overlap' => 'Vous avez déjà une demande pour ce logement sur ces dates.',
         'edit_title' => 'Modifier la demande',
+        'save' => 'Enregistrer',
         'updated' => 'Demande modifiée.',
         'edit' => 'Modifier',
         'too_far' => 'Choisissez une date dans les :days prochains jours.',

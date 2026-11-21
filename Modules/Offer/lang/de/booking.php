@@ -61,6 +61,7 @@ return [
         'pending_exists' => 'Sie haben für dieses Angebot bereits eine ausstehende Anfrage.',
         'own_overlap' => 'Sie haben für diese Unterkunft bereits eine Anfrage an diesen Daten.',
         'edit_title' => 'Anfrage ändern',
+        'save' => 'Speichern',
         'updated' => 'Anfrage geändert.',
         'edit' => 'Ändern',
         'too_far' => 'Wählen Sie ein Datum innerhalb der nächsten :days Tage.',
