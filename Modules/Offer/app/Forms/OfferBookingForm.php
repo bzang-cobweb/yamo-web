@@ -27,7 +27,10 @@ use Modules\Offer\Services\OfferAvailability;
  */
 class OfferBookingForm extends Form
 {
-    private ?Offer $offer = null;
+    protected ?Offer $offer = null;
+
+    /** La demande modifiée (`BookingEditForm`), exclue des règles « déjà une demande » ; `null` : une nouvelle. */
+    protected ?Booking $editing = null;
 
     public static function name(): string
     {
@@ -48,7 +51,7 @@ class OfferBookingForm extends Form
         return $this;
     }
 
-    private function type(): BookingTypeEnum
+    protected function type(): BookingTypeEnum
     {
         return ($this->offer === null ? null : app(DomainRegistry::class)->require()->bookingType($this->offer)) ?? BookingTypeEnum::VISIT;
     }
@@ -128,13 +131,14 @@ class OfferBookingForm extends Form
     {
         $offer = $this->offer;
         $userId = $this->user?->getAuthIdentifier();
+        $except = $this->editing?->getKey();
 
-        return new class($offer, $userId) implements DataAwareRule, ValidationRule
+        return new class($offer, $userId, $except) implements DataAwareRule, ValidationRule
         {
             /** @var array<string, mixed> */
             private array $data = [];
 
-            public function __construct(private readonly ?Offer $offer, private readonly int|string|null $userId) {}
+            public function __construct(private readonly ?Offer $offer, private readonly int|string|null $userId, private readonly int|string|null $except) {}
 
             /** @param  array<string, mixed>  $data */
             public function setData(array $data): static
@@ -163,6 +167,7 @@ class OfferBookingForm extends Form
 
                 if ($this->offer->bookings()
                     ->where('user_id', $this->userId)
+                    ->when($this->except !== null, fn ($bookings) => $bookings->whereKeyNot($this->except))
                     ->whereIn('status', [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED])
                     ->overlapping($from, $to)
                     ->exists()) {
@@ -180,6 +185,7 @@ class OfferBookingForm extends Form
         return function (string $attribute, mixed $value, Closure $fail): void {
             if ($this->offer !== null && $this->offer->bookings()
                 ->where('user_id', $this->user?->getAuthIdentifier())
+                ->when($this->editing !== null, fn ($bookings) => $bookings->whereKeyNot($this->editing?->getKey()))
                 ->where('status', BookingStatusEnum::PENDING)
                 ->exists()) {
                 $fail(__('offer::booking.form.pending_exists'));

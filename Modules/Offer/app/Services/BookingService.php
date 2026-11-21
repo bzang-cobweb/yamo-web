@@ -69,6 +69,39 @@ class BookingService
     }
 
     /**
+     * Sa demande en attente, modifiée (décision 2026-11-21-modifier-reservation) : nouvelles dates (un séjour :
+     * total recalculé au prix figé), voyageurs, message ; jamais sur un jour pris ou bloqué.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function update(Booking $booking, array $data): Booking
+    {
+        $checkIn = Carbon::parse((string) $data['check_in'])->startOfDay();
+        $checkOut = filled($data['check_out'] ?? null) ? Carbon::parse((string) $data['check_out'])->startOfDay() : null;
+        $stay = $booking->type === BookingTypeEnum::STAY;
+        $days = $stay && $checkOut !== null ? (int) $checkIn->diffInDays($checkOut) : null;
+        $message = trim((string) ($data['message'] ?? ''));
+
+        return DB::transaction(function () use ($booking, $stay, $checkIn, $checkOut, $days, $message, $data): Booking {
+            $offer = $booking->offer;
+            $this->lock($offer);
+            if ($this->availability->conflicts($offer, $booking->type, $checkIn, $checkOut, (int) $booking->getKey())) {
+                throw ValidationException::withMessages(['check_in' => __('offer::booking.unavailable')]);
+            }
+
+            $booking->fill([
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'guests' => $stay ? (int) ($data['guests'] ?? $booking->guests ?? 1) : null,
+                'message' => $message === '' ? null : $message,
+                'total' => $booking->unit_price === null || $days === null ? null : number_format((float) $booking->unit_price * $days, 2, '.', ''),
+            ])->save();
+
+            return $booking;
+        });
+    }
+
+    /**
      * La réponse du propriétaire ; un refus peut porter un message.
      */
     public function answer(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking

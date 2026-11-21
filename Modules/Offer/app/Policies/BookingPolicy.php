@@ -71,6 +71,18 @@ class BookingPolicy
     }
 
     /**
+     * Modifier sa demande (sinon 404), encore en attente (sinon 403) (décision 2026-11-21-modifier-reservation).
+     */
+    public function edit(User $user, Booking $booking): Response
+    {
+        if ((int) $booking->user_id !== (int) $user->getKey()) {
+            return Response::denyAsNotFound();
+        }
+
+        return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__('offer::booking.not_editable'));
+    }
+
+    /**
      * Répondre à une demande : sur une de ses offres (sinon 404), encore en attente (sinon 403).
      */
     public function answer(User $user, Booking $booking): Response

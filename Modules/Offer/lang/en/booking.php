@@ -39,6 +39,7 @@ return [
     'own_offer' => 'You cannot book your own offer.',
     'not_cancellable' => 'This request can no longer be cancelled.',
     'already_answered' => 'This request has already been answered.',
+    'not_editable' => 'This request already has an answer: it can no longer be edited.',
     'unavailable' => 'These dates are not available: please choose other days.',
     'accept_unavailable' => 'These dates overlap an accepted stay or a blocked day: the request cannot be accepted.',
     'overlap_refusal' => 'These dates are no longer available.',
@@ -59,6 +60,9 @@ return [
         'sent_visit' => 'Visit request sent. The owner will reply.',
         'pending_exists' => 'You already have a pending request for this offer.',
         'own_overlap' => 'You already have a request for this home on these dates.',
+        'edit_title' => 'Edit the request',
+        'updated' => 'Request updated.',
+        'edit' => 'Edit',
         'too_far' => 'Choose a date within the next :days days.',
     ],
     'answer' => [

@@ -6,6 +6,7 @@ use Illuminate\Http\Response;
 use Modules\Auth\Models\User;
 use Modules\Offer\Forms\BookingAnswerForm;
 use Modules\Offer\Http\Requests\BookingAnswerRequest;
+use Modules\Offer\Http\Requests\BookingUpdateRequest;
 use Modules\Offer\Http\Requests\OfferBookingRequest;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -29,6 +30,16 @@ class BookingController
         /** @var User $user */
         $user = $request->user();
         $this->bookings->request($user, $offer, $request->validated());
+
+        return response()->noContent();
+    }
+
+    /**
+     * Modifier sa demande en attente : dates, voyageurs, message (décision 2026-11-21-modifier-reservation).
+     */
+    public function update(BookingUpdateRequest $request, Booking $booking): Response
+    {
+        $this->bookings->update($booking, $request->validated());
 
         return response()->noContent();
     }

@@ -16,6 +16,7 @@ use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingTypeEnum;
+use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\OfferAddress;
 
@@ -156,6 +157,10 @@ class BookingListing extends Listing
         // Le statut sur la photo, comme dans « Mes logements » ; à droite, le menu des actions à la place du
         // cœur (décisions 2026-11-21-reservations-statut-coeur et 2026-11-21-reservations-menu).
         $item->tag($record->status->label(), $record->status->tone(), onImage: true);
+        // « Modifier », dans le menu, tant qu'elle est en attente (décision 2026-11-21-modifier-reservation).
+        if ($record->isAwaitingAnswer()) {
+            $item->action(__('offer::booking.form.edit'), form: BookingEditForm::name(), record: $record->getKey());
+        }
 
         return ! $record->isCancellable() ? $item : $item->delete(
             __('offer::booking.cancel.label'),

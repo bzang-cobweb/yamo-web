@@ -174,6 +174,39 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.subtitle', 'Studio meublé à Bonanjo');
     }
 
+    public function test_the_guest_edits_a_pending_request_from_its_card(): void
+    {
+        // Décision 2026-11-21-modifier-reservation.
+        $offer = $this->home(true);
+        $guest = $this->member();
+        $pending = Booking::factory()->for($offer)->for($guest)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(8), 'guests' => 2, 'unit_price' => '45000.00', 'total' => '135000.00']);
+        $accepted = Booking::factory()->for($offer)->for($guest)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(20), 'check_out' => today()->addDays(22)]);
+
+        // « Modifier » dans le menu de la carte, seulement en attente.
+        $items = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id');
+        $edit = collect($items[(string) $pending->getKey()]['actions'])->firstWhere('label', 'Modifier');
+        $this->assertSame(['form' => 'offer.booking.edit', 'record' => (string) $pending->getKey()], $edit['form']);
+        $this->assertNull(collect($items[(string) $accepted->getKey()]['actions'])->firstWhere('label', 'Modifier'));
+
+        // Le formulaire, rempli de la demande.
+        $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
+        $this->assertSame('Modifier la demande', $form['title']);
+        $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
+        $defaults = array_column($form['fields'], 'default', 'name');
+        $this->assertSame([today()->addDays(5)->toDateString(), today()->addDays(8)->toDateString(), '2'], [$defaults['check_in'], $defaults['check_out'], $defaults['guests']]);
+
+        // Ses propres dates ne la gênent pas ; le total suit les nouvelles dates.
+        $this->asUser($guest)->putJson('/api/v1/bookings/'.$pending->getKey(), $this->stay(['check_in' => today()->addDays(6)->toDateString(), 'check_out' => today()->addDays(10)->toDateString(), 'guests' => '3']))->assertNoContent();
+        $pending->refresh();
+        $this->assertSame([today()->addDays(6)->toDateString(), 3, '180000.00'], [$pending->check_in->toDateString(), $pending->guests, $pending->total]);
+        // Pas sur les dates de sa demande acceptée.
+        $this->asUser($guest)->putJson('/api/v1/bookings/'.$pending->getKey(), $this->stay(['check_in' => today()->addDays(21)->toDateString(), 'check_out' => today()->addDays(23)->toDateString()]))->assertJsonValidationErrors('check_in');
+
+        // Une demande acceptée ne se modifie plus ; celle d'un autre : 404.
+        $this->asUser($guest)->putJson('/api/v1/bookings/'.$accepted->getKey(), $this->stay())->assertForbidden();
+        $this->asUser($this->member())->putJson('/api/v1/bookings/'.$pending->getKey(), $this->stay())->assertNotFound();
+    }
+
     public function test_a_visit_keeps_one_date_and_no_price(): void
     {
         $offer = $this->home(false);

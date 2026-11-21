@@ -39,6 +39,7 @@ return [
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',
     'already_answered' => 'Cette demande a déjà une réponse.',
+    'not_editable' => 'Cette demande a déjà une réponse : elle ne se modifie plus.',
     'unavailable' => "Ces dates ne sont pas disponibles : choisissez d'autres jours.",
     'accept_unavailable' => 'Ces dates chevauchent un séjour accepté ou un jour bloqué : la demande ne peut pas être acceptée.',
     'overlap_refusal' => 'Ces dates ne sont plus disponibles.',
@@ -59,6 +60,9 @@ return [
         'sent_visit' => 'Demande de visite envoyée. Le propriétaire vous répondra.',
         'pending_exists' => 'Vous avez déjà une demande en attente pour cette offre.',
         'own_overlap' => 'Vous avez déjà une demande pour ce logement sur ces dates.',
+        'edit_title' => 'Modifier la demande',
+        'updated' => 'Demande modifiée.',
+        'edit' => 'Modifier',
         'too_far' => 'Choisissez une date dans les :days prochains jours.',
     ],
     'answer' => [

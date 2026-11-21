@@ -55,4 +55,6 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/booki
     // Accepter d'un geste, depuis la carte de la demande (décision 2026-11-19-contrat-reservations-logements-profil).
     Route::post('{booking}/accept', [BookingController::class, 'accept'])->can('answer', 'booking')->name('accept');
     Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->can('cancel', 'booking')->name('cancel');
+    // Modifier sa demande, tant qu'elle est en attente (décision 2026-11-21-modifier-reservation).
+    Route::put('{booking}', [BookingController::class, 'update'])->can('edit', 'booking')->middleware('throttle:20,1')->name('update');
 });

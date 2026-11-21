@@ -39,6 +39,7 @@ return [
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht buchen.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',
     'already_answered' => 'Diese Anfrage wurde bereits beantwortet.',
+    'not_editable' => 'Diese Anfrage wurde bereits beantwortet: Sie kann nicht mehr geändert werden.',
     'unavailable' => 'Diese Daten sind nicht verfügbar: Bitte wählen Sie andere Tage.',
     'accept_unavailable' => 'Diese Daten überschneiden sich mit einem angenommenen Aufenthalt oder einem gesperrten Tag: Die Anfrage kann nicht angenommen werden.',
     'overlap_refusal' => 'Diese Daten sind nicht mehr verfügbar.',
@@ -59,6 +60,9 @@ return [
         'sent_visit' => 'Besichtigungsanfrage gesendet. Der Eigentümer antwortet Ihnen.',
         'pending_exists' => 'Sie haben für dieses Angebot bereits eine ausstehende Anfrage.',
         'own_overlap' => 'Sie haben für diese Unterkunft bereits eine Anfrage an diesen Daten.',
+        'edit_title' => 'Anfrage ändern',
+        'updated' => 'Anfrage geändert.',
+        'edit' => 'Ändern',
         'too_far' => 'Wählen Sie ein Datum innerhalb der nächsten :days Tage.',
     ],
     'answer' => [

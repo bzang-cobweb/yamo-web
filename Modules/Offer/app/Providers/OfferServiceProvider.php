@@ -10,6 +10,7 @@ use Modules\Notification\Support\NotificationFilters;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\BookingAnswerForm;
+use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
@@ -92,6 +93,8 @@ class OfferServiceProvider extends ModuleServiceProvider
         // Réservations et visites (décision 2026-11-19-contrat-reservations) : la demande depuis
         // la fiche, la réponse du propriétaire, et les deux listes du profil.
         $this->app->make(FormRegistry::class)->register(OfferBookingForm::class);
+        // Modifier sa demande en attente (décision 2026-11-21-modifier-reservation).
+        $this->app->make(FormRegistry::class)->register(BookingEditForm::class);
         $this->app->make(FormRegistry::class)->register(BookingAnswerForm::class);
         $this->app->make(FormRegistry::class)->register(BookingRefuseForm::class);
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
