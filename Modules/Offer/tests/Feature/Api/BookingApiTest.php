@@ -393,15 +393,15 @@ class BookingApiTest extends TestCase
         // Le titre du logement dans la barre du haut (décision 2026-11-21-demandes-titre-logement-barre) ; sous les
         // filtres, le nombre de demandes, filtres compris, sans la ligne du type (décision 2026-11-21-demandes-nombre).
         $this->assertSame(OfferCardTitle::of($offer, 'fr')[0], $requests['title']);
-        $this->assertSame(['title' => null, 'subtitle' => '2 demandes'], $requests['heading']);
-        $this->assertSame('Aucune demande', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.subtitle'));
+        $this->assertSame(['title' => '2 demandes', 'subtitle' => null], $requests['heading']);
+        $this->assertSame('Aucune demande', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.title'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
-        $this->assertSame(['Demandes', '3 demandes'], [$all['title'], $all['heading']['subtitle']]);
+        $this->assertSame(['Demandes', '3 demandes'], [$all['title'], $all['heading']['title']]);
         // Une recherche sur le membre ou son message, comptée dans le nombre (décision 2026-11-21-demandes-nombre).
         $this->assertSame('Rechercher un membre, un message…', $requests['search']);
         $found = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=travail")->json('data');
         $this->assertSame([(string) $first->getKey()], array_column($found['items'], 'id'));
-        $this->assertSame('1 demande', $found['heading']['subtitle']);
+        $this->assertSame('1 demande', $found['heading']['title']);
         $byName = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=".urlencode((string) $first->user->last_name))->json('data.items');
         $this->assertContains((string) $first->getKey(), array_column($byName, 'id'));
         $this->assertSame(['status', 'period', 'offer'], array_column($requests['filters'], 'name'));

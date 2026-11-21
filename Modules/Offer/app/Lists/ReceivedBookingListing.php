@@ -64,7 +64,8 @@ class ReceivedBookingListing extends Listing
     {
         $count = $this->countFor($search, $filters);
 
-        return ['title' => null, 'subtitle' => trans_choice('offer::booking.profile.requests_count', $count, ['count' => $count], $this->locale())];
+        // En titre, en gras (décision 2026-11-21-demandes-nombre-en-titre).
+        return ['title' => trans_choice('offer::booking.profile.requests_count', $count, ['count' => $count], $this->locale()), 'subtitle' => null];
     }
 
     /**
