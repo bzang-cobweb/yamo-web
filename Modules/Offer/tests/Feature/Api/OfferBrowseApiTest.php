@@ -52,16 +52,16 @@ class OfferBrowseApiTest extends TestCase
 
         $this->assertSame([(string) $newer->getKey(), (string) $older->getKey()], array_column($data['items'], 'id'));
         $item = $data['items'][1];
-        $this->assertSame('Studio à Akwa', $item['title']);
-        // Le titre saisi ; dessous, le type de location et la ville ; le prix en gras.
-        // Rental sans « meublé » : au mois.
-        $this->assertSame('Location · '.$douala->city, $item['subtitle']);
+        // En titre, le type de location et la ville ; dessous, le titre saisi (décision
+        // 2026-11-21-cartes-titre-compose-en-tete) ; le prix en gras. Rental sans « meublé » : au mois.
+        $this->assertSame('Location · '.$douala->city, $item['title']);
+        $this->assertSame('Studio à Akwa', $item['subtitle']);
         $this->assertSame('25 000 FCFA / mois', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $item['highlight']));
         $this->assertNull($item['edit']);
         $this->assertNull($item['delete']);
 
         // En anglais, et par recherche dans toutes les langues.
-        $this->assertSame('Studio in Akwa', $this->browse('', 'CM', 'en')->json('data.items.1.title'));
+        $this->assertSame('Studio in Akwa', $this->browse('', 'CM', 'en')->json('data.items.1.subtitle'));
         $this->assertSame([(string) $older->getKey()], array_column($this->browse('?search=akwa')->json('data.items'), 'id'));
         // La ville, affichée dans le titre des logements, se cherche aussi.
         $this->assertSame([(string) $older->getKey()], array_column($this->browse('?search=douala')->json('data.items'), 'id'));
@@ -74,14 +74,14 @@ class OfferBrowseApiTest extends TestCase
         $studio = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term']]);
         $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'rental_type' => 'furnished']]);
 
-        // Le titre saisi ; dessous, type de location, type de logement et ville
-        // (décision 2026-11-21-cartes-titre-saisi-ligne-type).
+        // En titre, type de location, type de logement et ville ; dessous, le titre saisi
+        // (décisions 2026-11-21-cartes-titre-saisi-ligne-type et 2026-11-21-cartes-titre-compose-en-tete).
         $items = collect($this->browse()->json('data.items'))->keyBy('id');
-        $this->assertSame($house->getTranslation('title', 'fr'), $items[(string) $house->getKey()]['title']);
-        $this->assertSame('Location meublée · Maison · Douala', $items[(string) $house->getKey()]['subtitle']);
-        $this->assertSame('Location · Studio · Douala', $items[(string) $studio->getKey()]['subtitle']);
+        $this->assertSame($house->getTranslation('title', 'fr'), $items[(string) $house->getKey()]['subtitle']);
+        $this->assertSame('Location meublée · Maison · Douala', $items[(string) $house->getKey()]['title']);
+        $this->assertSame('Location · Studio · Douala', $items[(string) $studio->getKey()]['title']);
         // Sans adresse : sans ville.
-        $this->assertSame('Location meublée · Chambre', $items[(string) $room->getKey()]['subtitle']);
+        $this->assertSame('Location meublée · Chambre', $items[(string) $room->getKey()]['title']);
 
         // Le prix suit le type de location : meublé au jour, sinon au mois.
         $house->update(['price' => '45000', 'currency' => 'XAF']);
@@ -93,7 +93,7 @@ class OfferBrowseApiTest extends TestCase
         $this->assertSame('80 000 FCFA / mois', $highlights[(string) $studio->getKey()]);
 
         $en = collect($this->browse('', 'CM', 'en')->json('data.items'))->keyBy('id');
-        $this->assertSame('Furnished rental · House · Douala', $en[(string) $house->getKey()]['subtitle']);
+        $this->assertSame('Furnished rental · House · Douala', $en[(string) $house->getKey()]['title']);
     }
 
     public function test_pages_of_20_without_any_private_field(): void

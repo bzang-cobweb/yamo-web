@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-21-cartes-titre-compose-en-tete.md (pour l ordre)
+
 # Cartes de l'accueil et de « Mes logements » : titre saisi, ligne du type dessous
 
 - **Date** : 2026-11-21

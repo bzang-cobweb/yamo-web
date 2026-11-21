@@ -42,7 +42,7 @@ final class BookingItem
 
         $domain = app(DomainRegistry::class)->require();
         // Le titre et la ligne du type comme toute carte d'offre ; puis les dates.
-        [$title, $line] = OfferCardTitle::of($offer, $locale);
+        [$title, $line] = OfferCardTitle::composedFirst($offer, $locale);
         $subtitle = implode("\n", array_filter([$line, $subtitle], fn (?string $part): bool => $part !== null && $part !== ''));
 
         return ListItem::make($booking->getKey(), $title, $subtitle)

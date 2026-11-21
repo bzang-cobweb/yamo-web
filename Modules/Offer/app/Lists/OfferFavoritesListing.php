@@ -106,7 +106,7 @@ class OfferFavoritesListing extends Listing
         $domain = app(DomainRegistry::class)->require();
         // Comme la vitrine (titre saisi, ligne du type dessous, décision 2026-11-21-favoris-titre-saisi-ligne-type),
         // avec un cœur plein.
-        [$title, $line] = OfferCardTitle::of($offer, app()->getLocale());
+        [$title, $line] = OfferCardTitle::composedFirst($offer, app()->getLocale());
 
         return ListItem::make($offer->getKey(), $title, $line)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))

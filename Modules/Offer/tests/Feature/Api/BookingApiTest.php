@@ -323,8 +323,10 @@ class BookingApiTest extends TestCase
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
-        // Titres inversés (décision 2026-11-21-reservations-titres-inverses-sans-prix).
-        $this->assertSame($pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['title']);
+        // En titre, la ligne du type ; dessous, le titre saisi puis la demande (décision 2026-11-21-cartes-titre-compose-en-tete).
+        [$cardTitle, $cardLine] = OfferCardTitle::composedFirst($pending->offer, 'fr');
+        $this->assertSame($cardTitle, $items[(string) $pending->getKey()]['title']);
+        $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", (string) $items[(string) $pending->getKey()]['subtitle']);
         // Sans avis : pas de note (décision 2026-11-21-reservations-note).
         $this->assertNull($items[(string) $pending->getKey()]['rating']);
         OfferReview::factory()->for($pending->offer)->create(['rating' => 4]);
@@ -332,13 +334,14 @@ class BookingApiTest extends TestCase
         $this->assertEquals(['average' => 4, 'count' => 1], $rated['rating']);
         // En gras, le prix et son unité, comme à l'accueil (décision 2026-11-21-reservations-prix-comme-accueil).
         $this->assertSame('45 000 FCFA / jour', preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $items[(string) $pending->getKey()]['highlight']));
-        // Sous le titre saisi : type de location et type de logement, puis les dates (décision 2026-11-21-reservations-type-de-location-titre).
-        $this->assertStringStartsWith("Location meublée · Studio\n", $items[(string) $pending->getKey()]['subtitle']);
+        // En titre : type de location et type de logement ; dessous le titre saisi, puis les dates (décisions
+        // 2026-11-21-reservations-type-de-location-titre et 2026-11-21-cartes-titre-compose-en-tete).
+        $this->assertSame('Location meublée · Studio', $items[(string) $pending->getKey()]['title']);
         // La ville sur la ligne du type (décision 2026-11-21-reservations-ville-ligne-du-type).
         $pending->offer->offerAddress()->create(['address_id' => Address::factory()->create(['city' => 'Douala'])->getKey()]);
         $card = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()];
-        $this->assertSame($pending->offer->getTranslation('title', 'fr'), $card['title']);
-        $this->assertStringStartsWith("Location meublée · Studio · Douala\n", $card['subtitle']);
+        $this->assertSame('Location meublée · Studio · Douala', $card['title']);
+        $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $card['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
         $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
@@ -544,9 +547,9 @@ class BookingApiTest extends TestCase
 
         $data = $this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data');
         $this->assertSame('status', $data['filters'][0]['name']);
-        // Le titre saisi ; dessous, la ligne du type, comme à l'accueil (décision 2026-11-21-cartes-titre-saisi-ligne-type).
+        // En titre, la ligne du type ; dessous, le titre saisi, comme à l'accueil (décision 2026-11-21-cartes-titre-compose-en-tete).
         $card = collect($data['items'])->firstWhere('id', (string) $draft->getKey());
-        $this->assertSame([$draft->getTranslation('title', 'fr'), 'Location meublée · Studio'], [$card['title'], $card['subtitle']]);
+        $this->assertSame(['Location meublée · Studio', $draft->getTranslation('title', 'fr')], [$card['title'], $card['subtitle']]);
         $this->assertContains('price', array_column($data['filters'], 'name'));
         $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status]=draft')->json('data.items'), 'id'));
     }

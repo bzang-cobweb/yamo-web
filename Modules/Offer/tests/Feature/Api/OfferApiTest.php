@@ -14,6 +14,7 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\OfferStatusEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferInformation;
@@ -603,7 +604,8 @@ class OfferApiTest extends TestCase
 
         $this->assertCount(1, $data);
         $this->assertSame((string) $mine->getKey(), $data[0]['id']);
-        $this->assertSame('Studio', $data[0]['title']);
+        // En titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
+        $this->assertSame(OfferCardTitle::composedFirst($mine->fresh(), 'fr'), [$data[0]['title'], $data[0]['subtitle']]);
         // Statut, détails et prix en gras ; le titre saisi en sous-titre s'il diffère.
         // Le statut en pastille verte ; plus dans la ligne en gras (décision 2026-11-19-statut-carte-logement).
         // Sur la photo, à la place du cœur (décision 2026-11-21-statut-a-la-place-du-coeur).
@@ -625,7 +627,7 @@ class OfferApiTest extends TestCase
         Offer::factory()->for($user)->create(['title' => 'B', 'status' => 'published', 'expires_at' => now()->subDay()->setDate(2026, 1, 2)]);
         Offer::factory()->for($user)->create(['title' => 'C', 'status' => 'draft']);
 
-        $highlights = array_column($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()->json('data.items'), 'highlight', 'title');
+        $highlights = array_column($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()->json('data.items'), 'highlight', 'subtitle');
 
         $this->assertStringStartsWith("Payé jusqu'au 30 juin 2027", $highlights['A']);
         $this->assertStringStartsWith('Paiement échu le 2 janvier 2026', $highlights['B']);

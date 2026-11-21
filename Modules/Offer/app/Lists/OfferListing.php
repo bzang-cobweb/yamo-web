@@ -163,7 +163,7 @@ class OfferListing extends Listing
         // Le titre saisi ; dessous, la ligne du type (« Location meublée · Studio · Douala »), comme à
         // l'accueil (décision 2026-11-21-cartes-titre-saisi-ligne-type).
         $domain = app(DomainRegistry::class)->require();
-        [$title, $line] = OfferCardTitle::of($record, $locale);
+        [$title, $line] = OfferCardTitle::composedFirst($record, $locale);
 
         // La date d'expiration, après le statut (décision 2026-11-19-expiration-mes-logements) :
         // « Expire le 30 juin 2027 », « Expirée le 2 janvier 2026 » ; sans date, rien.

@@ -148,7 +148,7 @@ class OfferBrowseListing extends Listing
         // Le titre saisi ; dessous, la ligne du type (« Location meublée · Studio · Douala ») ; en gras,
         // les détails puis le prix (« 80 000 FCFA / mois », décisions 2026-11-21-cartes-titre-saisi-ligne-type
         // et 2026-11-19-ombre-coeur-onglets-offre).
-        [$title, $line] = OfferCardTitle::of($record, app()->getLocale());
+        [$title, $line] = OfferCardTitle::composedFirst($record, app()->getLocale());
         $item = ListItem::make($record->getKey(), $title, $line)
             ->image(MediaUrl::onRequestHost($record->photoUrl()))
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)
