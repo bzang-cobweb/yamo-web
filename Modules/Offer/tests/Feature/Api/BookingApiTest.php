@@ -379,6 +379,8 @@ class BookingApiTest extends TestCase
 
         // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
         $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
+        // Le filtre « Logement », avec une recherche (décision 2026-11-21-filtre-logement-recherche).
+        $this->assertTrue(collect($requests['filters'])->keyBy('name')['offer']['searchable']);
         $this->assertStringStartsWith('Demandes · ', $requests['title']);
         $this->assertCount(2, $requests['items']);
         // Le message du membre, cité sur sa carte (décision 2026-11-19-message-sur-les-demandes-recues).
@@ -446,7 +448,7 @@ class BookingApiTest extends TestCase
         $filters = collect($data['filters'])->keyBy('name');
         $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], $filters->keys()->all());
         // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
-        $this->assertSame(['Logement', 'select'], [$filters['offer']['label'], $filters['offer']['type']]);
+        $this->assertSame(['Logement', 'select', true], [$filters['offer']['label'], $filters['offer']['type'], $filters['offer']['searchable']]);
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
         $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[offer]='.$upcoming->offer_id));
         $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);

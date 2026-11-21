@@ -124,7 +124,9 @@ class ReceivedBookingListing extends Listing
         return [
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
-                ->options($this->offers()),
+                ->options($this->offers())
+                // Avec une recherche (décision 2026-11-21-filtre-logement-recherche).
+                ->searchable(),
             BookingFilters::status(),
         ];
     }

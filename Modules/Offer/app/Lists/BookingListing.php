@@ -89,10 +89,12 @@ class BookingListing extends Listing
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 ->options($this->cities()),
-            // Le logement demandé, par son titre (décision 2026-11-21-reservations-filtre-logement).
+            // Le logement demandé, par son titre, avec une recherche (décisions 2026-11-21-reservations-filtre-logement
+            // et 2026-11-21-filtre-logement-recherche).
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
-                ->options($this->offers()),
+                ->options($this->offers())
+                ->searchable(),
             ...app(DomainRegistry::class)->require()->offerTypeFilters(),
         ];
     }
