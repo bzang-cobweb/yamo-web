@@ -337,7 +337,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame([['key' => 'arrival', 'label' => 'Arrival', 'value' => 'Dec 5, 2026 from 14:00'], ['key' => 'departure', 'label' => 'Departure', 'value' => 'Dec 7, 2026 by 11:00']], $stay->dateLines('en'));
 
         $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
-        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Seconde date', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
+        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Autre visite', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
         // Le texte d'une visite : sa date, ou la seconde proposée (décision 2026-11-20-texte-demande-location).
         app()->setLocale('fr');
         $this->assertSame('Demande de visite « '.$this->offer->getTranslation('title', 'fr').' » le 28 nov. 2026 ou le 30 nov. 2026.', BookingText::summary($visit, 'requested'));

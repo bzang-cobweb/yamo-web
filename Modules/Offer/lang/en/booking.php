@@ -30,7 +30,7 @@ return [
         'arrival' => 'Arrival',
         'departure' => 'Departure',
         'visit' => 'Visit',
-        'second' => 'Second date',
+        'second' => 'Other visit',
         'from' => ':date from :time',
         'until' => ':date by :time',
     ],
