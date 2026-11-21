@@ -210,16 +210,32 @@ class OfferBookingForm extends Form
         };
     }
 
+    /**
+     * En titre, le titre de l'offre, tel que saisi (« Studio meublé à Bonanjo ») ; sans offre, ce que fait le
+     * formulaire (décisions 2026-11-21-titre-offre-reservation et 2026-11-22-formulaire-demande-titre-offre).
+     */
     public function title(): string
+    {
+        return $this->offerTitle() ?? $this->action();
+    }
+
+    /**
+     * Dessous, ce que fait le formulaire (« Réserver », « Demander une visite ») ; sans offre, rien.
+     */
+    public function subtitle(): ?string
+    {
+        return $this->offerTitle() === null ? null : $this->action();
+    }
+
+    /**
+     * Ce que fait le formulaire : « Réserver », « Demander une visite ».
+     */
+    protected function action(): string
     {
         return __('offer::booking.form.'.$this->type()->value.'_title');
     }
 
-    /**
-     * Le titre de l'offre, tel que saisi (« Studio meublé à Bonanjo »), sous le titre du formulaire
-     * (décision 2026-11-21-titre-offre-reservation).
-     */
-    public function subtitle(): ?string
+    private function offerTitle(): ?string
     {
         if ($this->offer === null) {
             return null;
