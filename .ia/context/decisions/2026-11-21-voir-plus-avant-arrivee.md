@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-21-voir-plus-apres-deux-lignes.md
 # Détail d'une réservation : « Voir plus » avant l'arrivée
 
 - **Date** : 2026-11-21
