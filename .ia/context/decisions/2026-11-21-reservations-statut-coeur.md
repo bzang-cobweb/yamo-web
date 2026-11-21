@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-21-reservations-menu.md
+
 # « Mes réservations » : statut sur la photo, cœur de favori
 
 - **Date** : 2026-11-21

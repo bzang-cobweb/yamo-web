@@ -238,11 +238,10 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $started->getKey()]['delete']);
         // Sous le titre construit, le titre saisi de l'offre, puis les dates (décision 2026-11-21-reservations-vrai-titre).
         $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $items[(string) $pending->getKey()]['subtitle']);
-        // Le statut sur la photo, et le cœur du logement, comme sur l'accueil (décision 2026-11-21-reservations-statut-coeur).
+        // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
-        $this->assertSame(['active' => false, 'endpoint' => '/v1/offers/'.$pending->offer_id.'/favorite'], $items[(string) $pending->getKey()]['favorite']);
-        $pending->offer->favorites()->create(['user_id' => $guest->getKey()]);
-        $this->assertTrue(collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['favorite']['active']);
+        $this->assertNull($items[(string) $pending->getKey()]['favorite']);
+        $this->assertTrue($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
 
         $cancel = $items[(string) $pending->getKey()]['delete'];
         $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();
