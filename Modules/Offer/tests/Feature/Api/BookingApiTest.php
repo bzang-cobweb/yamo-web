@@ -308,6 +308,8 @@ class BookingApiTest extends TestCase
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
+        // Le type de location en tête du titre (décision 2026-11-21-reservations-type-de-location-titre).
+        $this->assertStringStartsWith('Location meublée · Studio · meublé', $items[(string) $pending->getKey()]['title']);
         // Sous le titre construit, le titre saisi de l'offre, puis les dates (décision 2026-11-21-reservations-vrai-titre).
         $this->assertStringStartsWith($pending->offer->getTranslation('title', 'fr')."\n", $items[(string) $pending->getKey()]['subtitle']);
         // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).

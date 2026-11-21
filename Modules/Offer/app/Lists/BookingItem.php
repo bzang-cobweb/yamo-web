@@ -5,6 +5,7 @@ namespace Modules\Offer\Lists;
 use App\Support\MediaUrl;
 use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -16,9 +17,11 @@ final class BookingItem
 {
     /**
      * `$withTypedTitle` : le titre saisi de l'offre sur la première ligne sous le titre, s'il en
-     * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre).
+     * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre). `$withRentalType` :
+     * le type de location de l'offre en tête du titre (« Location meublée · Studio · meublé · Douala »,
+     * décision 2026-11-21-reservations-type-de-location-titre).
      */
-    public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false): ListItem
+    public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false, bool $withRentalType = false): ListItem
     {
         $offer = $booking->offer;
         $typed = (string) $offer->getTranslation('title', $locale);
@@ -32,6 +35,10 @@ final class BookingItem
 
         if ($withTypedTitle && $typed !== '' && $typed !== $title) {
             $subtitle = $typed."\n".$subtitle;
+        }
+
+        if ($withRentalType) {
+            $title = implode(' · ', array_filter([($type = RentalTypeEnum::of($offer)) === null ? null : __('offer::rental.rental_types.'.$type->value, [], $locale), $title]));
         }
 
         return ListItem::make($booking->getKey(), $title, $subtitle)
