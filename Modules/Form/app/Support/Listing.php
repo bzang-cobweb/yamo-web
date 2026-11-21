@@ -295,9 +295,19 @@ abstract class Listing
      * @param  array<string, mixed>  $filters  filtres validés
      * @return array{title: string|null, subtitle: string|null}|null
      */
-    public function headingFor(array $filters): ?array
+    public function headingFor(array $filters, ?string $search = null): ?array
     {
         return null;
+    }
+
+    /**
+     * Le nombre d'enregistrements de la liste, recherche et filtres compris (« 3 demandes »).
+     *
+     * @param  array<string, mixed>  $filters  filtres validés
+     */
+    final protected function countFor(?string $search, array $filters): int
+    {
+        return $this->filtered($search, $filters)->count();
     }
 
     /**

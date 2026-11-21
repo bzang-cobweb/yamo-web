@@ -100,6 +100,7 @@ return [
         'received_empty' => 'Noch keine Anfragen erhalten.',
         'guests' => ':count Gast/Gäste',
         'search' => 'Angebot suchen…',
+        'search_requests' => 'Mitglied, Nachricht suchen…',
     ],
     // Der Verlauf einer Anfrage (Entscheidung 2026-11-20-suivi-demande).
     'history' => [
@@ -203,6 +204,7 @@ return [
         'filter_offer' => 'Unterkunft',
         'search_home' => 'Unterkunft suchen',
         'requests_all' => 'Anfragen',
+        'requests_count' => '{0} Keine Anfragen|{1} :count Anfrage|[2,*] :count Anfragen',
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'unread_count' => '{1} :count ungelesene Benachrichtigung|[2,*] :count ungelesene Benachrichtigungen',
         'notifications' => 'Anfragen',

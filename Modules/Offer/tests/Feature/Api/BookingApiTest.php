@@ -390,15 +390,20 @@ class BookingApiTest extends TestCase
         // Titrée « Demandes » ; sous les filtres, le titre du logement et sa ligne du type ; sans logement, pas
         // d'intitulé ; sans recherche ; filtres : statut, période, logement caché (décisions
         // 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre).
-        // Le titre du logement dans la barre du haut, sa ligne du type seule sous les filtres
-        // (décision 2026-11-21-demandes-titre-logement-barre).
-        [$cardTitle, $cardLine] = OfferCardTitle::of($offer, 'fr');
-        $this->assertSame($cardTitle, $requests['title']);
-        $this->assertSame(['title' => null, 'subtitle' => $cardLine], $requests['heading']);
-        $this->assertNotNull($cardLine);
+        // Le titre du logement dans la barre du haut (décision 2026-11-21-demandes-titre-logement-barre) ; sous les
+        // filtres, le nombre de demandes, filtres compris, sans la ligne du type (décision 2026-11-21-demandes-nombre).
+        $this->assertSame(OfferCardTitle::of($offer, 'fr')[0], $requests['title']);
+        $this->assertSame(['title' => null, 'subtitle' => '2 demandes'], $requests['heading']);
+        $this->assertSame('Aucune demande', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.subtitle'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
-        $this->assertSame(['Demandes', null], [$all['title'], $all['heading']]);
-        $this->assertNull($requests['search']);
+        $this->assertSame(['Demandes', '3 demandes'], [$all['title'], $all['heading']['subtitle']]);
+        // Une recherche sur le membre ou son message, comptée dans le nombre (décision 2026-11-21-demandes-recherche-membre).
+        $this->assertSame('Rechercher un membre, un message…', $requests['search']);
+        $found = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=travail")->json('data');
+        $this->assertSame([(string) $first->getKey()], array_column($found['items'], 'id'));
+        $this->assertSame('1 demande', $found['heading']['subtitle']);
+        $byName = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&search=".urlencode((string) $first->user->last_name))->json('data.items');
+        $this->assertContains((string) $first->getKey(), array_column($byName, 'id'));
         $this->assertSame(['status', 'period', 'offer'], array_column($requests['filters'], 'name'));
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);

@@ -100,6 +100,7 @@ return [
         'received_empty' => 'No requests received yet.',
         'guests' => ':count guest(s)',
         'search' => 'Search an offer…',
+        'search_requests' => 'Search a member, a message…',
     ],
     // The follow-up of a request (decision 2026-11-20-suivi-demande).
     'history' => [
@@ -203,6 +204,7 @@ return [
         'filter_offer' => 'Home',
         'search_home' => 'Find a home',
         'requests_all' => 'Requests',
+        'requests_count' => '{0} No requests|{1} :count request|[2,*] :count requests',
         'pending_count' => '{1} :count pending request|[2,*] :count pending requests',
         'unread_count' => '{1} :count unread notification|[2,*] :count unread notifications',
         'notifications' => 'Requests',

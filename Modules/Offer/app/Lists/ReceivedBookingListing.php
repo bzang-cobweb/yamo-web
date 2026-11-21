@@ -55,17 +55,16 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Sous les filtres, sa ligne du type seule (« Location · Appartement · Douala ») ; sans logement ou sans
-     * ligne, rien (décisions 2026-11-21-demandes-d-une-offre et 2026-11-21-demandes-titre-logement-barre).
+     * Sous les filtres, le nombre de demandes de la liste, recherche et filtres compris : « 3 demandes »,
+     * « Aucune demande » (décision 2026-11-21-demandes-nombre).
      *
-     * @return array{title: string|null, subtitle: string|null}|null
+     * @return array{title: string|null, subtitle: string|null}
      */
-    public function headingFor(array $filters): ?array
+    public function headingFor(array $filters, ?string $search = null): array
     {
-        $offer = $this->chosenOffer($filters);
-        $line = $offer === null ? null : OfferCardTitle::of($offer, $this->locale())[1];
+        $count = $this->countFor($search, $filters);
 
-        return $line === null ? null : ['title' => null, 'subtitle' => $line];
+        return ['title' => null, 'subtitle' => trans_choice('offer::booking.profile.requests_count', $count, ['count' => $count], $this->locale())];
     }
 
     /**
@@ -127,6 +126,21 @@ class ReceivedBookingListing extends Listing
     private function locale(): string
     {
         return $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
+    }
+
+    public function searchPlaceholder(): string
+    {
+        return __('offer::booking.list.search_requests');
+    }
+
+    /**
+     * Le membre (prénom, nom, pseudonyme) ou son message : il n'y a qu'un logement (décision
+     * 2026-11-21-demandes-recherche-membre).
+     */
+    protected function search(Builder $query, string $term): void
+    {
+        $this->orWhereContains($query, ['bookings.message'], $term);
+        $query->orWhereHas('user', fn (Builder $user) => $user->where(fn (Builder $columns) => $this->orWhereContains($columns, ['first_name', 'last_name', 'name'], $term)));
     }
 
     public function emptyText(): string

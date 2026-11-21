@@ -31,7 +31,7 @@ class ListingResource extends JsonResource
             'name' => $this->resource->key(),
             'title' => $this->resource->titleFor($filters),
             /** Intitulé sous les filtres, en tête des items : un titre et un sous-titre ; `null` : aucun. */
-            'heading' => $this->resource->headingFor($filters),
+            'heading' => $this->resource->headingFor($filters, is_string($search) ? $search : null),
             /** Texte affiché quand la liste est vide. */
             'empty' => $this->resource->emptyText(),
             /** Bouton de création : libellé et formulaire ouvert ; absent pour une liste en lecture seule. */
