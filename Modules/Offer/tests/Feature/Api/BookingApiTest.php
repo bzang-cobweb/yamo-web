@@ -223,22 +223,11 @@ class BookingApiTest extends TestCase
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
-        // Comme « Mes logements » (décision 2026-11-21-reservations-comme-logements) : le statut sur la photo, pas
-        // de cœur, les actions dans le menu, « Notifications » vers celles de la demande.
-        $card = $items[(string) $pending->getKey()];
-        $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $card['tag']);
-        $this->assertNull($card['favorite']);
-        $this->assertTrue($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
-        $this->assertSame(['label' => 'Notifications', 'link' => '/notifications/filtered', 'list' => 'notifications', 'filter' => ['type' => 'booking', 'offer' => (string) $pending->offer_id]],
-            array_intersect_key($card['actions'][0], array_flip(['label', 'link', 'list', 'filter'])));
-        $this->assertSame([], $card['counters']);
-        // Deux notifications non lues de la demande, une lue : « 2 notifications non lues », les mêmes filtres plus « Non lues ».
-        foreach ([null, null, now()] as $readAt) {
-            $guest->notifications()->create(['id' => (string) \Illuminate\Support\Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => $readAt,
-                'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
-        }
-        $counter = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['counters'][0];
-        $this->assertSame(['label' => '2 notifications non lues', 'list' => 'notifications', 'filter' => ['type' => 'booking', 'offer' => (string) $pending->offer_id, 'unread' => 'yes'], 'link' => '/notifications/filtered'], $counter);
+        // Le statut sur la photo, et le cœur du logement, comme sur l'accueil (décision 2026-11-21-reservations-statut-coeur).
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
+        $this->assertSame(['active' => false, 'endpoint' => '/v1/offers/'.$pending->offer_id.'/favorite'], $items[(string) $pending->getKey()]['favorite']);
+        $pending->offer->favorites()->create(['user_id' => $guest->getKey()]);
+        $this->assertTrue(collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['favorite']['active']);
 
         $cancel = $items[(string) $pending->getKey()]['delete'];
         $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();
