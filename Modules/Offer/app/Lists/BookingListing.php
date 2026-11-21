@@ -128,7 +128,7 @@ class BookingListing extends Listing
         /** @var Booking $record */
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
-        $item = BookingItem::make($record, $locale)->link('/offers/'.$record->offer_id);
+        $item = BookingItem::make($record, $locale, withTypedTitle: true)->link('/offers/'.$record->offer_id);
         // Le statut sur la photo, comme dans « Mes logements », et le cœur du logement à droite, comme sur
         // l'accueil, s'il peut encore être mis en favori (décision 2026-11-21-reservations-statut-coeur).
         $item->tag($record->status->label(), $record->status->tone(), onImage: true);

@@ -14,16 +14,25 @@ use Modules\Offer\Models\Booking;
  */
 final class BookingItem
 {
-    public static function make(Booking $booking, string $locale, bool $withGuest = false): ListItem
+    /**
+     * `$withTypedTitle` : le titre saisi de l'offre sur la première ligne sous le titre, s'il en
+     * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre).
+     */
+    public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false): ListItem
     {
         $offer = $booking->offer;
-        $title = app(DomainRegistry::class)->require()->itemTitle($offer) ?? (string) $offer->getTranslation('title', $locale);
+        $typed = (string) $offer->getTranslation('title', $locale);
+        $title = app(DomainRegistry::class)->require()->itemTitle($offer) ?? $typed;
         $subtitle = implode(' · ', array_filter([
             $withGuest ? (string) $booking->user->full_name : null,
             $booking->type->label(),
             $booking->period($locale),
             $booking->guests === null ? null : __('offer::booking.list.guests', ['count' => $booking->guests], $locale),
         ]));
+
+        if ($withTypedTitle && $typed !== '' && $typed !== $title) {
+            $subtitle = $typed."\n".$subtitle;
+        }
 
         return ListItem::make($booking->getKey(), $title, $subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
