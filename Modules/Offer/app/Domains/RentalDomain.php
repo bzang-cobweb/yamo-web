@@ -352,9 +352,12 @@ class RentalDomain extends Domain
             Field::select('bathrooms')
                 ->label(__('offer::rental.filters.bathrooms'))
                 ->options(collect([1, 2, 3])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
+            // Pas pour la location meublée, qui se réserve par dates : visible sans type de location choisi ou
+            // pour un non meublé (décision 2026-11-22-filtre-libre-des-sans-meuble).
             Field::date('available_from')
                 ->label(__('offer::rental.filters.available_from'))
-                ->help(__('offer::rental.filters.available_from_help')),
+                ->help(__('offer::rental.filters.available_from_help'))
+                ->visibleWhen('rental_type', ['', ...RentalTypeEnum::unfurnishedValues()]),
             Field::multiselect('amenities')
                 ->label(__('offer::rental.amenities_label'))
                 ->help(__('offer::rental.filters.amenities_help'))

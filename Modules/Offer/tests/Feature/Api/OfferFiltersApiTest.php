@@ -56,6 +56,9 @@ class OfferFiltersApiTest extends TestCase
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
         $this->assertSame(['city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
+        // « Libre dès le » : sans type de location choisi ou pour un non meublé, pas pour la location meublée
+        // (décision 2026-11-22-filtre-libre-des-sans-meuble).
+        $this->assertSame(['field' => 'rental_type', 'value' => '', 'values' => ['', 'long_term', 'shared']], $filters['available_from']['visible_when']);
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
         // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
