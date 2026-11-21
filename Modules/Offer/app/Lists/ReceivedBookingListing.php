@@ -164,6 +164,13 @@ class ReceivedBookingListing extends Listing
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->limit(1)])
+            // Ses notifications non lues, pour le compteur de la carte (décision 2026-11-21-demandes-non-lues).
+            ->addSelect(['unread_notifications_count' => DatabaseNotification::query()
+                ->selectRaw('count(*)')
+                ->where('notifiable_type', (new User)->getMorphClass())
+                ->where('notifiable_id', $this->user?->getAuthIdentifier())
+                ->whereNull('read_at')
+                ->whereColumn('data->booking_id', 'bookings.id')])
             ->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()
                 ->where('user_id', $this->user?->getAuthIdentifier())
                 ->where('country_id', CurrentCountry::require()->getKey()))
@@ -179,6 +186,12 @@ class ReceivedBookingListing extends Listing
         $notification = $record->getAttribute('thread_notification_id');
         $item = OfferRequestItem::make($record, $locale)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
+        // Ses notifications non lues : un compteur en bas de la carte, qui ouvre la page de la demande
+        // (décision 2026-11-21-demandes-non-lues).
+        $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
+        if ($unread > 0 && is_string($notification) && $notification !== '') {
+            $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification);
+        }
 
         if ($record->isAwaitingAnswer()) {
             // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message

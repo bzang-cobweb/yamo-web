@@ -457,6 +457,15 @@ class BookingApiTest extends TestCase
             'link' => '/notifications/filtered',
         ]], array_slice($items[(string) $offer->getKey()]['counters'], 1));
         $this->assertSame([], $items[(string) $other->getKey()]['counters']);
+
+        // Dans « Demandes » du logement, chaque carte compte les siennes, et le compteur ouvre la page de la
+        // demande (décision 2026-11-21-demandes-non-lues).
+        $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
+        $firstCard = $cards[(string) $first->getKey()];
+        $this->assertSame([['label' => '2 notifications non lues', 'list' => 'notifications', 'filter' => [], 'link' => $firstCard['link']]], $firstCard['counters']);
+        $this->assertStringStartsWith('/notifications/', $firstCard['link']);
+        $this->assertSame('1 notification non lue', $cards[(string) $second->getKey()]['counters'][0]['label']);
+        $this->assertSame([], $cards[(string) $read->getKey()]['counters']);
     }
 
     public function test_my_bookings_are_filtered_by_status_city_and_offer_types_with_a_search_button(): void
