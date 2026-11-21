@@ -223,6 +223,11 @@ class BookingApiTest extends TestCase
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
         // Acceptée et commencée : plus annulable.
         $this->assertNull($items[(string) $started->getKey()]['delete']);
+        // Le statut sur la photo, et le cœur du logement, comme sur l'accueil (décision 2026-11-21-reservations-statut-coeur).
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
+        $this->assertSame(['active' => false, 'endpoint' => '/v1/offers/'.$pending->offer_id.'/favorite'], $items[(string) $pending->getKey()]['favorite']);
+        $pending->offer->favorites()->create(['user_id' => $guest->getKey()]);
+        $this->assertTrue(collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['favorite']['active']);
 
         $cancel = $items[(string) $pending->getKey()]['delete'];
         $this->asUser($guest)->json($cancel['method'], '/api'.$cancel['endpoint'])->assertNoContent();

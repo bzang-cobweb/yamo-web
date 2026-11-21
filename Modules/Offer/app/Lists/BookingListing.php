@@ -109,7 +109,8 @@ class BookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            ->with(['offer.media', 'offer.address'])
+            // Le cœur du membre sur le logement, comme sur l'accueil (décision 2026-11-21-reservations-statut-coeur).
+            ->with(['offer' => fn ($offer) => $offer->withFavoriteOf($this->user?->getAuthIdentifier()), 'offer.media', 'offer.address'])
             ->where('user_id', $this->user?->getAuthIdentifier())
             ->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->where('country_id', CurrentCountry::require()->getKey()))
             ->orderByDesc('id');
@@ -128,6 +129,13 @@ class BookingListing extends Listing
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
         $item = BookingItem::make($record, $locale)->link('/offers/'.$record->offer_id);
+        // Le statut sur la photo, comme dans « Mes logements », et le cœur du logement à droite, comme sur
+        // l'accueil, s'il peut encore être mis en favori (décision 2026-11-21-reservations-statut-coeur).
+        $item->tag($record->status->label(), $record->status->tone(), onImage: true);
+        $offer = $record->offer;
+        if ($offer !== null && ! $offer->trashed() && $offer->isVisibleToOthers() && (int) $offer->user_id !== (int) $this->user?->getAuthIdentifier()) {
+            $item->favorite((bool) $offer->is_favorite, $offer->favoriteEndpoint());
+        }
 
         return ! $record->isCancellable() ? $item : $item->delete(
             __('offer::booking.cancel.label'),
