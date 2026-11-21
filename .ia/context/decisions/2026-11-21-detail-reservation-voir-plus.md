@@ -14,12 +14,12 @@ dernière date de la demande, avant la durée et les prix. Sans date, elles vont
 `AddBookingToNotificationThread::afterDates()` fait ce placement.
 
 ### Affichage dans l'app
-- Le nom de l'offre est un titre simple, qui ne plie plus rien.
 - Les lignes jusqu'à la dernière date (Arrivée, Départ, ou Visite, Seconde date) sont toujours
   visibles.
-- Un lien « Voir plus » déplie la suite : l'autre partie, la durée, les prix et le total. Une
-  fois déplié, le lien devient « Voir moins ».
-- « Voir le logement » apparaît avec la suite dépliée, ou directement s'il n'y a pas de suite.
+- Le nom de l'offre ouvre la fiche du logement. Le lien « Voir le logement » est retiré.
+- « Voir plus », avec une icône +, déplie la suite : l'autre partie, la durée, les prix et le
+  total. Une fois déplié, il devient « Voir moins », avec une icône −.
+- Ce lien reste toujours à la fin des lignes, même déplié, aligné à droite.
 - Textes servis par l'API : `notifications.more` et `notifications.less`.
 
 Une étape intermédiaire, « Détails » sous le titre pour plier les lignes, n'a pas été gardée.
@@ -28,4 +28,7 @@ Une étape intermédiaire, « Détails » sous le titre pour plier les lignes, n
 Demandes de l'humain du 2026-11-21 :
 - « enlever le dropdown sur le titre et le mettre sur un texte "détails" juste en dessous du
   titre, déplacer hôte après checkin » ;
-- puis « enlever le dropdown détails et mettre un lien voir plus après checkout ».
+- puis « enlever le dropdown détails et mettre un lien voir plus après checkout » ;
+- puis « le lien voir plus/moins doit être à la fin même déplié et aligné à droite » ;
+- puis « enlever le lien voir le logement et rendre le titre cliquable » ;
+- puis « mettre icone + et - sur voir plus/moins ».
