@@ -9,6 +9,8 @@ return [
     ],
     'notifications' => [
         'title' => 'Notifications',
+        // La page des notifications ouverte depuis une carte de « Mes logements » (décision 2026-11-21-demandes-depuis-logements).
+        'requests' => 'Requests',
         // La page d'une notification et son bouton, à défaut du libellé servi.
         'detail' => 'Notification',
         // Le suivi d'une demande, sur la page d'une notification (décision 2026-11-20-suivi-demande).

@@ -126,7 +126,7 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame(['label' => 'Calendrier', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => "/offers/{$offer->getKey()}/calendar"], $card['actions'][0]);
         // Puis « Notifications » : les demandes de ce logement, sans autre filtre (décision 2026-11-21-lien-notifications).
         $this->assertSame([
-            'label' => 'Notifications', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => '/notifications/filtered',
+            'label' => 'Demandes', 'style' => 'default', 'confirm' => null, 'submission' => null, 'form' => null, 'link' => '/notifications/filtered',
             'list' => 'notifications', 'filter' => ['type' => 'booking', 'offer' => (string) $offer->getKey()],
         ], $card['actions'][1]);
     }

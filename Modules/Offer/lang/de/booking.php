@@ -176,7 +176,7 @@ return [
         'requests_all' => 'Erhaltene Anfragen',
         'pending_count' => '{1} :count ausstehende Anfrage|[2,*] :count ausstehende Anfragen',
         'unread_count' => '{1} :count ungelesene Benachrichtigung|[2,*] :count ungelesene Benachrichtigungen',
-        'notifications' => 'Benachrichtigungen',
+        'notifications' => 'Anfragen',
         'accept' => 'Annehmen',
         'accept_confirm' => 'Die Anfrage von :guest (:period) annehmen?',
         'accept_overlaps' => '{1} Diese offene Anfrage überschneidet sich mit diesen Daten und wird abgelehnt: :requests.|[2,*] Diese :count offenen Anfragen überschneiden sich mit diesen Daten und werden abgelehnt: :requests.',
