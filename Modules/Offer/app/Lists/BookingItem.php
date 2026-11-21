@@ -17,7 +17,7 @@ final class BookingItem
     /**
      * `$withTypedTitle` : le titre saisi de l'offre sur la première ligne sous le titre, s'il en
      * diffère (« Mes réservations », décision 2026-11-21-reservations-vrai-titre). `$withRentalType` :
-     * le titre de carte du domaine (« Location meublée · Studio · Douala », décision
+     * le titre de carte du domaine (« Location meublée · Studio », décision
      * 2026-11-21-reservations-type-de-location-titre).
      */
     public static function make(Booking $booking, string $locale, bool $withGuest = false, bool $withTypedTitle = false, bool $withRentalType = false): ListItem
