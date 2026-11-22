@@ -6,8 +6,8 @@ return [
     'types' => ['stay' => 'Aufenthalt', 'visit' => 'Besichtigung'],
     'actions' => ['stay' => 'Buchen', 'visit' => 'Besichtigung anfragen'],
     'statuses' => ['pending' => 'Ausstehend', 'accepted' => 'Angenommen', 'refused' => 'Abgelehnt', 'cancelled' => 'Storniert',
-        // Terminée : enregistrée chaque nuit par booking:complete ; expirée : affichée d'après les dates (décisions
-        // 2026-11-22-statut-termine-enregistre et 2026-11-22-statuts-terminee-expiree).
+        // Enregistrées chaque nuit par booking:complete et booking:expire (décisions 2026-11-22-statut-termine-enregistre
+        // et 2026-11-22-statut-expire-enregistre).
         'completed' => 'Abgeschlossen', 'expired' => 'Abgelaufen'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
@@ -47,6 +47,8 @@ return [
     // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
     // La sortie de booking:complete (décision 2026-11-22-statut-termine-enregistre).
     'completed_count' => ':count Anfrage(n) als abgeschlossen markiert.',
+    // La sortie de booking:expire (décision 2026-11-22-statut-expire-enregistre).
+    'expired_count' => ':count Anfrage(n) als abgelaufen markiert.',
     'review_cta' => 'Bewertung abgeben',
     'expired' => 'Diese Anfrage ist abgelaufen: ihr Datum ist vorbei.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',

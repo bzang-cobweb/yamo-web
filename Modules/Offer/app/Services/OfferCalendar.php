@@ -186,7 +186,7 @@ class OfferCalendar
     private function bookings(Offer $offer, Carbon $from, Carbon $to): Collection
     {
         return $offer->bookings()
-            ->whereIn('status', [BookingStatusEnum::PENDING, ...BookingStatusEnum::held()])
+            ->whereIn('status', [BookingStatusEnum::PENDING, BookingStatusEnum::EXPIRED, ...BookingStatusEnum::held()])
             ->where(fn (Builder $query) => $query
                 ->where(fn (Builder $stays) => $stays->overlapping($from, $to))
                 ->orWhere(fn (Builder $visits) => $visits->where('type', BookingTypeEnum::VISIT)

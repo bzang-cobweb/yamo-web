@@ -5,7 +5,9 @@ namespace Modules\Offer\Enums;
 /**
  * Où en est une demande (décision 2026-11-19-contrat-reservations) : en attente de
  * la réponse du propriétaire, acceptée, refusée, ou annulée par le membre ; terminée, une fois acceptée et son
- * dernier jour passé, posé chaque nuit par `booking:complete` (décision 2026-11-22-statut-termine-enregistre). Rien
+ * dernier jour passé, posé chaque nuit par `booking:complete` (décision 2026-11-22-statut-termine-enregistre) ;
+ * expirée, restée en attente après sa date, posé chaque nuit par `booking:expire` (décision
+ * 2026-11-22-statut-expire-enregistre). Rien
  * n'est supprimé.
  */
 enum BookingStatusEnum: string
@@ -15,6 +17,7 @@ enum BookingStatusEnum: string
     case REFUSED = 'refused';
     case CANCELLED = 'cancelled';
     case COMPLETED = 'completed';
+    case EXPIRED = 'expired';
 
     public function label(): string
     {
@@ -30,7 +33,7 @@ enum BookingStatusEnum: string
         return match ($this) {
             self::PENDING => 'warning',
             self::ACCEPTED => 'success',
-            self::REFUSED, self::CANCELLED, self::COMPLETED => 'neutral',
+            self::REFUSED, self::CANCELLED, self::COMPLETED, self::EXPIRED => 'neutral',
         };
     }
 
@@ -43,7 +46,7 @@ enum BookingStatusEnum: string
             self::PENDING => 'warning',
             self::ACCEPTED => 'success',
             self::REFUSED => 'danger',
-            self::CANCELLED, self::COMPLETED => 'gray',
+            self::CANCELLED, self::COMPLETED, self::EXPIRED => 'gray',
         };
     }
 

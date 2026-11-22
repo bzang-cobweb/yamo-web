@@ -6,8 +6,8 @@ return [
     'types' => ['stay' => 'Stay', 'visit' => 'Visit'],
     'actions' => ['stay' => 'Book', 'visit' => 'Request a visit'],
     'statuses' => ['pending' => 'Pending', 'accepted' => 'Accepted', 'refused' => 'Declined', 'cancelled' => 'Cancelled',
-        // Terminée : enregistrée chaque nuit par booking:complete ; expirée : affichée d'après les dates (décisions
-        // 2026-11-22-statut-termine-enregistre et 2026-11-22-statuts-terminee-expiree).
+        // Enregistrées chaque nuit par booking:complete et booking:expire (décisions 2026-11-22-statut-termine-enregistre
+        // et 2026-11-22-statut-expire-enregistre).
         'completed' => 'Completed', 'expired' => 'Expired'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
@@ -47,6 +47,8 @@ return [
     // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
     // La sortie de booking:complete (décision 2026-11-22-statut-termine-enregistre).
     'completed_count' => ':count request(s) marked as completed.',
+    // La sortie de booking:expire (décision 2026-11-22-statut-expire-enregistre).
+    'expired_count' => ':count request(s) marked as expired.',
     'review_cta' => 'Leave a review',
     'expired' => 'This request has expired: its date has passed.',
     'not_cancellable' => 'This request can no longer be cancelled.',

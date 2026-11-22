@@ -172,7 +172,10 @@ class Booking extends Model
      */
     public function scopeExpired(Builder $query): void
     {
-        $query->where('status', BookingStatusEnum::PENDING)->whereRaw(self::EXPIRES_AFTER.' < ?', [today()->toDateString()]);
+        // Enregistrée expirée par `booking:expire`, ou en attente et passée en attendant sa prochaine exécution
+        // (décision 2026-11-22-statut-expire-enregistre).
+        $query->where(fn (Builder $expired) => $expired->where('status', BookingStatusEnum::EXPIRED)
+            ->orWhere(fn (Builder $past) => $past->where('status', BookingStatusEnum::PENDING)->whereRaw(self::EXPIRES_AFTER.' < ?', [today()->toDateString()])));
     }
 
     /**
@@ -254,7 +257,8 @@ class Booking extends Model
     {
         $day = $this->type === BookingTypeEnum::VISIT ? $this->lastDay() : $this->check_in;
 
-        return $this->status === BookingStatusEnum::PENDING && $day->copy()->startOfDay()->lessThan(today());
+        return $this->status === BookingStatusEnum::EXPIRED
+            || ($this->status === BookingStatusEnum::PENDING && $day->copy()->startOfDay()->lessThan(today()));
     }
 
     /**
@@ -276,7 +280,7 @@ class Booking extends Model
     {
         $shown = match (true) {
             $this->status === BookingStatusEnum::ACCEPTED && $this->isCompleted() => 'completed',
-            $this->isExpired() => 'expired',
+            $this->status === BookingStatusEnum::PENDING && $this->isExpired() => 'expired',
             default => null,
         };
 

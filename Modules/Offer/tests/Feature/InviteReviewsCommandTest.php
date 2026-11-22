@@ -108,8 +108,27 @@ class InviteReviewsCommandTest extends TestCase
         Notification::assertSentTo($past->user, BookingReviewInvitation::class);
     }
 
+    public function test_pending_bookings_whose_date_has_passed_become_expired_each_night(): void
+    {
+        // Décision 2026-11-22-statut-expire-enregistre.
+        $past = $this->booking(1, BookingStatusEnum::PENDING);
+        $upcoming = $this->booking(-3, BookingStatusEnum::PENDING);
+        $accepted = $this->booking(1);
+
+        $this->artisan('booking:expire')->assertSuccessful();
+
+        $this->assertSame(BookingStatusEnum::EXPIRED, $past->refresh()->status);
+        $this->assertSame(BookingStatusEnum::PENDING, $upcoming->refresh()->status);
+        $this->assertSame(BookingStatusEnum::ACCEPTED, $accepted->refresh()->status);
+        $this->assertTrue($past->isExpired());
+        $this->assertFalse($past->isAwaitingAnswer());
+        $this->assertFalse($past->isCancellable());
+        $this->assertSame(['label' => 'Expirée', 'tone' => 'neutral'], $past->statusTag());
+        $this->assertSame([(string) $past->getKey()], Booking::query()->expired()->pluck('id')->map(fn ($id): string => (string) $id)->all());
+    }
+
     public function test_it_runs_every_morning(): void
     {
-        $this->artisan('schedule:list')->expectsOutputToContain('booking:complete')->expectsOutputToContain('booking:invite-reviews')->assertSuccessful();
+        $this->artisan('schedule:list')->expectsOutputToContain('booking:complete')->expectsOutputToContain('booking:expire')->expectsOutputToContain('booking:invite-reviews')->assertSuccessful();
     }
 }

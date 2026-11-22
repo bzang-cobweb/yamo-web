@@ -8,6 +8,7 @@ use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
 use Modules\Offer\Console\CompleteBookingsCommand;
+use Modules\Offer\Console\ExpireBookingsCommand;
 use Modules\Offer\Console\InviteReviewsCommand;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
@@ -68,7 +69,7 @@ class OfferServiceProvider extends ModuleServiceProvider
     public array $singletons = [DomainRegistry::class => DomainRegistry::class, BookingCache::class => BookingCache::class];
 
     /** @var list<class-string> */
-    protected array $commands = [CompleteBookingsCommand::class, InviteReviewsCommand::class];
+    protected array $commands = [CompleteBookingsCommand::class, ExpireBookingsCommand::class, InviteReviewsCommand::class];
 
     public function boot(): void
     {
