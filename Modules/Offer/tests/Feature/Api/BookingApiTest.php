@@ -279,7 +279,8 @@ class BookingApiTest extends TestCase
         $this->assertNull($item['rating']);
         // Avec son libellé (décision 2026-11-21-demandes-pastille-non-lues-total).
         $this->assertStringStartsWith('Total : 135', (string) $item['highlight']);
-        $this->assertTrue($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
+        // Sans menu trois points : les actions en boutons (décision 2026-11-22-demandes-sans-menu).
+        $this->assertFalse($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
         [$accept, $refuse] = $item['actions'];
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
         $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);
@@ -429,7 +430,10 @@ class BookingApiTest extends TestCase
         // Le logement, choisi par « Demandes » de sa carte, en champ caché (décision 2026-11-21-demandes-filtre-logement-cache).
         $this->assertSame('hidden', collect($requests['filters'])->keyBy('name')['offer']['type']);
         $this->assertCount(2, $requests['items']);
-        $this->assertSame([null, null], array_column($requests['items'], 'quote'));
+        // Le dernier message, sa première ligne ; sans message, rien (décision 2026-11-22-demandes-dernier-message).
+        $quotes = collect($requests['items'])->pluck('quote', 'id');
+        $this->assertSame('Bonjour,', $quotes[(string) $first->getKey()]);
+        $this->assertNull($quotes->except((string) $first->getKey())->first());
 
         // Accepter d'un geste ; un autre que le propriétaire : 404.
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$first->getKey()}/accept")->assertNotFound();
@@ -484,6 +488,14 @@ class BookingApiTest extends TestCase
         $this->assertStringStartsWith('/notifications/', $firstCard['link']);
         $this->assertSame('1 notification non lue', $cards[(string) $second->getKey()]['counters'][0]['label']);
         $this->assertSame([], $cards[(string) $read->getKey()]['counters']);
+
+        // Le dernier message du fil, d'un côté ou de l'autre, sa première ligne (décision 2026-11-22-demandes-dernier-message).
+        $this->member()->notifications()->create([
+            'id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $second->thread(), 'read_at' => now(),
+            'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $second->offer_id, 'booking_id' => $second->getKey(), 'message' => "Arrivée vers 18 h.\nMerci !"],
+        ]);
+        $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
+        $this->assertSame('Arrivée vers 18 h.', $cards[(string) $second->getKey()]['quote']);
     }
 
     public function test_my_bookings_are_filtered_by_status_city_and_offer_types_with_a_search_button(): void

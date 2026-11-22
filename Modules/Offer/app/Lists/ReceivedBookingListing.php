@@ -5,6 +5,7 @@ namespace Modules\Offer\Lists;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
@@ -98,11 +99,12 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Les actions dans le menu trois points.
+     * Pas de menu trois points : Accepter, Refuser, Masquer l'adresse en boutons sur la carte (décision
+     * 2026-11-22-demandes-sans-menu).
      */
     public function actionsMenu(): bool
     {
-        return true;
+        return false;
     }
 
     /**
@@ -164,6 +166,16 @@ class ReceivedBookingListing extends Listing
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->limit(1)])
+            // Le dernier message du fil (le membre ou le propriétaire), pour la carte (décision
+            // 2026-11-22-demandes-dernier-message).
+            ->addSelect(['last_message' => DatabaseNotification::query()
+                ->select('data->message')
+                ->whereColumn('data->booking_id', 'bookings.id')
+                ->whereNotNull('data->message')
+                ->where('data->message', '!=', '')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(1)])
             // Ses notifications non lues, pour le compteur de la carte (décision 2026-11-21-demandes-non-lues).
             ->addSelect(['unread_notifications_count' => DatabaseNotification::query()
                 ->selectRaw('count(*)')
@@ -184,8 +196,13 @@ class ReceivedBookingListing extends Listing
         // Sa carte à elle, sans le logement, déjà nommé sous les filtres ; elle ouvre la page de la demande, où se
         // lit son message ; sans notification dans son fil, la fiche du logement (décision 2026-11-21-demandes-d-une-offre).
         $notification = $record->getAttribute('thread_notification_id');
+        // Le dernier message du fil, sa première ligne, cité sur la carte (décision 2026-11-22-demandes-dernier-message) ;
+        // à défaut, celui de la demande.
+        $message = $record->getAttribute('last_message');
+        $message = is_string($message) && trim($message) !== '' ? $message : $record->message;
         $item = OfferRequestItem::make($record, $locale)
-            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
+            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
+            ->quote(is_string($message) && trim($message) !== '' ? Str::of($message)->trim()->before("\n")->squish()->value() : null);
         // Ses notifications non lues : une pastille rouge sous le titre, pour information (décisions
         // 2026-11-21-demandes-non-lues et 2026-11-21-demandes-pastille-non-lues-total).
         $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
