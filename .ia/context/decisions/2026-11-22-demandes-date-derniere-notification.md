@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-demandes-date-chiffres.md (place et format)
+
 # « Demandes reçues » : la date de la dernière notification sous le message
 
 - **Date** : 2026-11-22
