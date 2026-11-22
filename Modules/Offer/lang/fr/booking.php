@@ -6,7 +6,8 @@ return [
     'types' => ['stay' => 'Séjour', 'visit' => 'Visite'],
     'actions' => ['stay' => 'Réserver', 'visit' => 'Demander une visite'],
     'statuses' => ['pending' => 'En attente', 'accepted' => 'Acceptée', 'refused' => 'Refusée', 'cancelled' => 'Annulée',
-        // Affichés d'après les dates, jamais enregistrés (décision 2026-11-22-statuts-terminee-expiree).
+        // Terminée : enregistrée chaque nuit par booking:complete ; expirée : affichée d'après les dates (décisions
+        // 2026-11-22-statut-termine-enregistre et 2026-11-22-statuts-terminee-expiree).
         'completed' => 'Terminée', 'expired' => 'Expirée'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
@@ -44,6 +45,8 @@ return [
     ],
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
     // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
+    // La sortie de booking:complete (décision 2026-11-22-statut-termine-enregistre).
+    'completed_count' => ':count demande(s) passée(s) au statut « Terminée ».',
     'review_cta' => 'Laisser un avis',
     'expired' => 'Cette demande a expiré : sa date est passée.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',

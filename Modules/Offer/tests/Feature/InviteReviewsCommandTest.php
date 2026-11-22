@@ -84,8 +84,32 @@ class InviteReviewsCommandTest extends TestCase
         $this->assertStringContainsString('Laissez un avis dans l\'app.', (new BookingReviewInvitation($booking))->toSms($booking->user));
     }
 
+    public function test_accepted_bookings_whose_last_day_has_passed_become_completed_each_night(): void
+    {
+        // Décision 2026-11-22-statut-termine-enregistre.
+        $past = $this->booking(1);
+        $ongoing = $this->booking(-1);
+        $pending = $this->booking(1, BookingStatusEnum::PENDING);
+        $visit = $this->booking(2, type: 'visit');
+
+        $this->artisan('booking:complete')->assertSuccessful();
+
+        $this->assertSame(BookingStatusEnum::COMPLETED, $past->refresh()->status);
+        $this->assertSame(BookingStatusEnum::COMPLETED, $visit->refresh()->status);
+        $this->assertSame(BookingStatusEnum::ACCEPTED, $ongoing->refresh()->status);
+        // Une demande en attente expire, mais ne devient pas terminée.
+        $this->assertSame(BookingStatusEnum::PENDING, $pending->refresh()->status);
+        $this->assertSame(['label' => 'Terminée', 'tone' => 'neutral'], $past->statusTag());
+        $this->assertTrue($past->isCompleted());
+
+        // Toujours invitée à donner son avis, et l'avis toujours permis.
+        Notification::fake();
+        $this->artisan('booking:invite-reviews')->assertSuccessful();
+        Notification::assertSentTo($past->user, BookingReviewInvitation::class);
+    }
+
     public function test_it_runs_every_morning(): void
     {
-        $this->artisan('schedule:list')->expectsOutputToContain('booking:invite-reviews')->assertSuccessful();
+        $this->artisan('schedule:list')->expectsOutputToContain('booking:complete')->expectsOutputToContain('booking:invite-reviews')->assertSuccessful();
     }
 }

@@ -49,11 +49,12 @@ class OfferCalendar
             $visits = $bookings->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT && $this->visitsOn($booking, $day));
             $isBlocked = in_array($date, $blocked, true);
             // Une visite colore son jour comme un séjour ses nuits (décision 2026-11-20-calendrier-visites).
-            $stayAccepted = $stays->contains('status', BookingStatusEnum::ACCEPTED);
+            // Acceptée ou terminée : la nuit est prise (décision 2026-11-22-statut-termine-enregistre).
+            $stayAccepted = $stays->contains(fn (Booking $booking): bool => in_array($booking->status, BookingStatusEnum::held(), true));
             // En attente : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
             $stayPending = $stays->contains(fn (Booking $booking): bool => $booking->isAwaitingAnswer());
             $visitPending = $visits->contains(fn (Booking $booking): bool => $booking->isAwaitingAnswer());
-            $accepted = $stayAccepted || $visits->contains('status', BookingStatusEnum::ACCEPTED);
+            $accepted = $stayAccepted || $visits->contains(fn (Booking $booking): bool => in_array($booking->status, BookingStatusEnum::held(), true));
             $pending = $stayPending || $visitPending;
             // Chevauchement : un séjour en attente sur une nuit prise ou bloquée ; une visite en attente sur un jour bloqué.
             $conflict = ($stayPending && ($stayAccepted || $isBlocked)) || ($visitPending && $isBlocked);
@@ -110,7 +111,7 @@ class OfferCalendar
         $bookings = $this->bookings($offer, $day, $day->copy()->addDay())
             ->filter(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::VISIT ? $this->visitsOn($booking, $day) : $this->coversNight($booking, $day));
         $isBlocked = $offer->blockedDates()->whereDate('date', $day->toDateString())->exists();
-        $hasAccepted = $bookings->contains(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::STAY && $booking->status === BookingStatusEnum::ACCEPTED);
+        $hasAccepted = $bookings->contains(fn (Booking $booking): bool => $booking->type === BookingTypeEnum::STAY && in_array($booking->status, BookingStatusEnum::held(), true));
         $parameters = ['offer' => $offer->getKey(), 'date' => $day->toDateString()];
 
         $action = null;
@@ -185,7 +186,7 @@ class OfferCalendar
     private function bookings(Offer $offer, Carbon $from, Carbon $to): Collection
     {
         return $offer->bookings()
-            ->whereIn('status', [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED])
+            ->whereIn('status', [BookingStatusEnum::PENDING, ...BookingStatusEnum::held()])
             ->where(fn (Builder $query) => $query
                 ->where(fn (Builder $stays) => $stays->overlapping($from, $to))
                 ->orWhere(fn (Builder $visits) => $visits->where('type', BookingTypeEnum::VISIT)

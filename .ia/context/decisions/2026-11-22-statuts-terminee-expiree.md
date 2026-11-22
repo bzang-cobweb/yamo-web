@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-statut-termine-enregistre.md
+
 # Demandes : « Terminée » et « Expirée », d'après les dates
 
 - **Date** : 2026-11-22

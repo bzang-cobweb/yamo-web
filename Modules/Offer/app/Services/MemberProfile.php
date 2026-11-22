@@ -51,13 +51,13 @@ class MemberProfile
         return $city === '' ? null : $city;
     }
 
-    /** Ses séjours acceptés, comme voyageur. */
+    /** Ses séjours acceptés ou terminés, comme voyageur. */
     private function stays(User $member): int
     {
         return Booking::query()
             ->where('user_id', $member->getKey())
             ->where('type', BookingTypeEnum::STAY)
-            ->where('status', BookingStatusEnum::ACCEPTED)
+            ->whereIn('status', BookingStatusEnum::held())
             ->count();
     }
 }

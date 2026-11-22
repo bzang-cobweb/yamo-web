@@ -82,7 +82,7 @@ class NotificationFiltersTest extends TestCase
         foreach (['status', 'offer', 'rental_type'] as $name) {
             $this->assertSame(['booking', 'booking_received', 'booking_accepted', 'booking_refused', 'booking_cancelled', 'booking_updated'], $filters[$name]['visible_when']['values']);
         }
-        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters['status']['options'], 'value'));
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'completed'], array_column($filters['status']['options'], 'value'));
         $this->assertSame(['long_term' => 'Location', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));

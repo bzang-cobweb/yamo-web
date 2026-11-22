@@ -266,6 +266,11 @@ web_extra_daemons:
   - name: "queue"
     command: "php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
     directory: /var/www/html
+  # Planificateur Laravel (routes/console.php : invitations à donner son avis, demandes terminées, nettoyages ;
+  # décision 2026-11-22-planificateur-ddev).
+  - name: "scheduler"
+    command: "php artisan schedule:work"
+    directory: /var/www/html
 
 #web_extra_daemons:
 #- name: "http-1"

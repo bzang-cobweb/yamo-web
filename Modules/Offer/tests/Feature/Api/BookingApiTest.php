@@ -539,7 +539,7 @@ class BookingApiTest extends TestCase
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
         $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[offer]='.$upcoming->offer_id));
         $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
-        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée'], array_column($filters['status']['options'], 'label'));
+        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Terminée'], array_column($filters['status']['options'], 'label'));
         $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
         $this->assertSame(['upcoming', 'ongoing', 'past'], array_column($filters['period']['options'], 'value'));
 

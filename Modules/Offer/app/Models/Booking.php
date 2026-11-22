@@ -152,7 +152,7 @@ class Booking extends Model
             'pending' => $query->awaitingAnswer(),
             'past' => $query->where(fn (Builder $past) => $past
                 ->whereIn('status', [BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED])
-                ->orWhere(fn (Builder $done) => $done->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} < ?", [$today]))
+                ->orWhere(fn (Builder $done) => $done->completed())
                 ->orWhere(fn (Builder $expired) => $expired->expired())),
             default => null,
         };
@@ -183,8 +183,10 @@ class Booking extends Model
      */
     public function scopeCompleted(Builder $query): void
     {
-        $query->where('status', BookingStatusEnum::ACCEPTED)
-            ->whereRaw('date(case when check_out is not null and check_out > check_in then check_out else check_in end) < ?', [today()->toDateString()]);
+        // Enregistrée terminée par `booking:complete`, ou acceptée et passée en attendant sa prochaine exécution.
+        $query->where(fn (Builder $done) => $done->where('status', BookingStatusEnum::COMPLETED)
+            ->orWhere(fn (Builder $past) => $past->where('status', BookingStatusEnum::ACCEPTED)
+                ->whereRaw('date(case when check_out is not null and check_out > check_in then check_out else check_in end) < ?', [today()->toDateString()])));
     }
 
     /**
@@ -260,7 +262,8 @@ class Booking extends Model
      */
     public function isCompleted(): bool
     {
-        return $this->status === BookingStatusEnum::ACCEPTED && $this->lastDay()->copy()->startOfDay()->lessThan(today());
+        return $this->status === BookingStatusEnum::COMPLETED
+            || ($this->status === BookingStatusEnum::ACCEPTED && $this->lastDay()->copy()->startOfDay()->lessThan(today()));
     }
 
     /**
@@ -272,7 +275,7 @@ class Booking extends Model
     public function statusTag(): array
     {
         $shown = match (true) {
-            $this->isCompleted() => 'completed',
+            $this->status === BookingStatusEnum::ACCEPTED && $this->isCompleted() => 'completed',
             $this->isExpired() => 'expired',
             default => null,
         };
