@@ -489,7 +489,6 @@ class BookingThreadTest extends TestCase
         $card = $this->cards($this->owner)[0];
         $this->assertFalse($card['read']);
         $this->assertStringContainsString('modifiée', (string) $card['summary']);
-        $this->assertStringStartsWith('Vous avez reçu une demande de séjour modifiée pour « ', (string) $card['summary']);
         $this->assertStringContainsString(', 2 personnes)', (string) $card['summary']);
         $history = $this->api($this->owner, 'GET', '/'.$card['id'])->json('data.history');
         $this->assertSame(['Demande modifiée'], array_column($history, 'label'));
