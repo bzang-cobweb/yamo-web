@@ -35,6 +35,8 @@ return [
         'minutesAgo' => 'il y a :count min',
         'hoursAgo' => 'il y a :count h',
         'yesterday' => 'hier',
+        // « hier à 10:30 » (décision 2026-11-22-date-carte-heure).
+        'yesterdayAt' => 'hier à :time',
         'daysAgo' => 'il y a :count jours',
     ],
 ];
