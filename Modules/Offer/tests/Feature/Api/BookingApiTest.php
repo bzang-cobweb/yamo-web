@@ -3,6 +3,7 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Modules\Auth\Enums\RoleEnum;
@@ -500,6 +501,9 @@ class BookingApiTest extends TestCase
         ]);
         $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
         $this->assertSame('Arrivée vers 18 h.', $cards[(string) $second->getKey()]['quote']);
+        // La date de sa dernière notification (décision 2026-11-22-demandes-date-derniere-notification) ; sans, rien.
+        $this->assertNotNull($cards[(string) $first->getKey()]['date'] ?? null);
+        $this->assertSame(Carbon::parse($cards[(string) $first->getKey()]['date'])->toIso8601String(), $cards[(string) $first->getKey()]['date']);
     }
 
     public function test_my_bookings_are_filtered_by_status_city_and_offer_types_with_a_search_button(): void

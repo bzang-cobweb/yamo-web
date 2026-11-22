@@ -5,6 +5,7 @@ namespace Modules\Offer\Lists;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
@@ -166,6 +167,15 @@ class ReceivedBookingListing extends Listing
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->limit(1)])
+            // La date de sa dernière notification, pour la carte (décision 2026-11-22-demandes-date-derniere-notification).
+            ->addSelect(['last_notification_at' => DatabaseNotification::query()
+                ->select('created_at')
+                ->where('notifiable_type', (new User)->getMorphClass())
+                ->where('notifiable_id', $this->user?->getAuthIdentifier())
+                ->whereColumn('data->booking_id', 'bookings.id')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(1)])
             // Le dernier message du fil (le membre ou le propriétaire), pour la carte (décision
             // 2026-11-22-demandes-dernier-message).
             ->addSelect(['last_message' => DatabaseNotification::query()
@@ -203,6 +213,9 @@ class ReceivedBookingListing extends Listing
         $item = OfferRequestItem::make($record, $locale)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
             ->quote(is_string($message) && trim($message) !== '' ? Str::of($message)->trim()->before("\n")->squish()->value() : null);
+        // La date de sa dernière notification, sous le message, à droite (décision 2026-11-22-demandes-date-derniere-notification).
+        $last = $record->getAttribute('last_notification_at');
+        $item->date($last === null ? null : Carbon::parse((string) $last)->toIso8601String());
         // Ses notifications non lues : une pastille rouge sous le titre, pour information (décisions
         // 2026-11-21-demandes-non-lues et 2026-11-21-demandes-pastille-non-lues-total).
         $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);

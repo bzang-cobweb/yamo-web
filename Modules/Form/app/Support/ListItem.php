@@ -32,6 +32,9 @@ final class ListItem
     /** Une ligne sous le sous-titre, à part (« Séjour · du 2 au 6 déc. ») ; `null` : aucune. */
     private ?string $detail = null;
 
+    /** Une date (ISO 8601) sous le message, à droite (« il y a 2 h ») ; `null` : aucune. */
+    private ?string $date = null;
+
     /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
     private ?bool $favoriteActive = null;
 
@@ -158,6 +161,17 @@ final class ListItem
     }
 
     /**
+     * Une date, sous le message cité, alignée à droite, que l'app dit en temps relatif (la dernière notification
+     * d'une demande, décision 2026-11-22-demandes-date-derniere-notification).
+     */
+    public function date(?string $iso): self
+    {
+        $this->date = $iso === '' ? null : $iso;
+
+        return $this;
+    }
+
+    /**
      * Toucher le titre seul ouvre cet écran de l'app (« /members/3 »), le reste de la carte gardant son lien ;
      * le titre s'affiche alors en lien (décision 2026-11-21-demandes-lien-membre).
      */
@@ -259,6 +273,8 @@ final class ListItem
             'subtitle' => $this->subtitle,
             /** Ligne sous le sous-titre, à part ; absente : aucune. */
             ...($this->detail === null ? [] : ['detail' => $this->detail]),
+            /** Date ISO 8601 sous le message, à droite ; absente : aucune. */
+            ...($this->date === null ? [] : ['date' => $this->date]),
             'image' => $this->image,
             /** Note moyenne (1 à 5, au dixième) et nombre de notes ; `null` sans note. */
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
