@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-toi-message.md
+
 # Carte de notification : « Toi » quand l'expéditeur est le lecteur
 
 - **Date** : 2026-11-22
