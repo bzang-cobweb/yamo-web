@@ -10,6 +10,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
 /**
@@ -75,9 +76,16 @@ class OfferPolicy
             return Response::denyAsNotFound();
         }
 
-        return (int) $offer->user_id === (int) $user->getKey()
-            ? Response::deny(__('offer::review.own_offer'))
-            : Response::allow();
+        if ((int) $offer->user_id === (int) $user->getKey()) {
+            return Response::deny(__('offer::review.own_offer'));
+        }
+
+        // Après un séjour ou une visite terminé dans ce logement ; un avis déjà donné reste modifiable
+        // (décision 2026-11-22-avis-apres-demande-terminee).
+        return $offer->reviews()->where('user_id', $user->getKey())->exists()
+            || Booking::query()->where('offer_id', $offer->getKey())->where('user_id', $user->getKey())->completed()->exists()
+            ? Response::allow()
+            : Response::deny(__('offer::review.not_completed'));
     }
 
     /**

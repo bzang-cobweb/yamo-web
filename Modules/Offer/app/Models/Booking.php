@@ -36,10 +36,11 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property bool $show_address l'adresse du logement visible du demandeur (décision 2026-11-21-afficher-adresse)
  * @property Carbon|null $answered_at
  * @property Carbon|null $cancelled_at
+ * @property Carbon|null $review_invited_at l'invitation à donner son avis, une fois terminée (décision 2026-11-22-invitation-avis)
  * @property-read Offer $offer
  * @property-read User $user
  */
-#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'show_address', 'answered_at', 'cancelled_at'])]
+#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'show_address', 'answered_at', 'cancelled_at', 'review_invited_at'])]
 #[UseFactory(BookingFactory::class)]
 class Booking extends Model
 {
@@ -79,6 +80,7 @@ class Booking extends Model
             'total' => 'decimal:2',
             'answered_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'review_invited_at' => 'datetime',
             'show_address' => 'boolean',
         ];
     }
@@ -171,6 +173,18 @@ class Booking extends Model
     public function scopeExpired(Builder $query): void
     {
         $query->where('status', BookingStatusEnum::PENDING)->whereRaw(self::EXPIRES_AFTER.' < ?', [today()->toDateString()]);
+    }
+
+    /**
+     * Les demandes terminées : acceptées, et leur dernier jour est passé (décisions 2026-11-22-statuts-terminee-expiree
+     * et 2026-11-22-avis-apres-demande-terminee).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeCompleted(Builder $query): void
+    {
+        $query->where('status', BookingStatusEnum::ACCEPTED)
+            ->whereRaw('date(case when check_out is not null and check_out > check_in then check_out else check_in end) < ?', [today()->toDateString()]);
     }
 
     /**

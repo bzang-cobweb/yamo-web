@@ -12,6 +12,8 @@ return [
     'delete' => 'Delete my review',
     'delete_confirm' => 'Delete your review of this offer?',
     'deleted' => 'Your review is deleted.',
+    // Pas encore de séjour ou de visite terminé (décision 2026-11-22-avis-apres-demande-terminee).
+    'not_completed' => 'You can review this home after a completed stay or visit.',
     'own_offer' => 'You cannot review your own offer.',
     'resource' => [
         'singular' => 'review',

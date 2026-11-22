@@ -43,6 +43,8 @@ return [
         'visit_or' => 'on :date or :second',
     ],
     'own_offer' => 'You cannot book your own offer.',
+    // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
+    'review_cta' => 'Leave a review',
     'expired' => 'This request has expired: its date has passed.',
     'not_cancellable' => 'This request can no longer be cancelled.',
     'already_answered' => 'This request has already been answered.',
@@ -185,6 +187,17 @@ return [
         'message' => 'Message: :message',
         'open_app' => 'Find your requests in the app, under “:section”.',
         'type_lower' => ['stay' => 'a stay', 'visit' => 'a visit'],
+        // L'invitation à donner son avis, le lendemain de la fin (décision 2026-11-22-invitation-avis).
+        'review' => [
+            'title' => 'Your review',
+            'subject' => 'Your review of “:offer”',
+            'body' => 'Your stay at “:offer” (:period) is over. Leave a review.',
+            'body_visit' => 'Your visit of “:offer” (:period) is over. Leave a review.',
+            'sms' => ':app: your stay at “:offer” is over. Leave a review in the app.',
+            'sms_visit' => ':app: your visit of “:offer” is over. Leave a review in the app.',
+            'open_app' => 'Open the app to review the home.',
+            'sent' => ':count review invitation(s) sent.',
+        ],
         // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
         'request_lower' => ['stay' => 'stay request', 'visit' => 'visit request'],
     ],

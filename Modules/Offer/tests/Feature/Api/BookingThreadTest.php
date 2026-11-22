@@ -466,6 +466,14 @@ class BookingThreadTest extends TestCase
         // Acceptée, pas encore commencée : toujours annulable.
         $this->assertSame('Annuler', $page($this->guest)['secondary_link_label']);
 
+        // Terminée : « Laisser un avis », tant qu'il n'en a pas donné (décision 2026-11-22-avis-apres-demande-terminee).
+        $this->travel(10)->days();
+        $this->assertSame(['/offers/'.$booking->offer_id.'/review', 'Laisser un avis'], [$page($this->guest)['link'], $page($this->guest)['link_label']]);
+        $this->assertSame('Traiter la demande', $page($this->owner)['link_label']);
+        $booking->offer->reviews()->create(['user_id' => $this->guest->getKey(), 'rating' => 5, 'comment' => 'Parfait.']);
+        $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
+        $this->travelBack();
+
         // Annulée avec un message : plus de bouton, le message dans le suivi du propriétaire.
         $this->travel(5)->minutes();
         app(BookingService::class)->cancel($booking->refresh(), 'Empêchement.');

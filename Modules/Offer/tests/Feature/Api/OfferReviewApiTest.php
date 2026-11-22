@@ -9,6 +9,8 @@ use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;
 use Tests\TestCase;
@@ -58,6 +60,14 @@ class OfferReviewApiTest extends TestCase
         return $request->json($method, $uri, $data);
     }
 
+    /** Un séjour terminé de `$user` dans `$offer` : il peut donner son avis (décision 2026-11-22-avis-apres-demande-terminee). */
+    private function stayed(User $user, Offer $offer): User
+    {
+        Booking::factory()->for($offer)->for($user)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->subDays(5), 'check_out' => today()->subDays(2)]);
+
+        return $user;
+    }
+
     private function review(User $user, Offer $offer, int $rating, string $comment): TestResponse
     {
         return $this->api($user, 'PUT', "/api/v1/offers/{$offer->getKey()}/review", ['rating' => $rating, 'comment' => $comment]);
@@ -66,8 +76,8 @@ class OfferReviewApiTest extends TestCase
     public function test_a_member_reviews_another_members_offer_and_sees_it_in_the_list_and_the_detail(): void
     {
         $offer = Offer::factory()->create(['status' => 'published']);
-        $awa = $this->member('Awa');
-        $paul = $this->member('Paul');
+        $awa = $this->stayed($this->member('Awa'), $offer);
+        $paul = $this->stayed($this->member('Paul'), $offer);
 
         $this->review($awa, $offer, 4, 'Très bon accueil.')->assertNoContent();
         $this->travel(1)->minutes();
@@ -95,7 +105,7 @@ class OfferReviewApiTest extends TestCase
     public function test_one_review_per_member_and_offer_which_can_be_changed_or_removed(): void
     {
         $offer = Offer::factory()->create(['status' => 'published']);
-        $awa = $this->member();
+        $awa = $this->stayed($this->member(), $offer);
 
         $this->review($awa, $offer, 2, 'Bruyant.')->assertNoContent();
         $this->review($awa, $offer, 3, 'Bruyant, mais bien situé.')->assertNoContent();
@@ -105,7 +115,7 @@ class OfferReviewApiTest extends TestCase
 
         // Un avis modifié redevient le premier de la fiche.
         $this->travel(1)->minutes();
-        $this->review($this->member('Paul'), $offer, 5, 'Parfait.')->assertNoContent();
+        $this->review($this->stayed($this->member('Paul'), $offer), $offer, 5, 'Parfait.')->assertNoContent();
         $this->travel(1)->minutes();
         $this->review($awa, $offer, 3, 'Bruyant le soir, mais bien situé.')->assertNoContent();
         config(['offer.reviews_shown' => 5]);
@@ -129,6 +139,16 @@ class OfferReviewApiTest extends TestCase
         $owner = $this->member();
         $offer = Offer::factory()->for($owner)->create(['status' => 'published']);
         $visitor = $this->member('Paul');
+
+        // Sans séjour ni visite terminé : 403, et pas de bouton (décision 2026-11-22-avis-apres-demande-terminee).
+        $this->review($visitor, $offer, 5, 'Parfait !')->assertForbidden()
+            ->assertJsonPath('message', 'Vous pourrez donner votre avis après un séjour ou une visite terminé dans ce logement.');
+        $this->assertFalse($this->api($visitor, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.reviews.can_review'));
+        // Une demande acceptée pas encore terminée ne suffit pas ; une visite terminée, si.
+        Booking::factory()->for($offer)->for($visitor)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->subDay(), 'check_out' => today()->addDay()]);
+        $this->review($visitor, $offer, 5, 'Parfait !')->assertForbidden();
+        Booking::factory()->for($offer)->for($visitor)->status(BookingStatusEnum::ACCEPTED)->create(['type' => 'visit', 'check_in' => today()->subDays(3), 'check_out' => null, 'guests' => null]);
+        $this->assertTrue($this->api($visitor, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.reviews.can_review'));
 
         // Le propriétaire : 403, même par le formulaire.
         $this->review($owner, $offer, 5, 'Parfait !')->assertForbidden();

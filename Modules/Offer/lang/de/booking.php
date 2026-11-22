@@ -43,6 +43,8 @@ return [
         'visit_or' => 'am :date oder :second',
     ],
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht buchen.',
+    // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
+    'review_cta' => 'Bewertung abgeben',
     'expired' => 'Diese Anfrage ist abgelaufen: ihr Datum ist vorbei.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',
     'already_answered' => 'Diese Anfrage wurde bereits beantwortet.',
@@ -185,6 +187,17 @@ return [
         'message' => 'Nachricht: :message',
         'open_app' => 'Ihre Anfragen finden Sie in der App unter „:section“.',
         'type_lower' => ['stay' => 'einen Aufenthalt', 'visit' => 'eine Besichtigung'],
+        // L'invitation à donner son avis, le lendemain de la fin (décision 2026-11-22-invitation-avis).
+        'review' => [
+            'title' => 'Ihre Bewertung',
+            'subject' => 'Ihre Bewertung von „:offer“',
+            'body' => 'Ihr Aufenthalt in „:offer“ (:period) ist beendet. Geben Sie eine Bewertung ab.',
+            'body_visit' => 'Ihre Besichtigung von „:offer“ (:period) ist beendet. Geben Sie eine Bewertung ab.',
+            'sms' => ':app: Ihr Aufenthalt in „:offer“ ist beendet. Bewerten Sie ihn in der App.',
+            'sms_visit' => ':app: Ihre Besichtigung von „:offer“ ist beendet. Bewerten Sie sie in der App.',
+            'open_app' => 'Öffnen Sie die App, um die Unterkunft zu bewerten.',
+            'sent' => ':count Einladung(en) zur Bewertung gesendet.',
+        ],
         // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
         'request_lower' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     ],

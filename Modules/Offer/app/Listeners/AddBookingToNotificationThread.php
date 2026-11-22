@@ -111,6 +111,13 @@ class AddBookingToNotificationThread
             $event->data['secondary_link_label'] = __('offer::booking.cancel.button');
         }
 
+        // Terminée, sans avis du membre : « Laisser un avis » ouvre le formulaire d'avis du logement (décision
+        // 2026-11-22-avis-apres-demande-terminee).
+        if ($mine && $booking->isCompleted() && ! $booking->offer?->reviews()->where('user_id', $booking->user_id)->exists()) {
+            $event->data['link'] = '/offers/'.$booking->offer_id.'/review';
+            $event->data['link_label'] = __('offer::booking.review_cta');
+        }
+
         if ($mine && $booking->isAwaitingAnswer()) {
             $event->data['link'] = '/profile/'.BookingEditForm::name().'?record='.$booking->getKey();
             $event->data['link_label'] = __('offer::booking.form.edit');

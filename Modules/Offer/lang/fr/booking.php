@@ -43,6 +43,8 @@ return [
         'visit_or' => 'le :date ou :second',
     ],
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
+    // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
+    'review_cta' => 'Laisser un avis',
     'expired' => 'Cette demande a expiré : sa date est passée.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',
     'already_answered' => 'Cette demande a déjà une réponse.',
@@ -185,6 +187,17 @@ return [
         'message' => 'Message : :message',
         'open_app' => 'Retrouvez vos demandes dans l\'app, rubrique « :section ».',
         'type_lower' => ['stay' => 'un séjour', 'visit' => 'une visite'],
+        // L'invitation à donner son avis, le lendemain de la fin (décision 2026-11-22-invitation-avis).
+        'review' => [
+            'title' => 'Votre avis',
+            'subject' => 'Votre avis sur « :offer »',
+            'body' => 'Votre séjour à « :offer » (:period) est terminé. Laissez un avis.',
+            'body_visit' => 'Votre visite de « :offer » (:period) est terminée. Laissez un avis.',
+            'sms' => ':app : votre séjour à « :offer » est terminé. Laissez un avis dans l\'app.',
+            'sms_visit' => ':app : votre visite de « :offer » est terminée. Laissez un avis dans l\'app.',
+            'open_app' => 'Ouvrez l\'app pour donner votre avis sur le logement.',
+            'sent' => ':count invitation(s) à donner son avis envoyée(s).',
+        ],
         // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
         'request_lower' => ['stay' => 'demande de séjour', 'visit' => 'demande de visite'],
     ],

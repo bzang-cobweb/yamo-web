@@ -2,11 +2,13 @@
 
 namespace Modules\Offer\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
+use Modules\Offer\Console\InviteReviewsCommand;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Forms\BookingAnswerForm;
@@ -64,6 +66,18 @@ class OfferServiceProvider extends ModuleServiceProvider
      * @var array<class-string, class-string>
      */
     public array $singletons = [DomainRegistry::class => DomainRegistry::class, BookingCache::class => BookingCache::class];
+
+    /** @var list<class-string> */
+    protected array $commands = [InviteReviewsCommand::class];
+
+    /**
+     * Chaque matin, l'invitation à donner son avis après un séjour ou une visite terminé (décision
+     * 2026-11-22-invitation-avis).
+     */
+    protected function configureSchedules(Schedule $schedule): void
+    {
+        $schedule->command(InviteReviewsCommand::class)->dailyAt('10:00');
+    }
 
     public function boot(): void
     {

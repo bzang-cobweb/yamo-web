@@ -12,6 +12,8 @@ return [
     'delete' => 'Meine Bewertung löschen',
     'delete_confirm' => 'Ihre Bewertung zu diesem Angebot löschen?',
     'deleted' => 'Ihre Bewertung ist gelöscht.',
+    // Pas encore de séjour ou de visite terminé (décision 2026-11-22-avis-apres-demande-terminee).
+    'not_completed' => 'Sie können diese Unterkunft nach einem abgeschlossenen Aufenthalt oder einer Besichtigung bewerten.',
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht bewerten.',
     'resource' => [
         'singular' => 'Bewertung',
