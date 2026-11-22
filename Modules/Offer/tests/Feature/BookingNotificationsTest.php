@@ -148,7 +148,7 @@ class BookingNotificationsTest extends TestCase
         app()->setLocale('fr');
         $mail = BookingNotification::for($booking, BookingStepEnum::RECEIVED)->toMail($booking->offer->user);
         $this->assertSame('Nouvelle demande : '.$booking->offer->getTranslation('title', 'fr'), $mail->subject);
-        $this->assertStringContainsString('Marie Curie demande un séjour du 3 mars 2027 au 6 mars 2027', $mail->introLines[0]);
+        $this->assertStringContainsString('Marie Curie demande un séjour du 03/03/2027 au 06/03/2027', $mail->introLines[0]);
         $this->assertSame('Message : Bonjour !', $mail->introLines[1]);
         $this->assertStringContainsString('« Réservations reçues »', $mail->introLines[2]);
 

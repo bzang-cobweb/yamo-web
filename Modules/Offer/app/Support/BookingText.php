@@ -23,7 +23,8 @@ final class BookingText
             'guest' => (string) $booking->user->full_name,
             // Le titre saisi par le propriétaire, pas le titre construit de la liste.
             'offer' => (string) $booking->offer->getTranslation('title', $locale),
-            'period' => $booking->period($locale),
+            // En chiffres, dans l'ordre de la langue : « du 05/12/2026 au 07/12/2026 » (décision 2026-11-22-date-entiere-chiffres).
+            'period' => $booking->period($locale, numeric: true),
             'type' => __('offer::booking.notify.type_lower.'.$booking->type->value),
             // « demande de séjour », « demande de visite » (décision 2026-11-22-annulation-visite-sejour).
             'request' => __('offer::booking.notify.request_lower.'.$booking->type->value),
