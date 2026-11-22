@@ -278,8 +278,8 @@ class BookingApiTest extends TestCase
         $this->assertSame('/members/'.$guest->getKey(), $item['title_link']);
         $this->assertSame($booking->type->label().' · '.$booking->period('fr'), $item['subtitle']);
         $this->assertNull($item['rating']);
-        // Avec son libellé (décision 2026-11-21-demandes-pastille-non-lues-total).
-        $this->assertStringStartsWith('Total : 135', (string) $item['highlight']);
+        // Sans total (décision 2026-11-22-demandes-sans-total).
+        $this->assertNull($item['highlight']);
         // Ni menu ni bouton : la carte ouvre le détail de la demande (décision 2026-11-22-demandes-carte-seule) ; on
         // répond depuis le calendrier, son bouton « Traiter la demande ».
         $this->assertFalse($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
