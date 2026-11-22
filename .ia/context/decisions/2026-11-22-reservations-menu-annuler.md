@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-reservations-coeur.md
+
 # Mes réservations : « Annuler » dans le menu ⋮ ouvre le formulaire d'annulation
 
 - **Date** : 2026-11-22

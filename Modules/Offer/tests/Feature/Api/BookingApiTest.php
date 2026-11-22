@@ -189,11 +189,9 @@ class BookingApiTest extends TestCase
         $pending = Booking::factory()->for($offer)->for($guest)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(8), 'guests' => 2, 'unit_price' => '45000.00', 'total' => '135000.00']);
         $accepted = Booking::factory()->for($offer)->for($guest)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(20), 'check_out' => today()->addDays(22)]);
 
-        // « Modifier » dans le menu de la carte, seulement en attente.
+        // Plus de « Modifier » sur la carte : il est sur la page de la demande (décision 2026-11-22-reservations-coeur).
         $items = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id');
-        $edit = collect($items[(string) $pending->getKey()]['actions'])->firstWhere('label', 'Modifier');
-        $this->assertSame(['form' => 'offer.booking.edit', 'record' => (string) $pending->getKey()], $edit['form']);
-        $this->assertNull(collect($items[(string) $accepted->getKey()]['actions'])->firstWhere('label', 'Modifier'));
+        $this->assertSame([], $items[(string) $pending->getKey()]['actions']);
 
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
@@ -323,10 +321,13 @@ class BookingApiTest extends TestCase
             ->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today(), 'check_out' => today()->addDays(2)]);
 
         $items = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->assertOk()->json('data.items'))->keyBy('id');
-        // Dans le menu, en dernier, « Annuler » (en rouge) ouvre le formulaire d'annulation ; plus de retrait direct
-        // (décision 2026-11-22-reservations-menu-annuler).
-        $cancelAction = collect($items[(string) $pending->getKey()]['actions'])->last();
-        $this->assertSame(['Annuler', 'destructive', ['form' => 'offer.booking.cancel', 'record' => (string) $pending->getKey()]], [$cancelAction['label'], $cancelAction['style'], $cancelAction['form']]);
+        // Plus de menu trois points : le cœur des favoris du logement, éteint ; « Annuler » est sur la page de la demande
+        // (décision 2026-11-22-reservations-coeur).
+        $this->assertFalse($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
+        $this->assertSame([], $items[(string) $pending->getKey()]['actions']);
+        $this->assertFalse($items[(string) $pending->getKey()]['favorite']['active']);
+        $pending->offer->favorites()->create(['user_id' => $guest->getKey()]);
+        $this->assertTrue(collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['favorite']['active']);
         $this->assertNull($items[(string) $pending->getKey()]['delete']);
         // Sans notification dans son fil : la fiche du logement.
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
@@ -371,10 +372,9 @@ class BookingApiTest extends TestCase
         $this->assertSame($pending->offer->getTranslation('title', 'fr'), $card['subtitle']);
         // Sans le nombre de personnes (décision 2026-11-21-reservations-sans-nombre-personnes).
         $this->assertStringNotContainsString('personne', $items[(string) $pending->getKey()]['detail']);
-        // Le statut sur la photo ; le menu trois points à la place du cœur (décision 2026-11-21-reservations-menu).
+        // Le statut sur la photo ; le cœur des favoris à la place du menu trois points (décision 2026-11-22-reservations-coeur).
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
-        $this->assertNull($items[(string) $pending->getKey()]['favorite']);
-        $this->assertTrue($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
+        $this->assertNotNull($items[(string) $pending->getKey()]['favorite']);
         // Le nombre, sous les filtres, filtres compris (décision 2026-11-22-listes-nombre-en-tete).
         $this->assertSame('2 réservations', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.heading.title'));
         $this->assertSame('1 réservation', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings?filter[status]=pending')->json('data.heading.title'));

@@ -11,8 +11,6 @@ use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Forms\BookingCancelForm;
-use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Lists\Concerns\FiltersBookings;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -70,15 +68,6 @@ class BookingListing extends Listing
      * « Rechercher un logement » dans la barre fixe en bas : retour à l'accueil
      * (décision 2026-11-19-contrat-reservations-logements-profil).
      */
-    /**
-     * Voir, Annuler la demande : dans le menu trois points, comme « Mes logements »
-     * (décision 2026-11-21-reservations-menu).
-     */
-    public function actionsMenu(): bool
-    {
-        return true;
-    }
-
     public function footer(): ?array
     {
         return ['label' => __('offer::booking.profile.search_home'), 'form' => null, 'link' => '/'];
@@ -103,7 +92,8 @@ class BookingListing extends Listing
     {
         return Booking::query()
             // La note et le nombre d'avis du logement, comme à l'accueil (décision 2026-11-21-reservations-note).
-            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary()])
+            // Et s'il est en favori, pour le cœur de la carte (décision 2026-11-22-reservations-coeur).
+            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary()->withFavoriteOf($this->user?->getAuthIdentifier())])
             // Sa dernière notification du fil de la demande : la carte ouvre sa page (décision
             // 2026-11-21-reservation-comme-notification).
             ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
@@ -144,31 +134,22 @@ class BookingListing extends Listing
         $notification = $record->getAttribute('thread_notification_id');
         $item = BookingItem::make($record, $locale, mine: true)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
-        // Le statut sur la photo, comme dans « Mes logements » ; à droite, le menu des actions à la place du
-        // cœur (décisions 2026-11-21-reservations-statut-coeur et 2026-11-21-reservations-menu).
+        // Le statut sur la photo, en haut à gauche, le cœur à droite (décision 2026-11-21-reservations-statut-coeur).
         $item->tag($record->status->label(), $record->status->tone(), onImage: true);
         // Le titre saisi de l'offre en lien vers sa fiche : le sous-titre, sous la ligne du type ; sans ligne du type,
         // le titre lui-même. Le reste de la carte ouvre la page de la demande (décision 2026-11-22-reservations-lien-offre).
         OfferCardTitle::of($record->offer, $locale)[1] === null
             ? $item->titleLink('/offers/'.$record->offer_id)
             : $item->subtitleLink('/offers/'.$record->offer_id);
-        // « Modifier », dans le menu, tant qu'elle est en attente (décision 2026-11-21-modifier-reservation).
-        if ($record->isAwaitingAnswer()) {
-            $item->action(__('offer::booking.form.edit'), form: BookingEditForm::name(), record: $record->getKey());
-        }
+        // Le cœur des favoris à la place du menu trois points : « Modifier » et « Annuler » sont sur la page de la
+        // demande (décision 2026-11-22-reservations-coeur).
+        $item->favorite((bool) $record->offer->is_favorite, $record->offer->favoriteEndpoint());
 
         // Ses notifications non lues : un compteur en bas de la carte, qui ouvre la page de la demande, comme dans
         // « Mes logements » (décision 2026-11-22-reservations-non-lues).
         $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
         if ($unread > 0 && is_string($notification) && $notification !== '') {
             $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification);
-        }
-
-        // « Annuler », en dernier, tant qu'elle peut l'être : il ouvre le formulaire d'annulation, comme le bouton
-        // « Annuler » de la page de la demande (décisions 2026-11-21-annuler-depuis-le-detail et
-        // 2026-11-22-reservations-menu-annuler).
-        if ($record->isCancellable()) {
-            $item->action(__('offer::booking.cancel.button'), 'destructive', form: BookingCancelForm::name(), record: $record->getKey());
         }
 
         return $item;

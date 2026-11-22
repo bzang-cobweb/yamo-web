@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-reservations-coeur.md
+
 # « Mes réservations » : le menu trois points à la place du cœur
 
 - **Date** : 2026-11-21
