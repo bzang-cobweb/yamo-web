@@ -192,7 +192,7 @@ class BookingAvailabilityTest extends TestCase
         $this->assertSame([$date(5), $date(7)], [$booking->check_in->toDateString(), $booking->check_out->toDateString()]);
         $this->assertNull($booking->days());
         $this->assertNull($booking->guests);
-        $this->assertMatchesRegularExpression('/^le .+ ou le .+$/', $booking->period('fr'));
+        $this->assertMatchesRegularExpression('/^le .+ ou \d.+$/', $booking->period('fr'));
 
         // Facultative ; jamais la même date ; jamais un jour bloqué.
         $this->asUser($this->member())->postJson($url, ['check_in' => $date(6)])->assertNoContent();

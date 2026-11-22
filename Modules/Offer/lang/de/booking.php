@@ -38,7 +38,7 @@ return [
         'stay' => 'vom :from bis :to',
         'visit' => 'am :date',
         // Une visite avec une seconde date proposée.
-        'visit_or' => 'am :date oder am :second',
+        'visit_or' => 'am :date oder :second',
     ],
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht buchen.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',
@@ -139,8 +139,8 @@ return [
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'Sie haben eine :request für „:offer“ (:period) gesendet.',
             // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
-            'summary' => 'Die :request für „:offer“ (:period) wurde gesendet.',
-            'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde gesendet.',
+            'summary' => 'Eine :request für „:offer“ (:period) wurde erfasst.',
+            'summary_stay' => 'Eine :request für „:offer“ (:period, :people) wurde erfasst.',
             'sms' => ':app: :guest hat eine :request für „:offer“ (:period) gesendet. Antworten Sie in der App.',
         ],
         'accepted' => [
@@ -167,6 +167,7 @@ return [
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) storniert.',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'Die :request für „:offer“ (:period) wurde storniert.',
+            'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde storniert.',
             'sms' => ':app: :guest hat die :request für „:offer“ (:period) storniert.',
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
@@ -174,8 +175,8 @@ return [
             'subject' => 'Anfrage geändert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) geändert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) geändert.',
-            'summary' => 'Die :request für „:offer“ (:period) wurde geändert.',
-            'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde geändert.',
+            'summary' => 'Die :request für „:offer“ wurde geändert (:period).',
+            'summary_stay' => 'Die :request für „:offer“ wurde geändert (:period, :people).',
             'sms' => ':app: :guest hat die :request für „:offer“ (:period) geändert. Antworten Sie in der App.',
         ],
         'message' => 'Nachricht: :message',

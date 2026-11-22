@@ -139,8 +139,8 @@ return [
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'You sent a :request for “:offer” (:period).',
             // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
-            'summary' => 'The :request for “:offer” (:period) has been sent.',
-            'summary_stay' => 'The :request for “:offer” (:period, :people) has been sent.',
+            'summary' => 'A :request for “:offer” (:period) has been recorded.',
+            'summary_stay' => 'A :request for “:offer” (:period, :people) has been recorded.',
             'sms' => ':app: :guest sent a :request for “:offer” (:period). Reply in the app.',
         ],
         'accepted' => [
@@ -167,6 +167,7 @@ return [
             'own' => 'You cancelled your :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'The :request for “:offer” (:period) has been cancelled.',
+            'summary_stay' => 'The :request for “:offer” (:period, :people) has been cancelled.',
             'sms' => ':app: :guest cancelled their :request for “:offer” (:period).',
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
@@ -174,8 +175,8 @@ return [
             'subject' => 'Request changed: :offer',
             'body' => ':guest changed their :request for “:offer” (:period).',
             'own' => 'You changed your :request for “:offer” (:period).',
-            'summary' => 'The :request for “:offer” (:period) has been changed.',
-            'summary_stay' => 'The :request for “:offer” (:period, :people) has been changed.',
+            'summary' => 'The :request for “:offer” has been changed (:period).',
+            'summary_stay' => 'The :request for “:offer” has been changed (:period, :people).',
             'sms' => ':app: :guest changed their :request for “:offer” (:period). Reply in the app.',
         ],
         'message' => 'Message: :message',
