@@ -695,6 +695,11 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['title' => 'Nouveau titre']))->assertNoContent();
         $this->assertSame(OfferStatusEnum::PUBLISHED, $offer->fresh()->status);
 
+        // Un logement passé en brouillon avant la règle revient toujours à « Publiée ».
+        $offer->update(['status' => OfferStatusEnum::DRAFT]);
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'published']))->assertNoContent();
+        $this->assertSame(OfferStatusEnum::PUBLISHED, $offer->fresh()->status);
+
         // Acceptée et pas terminée : toujours verrouillé.
         $pending->update(['status' => BookingStatusEnum::ACCEPTED]);
         $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'draft']))->assertUnprocessable();

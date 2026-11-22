@@ -142,7 +142,8 @@ class OfferForm extends Form
                 // Pas de changement de statut tant qu'il a une demande en cours (décision
                 // 2026-11-22-logement-verrouille-par-demandes).
                 ->rules([function (string $attribute, mixed $value, Closure $fail) use ($offer): void {
-                    if ($offer !== null && $value !== $offer->status->value && $offer->hasOpenBookings()) {
+                    // Revenir à « Publiée » reste toujours possible.
+                    if ($offer !== null && $value !== $offer->status->value && $value !== OfferStatusEnum::PUBLISHED->value && $offer->hasOpenBookings()) {
                         $fail(__('offer::offer.status_locked'));
                     }
                 }]),

@@ -12,7 +12,7 @@ Tant qu'un logement a une **demande en cours**, son propriétaire ne peut ni cha
 
 Ne bloquent pas : les demandes terminées, refusées, annulées ou expirées.
 
-- **Changer le statut** : refusé à l'enregistrement, sur le champ « Statut » : « Ce logement a une demande en attente ou acceptée : son statut ne peut pas changer avant qu'elle soit réglée ou terminée. » Le reste du formulaire s'enregistre si le statut ne change pas.
+- **Changer le statut** vers brouillon ou archivé : refusé à l'enregistrement, sur le champ « Statut » : « Ce logement a une demande en attente ou acceptée : son statut ne peut pas changer avant qu'elle soit réglée ou terminée. » Le reste du formulaire s'enregistre si le statut ne change pas. Revenir à « Publiée » reste toujours possible.
 - **Retirer** : 403 « … il ne peut pas être retiré avant qu'elle soit réglée ou terminée. ». Sur la fiche, « Retirer » n'apparaît pas tant que c'est verrouillé.
 
 ## Portée
@@ -22,4 +22,4 @@ Ne bloquent pas : les demandes terminées, refusées, annulées ou expirées.
 
 ## Corollaires
 
-Avant cette règle, un logement a pu être passé en brouillon avec des demandes en cours : en local, l'offre 2 (« Appartement 3 pièces à Bonapriso »). Elle reste ainsi, et pourra revenir à « Publiée » quand ses demandes seront réglées.
+Avant cette règle, un logement a pu être passé en brouillon avec des demandes en cours : en local, l'offre 2 (« Appartement 3 pièces à Bonapriso »). Elle reste ainsi, mais elle peut revenir à « Publiée » à tout moment.
