@@ -149,7 +149,8 @@ return [
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You accepted :guest’s :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
-            'summary' => 'The :request for “:offer” (:period) has been accepted.',
+            'summary' => 'Your :request for “:offer” (:period) has been accepted.',
+            'summary_stay' => 'Your :request for “:offer” (:period, :people) has been accepted.',
             'sms' => ':app: your :request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
@@ -158,7 +159,8 @@ return [
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You declined :guest’s :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
-            'summary' => 'The :request for “:offer” (:period) has been declined.',
+            'summary' => 'Your :request for “:offer” (:period) has been declined.',
+            'summary_stay' => 'Your :request for “:offer” (:period, :people) has been declined.',
             'sms' => ':app: your :request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [

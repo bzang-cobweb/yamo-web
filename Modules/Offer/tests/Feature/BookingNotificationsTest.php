@@ -95,8 +95,8 @@ class BookingNotificationsTest extends TestCase
                 $own = BookingNotification::for($booking, BookingStepEnum::from($step), own: true);
                 $verb = mb_substr($done, 0, -1);
 
-                $this->assertStringStartsWith("La demande de {$kind} pour « ", $sent->toArray($booking->user)['summary']);
-                $this->assertStringEndsWith(") a été {$done}.", $sent->toArray($booking->user)['summary']);
+                $this->assertStringStartsWith("Votre demande de {$kind} pour « ", $sent->toArray($booking->user)['summary']);
+                $this->assertStringEndsWith(($kind === 'séjour' ? ' personnes)' : ')')." a été {$done}.", $sent->toArray($booking->user)['summary']);
                 $this->assertStringStartsWith("Vous avez {$verb} la demande de {$kind} de {$guest} pour « ", $own->toArray($owner)['body']);
                 $this->assertStringContainsString("votre demande de {$kind} pour « ", $sent->toSms($booking->user));
             }
