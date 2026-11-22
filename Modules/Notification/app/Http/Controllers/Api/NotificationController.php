@@ -42,6 +42,8 @@ class NotificationController
             $filters->search($query->getQuery(), $search);
         }
 
+        // Le nombre de cartes, recherche et filtres compris, pour « 12 notifications » (décision 2026-11-22-notifications-nombre).
+        $total = (clone $query)->count();
         $page = $query->cursorPaginate((int) config('notification.per_page', 20));
         $inPage = [];
         foreach ($page->items() as $notification) {
@@ -54,6 +56,7 @@ class NotificationController
 
         return (new NotificationPageResource($page))
             ->withFilters($filters->fields($user))
+            ->withTotal($total)
             ->withUnreadThreads($threads->unreadThreads($user, $inPage));
     }
 

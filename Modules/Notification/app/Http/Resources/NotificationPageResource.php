@@ -21,6 +21,9 @@ class NotificationPageResource extends JsonResource
     /** @var list<Field> */
     private array $filters = [];
 
+    /** Le nombre de cartes de la liste, recherche et filtres compris. */
+    private int $total = 0;
+
     /** @var list<string> Les fils de la page qui ont une notification non lue. */
     private array $unreadThreads = [];
 
@@ -32,6 +35,14 @@ class NotificationPageResource extends JsonResource
     public function withUnreadThreads(array $threads): self
     {
         $this->unreadThreads = $threads;
+
+        return $this;
+    }
+
+    /** Le nombre de cartes de toute la liste, pas seulement de la page (décision 2026-11-22-notifications-nombre). */
+    public function withTotal(int $total): self
+    {
+        $this->total = $total;
 
         return $this;
     }
@@ -49,7 +60,7 @@ class NotificationPageResource extends JsonResource
     }
 
     /**
-     * @return array{items: list<array{id: string, title: string, card_title: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, filters: list<array<string, mixed>>}
+     * @return array{items: list<array{id: string, title: string, card_title: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, count: string, filters: list<array<string, mixed>>}
      */
     public function toArray(Request $request): array
     {
@@ -81,7 +92,10 @@ class NotificationPageResource extends JsonResource
             $items[] = $resource->toArray($request);
         }
 
-        return ['items' => $items, 'next_cursor' => $this->nextCursor(), /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`), comme une liste (décision 2026-11-20-filtres-notifications). */
+        return ['items' => $items, 'next_cursor' => $this->nextCursor(),
+            /** Le nombre de cartes, rédigé (« 12 notifications », « Aucune notification »), recherche et filtres compris. */
+            'count' => trans_choice('notification::notification.count', $this->total, ['count' => $this->total]),
+            /** Filtres proposés, en champs de formulaire (`?filter[nom]=valeur`), comme une liste (décision 2026-11-20-filtres-notifications). */
             'filters' => array_map(fn (Field $field): array => $field->asFilter()->toArray(), $this->filters)];
     }
 

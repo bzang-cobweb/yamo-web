@@ -72,6 +72,9 @@ class NotificationApiTest extends TestCase
         $this->assertCount(20, $first['items']);
         $this->assertCount(5, $second['items']);
         $this->assertNull($second['next_cursor']);
+        // Le nombre de toute la liste, sur chaque page (décision 2026-11-22-notifications-nombre).
+        $this->assertSame('25 notifications', $first['count']);
+        $this->assertSame('25 notifications', $second['count']);
     }
 
     public function test_unread_count_read_one_and_read_all(): void
