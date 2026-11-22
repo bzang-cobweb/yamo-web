@@ -213,15 +213,9 @@ class ReceivedBookingListing extends Listing
         $item = OfferRequestItem::make($record, $locale)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
             ->quote(is_string($message) && trim($message) !== '' ? Str::of($message)->trim()->before("\n")->squish()->value() : null);
-        // La date de sa dernière notification, sous le message, à droite (décision 2026-11-22-demandes-date-derniere-notification).
+        // La date de sa dernière notification, à droite du nom (décisions 2026-11-22-demandes-date-derniere-notification et 2026-11-22-demandes-date-chiffres).
         $last = $record->getAttribute('last_notification_at');
         $item->date($last === null ? null : Carbon::parse((string) $last)->toIso8601String());
-        // Ses notifications non lues : une pastille rouge sous le titre, pour information (décisions
-        // 2026-11-21-demandes-non-lues et 2026-11-21-demandes-pastille-non-lues-total).
-        $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
-        if ($unread > 0 && is_string($notification) && $notification !== '') {
-            $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification, tone: 'danger');
-        }
 
         // Pas de bouton sur la carte : la toucher ouvre le détail de la demande, où l'on répond (décision
         // 2026-11-22-demandes-carte-seule).

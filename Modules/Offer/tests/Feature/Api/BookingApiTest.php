@@ -484,15 +484,11 @@ class BookingApiTest extends TestCase
         ]], array_slice($items[(string) $offer->getKey()]['counters'], 1));
         $this->assertSame([], $items[(string) $other->getKey()]['counters']);
 
-        // Dans « Demandes » du logement, chaque carte compte les siennes, et le compteur ouvre la page de la
-        // demande (décision 2026-11-21-demandes-non-lues).
+        // Dans « Demandes » du logement, plus de pastille des non lues (décision 2026-11-22-demandes-sans-pastille-non-lues).
         $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
         $firstCard = $cards[(string) $first->getKey()];
-        // En pastille rouge (décision 2026-11-21-demandes-pastille-non-lues-total).
-        $this->assertSame([['label' => '2 notifications non lues', 'list' => 'notifications', 'filter' => [], 'link' => $firstCard['link'], 'tone' => 'danger']], $firstCard['counters']);
+        $this->assertSame([], $firstCard['counters']);
         $this->assertStringStartsWith('/notifications/', $firstCard['link']);
-        $this->assertSame('1 notification non lue', $cards[(string) $second->getKey()]['counters'][0]['label']);
-        $this->assertSame([], $cards[(string) $read->getKey()]['counters']);
 
         // Le dernier message du fil, d'un côté ou de l'autre, sa première ligne (décision 2026-11-22-demandes-dernier-message).
         $this->member()->notifications()->create([
