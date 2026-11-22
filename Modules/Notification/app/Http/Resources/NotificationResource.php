@@ -65,7 +65,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, card_title: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, card_title: string|null, card_subtitle: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -87,6 +87,8 @@ class NotificationResource extends JsonResource
             'title' => (string) ($data['title'] ?? ''),
             /** Le titre de sa carte dans la liste, donné par son module (« Location meublée » pour une demande) ; `null` : `title`. */
             'card_title' => app(NotificationFilters::class)->cardTitle($notification),
+            /** La ligne sous le titre de la carte, donnée par son module (le titre du logement d'une demande) ; ou `null`. */
+            'card_subtitle' => app(NotificationFilters::class)->cardSubtitle($notification),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
             'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),

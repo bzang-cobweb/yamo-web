@@ -13,6 +13,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
+use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Support\BookingCache;
@@ -58,17 +59,40 @@ class OfferNotificationFilter implements NotificationFilter
         app(BookingCache::class)->load($ids);
     }
 
-    /** Le type de location du logement de la demande (« Location meublée ») ; `null` sans lui. */
+    /**
+     * Le type de location, le type de logement et la ville de la demande (« Location meublée · Appartement · Douala »,
+     * décisions 2026-11-22-carte-notification-type-titre-auteur et 2026-11-22-carte-notification-ville-sans-statut) ;
+     * `null` sans eux.
+     */
     public function cardTitle(DatabaseNotification $notification): ?string
+    {
+        $offer = $this->offer($notification);
+        if ($offer === null) {
+            return null;
+        }
+
+        $line = implode(' · ', array_filter([RentalTypeEnum::of($offer)?->label(), BookingResource::propertyType($offer), $offer->address?->city]));
+
+        return $line === '' ? null : $line;
+    }
+
+    /** Le titre saisi du logement de la demande, sous la ligne du type ; `null` sans lui. */
+    public function cardSubtitle(DatabaseNotification $notification): ?string
+    {
+        $title = $this->offer($notification)?->getTranslation('title', app()->getLocale());
+
+        return is_string($title) && trim($title) !== '' ? $title : null;
+    }
+
+    /** Le logement de la demande d'une notification `BookingRequested`, déjà chargé (`prepare()`). */
+    private function offer(DatabaseNotification $notification): ?Offer
     {
         $id = ((array) $notification->data)['booking_id'] ?? null;
         if ($notification->getAttribute('type') !== BookingRequested::class || ! is_int($id)) {
             return null;
         }
 
-        $offer = app(BookingCache::class)->find($id)?->offer;
-
-        return $offer === null ? null : RentalTypeEnum::of($offer)?->label();
+        return app(BookingCache::class)->find($id)?->offer;
     }
 
     public function tag(DatabaseNotification $notification): ?array

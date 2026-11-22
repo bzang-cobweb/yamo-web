@@ -102,6 +102,18 @@ class NotificationFilters
         return null;
     }
 
+    public function cardSubtitle(DatabaseNotification $notification): ?string
+    {
+        foreach ($this->filters as $filter) {
+            $subtitle = app($filter)->cardSubtitle($notification);
+            if ($subtitle !== null) {
+                return $subtitle;
+            }
+        }
+
+        return null;
+    }
+
     public function step(DatabaseNotification $notification): string
     {
         foreach ($this->filters as $filter) {

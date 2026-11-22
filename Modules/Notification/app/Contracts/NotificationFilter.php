@@ -46,6 +46,12 @@ interface NotificationFilter
     public function cardTitle(DatabaseNotification $notification): ?string;
 
     /**
+     * La ligne sous le titre de la carte (le titre du logement d'une demande, décision
+     * 2026-11-22-carte-notification-type-titre-auteur) ; `null` : aucune.
+     */
+    public function cardSubtitle(DatabaseNotification $notification): ?string;
+
+    /**
      * Charge en une fois ce que ces notifications demanderont (une page de la liste) ;
      * `tag()` et les autres n'ont plus à relire, notification par notification (décision
      * 2026-11-20-cache-fil).

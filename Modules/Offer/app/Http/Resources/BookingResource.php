@@ -196,11 +196,12 @@ class BookingResource extends JsonResource
             'rental_type' => $offer === null ? null : RentalTypeEnum::of($offer)?->label(),
             // Le type de logement, rédigé (« Appartement »), ou `null` : à côté du type de location
             // (décision 2026-11-21-detail-reservation-type-logement).
-            'property_type' => $this->propertyType($offer),
+            'property_type' => self::propertyType($offer),
         ];
     }
 
-    private function propertyType(?Offer $offer): ?string
+    /** Le type de logement rédigé (« Appartement »), ou `null` ; aussi sur la carte d'une notification. */
+    public static function propertyType(?Offer $offer): ?string
     {
         $type = $offer?->detail('property_type');
 
