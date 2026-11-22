@@ -135,14 +135,13 @@ return [
         'salutation' => 'Ihr :app-Team',
         'requested' => [
             'subject' => 'Neue Anfrage: :offer',
-            'body' => ':guest fragt :type :period für „:offer“ an.',
+            'body' => ':guest hat eine :request für „:offer“ (:period) gesendet.',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
-            'own' => 'Sie haben :type :period für „:offer“ angefragt.',
-            // Le texte de la demande (décision 2026-11-20-texte-demande-location) : « Demande de location
-            // « Studio » du 5 déc. 2026 au 7 déc. 2026 pour 2 personnes. » ; une visite, sans personnes.
-            'summary' => 'Besichtigungsanfrage für „:offer“ :period.',
-            'summary_stay' => 'Mietanfrage für „:offer“ :period für :people.',
-            'sms' => ':app: :guest fragt :type :period für „:offer“ an. Antworten Sie in der App.',
+            'own' => 'Sie haben eine :request für „:offer“ (:period) gesendet.',
+            // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
+            'summary' => 'Die :request für „:offer“ (:period) wurde gesendet.',
+            'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde gesendet.',
+            'sms' => ':app: :guest hat eine :request für „:offer“ (:period) gesendet. Antworten Sie in der App.',
         ],
         'accepted' => [
             'subject' => 'Anfrage angenommen: :offer',
@@ -173,11 +172,11 @@ return [
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
         'updated' => [
             'subject' => 'Anfrage geändert: :offer',
-            'body' => ':guest hat die Anfrage geändert: :type :period für „:offer“.',
-            'own' => 'Sie haben Ihre Anfrage geändert: :type :period für „:offer“.',
-            'summary' => 'Geänderte Besichtigungsanfrage für „:offer“ :period.',
-            'summary_stay' => 'Geänderte Mietanfrage für „:offer“ :period für :people.',
-            'sms' => ':app: :guest hat die Anfrage für „:offer“ (:period) geändert. Antworten Sie in der App.',
+            'body' => ':guest hat die :request für „:offer“ (:period) geändert.',
+            'own' => 'Sie haben Ihre :request für „:offer“ (:period) geändert.',
+            'summary' => 'Die :request für „:offer“ (:period) wurde geändert.',
+            'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde geändert.',
+            'sms' => ':app: :guest hat die :request für „:offer“ (:period) geändert. Antworten Sie in der App.',
         ],
         'message' => 'Nachricht: :message',
         'open_app' => 'Ihre Anfragen finden Sie in der App unter „:section“.',

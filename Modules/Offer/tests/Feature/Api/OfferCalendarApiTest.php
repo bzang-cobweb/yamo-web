@@ -191,7 +191,7 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame((string) $pending->user_id, $card['actor']['id']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
         // « Demande de location « … » du … au … pour … » (décision 2026-11-20-texte-demande-location).
-        $this->assertStringStartsWith('Demande de location « ', $card['summary']);
+        $this->assertStringStartsWith('La demande de séjour pour « ', $card['summary']);
         $this->assertStringContainsString(' pour ', $card['summary']);
         $this->assertSame($pending->formattedTotal('fr'), $card['total']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
