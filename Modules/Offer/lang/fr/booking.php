@@ -164,11 +164,11 @@ return [
         ],
         'cancelled' => [
             'subject' => 'Demande annulée : :offer',
-            'body' => ':guest a annulé sa demande pour « :offer » (:period).',
-            'own' => 'Vous avez annulé votre demande pour « :offer » (:period).',
+            'body' => ':guest a annulé sa :request pour « :offer » (:period).',
+            'own' => 'Vous avez annulé votre :request pour « :offer » (:period).',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'a annulé sa demande pour « :offer » (:period).',
-            'sms' => ':app : :guest a annulé sa demande pour « :offer » (:period).',
+            'summary' => 'La :request pour « :offer » (:period) a été annulée.',
+            'sms' => ':app : :guest a annulé sa :request pour « :offer » (:period).',
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
         'updated' => [
@@ -182,6 +182,8 @@ return [
         'message' => 'Message : :message',
         'open_app' => 'Retrouvez vos demandes dans l\'app, rubrique « :section ».',
         'type_lower' => ['stay' => 'un séjour', 'visit' => 'une visite'],
+        // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
+        'request_lower' => ['stay' => 'demande de séjour', 'visit' => 'demande de visite'],
     ],
     'resource' => [
         'singular' => 'Réservation',

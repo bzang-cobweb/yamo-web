@@ -164,11 +164,11 @@ return [
         ],
         'cancelled' => [
             'subject' => 'Anfrage storniert: :offer',
-            'body' => ':guest hat die Anfrage für „:offer“ (:period) storniert.',
-            'own' => 'Sie haben Ihre Anfrage für „:offer“ (:period) storniert.',
+            'body' => ':guest hat die :request für „:offer“ (:period) storniert.',
+            'own' => 'Sie haben Ihre :request für „:offer“ (:period) storniert.',
             // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'hat die Anfrage für „:offer“ (:period) storniert.',
-            'sms' => ':app: :guest hat die Anfrage für „:offer“ (:period) storniert.',
+            'summary' => 'Die :request für „:offer“ (:period) wurde storniert.',
+            'sms' => ':app: :guest hat die :request für „:offer“ (:period) storniert.',
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
         'updated' => [
@@ -182,6 +182,8 @@ return [
         'message' => 'Nachricht: :message',
         'open_app' => 'Ihre Anfragen finden Sie in der App unter „:section“.',
         'type_lower' => ['stay' => 'einen Aufenthalt', 'visit' => 'eine Besichtigung'],
+        // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
+        'request_lower' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     ],
     'resource' => [
         'singular' => 'Buchung',

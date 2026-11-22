@@ -58,6 +58,27 @@ class BookingNotificationsTest extends TestCase
             ->create(['check_in' => '2027-03-03', 'check_out' => '2027-03-06', 'message' => 'Bonjour !']);
     }
 
+    public function test_the_cancellation_names_a_visit_or_a_stay_request(): void
+    {
+        // Décision 2026-11-22-annulation-visite-sejour.
+        $stay = $this->booking();
+        $visit = $this->booking();
+        $visit->forceFill(['type' => 'visit', 'check_out' => null])->save();
+        app()->setLocale('fr');
+
+        foreach (['séjour' => $stay, 'visite' => $visit] as $kind => $booking) {
+            $owner = $booking->offer->user;
+            $guest = (string) $booking->user->full_name;
+            $sent = BookingNotification::for($booking, BookingStepEnum::CANCELLED);
+            $own = BookingNotification::for($booking, BookingStepEnum::CANCELLED, own: true);
+
+            $this->assertStringStartsWith("La demande de {$kind} pour « ", $sent->toArray($owner)['summary']);
+            $this->assertStringEndsWith(') a été annulée.', $sent->toArray($owner)['summary']);
+            $this->assertStringStartsWith("Vous avez annulé votre demande de {$kind} pour « ", $own->toArray($booking->user)['body']);
+            $this->assertStringContainsString("{$guest} a annulé sa demande de {$kind} pour « ", $sent->toSms($owner));
+        }
+    }
+
     public function test_each_step_is_an_event(): void
     {
         Event::fake([BookingRequested::class, BookingAnswered::class, BookingCancelled::class]);
