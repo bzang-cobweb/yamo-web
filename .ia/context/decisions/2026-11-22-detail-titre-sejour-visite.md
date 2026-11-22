@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-detail-titre-compose.md (reste le repli)
+
 # Page d'une demande : « Demande de séjour » ou « Demande de visite »
 
 - **Date** : 2026-11-22

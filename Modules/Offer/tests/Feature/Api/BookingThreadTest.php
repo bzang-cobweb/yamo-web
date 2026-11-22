@@ -242,8 +242,9 @@ class BookingThreadTest extends TestCase
         foreach ([$this->owner, $this->guest] as $reader) {
             $page = $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data');
 
-            // Selon la demande : « Demande de séjour » ou « Demande de visite » (décision 2026-11-22-detail-titre-sejour-visite).
-            $this->assertSame($booking->type->value === 'stay' ? 'Demande de séjour' : 'Demande de visite', $page['title']);
+            // Le titre composé sans ville (décision 2026-11-22-detail-titre-compose).
+            $this->assertSame(implode(' · ', array_filter([$page['booking']['offer']['rental_type'], $page['booking']['offer']['property_type']])), $page['title']);
+            $this->assertStringNotContainsString(' · Douala', $page['title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Demande de location « '.$this->offer->getTranslation('title', 'fr').' » '.$booking->period('fr').' pour 1 personne.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
