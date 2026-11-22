@@ -53,7 +53,7 @@ return [
         'check_in' => 'Arrival date',
         'check_out' => 'Departure date',
         'visit_date' => 'Preferred date',
-        'visit_second_date' => 'Other visit (optional)',
+        'visit_second_date' => 'Other date (optional)',
         'guests' => 'Guests',
         'message' => 'Message to the owner',
         'message_placeholder' => 'Introduce yourself, tell them what you need…',

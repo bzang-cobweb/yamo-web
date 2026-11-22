@@ -114,7 +114,7 @@ class BookingApiTest extends TestCase
         $visit = $this->asUser($guest)->getJson('/api/v1/forms/offer.booking?record='.$this->home(false)->getKey())->assertOk();
         // Une visite : sa date, et une seconde date facultative.
         $this->assertSame(['check_in', 'check_out', 'message'], array_column($visit->json('data.fields'), 'name'));
-        $visit->assertJsonPath('data.fields.1.label', 'Autre visite (facultatif)')->assertJsonPath('data.fields.1.required', false);
+        $visit->assertJsonPath('data.fields.1.label', 'Autre date (facultatif)')->assertJsonPath('data.fields.1.required', false);
         $visit->assertJsonPath('data.title', 'Demander une visite')->assertJsonPath('data.fields.0.label', 'Date souhaitée');
     }
 
