@@ -30,6 +30,7 @@ return [
         'search' => 'Suchen…',
         'noResults' => 'Keine Benachrichtigung entspricht dieser Suche.',
         'unread' => 'Ungelesen',
+        'unreadCount' => 'Ungelesene Benachrichtigungen: :count',
         'justNow' => 'gerade eben',
         'minutesAgo' => 'vor :count Min.',
         'hoursAgo' => 'vor :count Std.',

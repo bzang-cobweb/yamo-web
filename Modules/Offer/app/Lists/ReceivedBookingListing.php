@@ -217,6 +217,10 @@ class ReceivedBookingListing extends Listing
         $last = $record->getAttribute('last_notification_at');
         $item->date($last === null ? null : Carbon::parse((string) $last)->toIso8601String());
 
+        // Ses notifications non lues : le nombre, en pastille à droite du message (décision
+        // 2026-11-22-demandes-pastille-nombre-message).
+        $item->unreadCount((int) ($record->getAttribute('unread_notifications_count') ?? 0));
+
         // Pas de bouton sur la carte : la toucher ouvre le détail de la demande, où l'on répond (décision
         // 2026-11-22-demandes-carte-seule).
         return $item;

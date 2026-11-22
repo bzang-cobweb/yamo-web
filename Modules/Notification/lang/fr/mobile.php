@@ -30,6 +30,7 @@ return [
         'search' => 'Rechercher…',
         'noResults' => 'Aucune notification ne correspond à cette recherche.',
         'unread' => 'Non lue',
+        'unreadCount' => 'Notifications non lues : :count',
         'justNow' => "à l'instant",
         'minutesAgo' => 'il y a :count min',
         'hoursAgo' => 'il y a :count h',

@@ -488,6 +488,10 @@ class BookingApiTest extends TestCase
         $cards = collect($this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->keyBy('id');
         $firstCard = $cards[(string) $first->getKey()];
         $this->assertSame([], $firstCard['counters']);
+        // À la place, le nombre en pastille à droite du message (décision 2026-11-22-demandes-pastille-nombre-message).
+        $this->assertSame(2, $firstCard['unread_count']);
+        $this->assertSame(1, $cards[(string) $second->getKey()]['unread_count']);
+        $this->assertArrayNotHasKey('unread_count', $cards[(string) $read->getKey()]);
         $this->assertStringStartsWith('/notifications/', $firstCard['link']);
 
         // Le dernier message du fil, d'un côté ou de l'autre, sa première ligne (décision 2026-11-22-demandes-dernier-message).

@@ -35,6 +35,9 @@ final class ListItem
     /** Une date (ISO 8601) sous le message, à droite (« il y a 2 h ») ; `null` : aucune. */
     private ?string $date = null;
 
+    /** Le nombre de notifications non lues, en pastille à droite du message ; 0 : aucune. */
+    private int $unreadCount = 0;
+
     /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
     private ?bool $favoriteActive = null;
 
@@ -172,6 +175,17 @@ final class ListItem
     }
 
     /**
+     * Le nombre de notifications non lues : l'app le met en pastille à droite du message cité (décision
+     * 2026-11-22-demandes-pastille-nombre-message).
+     */
+    public function unreadCount(int $count): self
+    {
+        $this->unreadCount = max(0, $count);
+
+        return $this;
+    }
+
+    /**
      * Toucher le titre seul ouvre cet écran de l'app (« /members/3 »), le reste de la carte gardant son lien ;
      * le titre s'affiche alors en lien (décision 2026-11-21-demandes-lien-membre).
      */
@@ -275,6 +289,8 @@ final class ListItem
             ...($this->detail === null ? [] : ['detail' => $this->detail]),
             /** Date ISO 8601 sous le message, à droite ; absente : aucune. */
             ...($this->date === null ? [] : ['date' => $this->date]),
+            /** Notifications non lues, en pastille à droite du message ; absent : aucune. */
+            ...($this->unreadCount > 0 ? ['unread_count' => $this->unreadCount] : []),
             'image' => $this->image,
             /** Note moyenne (1 à 5, au dixième) et nombre de notes ; `null` sans note. */
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
