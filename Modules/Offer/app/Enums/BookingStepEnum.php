@@ -2,9 +2,16 @@
 
 namespace Modules\Offer\Enums;
 
+use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestCancelled;
+use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Notifications\BookingRequestUpdated;
+
 /**
- * L'étape d'une demande que notifie `BookingRequested` (décision
- * 2026-11-20-notification-demande-unique) : reçue par le propriétaire, acceptée ou
+ * L'étape d'une demande, une classe de notification par étape (décision
+ * 2026-11-22-notification-par-action) : reçue par le propriétaire, acceptée ou
  * refusée pour le membre, annulée par le membre pour le propriétaire ; modifiée par le membre
  * tant qu'elle est en attente (décision 2026-11-21-demande-modifiee-notification).
  * Enregistrée dans `data.step` de la notification.
@@ -21,6 +28,44 @@ enum BookingStepEnum: string
     public static function answer(BookingStatusEnum $status): self
     {
         return $status === BookingStatusEnum::ACCEPTED ? self::ACCEPTED : self::REFUSED;
+    }
+
+    /**
+     * La classe de notification de l'étape (décision 2026-11-22-notification-par-action).
+     *
+     * @return class-string<BookingNotification>
+     */
+    public function notification(): string
+    {
+        return match ($this) {
+            self::RECEIVED => BookingRequestReceived::class,
+            self::UPDATED => BookingRequestUpdated::class,
+            self::ACCEPTED => BookingRequestAccepted::class,
+            self::REFUSED => BookingRequestRefused::class,
+            self::CANCELLED => BookingRequestCancelled::class,
+        };
+    }
+
+    /**
+     * Les classes de notification d'une demande, toutes étapes.
+     *
+     * @return list<class-string<BookingNotification>>
+     */
+    public static function notifications(): array
+    {
+        return array_map(fn (self $step): string => $step->notification(), self::cases());
+    }
+
+    /** L'étape d'une classe de notification ; `null` pour une autre. */
+    public static function fromNotification(mixed $type): ?self
+    {
+        foreach (self::cases() as $step) {
+            if ($step->notification() === $type) {
+                return $step;
+            }
+        }
+
+        return null;
     }
 
     /** La clé des textes `offer::booking.notify.<clé>`. */

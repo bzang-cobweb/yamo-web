@@ -4,7 +4,7 @@ namespace Modules\Offer\Listeners;
 
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingAnswered;
-use Modules\Offer\Notifications\BookingRequested;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Une réponse : le membre est prévenu, acceptée ou refusée (décision
@@ -16,6 +16,6 @@ class NotifyGuestOfBookingAnswer
     {
         $booking = $event->booking;
 
-        $booking->user->notify(new BookingRequested($booking, BookingStepEnum::answer($booking->status)));
+        $booking->user->notify(BookingNotification::for($booking, BookingStepEnum::answer($booking->status)));
     }
 }

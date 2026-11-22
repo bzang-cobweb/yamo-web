@@ -5,7 +5,7 @@ namespace Modules\Offer\Listeners;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested as BookingRequestedEvent;
-use Modules\Offer\Notifications\BookingRequested;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Sa demande, puis son annulation : le membre les retrouve dans son propre fil, déjà lues,
@@ -19,6 +19,6 @@ class NotifyGuestOfOwnRequest
         $booking = $event->booking;
         $step = $event instanceof BookingCancelled ? BookingStepEnum::CANCELLED : BookingStepEnum::RECEIVED;
 
-        $booking->user?->notify(new BookingRequested($booking, $step, own: true));
+        $booking->user?->notify(BookingNotification::for($booking, $step, own: true));
     }
 }

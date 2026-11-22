@@ -115,6 +115,16 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     'notify' => [
+        // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
+        // 2026-11-22-notification-par-action et 2026-11-22-types-de-logement) ; `received_own` : sa propre demande.
+        'types' => [
+            'received' => 'Neue Wohnungsanfrage',
+            'received_own' => 'Wohnungsanfrage gesendet',
+            'updated' => 'Wohnungsanfrage geändert',
+            'accepted' => 'Wohnungsanfrage angenommen',
+            'refused' => 'Wohnungsanfrage abgelehnt',
+            'cancelled' => 'Wohnungsanfrage storniert',
+        ],
         'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count Tag|[2,*] :count Tage',

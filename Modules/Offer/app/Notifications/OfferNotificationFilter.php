@@ -13,7 +13,6 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
-use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Support\BookingCache;
@@ -21,7 +20,7 @@ use Modules\Offer\Support\BookingCache;
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
- * - un type, « Demande de logement » : la notification `BookingRequested`, toutes étapes ;
+ * - un type, « Demande de logement » : les notifications d'une demande, une par action (`BookingNotification`) ;
  * - pour ce type : le statut réel de la demande, le logement, le type de location ;
  * - la recherche, dans le titre du logement.
  *
@@ -29,15 +28,40 @@ use Modules\Offer\Support\BookingCache;
  */
 class OfferNotificationFilter implements NotificationFilter
 {
-    /** La clé du groupe « Demande de logement » dans le filtre « Type ». */
+    /** La clé du groupe « Demande de logement » dans le filtre « Type » : toutes les actions. */
     public const BOOKING = 'booking';
 
+    /**
+     * Le filtre « Type » (décision 2026-11-22-filtre-type-par-action) : le groupe « Demande de logement », toutes
+     * actions, puis une option par action, du nom de sa carte (« Nouvelle demande », « Demande modifiée », « Demande
+     * acceptée », « Demande refusée », « Demande annulée »), chacune sa classe de notification.
+     */
     public function types(): array
     {
         // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
         $label = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
+        $types = [self::BOOKING => ['label' => $label, 'types' => BookingStepEnum::notifications()]];
+        foreach ([BookingStepEnum::RECEIVED, BookingStepEnum::UPDATED, BookingStepEnum::ACCEPTED, BookingStepEnum::REFUSED, BookingStepEnum::CANCELLED] as $step) {
+            $types[self::action($step)] = ['label' => BookingNotification::title($step, false), 'types' => [$step->notification()]];
+        }
 
-        return [self::BOOKING => ['label' => $label, 'type' => BookingRequested::class]];
+        return $types;
+    }
+
+    /** La clé d'une action dans le filtre « Type » (`booking_accepted`). */
+    public static function action(BookingStepEnum $step): string
+    {
+        return self::BOOKING.'_'.$step->value;
+    }
+
+    /**
+     * Les valeurs du filtre « Type » qui montrent les filtres d'une demande : le groupe et chaque action.
+     *
+     * @return list<string>
+     */
+    private static function bookingTypes(): array
+    {
+        return [self::BOOKING, ...array_map(fn (BookingStepEnum $step): string => self::action($step), BookingStepEnum::cases())];
     }
 
     /**
@@ -51,7 +75,7 @@ class OfferNotificationFilter implements NotificationFilter
         $ids = [];
         foreach ($notifications as $notification) {
             $id = ((array) $notification->data)['booking_id'] ?? null;
-            if ($notification->getAttribute('type') === BookingRequested::class && is_int($id)) {
+            if (BookingStepEnum::fromNotification($notification->getAttribute('type')) !== null && is_int($id)) {
                 $ids[] = $id;
             }
         }
@@ -60,50 +84,24 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /**
-     * Le type de location, le type de logement et la ville de la demande (« Location meublée · Appartement · Douala »,
-     * décisions 2026-11-22-carte-notification-type-titre-auteur et 2026-11-22-carte-notification-ville-sans-statut) ;
-     * `null` sans eux.
+     * Le type de l'action, sur la carte (« Nouvelle demande », « Demande acceptée »), dans la langue du lecteur
+     * (décision 2026-11-22-notification-par-action) ; `null` pour une autre notification.
      */
     public function cardTitle(DatabaseNotification $notification): ?string
     {
-        $offer = $this->offer($notification);
-        if ($offer === null) {
-            return null;
-        }
+        $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
 
-        $line = implode(' · ', array_filter([RentalTypeEnum::of($offer)?->label(), BookingResource::propertyType($offer), $offer->address?->city]));
-
-        return $line === '' ? null : $line;
-    }
-
-    /** Le titre saisi du logement de la demande, sous la ligne du type ; `null` sans lui. */
-    public function cardSubtitle(DatabaseNotification $notification): ?string
-    {
-        $title = $this->offer($notification)?->getTranslation('title', app()->getLocale());
-
-        return is_string($title) && trim($title) !== '' ? $title : null;
-    }
-
-    /** Le logement de la demande d'une notification `BookingRequested`, déjà chargé (`prepare()`). */
-    private function offer(DatabaseNotification $notification): ?Offer
-    {
-        $id = ((array) $notification->data)['booking_id'] ?? null;
-        if ($notification->getAttribute('type') !== BookingRequested::class || ! is_int($id)) {
-            return null;
-        }
-
-        return app(BookingCache::class)->find($id)?->offer;
+        return $step === null ? null : BookingNotification::title($step, (bool) (((array) $notification->data)['own'] ?? false));
     }
 
     public function tag(DatabaseNotification $notification): ?array
     {
-        if ($notification->getAttribute('type') !== BookingRequested::class) {
+        $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
+        if ($step === null) {
             return null;
         }
 
-        $data = (array) $notification->data;
-        $id = $data['booking_id'] ?? null;
-        $step = BookingStepEnum::tryFrom(is_string($data['step'] ?? null) ? $data['step'] : '') ?? BookingStepEnum::RECEIVED;
+        $id = ((array) $notification->data)['booking_id'] ?? null;
         $status = (is_int($id) ? app(BookingCache::class)->find($id)?->status : null) ?? $step->status();
 
         return self::statusTag($status);
@@ -112,13 +110,9 @@ class OfferNotificationFilter implements NotificationFilter
     /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
     public function step(DatabaseNotification $notification): ?string
     {
-        if ($notification->getAttribute('type') !== BookingRequested::class) {
-            return null;
-        }
+        $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
 
-        $step = ((array) $notification->data)['step'] ?? null;
-
-        return __('offer::booking.history.'.(BookingStepEnum::tryFrom(is_string($step) ? $step : '') ?? BookingStepEnum::RECEIVED)->value);
+        return $step === null ? null : __('offer::booking.history.'.$step->value);
     }
 
     /** La pastille d'un statut de demande : son libellé et sa couleur. Aussi dans le calendrier. */
@@ -134,16 +128,16 @@ class OfferNotificationFilter implements NotificationFilter
             Field::select('status')
                 ->label(__('offer::booking.profile.filter_status'))
                 ->options(BookingStatusEnum::options())
-                ->visibleWhen('type', self::BOOKING),
+                ->visibleWhen('type', self::bookingTypes()),
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->offers($user))
                 ->searchable()
-                ->visibleWhen('type', self::BOOKING),
+                ->visibleWhen('type', self::bookingTypes()),
             Field::select('rental_type')
                 ->label(__('offer::booking.notify.filter_rental_type'))
                 ->options(RentalTypeEnum::options())
-                ->visibleWhen('type', self::BOOKING),
+                ->visibleWhen('type', self::bookingTypes()),
         ];
     }
 

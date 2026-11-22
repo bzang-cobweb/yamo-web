@@ -75,7 +75,6 @@ class BookingThreadTest extends TestCase
 
     public function test_one_card_per_request_and_the_whole_follow_up_on_both_sides(): void
     {
-        $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['zip' => '', 'city' => 'Douala'])->getKey()]);
         $this->travelTo(now()->setTime(9, 0));
         $booking = $this->request(3);
         $this->travel(5)->minutes();
@@ -87,10 +86,8 @@ class BookingThreadTest extends TestCase
         $owner = $this->cards($this->owner);
         $this->assertCount(1, $owner);
         $this->assertSame(['label' => 'Annulée', 'tone' => 'neutral'], $owner[0]['tag']);
-        // Le titre de la carte : le type de location, le type de logement et la ville ; dessous, le titre du logement
-        // (décision 2026-11-22-carte-notification-type-titre-auteur).
-        $this->assertSame('Location meublée · Studio · Douala', $owner[0]['card_title']);
-        $this->assertSame($this->offer->getTranslation('title', 'fr'), $owner[0]['card_subtitle']);
+        // Le titre de la carte : le type de l'action, sa dernière étape (décision 2026-11-22-notification-par-action).
+        $this->assertSame('Demande de logement annulée', $owner[0]['card_title']);
         // Le membre : une carte, l'acceptation.
         $this->assertCount(1, $this->cards($this->guest));
 
@@ -439,12 +436,12 @@ class BookingThreadTest extends TestCase
         $this->assertSame(2, $this->api($this->owner, 'GET', '/unread-count')->assertOk()->json('data.unread'));
         $cards = collect($this->cards($this->owner))->keyBy('title');
         $this->assertCount(2, $cards);
-        $this->assertFalse($cards['Demande de logement']['read']);
+        $this->assertFalse($cards['Demande de logement annulée']['read']);
 
-        $this->api($this->owner, 'POST', '/'.$cards['Demande de logement']['id'].'/read')->assertNoContent();
+        $this->api($this->owner, 'POST', '/'.$cards['Demande de logement annulée']['id'].'/read')->assertNoContent();
 
         $this->assertSame(1, $this->api($this->owner, 'GET', '/unread-count')->json('data.unread'));
-        $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande de logement']['read']);
+        $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande de logement annulée']['read']);
     }
 
     public function test_the_requester_button_edits_the_request_while_it_is_pending(): void

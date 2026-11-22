@@ -14,7 +14,8 @@ use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequested;
+use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestRefused;
 use Tests\TestCase;
 
 /**
@@ -134,9 +135,9 @@ class BookingAvailabilityTest extends TestCase
         $this->assertSame(BookingStatusEnum::REFUSED, $overlapping->fresh()->status);
         $this->assertSame('These dates are no longer available.', $overlapping->fresh()->refusal_message);
         $this->assertSame(BookingStatusEnum::PENDING, $after->fresh()->status);
-        Notification::assertSentTo($chosen->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::ACCEPTED);
-        Notification::assertSentTo($overlapping->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::REFUSED);
-        Notification::assertNotSentTo($after->user, BookingRequested::class, fn (BookingRequested $notification): bool => $notification->step === BookingStepEnum::REFUSED);
+        Notification::assertSentTo($chosen->user, BookingRequestAccepted::class, fn (BookingRequestAccepted $notification): bool => $notification->step === BookingStepEnum::ACCEPTED);
+        Notification::assertSentTo($overlapping->user, BookingRequestRefused::class, fn (BookingRequestRefused $notification): bool => $notification->step === BookingStepEnum::REFUSED);
+        Notification::assertNotSentTo($after->user, BookingRequestRefused::class, fn (BookingRequestRefused $notification): bool => $notification->step === BookingStepEnum::REFUSED);
     }
 
     public function test_a_request_overlapping_an_accepted_stay_or_a_blocked_day_cannot_be_accepted(): void

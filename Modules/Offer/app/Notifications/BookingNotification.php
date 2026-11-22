@@ -10,7 +10,6 @@ use Modules\Auth\Models\User;
 use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Notification\Contracts\SentAsRead;
-use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Lists\BookingListing;
@@ -20,9 +19,10 @@ use Modules\Offer\Support\BookingText;
 
 /**
  * Une étape d'une demande, notifiée à l'autre partie (décision
- * 2026-11-19-notifications-reservations). Une seule classe pour toutes les étapes,
- * nommée par `$step` et enregistrée dans `data.step` : le filtre « Type » porte sur la
- * seule colonne `type` (décision 2026-11-20-notification-demande-unique). La notification est mise en file, envoyée après
+ * 2026-11-19-notifications-reservations). Une classe par action (décision
+ * 2026-11-22-notification-par-action) : `BookingRequestReceived`, `…Updated`, `…Accepted`,
+ * `…Refused`, `…Cancelled` ; l'étape est aussi enregistrée dans `data.step`. Le filtre
+ * « Type » les regroupe (`NotificationFilter::types()`). La notification est mise en file, envoyée après
  * l'enregistrement, toujours dans l'onglet « Notifications » de l'app (canal
  * `database`, décision 2026-11-19-contrat-centre-notifications), et sur les
  * canaux que le destinataire peut recevoir (`User::notificationChannels()`),
@@ -34,16 +34,41 @@ use Modules\Offer\Support\BookingText;
  * son texte « Vous avez accepté la demande de … ». Le suivi ne la montre pas : la
  * notification du membre porte déjà l'étape.
  */
-class BookingRequested extends Notification implements HasNotificationThread, HasNotificationUser, SentAsRead, ShouldQueue
+abstract class BookingNotification extends Notification implements HasNotificationThread, HasNotificationUser, SentAsRead, ShouldQueue
 {
     use Queueable;
 
     /** Le statut à l'envoi : la demande, rechargée quand la file traite la notification, a pu changer depuis. */
     public readonly BookingStatusEnum $status;
 
-    /** `$edited` : une demande modifiée dont le message diffère du précédent (décision 2026-11-21-etape-modifiee-date). */
-    public function __construct(public readonly Booking $booking, public readonly BookingStepEnum $step, public readonly bool $own = false, public readonly bool $edited = false)
+    /** L'étape, donnée par la classe. */
+    public readonly BookingStepEnum $step;
+
+    /** L'étape notifiée par la classe. */
+    abstract public static function step(): BookingStepEnum;
+
+    /** La notification de l'étape `$step`, de sa classe. */
+    public static function for(Booking $booking, BookingStepEnum $step, bool $own = false, bool $edited = false): self
     {
+        $class = $step->notification();
+
+        return new $class($booking, $own, $edited);
+    }
+
+    /**
+     * Le type d'une notification, sur sa carte (« Nouvelle demande de logement », « Demande de logement acceptée »),
+     * dans la langue courante ; la copie de sa propre demande : « Demande de logement envoyée » (décision
+     * 2026-11-22-types-de-logement).
+     */
+    public static function title(BookingStepEnum $step, bool $own): string
+    {
+        return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''));
+    }
+
+    /** `$edited` : une demande modifiée dont le message diffère du précédent (décision 2026-11-21-etape-modifiee-date). */
+    final public function __construct(public readonly Booking $booking, public readonly bool $own = false, public readonly bool $edited = false)
+    {
+        $this->step = static::step();
         $this->status = $booking->status;
 
         // La connexion de file n'attend pas la fin des transactions : la notification, si.
@@ -127,7 +152,8 @@ class BookingRequested extends Notification implements HasNotificationThread, Ha
         $list = $this->section() === 'received' ? ReceivedBookingListing::name() : BookingListing::name();
 
         return [
-            'title' => app(DomainRegistry::class)->require()->requestLabel(),
+            // Le type de l'action (« Nouvelle demande », « Demande acceptée »), décision 2026-11-22-notification-par-action.
+            'title' => self::title($this->step, $this->own),
             // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`, `updated`.
             'step' => $this->step->value,
             // La demande et son statut à l'envoi.

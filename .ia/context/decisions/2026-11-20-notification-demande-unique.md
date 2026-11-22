@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-notification-par-action.md
+
 # Une seule notification de demande, `BookingRequested`, avec son étape
 
 - **Type** : décision de conception

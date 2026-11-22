@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
-use Modules\Offer\Notifications\BookingRequested;
 use Tests\TestCase;
 
 /**
@@ -32,7 +31,7 @@ class BookingRequestedMigrationTest extends TestCase
         $migration->up();
 
         $row = fn (string $id): object => DB::table('notifications')->where('id', $id)->first();
-        $this->assertSame(BookingRequested::class, $row($received)->type);
+        $this->assertSame('Modules\\Offer\\Notifications\\BookingRequested', $row($received)->type);
         $this->assertSame(['step' => 'received', 'title' => 'Reçue', 'booking_id' => 4], json_decode($row($received)->data, true));
         $this->assertSame('refused', json_decode($row($refused)->data, true)['step']);
         $this->assertSame('Autre', $row($other)->type);

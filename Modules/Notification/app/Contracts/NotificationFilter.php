@@ -17,10 +17,10 @@ interface NotificationFilter
 {
     /**
      * Les types de notification du module, pour le filtre « Type » : clé => son libellé
-     * et sa classe de notification, la valeur de la colonne `type` (« booking » =>
-     * « Demande de logement », `BookingRequested`).
+     * et ses classes de notification, les valeurs de la colonne `type` (« booking » =>
+     * « Demande de logement », une classe par action, décision 2026-11-22-notification-par-action).
      *
-     * @return array<string, array{label: string, type: class-string}>
+     * @return array<string, array{label: string, types: list<class-string>}>
      */
     public function types(): array;
 
@@ -40,16 +40,10 @@ interface NotificationFilter
     public function step(DatabaseNotification $notification): ?string;
 
     /**
-     * Le titre de la carte d'une notification du module dans la liste (« Location
-     * meublée » pour une demande, décision 2026-11-20-titre-carte) ; `null` : son titre.
+     * Le titre de la carte d'une notification du module dans la liste, dans la langue du lecteur
+     * (« Demande acceptée » pour une demande, décision 2026-11-22-notification-par-action) ; `null` : son titre.
      */
     public function cardTitle(DatabaseNotification $notification): ?string;
-
-    /**
-     * La ligne sous le titre de la carte (le titre du logement d'une demande, décision
-     * 2026-11-22-carte-notification-type-titre-auteur) ; `null` : aucune.
-     */
-    public function cardSubtitle(DatabaseNotification $notification): ?string;
 
     /**
      * Charge en une fois ce que ces notifications demanderont (une page de la liste) ;

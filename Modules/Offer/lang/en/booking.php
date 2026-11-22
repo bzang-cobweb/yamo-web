@@ -115,6 +115,16 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Stay request', 'visit' => 'Visit request'],
     'notify' => [
+        // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
+        // 2026-11-22-notification-par-action et 2026-11-22-types-de-logement) ; `received_own` : sa propre demande.
+        'types' => [
+            'received' => 'New housing request',
+            'received_own' => 'Housing request sent',
+            'updated' => 'Housing request updated',
+            'accepted' => 'Housing request accepted',
+            'refused' => 'Housing request declined',
+            'cancelled' => 'Housing request cancelled',
+        ],
         'filter_rental_type' => 'Rental type',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
         'days' => '{1} :count day|[2,*] :count days',

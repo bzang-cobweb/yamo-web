@@ -4,7 +4,7 @@ namespace Modules\Offer\Listeners;
 
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingCancelled;
-use Modules\Offer\Notifications\BookingRequested;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Une annulation : le propriétaire de l'offre est prévenu (décision
@@ -14,6 +14,6 @@ class NotifyOwnerOfBookingCancellation
 {
     public function handle(BookingCancelled $event): void
     {
-        $event->booking->offer->user?->notify(new BookingRequested($event->booking, BookingStepEnum::CANCELLED));
+        $event->booking->offer->user?->notify(BookingNotification::for($event->booking, BookingStepEnum::CANCELLED));
     }
 }

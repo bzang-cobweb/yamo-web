@@ -10,7 +10,8 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequested;
+use Modules\Offer\Notifications\BookingRequestAccepted;
+use Modules\Offer\Notifications\BookingRequestReceived;
 use Tests\TestCase;
 
 /**
@@ -59,18 +60,19 @@ class NotificationFiltersTest extends TestCase
             'id' => (string) Str::uuid(), 'type' => $type,
             'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($booking === null ? [] : ['booking_id' => $booking->getKey()])],
         ]);
-        $create(BookingRequested::class, 'Demande studio', $studio, $pending);
+        $create(BookingRequestReceived::class, 'Demande studio', $studio, $pending);
         // Reçue en attente, acceptée depuis : son statut réel est « Acceptée ».
-        $create(BookingRequested::class, 'Demande appartement', $flat, $accepted);
-        $create(BookingRequested::class, 'Acceptée appartement', $flat, $accepted);
+        $create(BookingRequestReceived::class, 'Demande appartement', $flat, $accepted);
+        $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat, $accepted);
         $create('Autre', 'Sans logement', null, null);
 
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
         $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'unread'], $filters->keys()->all());
-        // Un seul type pour les quatre étapes d'une demande ; un type inconnu des modules n'est pas proposé.
-        $this->assertSame(['booking' => 'Demande de logement'], array_column($filters['type']['options'], 'label', 'value'));
+        // Le groupe des demandes, puis une option par action présente (décision 2026-11-22-filtre-type-par-action) ;
+        // un type inconnu des modules n'est pas proposé.
+        $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande de logement', 'booking_accepted' => 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label', 'value'));
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
@@ -78,7 +80,7 @@ class NotificationFiltersTest extends TestCase
         $this->assertArrayNotHasKey('selected', $filters['type']);
         // Statut, logement et type de location : pour ce type seulement.
         foreach (['status', 'offer', 'rental_type'] as $name) {
-            $this->assertSame(['booking'], $filters[$name]['visible_when']['values']);
+            $this->assertSame(['booking', 'booking_received', 'booking_accepted', 'booking_refused', 'booking_cancelled', 'booking_updated'], $filters[$name]['visible_when']['values']);
         }
         $this->assertSame(['pending', 'accepted', 'refused', 'cancelled'], array_column($filters['status']['options'], 'value'));
         $this->assertSame(['long_term' => 'Location', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
@@ -86,6 +88,10 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
         $this->assertCount(3, $this->titles($user, '?filter[type]=booking'));
+        // Une action : ses seules notifications.
+        $this->assertEqualsCanonicalizing(['Demande studio', 'Demande appartement'], $this->titles($user, '?filter[type]=booking_received'));
+        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]=booking_accepted'));
+        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]=booking_accepted&filter[status]=accepted'));
         // Le statut réel de la demande, pas l'étape notifiée.
         $this->assertSame(['Demande studio'], $this->titles($user, '?filter[type]=booking&filter[status]=pending'));
         $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->titles($user, '?filter[type]=booking&filter[status]=accepted'));

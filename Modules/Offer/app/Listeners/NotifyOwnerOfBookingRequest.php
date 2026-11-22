@@ -5,7 +5,7 @@ namespace Modules\Offer\Listeners;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
-use Modules\Offer\Notifications\BookingRequested as BookingRequestedNotification;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Une demande : le propriétaire de l'offre est prévenu (décision
@@ -17,8 +17,8 @@ class NotifyOwnerOfBookingRequest
     public function handle(BookingRequested|BookingUpdated $event): void
     {
         $notification = $event instanceof BookingUpdated
-            ? new BookingRequestedNotification($event->booking, BookingStepEnum::UPDATED, edited: $event->edited)
-            : new BookingRequestedNotification($event->booking, BookingStepEnum::RECEIVED);
+            ? BookingNotification::for($event->booking, BookingStepEnum::UPDATED, edited: $event->edited)
+            : BookingNotification::for($event->booking, BookingStepEnum::RECEIVED);
 
         $event->booking->offer->user?->notify($notification);
     }

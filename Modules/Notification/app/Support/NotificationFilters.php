@@ -102,18 +102,6 @@ class NotificationFilters
         return null;
     }
 
-    public function cardSubtitle(DatabaseNotification $notification): ?string
-    {
-        foreach ($this->filters as $filter) {
-            $subtitle = app($filter)->cardSubtitle($notification);
-            if ($subtitle !== null) {
-                return $subtitle;
-            }
-        }
-
-        return null;
-    }
-
     public function step(DatabaseNotification $notification): string
     {
         foreach ($this->filters as $filter) {
@@ -146,7 +134,7 @@ class NotificationFilters
         $present = $user->notifications()->getQuery()->distinct()->pluck('type')->all();
         $options = [];
         foreach ($this->types() as $key => $type) {
-            if (in_array($type['type'], $present, true)) {
+            if (array_intersect($type['types'], $present) !== []) {
                 $options[$key] = $type['label'];
             }
         }
@@ -177,7 +165,7 @@ class NotificationFilters
     {
         $type = $filters['type'] ?? null;
         if (is_string($type) && array_key_exists($type, $this->types())) {
-            $query->where('type', $this->types()[$type]['type']);
+            $query->whereIn('type', $this->types()[$type]['types']);
         }
 
         $member = $filters['user'] ?? null;

@@ -18,7 +18,7 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\BookingRequested as BookingRequestedNotification;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * La règle des demandes (décision 2026-11-19-contrat-reservations) : le membre
@@ -145,9 +145,9 @@ class BookingService
 
             $data = $this->withLocale(
                 $notifiable->preferredLocale(),
-                fn (): array => (new BookingRequestedNotification($booking, BookingStepEnum::UPDATED, own: true, edited: $edited))->toArray($notifiable),
+                fn (): array => BookingNotification::for($booking, BookingStepEnum::UPDATED, own: true, edited: $edited)->toArray($notifiable),
             );
-            $notification->forceFill(['data' => $data, 'read_at' => now(), 'created_at' => now()])->save();
+            $notification->forceFill(['type' => BookingStepEnum::UPDATED->notification(), 'data' => $data, 'read_at' => now(), 'created_at' => now()])->save();
         });
 
         return $edited;
