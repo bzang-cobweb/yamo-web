@@ -116,14 +116,14 @@ return [
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     'notify' => [
         // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
-        // 2026-11-22-notification-par-action et 2026-11-22-types-de-logement) ; `received_own` : sa propre demande.
+        // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
         'types' => [
-            'received' => 'Neue Wohnungsanfrage',
-            'received_own' => 'Wohnungsanfrage gesendet',
-            'updated' => 'Wohnungsanfrage geändert',
-            'accepted' => 'Wohnungsanfrage angenommen',
-            'refused' => 'Wohnungsanfrage abgelehnt',
-            'cancelled' => 'Wohnungsanfrage storniert',
+            'received' => 'Neue Anfrage',
+            'received_own' => 'Anfrage gesendet',
+            'updated' => 'Anfrage geändert',
+            'accepted' => 'Anfrage angenommen',
+            'refused' => 'Anfrage abgelehnt',
+            'cancelled' => 'Anfrage storniert',
         ],
         'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

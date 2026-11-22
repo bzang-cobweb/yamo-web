@@ -133,7 +133,7 @@ class BookingNotificationsTest extends TestCase
 
         $this->assertSame('pending', $data['booking_status']);
         $this->assertSame('received', $data['step']);
-        $this->assertSame('Nouvelle demande de logement', $data['title']);
+        $this->assertSame('Nouvelle demande', $data['title']);
     }
 
     public function test_the_pill_is_the_real_booking_status_in_the_reader_language(): void
@@ -195,7 +195,7 @@ class BookingNotificationsTest extends TestCase
 
         $notification = $owner->notifications()->sole();
         // Le type de l'action (décision 2026-11-22-notification-par-action).
-        $this->assertSame('New housing request', $notification->data['title']);
+        $this->assertSame('New request', $notification->data['title']);
         $this->assertStringContainsString('Marie Curie requests a stay', $notification->data['body']);
         $this->assertSame('/offers/'.$booking->offer_id.'/calendar?month='.today()->addDay()->format('Y-m'), $notification->data['link']);
         $this->assertSame([], $notification->data['links']);

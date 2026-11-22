@@ -56,9 +56,8 @@ abstract class BookingNotification extends Notification implements HasNotificati
     }
 
     /**
-     * Le type d'une notification, sur sa carte (« Nouvelle demande de logement », « Demande de logement acceptée »),
-     * dans la langue courante ; la copie de sa propre demande : « Demande de logement envoyée » (décision
-     * 2026-11-22-types-de-logement).
+     * Le type d'une notification, sur sa carte (« Nouvelle demande », « Demande acceptée »), dans la langue
+     * courante ; la copie de sa propre demande : « Demande envoyée » (décision 2026-11-22-types-sans-logement).
      */
     public static function title(BookingStepEnum $step, bool $own): string
     {

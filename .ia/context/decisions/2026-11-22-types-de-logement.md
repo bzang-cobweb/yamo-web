@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-types-sans-logement.md
+
 # Types de notification : « de logement »
 
 - **Date** : 2026-11-22

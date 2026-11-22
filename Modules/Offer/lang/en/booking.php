@@ -116,14 +116,14 @@ return [
     'detail_title' => ['stay' => 'Stay request', 'visit' => 'Visit request'],
     'notify' => [
         // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
-        // 2026-11-22-notification-par-action et 2026-11-22-types-de-logement) ; `received_own` : sa propre demande.
+        // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
         'types' => [
-            'received' => 'New housing request',
-            'received_own' => 'Housing request sent',
-            'updated' => 'Housing request updated',
-            'accepted' => 'Housing request accepted',
-            'refused' => 'Housing request declined',
-            'cancelled' => 'Housing request cancelled',
+            'received' => 'New request',
+            'received_own' => 'Request sent',
+            'updated' => 'Request updated',
+            'accepted' => 'Request accepted',
+            'refused' => 'Request declined',
+            'cancelled' => 'Request cancelled',
         ],
         'filter_rental_type' => 'Rental type',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

@@ -72,7 +72,7 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'unread'], $filters->keys()->all());
         // Le groupe des demandes, puis une option par action présente (décision 2026-11-22-filtre-type-par-action) ;
         // un type inconnu des modules n'est pas proposé.
-        $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande de logement', 'booking_accepted' => 'Demande de logement acceptée'], array_column($filters['type']['options'], 'label', 'value'));
+        $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande', 'booking_accepted' => 'Demande acceptée'], array_column($filters['type']['options'], 'label', 'value'));
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
