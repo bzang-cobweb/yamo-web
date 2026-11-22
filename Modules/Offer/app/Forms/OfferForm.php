@@ -4,6 +4,7 @@ namespace Modules\Offer\Forms;
 
 use App\Support\Currency;
 use App\Support\Locales;
+use Closure;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Enums\SuccessAction;
@@ -137,7 +138,14 @@ class OfferForm extends Form
                 ->label(__('offer::offer.status'))
                 ->options(OfferStatusEnum::options())
                 ->default(($offer?->status ?? OfferStatusEnum::DRAFT)->value)
-                ->required(),
+                ->required()
+                // Pas de changement de statut tant qu'il a une demande en cours (décision
+                // 2026-11-22-logement-verrouille-par-demandes).
+                ->rules([function (string $attribute, mixed $value, Closure $fail) use ($offer): void {
+                    if ($offer !== null && $value !== $offer->status->value && $offer->hasOpenBookings()) {
+                        $fail(__('offer::offer.status_locked'));
+                    }
+                }]),
             ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
             // Les blocs d'informations, ajoutés et retirés par le propriétaire (décision 2026-11-19-contrat-offer-informations).
             Field::repeater('informations')

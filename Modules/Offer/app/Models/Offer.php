@@ -318,6 +318,15 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * A-t-il une demande en cours (en attente, ou acceptée et pas terminée) ? Alors son statut ne change pas et il ne
+     * se retire pas (décision 2026-11-22-logement-verrouille-par-demandes).
+     */
+    public function hasOpenBookings(): bool
+    {
+        return $this->bookings()->open()->exists();
+    }
+
+    /**
      * La même règle que `scopeVisibleToOthers()`, pour une offre chargée.
      */
     public function isVisibleToOthers(): bool

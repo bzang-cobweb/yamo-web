@@ -13,8 +13,10 @@ use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Lists\OfferCardTitle;
+use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferInformation;
@@ -672,6 +674,37 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->deleteJson("/api/v1/offers/{$mine->getKey()}")->assertNoContent();
         $this->assertSoftDeleted($mine);
         $this->assertNotNull($other->fresh());
+    }
+
+    public function test_a_pending_or_accepted_request_locks_the_status_and_the_removal(): void
+    {
+        // Décision 2026-11-22-logement-verrouille-par-demandes.
+        $user = $this->member();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user))->assertNoContent();
+        $offer = Offer::query()->sole();
+        $pending = Booking::factory()->for($offer)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(7)]);
+
+        // Brouillon ou archivé : refusé, sur le champ « Statut » ; retirer : refusé ; plus de « Retirer » sur la fiche.
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'draft']))
+            ->assertUnprocessable()->assertJsonValidationErrors(['status' => 'Ce logement a une demande en attente ou acceptée']);
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'archived']))->assertUnprocessable();
+        $this->asUser($user)->deleteJson("/api/v1/offers/{$offer->getKey()}")->assertForbidden()
+            ->assertJsonPath('message', 'Ce logement a une demande en attente ou acceptée : il ne peut pas être retiré avant qu\'elle soit réglée ou terminée.');
+        $this->assertNull($this->asUser($user)->getJson("/api/v1/offers/{$offer->getKey()}")->json('data.delete'));
+        // Le reste se modifie, statut inchangé.
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['title' => 'Nouveau titre']))->assertNoContent();
+        $this->assertSame(OfferStatusEnum::PUBLISHED, $offer->fresh()->status);
+
+        // Acceptée et pas terminée : toujours verrouillé.
+        $pending->update(['status' => BookingStatusEnum::ACCEPTED]);
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'draft']))->assertUnprocessable();
+
+        // Terminée, refusée, annulée ou expirée : libre.
+        $pending->update(['status' => BookingStatusEnum::COMPLETED]);
+        Booking::factory()->for($offer)->status(BookingStatusEnum::PENDING)->create(['check_in' => today()->subDays(3), 'check_out' => today()->subDay()]);
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['status' => 'draft']))->assertNoContent();
+        $this->assertSame(OfferStatusEnum::DRAFT, $offer->fresh()->status);
+        $this->asUser($user)->deleteJson("/api/v1/offers/{$offer->getKey()}")->assertNoContent();
     }
 
     public function test_searching_my_offers_by_title(): void

@@ -19,6 +19,9 @@ return [
     'address_country' => "The address must be in the offer's country.",
     'address_help' => 'Chosen among your account addresses.',
     'status' => 'Status',
+    // Une demande en cours verrouille le statut et le retrait (décision 2026-11-22-logement-verrouille-par-demandes).
+    'status_locked' => 'This home has a pending or accepted request: its status cannot change until it is settled or over.',
+    'delete_locked' => 'This home has a pending or accepted request: it cannot be removed until it is settled or over.',
     'published_at' => 'Published on',
     'photos' => 'Photos',
     'photos_help' => 'The first one is the main photo. JPEG, PNG or WebP.',

@@ -145,7 +145,13 @@ class OfferPolicy
             return $user->hasPermissionTo(PermissionEnum::DELETE_OFFERS);
         }
 
-        return $this->owns($user, $offer);
+        $owns = $this->owns($user, $offer);
+        if ($owns->denied()) {
+            return $owns;
+        }
+
+        // Pas de retrait tant qu'il a une demande en cours (décision 2026-11-22-logement-verrouille-par-demandes).
+        return $offer->hasOpenBookings() ? Response::deny(__('offer::offer.delete_locked')) : Response::allow();
     }
 
     public function deleteAny(User $user): bool

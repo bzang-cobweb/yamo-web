@@ -19,6 +19,9 @@ return [
     'address_country' => "L'adresse doit être dans le pays de l'offre.",
     'address_help' => 'Choisie parmi les adresses de votre compte.',
     'status' => 'Statut',
+    // Une demande en cours verrouille le statut et le retrait (décision 2026-11-22-logement-verrouille-par-demandes).
+    'status_locked' => 'Ce logement a une demande en attente ou acceptée : son statut ne peut pas changer avant qu\'elle soit réglée ou terminée.',
+    'delete_locked' => 'Ce logement a une demande en attente ou acceptée : il ne peut pas être retiré avant qu\'elle soit réglée ou terminée.',
     'published_at' => 'Publiée le',
     'photos' => 'Photos',
     'photos_help' => 'La première est la photo principale. JPEG, PNG ou WebP.',

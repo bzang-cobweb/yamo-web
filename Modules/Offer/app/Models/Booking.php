@@ -193,6 +193,20 @@ class Booking extends Model
     }
 
     /**
+     * Les demandes encore en cours : en attente d'une réponse, ou acceptées et pas terminées. Un logement qui en a ne
+     * change pas de statut et ne se retire pas (décision 2026-11-22-logement-verrouille-par-demandes).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeOpen(Builder $query): void
+    {
+        $query->where(fn (Builder $open) => $open
+            ->where(fn (Builder $pending) => $pending->awaitingAnswer())
+            ->orWhere(fn (Builder $accepted) => $accepted->where('status', BookingStatusEnum::ACCEPTED)
+                ->whereRaw('date(case when check_out is not null and check_out > check_in then check_out else check_in end) >= ?', [today()->toDateString()])));
+    }
+
+    /**
      * Les demandes en attente d'une réponse : en attente et pas expirées.
      *
      * @param  Builder<self>  $query

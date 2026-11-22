@@ -19,6 +19,9 @@ return [
     'address_country' => 'Die Adresse muss im Land des Angebots liegen.',
     'address_help' => 'Aus den Adressen Ihres Kontos gewählt.',
     'status' => 'Status',
+    // Une demande en cours verrouille le statut et le retrait (décision 2026-11-22-logement-verrouille-par-demandes).
+    'status_locked' => 'Diese Unterkunft hat eine ausstehende oder angenommene Anfrage: ihr Status kann erst geändert werden, wenn sie erledigt oder beendet ist.',
+    'delete_locked' => 'Diese Unterkunft hat eine ausstehende oder angenommene Anfrage: sie kann erst entfernt werden, wenn sie erledigt oder beendet ist.',
     'published_at' => 'Veröffentlicht am',
     'photos' => 'Fotos',
     'photos_help' => 'Das erste ist das Hauptfoto. JPEG, PNG oder WebP.',
