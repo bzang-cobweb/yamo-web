@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-type-auteur-message-date.md
+
 # Carte de notification : type, titre du logement, auteur, message, date
 
 - **Date** : 2026-11-22

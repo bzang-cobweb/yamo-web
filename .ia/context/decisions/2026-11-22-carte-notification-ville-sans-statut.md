@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-type-auteur-message-date.md
+
 # Carte de notification : la ville dans le titre, plus de statut
 
 - **Date** : 2026-11-22
