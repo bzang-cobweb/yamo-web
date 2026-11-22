@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-date-apres-message.md
+
 # Carte de notification : « Toi » sans autre expéditeur, s'il y a un message
 
 Remplace : 2026-11-22-carte-notification-toi.md

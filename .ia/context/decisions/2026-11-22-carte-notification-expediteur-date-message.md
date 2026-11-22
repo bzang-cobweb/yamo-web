@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-date-apres-message.md
+
 # Carte de notification : texte, puis expéditeur et date sur une ligne, puis message
 
 Remplace : 2026-11-22-carte-notification-expediteur-apres-titre.md
