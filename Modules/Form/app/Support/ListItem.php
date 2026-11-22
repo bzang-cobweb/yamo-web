@@ -49,6 +49,8 @@ final class ListItem
     /** L'écran ouvert en touchant le titre seul (« /members/3 ») ; `null` : le titre ouvre la carte. */
     private ?string $titleLink = null;
 
+    private ?string $subtitleLink = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -197,6 +199,17 @@ final class ListItem
     }
 
     /**
+     * Toucher le sous-titre seul ouvre cet écran de l'app (le titre saisi d'une offre, « /offers/12 »), le reste de la
+     * carte gardant son lien ; le sous-titre s'affiche alors en lien (décision 2026-11-22-reservations-lien-offre).
+     */
+    public function subtitleLink(?string $path): self
+    {
+        $this->subtitleLink = $path;
+
+        return $this;
+    }
+
+    /**
      * Toucher l'item ouvre le formulaire `$form` lié à cet enregistrement.
      */
     public function edit(string $form, string|int|null $record = null): self
@@ -304,6 +317,7 @@ final class ListItem
             'link' => $this->link,
             /** Écran ouvert en touchant le titre seul ; absent : le titre ouvre la carte. */
             ...($this->titleLink === null ? [] : ['title_link' => $this->titleLink]),
+            ...($this->subtitleLink === null ? [] : ['subtitle_link' => $this->subtitleLink]),
             'edit' => $this->edit,
             /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [

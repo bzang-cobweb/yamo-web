@@ -147,9 +147,11 @@ class BookingListing extends Listing
         // Le statut sur la photo, comme dans « Mes logements » ; à droite, le menu des actions à la place du
         // cœur (décisions 2026-11-21-reservations-statut-coeur et 2026-11-21-reservations-menu).
         $item->tag($record->status->label(), $record->status->tone(), onImage: true);
-        // Le titre en lien vers la fiche du logement ; le reste de la carte ouvre la page de la demande (décision
-        // 2026-11-22-reservations-lien-offre).
-        $item->titleLink('/offers/'.$record->offer_id);
+        // Le titre saisi de l'offre en lien vers sa fiche : le sous-titre, sous la ligne du type ; sans ligne du type,
+        // le titre lui-même. Le reste de la carte ouvre la page de la demande (décision 2026-11-22-reservations-lien-offre).
+        OfferCardTitle::of($record->offer, $locale)[1] === null
+            ? $item->titleLink('/offers/'.$record->offer_id)
+            : $item->subtitleLink('/offers/'.$record->offer_id);
         // « Modifier », dans le menu, tant qu'elle est en attente (décision 2026-11-21-modifier-reservation).
         if ($record->isAwaitingAnswer()) {
             $item->action(__('offer::booking.form.edit'), form: BookingEditForm::name(), record: $record->getKey());

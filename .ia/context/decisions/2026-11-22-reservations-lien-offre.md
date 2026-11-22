@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-reservations-lien-titre-offre.md
+
 # Mes réservations : le titre en lien vers la fiche du logement
 
 - **Date** : 2026-11-22
