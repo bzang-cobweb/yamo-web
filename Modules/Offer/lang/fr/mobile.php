@@ -11,6 +11,9 @@ return [
         'details' => 'Caractéristiques',
         'rules' => 'Règles',
         'description' => 'Description',
+        // La description repliée à quelques lignes (décision 2026-11-22-description-voir-plus).
+        'more' => 'Voir plus',
+        'less' => 'Voir moins',
         // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
         'location' => 'Localisation',
         // Avis (décision 2026-11-19-contrat-avis-offres).
