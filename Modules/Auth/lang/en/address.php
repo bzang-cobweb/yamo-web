@@ -19,7 +19,6 @@ return [
     'list' => [
         'title' => 'My addresses',
         'empty' => 'No address yet.',
-        'search' => 'Search an address…',
         'create' => 'Add an address',
         'confirm' => 'Remove this address?',
         'detached' => 'Address removed.',

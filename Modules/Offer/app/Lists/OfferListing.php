@@ -132,7 +132,8 @@ class OfferListing extends Listing
 
     public function searchPlaceholder(): string
     {
-        return __('offer::offer.list.search');
+        // « Rechercher… », le même partout (décision 2026-11-22-recherche-placeholder-unique).
+        return __('form::mobile.form.search');
     }
 
     /**

@@ -101,8 +101,6 @@ return [
         'received' => 'Réservations reçues',
         'received_empty' => 'Aucune demande reçue pour l\'instant.',
         'guests' => ':count voyageur(s)',
-        'search' => 'Rechercher une offre…',
-        'search_requests' => 'Rechercher un membre…',
     ],
     // Le suivi d'une demande (décision 2026-11-20-suivi-demande).
     'history' => [

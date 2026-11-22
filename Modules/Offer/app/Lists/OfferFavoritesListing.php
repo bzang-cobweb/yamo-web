@@ -68,7 +68,8 @@ class OfferFavoritesListing extends Listing
      */
     public function searchPlaceholder(): string
     {
-        return __('offer::offer.browse.search');
+        // « Rechercher… », le même partout (décision 2026-11-22-recherche-placeholder-unique).
+        return __('form::mobile.form.search');
     }
 
     protected function search(Builder $query, string $term): void

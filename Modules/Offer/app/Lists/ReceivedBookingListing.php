@@ -134,7 +134,8 @@ class ReceivedBookingListing extends Listing
 
     public function searchPlaceholder(): string
     {
-        return __('offer::booking.list.search_requests');
+        // « Rechercher… », le même partout (décision 2026-11-22-recherche-placeholder-unique).
+        return __('form::mobile.form.search');
     }
 
     /**

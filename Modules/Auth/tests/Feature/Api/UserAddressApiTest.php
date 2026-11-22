@@ -74,7 +74,7 @@ class UserAddressApiTest extends TestCase
                 'create' => null,
                 'footer' => ['label' => 'Ajouter une adresse', 'form' => 'auth.address', 'link' => null],
                 'menu' => false,
-                'search' => 'Rechercher une adresse…',
+                'search' => 'Rechercher…',
                 'filters' => [],
                 'next_cursor' => null,
                 'items' => [],

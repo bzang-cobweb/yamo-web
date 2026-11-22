@@ -49,14 +49,12 @@ return [
         'saved' => 'Saved.',
     ],
     'browse' => [
-        'search' => 'Search by title or city…',
         'empty' => 'No offers published in this country yet.',
     ],
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} No homes|{1} :count home|[2,*] :count homes',
         'empty' => 'Nothing yet.',
-        'search' => 'Search by title…',
         'create' => 'Add',
         'confirm' => 'Remove this offer?',
         'remove' => 'Remove',

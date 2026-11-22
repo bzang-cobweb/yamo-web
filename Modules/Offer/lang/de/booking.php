@@ -101,8 +101,6 @@ return [
         'received' => 'Erhaltene Buchungen',
         'received_empty' => 'Noch keine Anfragen erhalten.',
         'guests' => ':count Gast/Gäste',
-        'search' => 'Angebot suchen…',
-        'search_requests' => 'Mitglied suchen…',
     ],
     // Der Verlauf einer Anfrage (Entscheidung 2026-11-20-suivi-demande).
     'history' => [

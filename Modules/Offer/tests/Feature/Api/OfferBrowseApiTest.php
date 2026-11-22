@@ -47,7 +47,7 @@ class OfferBrowseApiTest extends TestCase
         $data = $this->browse()->assertOk()
             ->assertJsonPath('data.title', 'Logements')
             ->assertJsonPath('data.create', null)
-            ->assertJsonPath('data.search', 'Rechercher par titre ou ville…')
+            ->assertJsonPath('data.search', 'Rechercher…')
             ->json('data');
 
         $this->assertSame([(string) $newer->getKey(), (string) $older->getKey()], array_column($data['items'], 'id'));

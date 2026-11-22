@@ -599,7 +599,7 @@ class OfferApiTest extends TestCase
             ->assertJsonPath('data.footer', ['label' => 'Ajouter un logement', 'form' => 'offer.offer', 'link' => null])
             // Les actions des cartes dans un menu déroulant (décision 2026-11-21-actions-en-menu).
             ->assertJsonPath('data.menu', true)
-            ->assertJsonPath('data.search', 'Rechercher par titre…')
+            ->assertJsonPath('data.search', 'Rechercher…')
             ->json('data.items');
 
         $this->assertCount(1, $data);

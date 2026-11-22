@@ -49,14 +49,12 @@ return [
         'saved' => 'Gespeichert.',
     ],
     'browse' => [
-        'search' => 'Nach Titel oder Stadt suchen…',
         'empty' => 'In diesem Land wurde noch kein Angebot veröffentlicht.',
     ],
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Keine Unterkünfte|{1} :count Unterkunft|[2,*] :count Unterkünfte',
         'empty' => 'Noch nichts.',
-        'search' => 'Nach Titel suchen…',
         'create' => 'Hinzufügen',
         'confirm' => 'Dieses Angebot entfernen?',
         'remove' => 'Entfernen',

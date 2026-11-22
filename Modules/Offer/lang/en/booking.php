@@ -101,8 +101,6 @@ return [
         'received' => 'Bookings received',
         'received_empty' => 'No requests received yet.',
         'guests' => ':count guest(s)',
-        'search' => 'Search an offer…',
-        'search_requests' => 'Search a member…',
     ],
     // The follow-up of a request (decision 2026-11-20-suivi-demande).
     'history' => [
