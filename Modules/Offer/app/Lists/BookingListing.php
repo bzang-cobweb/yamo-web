@@ -42,6 +42,19 @@ class BookingListing extends Listing
         return __('offer::booking.list.mine');
     }
 
+    /**
+     * Sous les filtres, en titre, le nombre de la liste, recherche et filtres compris, comme dans « Demandes
+     * reçues » (décision 2026-11-22-listes-nombre-en-tete).
+     *
+     * @return array{title: string|null, subtitle: string|null}
+     */
+    public function headingFor(array $filters, ?string $search = null): array
+    {
+        $count = $this->countFor($search, $filters);
+
+        return ['title' => trans_choice('offer::booking.list.count', $count, ['count' => $count]), 'subtitle' => null];
+    }
+
     public function emptyText(): string
     {
         return __('offer::booking.list.mine_empty');

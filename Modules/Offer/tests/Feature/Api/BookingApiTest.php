@@ -368,6 +368,9 @@ class BookingApiTest extends TestCase
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning', 'on_image' => true], $items[(string) $pending->getKey()]['tag']);
         $this->assertNull($items[(string) $pending->getKey()]['favorite']);
         $this->assertTrue($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
+        // Le nombre, sous les filtres, filtres compris (décision 2026-11-22-listes-nombre-en-tete).
+        $this->assertSame('2 réservations', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.heading.title'));
+        $this->assertSame('1 réservation', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings?filter[status]=pending')->json('data.heading.title'));
 
         $this->asUser($guest)->postJson("/api/v1/bookings/{$pending->getKey()}/cancel")->assertNoContent();
         $this->assertSame(BookingStatusEnum::CANCELLED, $pending->fresh()->status);

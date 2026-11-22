@@ -604,6 +604,8 @@ class OfferApiTest extends TestCase
 
         $this->assertCount(1, $data);
         $this->assertSame((string) $mine->getKey(), $data[0]['id']);
+        // Le nombre, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
+        $this->assertSame(['title' => '1 logement', 'subtitle' => null], $this->asUser($user)->getJson('/api/v1/lists/offer.mine')->json('data.heading'));
         // En titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
         $this->assertSame(OfferCardTitle::composedFirst($mine->fresh(), 'fr'), [$data[0]['title'], $data[0]['subtitle']]);
         // Statut, détails et prix en gras ; le titre saisi en sous-titre s'il diffère.

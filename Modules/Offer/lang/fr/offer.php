@@ -53,6 +53,8 @@ return [
         'empty' => "Aucune offre publiée dans ce pays pour l'instant.",
     ],
     'list' => [
+        // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
+        'count' => '{0} Aucun logement|{1} :count logement|[2,*] :count logements',
         'empty' => 'Rien pour l\'instant.',
         'search' => 'Rechercher par titre…',
         'create' => 'Ajouter',

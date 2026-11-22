@@ -124,6 +124,8 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame('Mes favoris', $favorites['title']);
         $this->assertSame([(string) $offer->getKey()], array_column($favorites['items'], 'id'));
         $this->assertTrue($favorites['items'][0]['favorite']['active']);
+        // Le nombre, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
+        $this->assertSame('1 logement', $favorites['heading']['title']);
         // Comme à l'accueil : le titre saisi, la ligne du type dessous (décision 2026-11-21-favoris-titre-saisi-ligne-type).
         // En titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
         $this->assertSame(['Location', $offer->getTranslation('title', 'fr')], [$favorites['items'][0]['title'], $favorites['items'][0]['subtitle']]);
