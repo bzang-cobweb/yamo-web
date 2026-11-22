@@ -100,6 +100,13 @@ class BookingListing extends Listing
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->limit(1)])
+            // Ses notifications non lues, pour le compteur de la carte (décision 2026-11-22-reservations-non-lues).
+            ->addSelect(['unread_notifications_count' => DatabaseNotification::query()
+                ->selectRaw('count(*)')
+                ->where('notifiable_type', (new User)->getMorphClass())
+                ->where('notifiable_id', $this->user?->getAuthIdentifier())
+                ->whereNull('read_at')
+                ->whereColumn('data->booking_id', 'bookings.id')])
             ->where('user_id', $this->user?->getAuthIdentifier())
             ->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->where('country_id', CurrentCountry::require()->getKey()))
             ->orderByDesc('id');
@@ -129,6 +136,13 @@ class BookingListing extends Listing
         // « Modifier », dans le menu, tant qu'elle est en attente (décision 2026-11-21-modifier-reservation).
         if ($record->isAwaitingAnswer()) {
             $item->action(__('offer::booking.form.edit'), form: BookingEditForm::name(), record: $record->getKey());
+        }
+
+        // Ses notifications non lues : un compteur en bas de la carte, qui ouvre la page de la demande, comme dans
+        // « Mes logements » (décision 2026-11-22-reservations-non-lues).
+        $unread = (int) ($record->getAttribute('unread_notifications_count') ?? 0);
+        if ($unread > 0 && is_string($notification) && $notification !== '') {
+            $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification);
         }
 
         // « Annuler », en dernier, tant qu'elle peut l'être : il ouvre le formulaire d'annulation, comme le bouton

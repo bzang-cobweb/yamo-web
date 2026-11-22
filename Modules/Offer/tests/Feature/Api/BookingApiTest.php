@@ -325,6 +325,13 @@ class BookingApiTest extends TestCase
         $copy = $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequested::class, 'thread' => $pending->thread(), 'read_at' => now(),
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
+        // Lue : pas de compteur ; non lue : « 1 notification non lue », vers la page de la demande (décision
+        // 2026-11-22-reservations-non-lues).
+        $this->assertSame([], collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['counters']);
+        $copy->update(['read_at' => null]);
+        $card = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()];
+        $this->assertSame([['label' => '1 notification non lue', 'list' => 'notifications', 'filter' => [], 'link' => '/notifications/'.$copy->getKey()]], $card['counters']);
+        $copy->update(['read_at' => now()]);
         // Acceptée et commencée : plus annulable, plus de « Annuler ».
         $this->assertNotContains('Annuler', array_column($items[(string) $started->getKey()]['actions'], 'label'));
         // En titre, la ligne du type ; dessous, le titre saisi puis la demande (décision 2026-11-21-cartes-titre-compose-en-tete).
