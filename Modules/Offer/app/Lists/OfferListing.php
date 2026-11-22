@@ -145,7 +145,8 @@ class OfferListing extends Listing
             // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
             ->withReviewSummary()
             // Les demandes en attente, pour le compteur de la carte.
-            ->withCount(['bookings as pending_bookings_count' => fn (Builder $bookings) => $bookings->where('status', BookingStatusEnum::PENDING)])
+            // Sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+            ->withCount(['bookings as pending_bookings_count' => fn (Builder $bookings) => $bookings->awaitingAnswer()])
             // Ses notifications non lues de ce logement, quel que soit le statut de la demande, une demande (un fil)
             // comptant pour une, pour le second compteur (décision 2026-11-21-compteur-non-lues-sans-statut).
             ->addSelect(['unread_notifications_count' => DatabaseNotification::query()

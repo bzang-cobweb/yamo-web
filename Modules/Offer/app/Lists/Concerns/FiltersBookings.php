@@ -59,7 +59,10 @@ trait FiltersBookings
     protected function applyFilters(Builder $query, array $filters): void
     {
         $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
-        if ($status !== null) {
+        // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+        if ($status === BookingStatusEnum::PENDING) {
+            $query->awaitingAnswer();
+        } elseif ($status !== null) {
             $query->where('status', $status);
         }
         BookingFilters::applyPeriod($query, $filters);

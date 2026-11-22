@@ -21,6 +21,6 @@ final class OfferRequestItem
 
         return ListItem::make($booking->getKey(), $member !== '' ? $member : $when, $member !== '' ? $when : null)
             ->titleLink($member !== '' && $booking->user !== null ? '/members/'.$booking->user->getKey() : null)
-            ->tag($booking->status->label(), $booking->status->tone());
+            ->tag(...$booking->statusTag());
     }
 }

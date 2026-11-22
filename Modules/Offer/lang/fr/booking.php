@@ -5,7 +5,9 @@
 return [
     'types' => ['stay' => 'Séjour', 'visit' => 'Visite'],
     'actions' => ['stay' => 'Réserver', 'visit' => 'Demander une visite'],
-    'statuses' => ['pending' => 'En attente', 'accepted' => 'Acceptée', 'refused' => 'Refusée', 'cancelled' => 'Annulée'],
+    'statuses' => ['pending' => 'En attente', 'accepted' => 'Acceptée', 'refused' => 'Refusée', 'cancelled' => 'Annulée',
+        // Affichés d'après les dates, jamais enregistrés (décision 2026-11-22-statuts-terminee-expiree).
+        'completed' => 'Terminée', 'expired' => 'Expirée'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
         'member' => 'Membre',
@@ -41,6 +43,7 @@ return [
         'visit_or' => 'le :date ou :second',
     ],
     'own_offer' => 'Vous ne pouvez pas réserver votre propre offre.',
+    'expired' => 'Cette demande a expiré : sa date est passée.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',
     'already_answered' => 'Cette demande a déjà une réponse.',
     'not_editable' => 'Cette demande a déjà une réponse : elle ne se modifie plus.',

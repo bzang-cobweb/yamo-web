@@ -135,7 +135,7 @@ class BookingListing extends Listing
         $item = BookingItem::make($record, $locale, mine: true)
             ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
         // Le statut sur la photo, en haut à gauche, le cœur à droite (décision 2026-11-21-reservations-statut-coeur).
-        $item->tag($record->status->label(), $record->status->tone(), onImage: true);
+        $item->tag(...[...$record->statusTag(), 'onImage' => true]);
         // Le titre saisi de l'offre en lien vers sa fiche : le sous-titre, sous la ligne du type ; sans ligne du type,
         // le titre lui-même. Le reste de la carte ouvre la page de la demande (décision 2026-11-22-reservations-lien-offre).
         OfferCardTitle::of($record->offer, $locale)[1] === null

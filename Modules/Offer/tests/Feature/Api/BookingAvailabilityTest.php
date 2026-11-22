@@ -203,4 +203,43 @@ class BookingAvailabilityTest extends TestCase
         $days = collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar?month=".today()->addDays(7)->format('Y-m'))->json('data.days'))->keyBy('date');
         $this->assertSame('pending', $days[$date(7)]['state']);
     }
+
+    public function test_a_past_pending_request_expires_and_a_past_accepted_one_is_completed(): void
+    {
+        // Décision 2026-11-22-statuts-terminee-expiree.
+        $offer = $this->home();
+        $expired = $this->stay($offer, -3, -1);
+        $today = $this->stay($offer, 0, 2);
+        $completed = $this->stay($offer, -5, -2, BookingStatusEnum::ACCEPTED);
+        $ongoing = $this->stay($offer, -1, 2, BookingStatusEnum::ACCEPTED);
+        $visit = Booking::factory()->for($this->home(false))->for($this->member())->create(['type' => 'visit', 'check_in' => today()->subDays(2), 'check_out' => today()->addDay(), 'guests' => null]);
+
+        $this->assertTrue($expired->isExpired());
+        $this->assertFalse($expired->isAwaitingAnswer());
+        $this->assertFalse($expired->isCancellable());
+        $this->assertSame(['label' => 'Expirée', 'tone' => 'neutral'], $expired->statusTag());
+        // L'arrivée aujourd'hui : encore en attente.
+        $this->assertFalse($today->isExpired());
+        $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $today->statusTag());
+        $this->assertSame(['label' => 'Terminée', 'tone' => 'neutral'], $completed->statusTag());
+        $this->assertSame(['label' => 'Acceptée', 'tone' => 'success'], $ongoing->statusTag());
+        // Une visite avec une seconde date à venir n'expire pas.
+        $this->assertFalse($visit->isExpired());
+        $this->assertSame([(string) $today->getKey()], Booking::query()->whereKey([$expired->getKey(), $today->getKey()])->awaitingAnswer()->pluck('id')->map(fn ($id): string => (string) $id)->all());
+
+        // Plus de réponse, de modification ni d'annulation : « Cette demande a expiré ».
+        $this->asUser($offer->user)->postJson("/api/v1/bookings/{$expired->getKey()}/answer", ['answer' => 'accept'])
+            ->assertForbidden()->assertJsonPath('message', 'Cette demande a expiré : sa date est passée.');
+        $this->asUser($expired->user)->postJson("/api/v1/bookings/{$expired->getKey()}/cancel")->assertForbidden();
+
+        // La pastille dans « Mes réservations » ; plus dans le filtre « En attente ».
+        $items = collect($this->asUser($expired->user)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id');
+        $this->assertSame('Expirée', $items[(string) $expired->getKey()]['tag']['label']);
+        $this->assertSame([], $this->asUser($expired->user)->getJson('/api/v1/lists/offer.bookings?filter[status]=pending')->json('data.items'));
+        $this->assertSame('Terminée', collect($this->asUser($completed->user)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->first()['tag']['label']);
+
+        // Le compteur des demandes en attente de « Mes logements » ne la compte plus.
+        $card = collect($this->asUser($offer->user)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->firstWhere('id', (string) $offer->getKey());
+        $this->assertStringStartsWith('1 ', $card['counter']['label']);
+    }
 }

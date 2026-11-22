@@ -186,7 +186,8 @@ class OfferBookingForm extends Form
             if ($this->offer !== null && $this->offer->bookings()
                 ->where('user_id', $this->user?->getAuthIdentifier())
                 ->when($this->editing !== null, fn ($bookings) => $bookings->whereKeyNot($this->editing?->getKey()))
-                ->where('status', BookingStatusEnum::PENDING)
+                // Une demande expirée ne bloque plus (décision 2026-11-22-statuts-terminee-expiree).
+                ->awaitingAnswer()
                 ->exists()) {
                 $fail(__('offer::booking.form.pending_exists'));
             }

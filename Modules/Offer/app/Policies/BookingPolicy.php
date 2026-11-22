@@ -67,7 +67,7 @@ class BookingPolicy
             return Response::denyAsNotFound();
         }
 
-        return $booking->isCancellable() ? Response::allow() : Response::deny(__('offer::booking.not_cancellable'));
+        return $booking->isCancellable() ? Response::allow() : Response::deny(__($booking->isExpired() ? 'offer::booking.expired' : 'offer::booking.not_cancellable'));
     }
 
     /**
@@ -79,7 +79,7 @@ class BookingPolicy
             return Response::denyAsNotFound();
         }
 
-        return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__('offer::booking.not_editable'));
+        return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__($booking->isExpired() ? 'offer::booking.expired' : 'offer::booking.not_editable'));
     }
 
     /**
@@ -91,7 +91,7 @@ class BookingPolicy
             return Response::denyAsNotFound();
         }
 
-        return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__('offer::booking.already_answered'));
+        return $booking->isAwaitingAnswer() ? Response::allow() : Response::deny(__($booking->isExpired() ? 'offer::booking.expired' : 'offer::booking.already_answered'));
     }
 
     /**

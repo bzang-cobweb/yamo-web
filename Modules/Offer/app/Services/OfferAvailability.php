@@ -56,7 +56,7 @@ class OfferAvailability
 
         return Booking::query()
             ->where('offer_id', $booking->offer_id)
-            ->where('status', BookingStatusEnum::PENDING)
+            ->awaitingAnswer()
             ->whereKeyNot($booking->getKey())
             ->overlapping($booking->check_in, $booking->check_out)
             ->with('user')

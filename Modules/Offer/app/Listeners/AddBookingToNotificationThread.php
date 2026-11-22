@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Notification\Events\NotificationThreadSerializing;
-use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Http\Resources\BookingResource;
@@ -112,7 +111,7 @@ class AddBookingToNotificationThread
             $event->data['secondary_link_label'] = __('offer::booking.cancel.button');
         }
 
-        if ($mine && $booking->status === BookingStatusEnum::PENDING) {
+        if ($mine && $booking->isAwaitingAnswer()) {
             $event->data['link'] = '/profile/'.BookingEditForm::name().'?record='.$booking->getKey();
             $event->data['link_label'] = __('offer::booking.form.edit');
         }

@@ -102,9 +102,10 @@ class OfferNotificationFilter implements NotificationFilter
         }
 
         $id = ((array) $notification->data)['booking_id'] ?? null;
-        $status = (is_int($id) ? app(BookingCache::class)->find($id)?->status : null) ?? $step->status();
+        $booking = is_int($id) ? app(BookingCache::class)->find($id) : null;
 
-        return self::statusTag($status);
+        // « Terminée » ou « Expirée » d'après les dates (décision 2026-11-22-statuts-terminee-expiree).
+        return $booking !== null ? $booking->statusTag() : self::statusTag($step->status());
     }
 
     /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
@@ -146,7 +147,10 @@ class OfferNotificationFilter implements NotificationFilter
         // Le statut réel de la demande (décision 2026-11-20-statut-reel).
         $status = $filters['status'] ?? null;
         if (is_string($status) && BookingStatusEnum::tryFrom($status) !== null) {
-            $ids = Booking::query()->whereKey($this->bookingIds($user))->where('status', $status)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+            // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+            $ids = Booking::query()->whereKey($this->bookingIds($user))
+                ->when($status === BookingStatusEnum::PENDING->value, fn (Builder $bookings) => $bookings->awaitingAnswer(), fn (Builder $bookings) => $bookings->where('status', $status))
+                ->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
             $query->whereIn('data->booking_id', $ids === [] ? [0] : $ids);
         }
 

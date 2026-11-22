@@ -15,7 +15,6 @@ use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Support\BookingText;
 
 /**
@@ -51,8 +50,9 @@ class OfferCalendar
             $isBlocked = in_array($date, $blocked, true);
             // Une visite colore son jour comme un séjour ses nuits (décision 2026-11-20-calendrier-visites).
             $stayAccepted = $stays->contains('status', BookingStatusEnum::ACCEPTED);
-            $stayPending = $stays->contains('status', BookingStatusEnum::PENDING);
-            $visitPending = $visits->contains('status', BookingStatusEnum::PENDING);
+            // En attente : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+            $stayPending = $stays->contains(fn (Booking $booking): bool => $booking->isAwaitingAnswer());
+            $visitPending = $visits->contains(fn (Booking $booking): bool => $booking->isAwaitingAnswer());
             $accepted = $stayAccepted || $visits->contains('status', BookingStatusEnum::ACCEPTED);
             $pending = $stayPending || $visitPending;
             // Chevauchement : un séjour en attente sur une nuit prise ou bloquée ; une visite en attente sur un jour bloqué.
@@ -155,7 +155,7 @@ class OfferCalendar
             $summary = BookingText::summary($booking, 'requested');
             /** @var list<array<string, mixed>> $actions */
             $actions = $listing->withAnswerActions($listing->item($booking), $booking, $locale)->toArray()['actions'];
-            $tag = OfferNotificationFilter::statusTag($booking->status);
+            $tag = $booking->statusTag();
             $message = $booking->message;
             $total = $booking->formattedTotal($locale);
             $cards[] = [

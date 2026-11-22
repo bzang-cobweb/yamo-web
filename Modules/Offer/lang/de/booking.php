@@ -5,7 +5,9 @@
 return [
     'types' => ['stay' => 'Aufenthalt', 'visit' => 'Besichtigung'],
     'actions' => ['stay' => 'Buchen', 'visit' => 'Besichtigung anfragen'],
-    'statuses' => ['pending' => 'Ausstehend', 'accepted' => 'Angenommen', 'refused' => 'Abgelehnt', 'cancelled' => 'Storniert'],
+    'statuses' => ['pending' => 'Ausstehend', 'accepted' => 'Angenommen', 'refused' => 'Abgelehnt', 'cancelled' => 'Storniert',
+        // Affichés d'après les dates, jamais enregistrés (décision 2026-11-22-statuts-terminee-expiree).
+        'completed' => 'Abgeschlossen', 'expired' => 'Abgelaufen'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
         'member' => 'Mitglied',
@@ -41,6 +43,7 @@ return [
         'visit_or' => 'am :date oder :second',
     ],
     'own_offer' => 'Sie können Ihr eigenes Angebot nicht buchen.',
+    'expired' => 'Diese Anfrage ist abgelaufen: ihr Datum ist vorbei.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',
     'already_answered' => 'Diese Anfrage wurde bereits beantwortet.',
     'not_editable' => 'Diese Anfrage wurde bereits beantwortet: Sie kann nicht mehr geändert werden.',

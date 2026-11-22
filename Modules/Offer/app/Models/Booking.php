@@ -146,12 +146,41 @@ class Booking extends Model
 
         match ($group) {
             'upcoming' => $query->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} >= ?", [$today]),
-            'pending' => $query->where('status', BookingStatusEnum::PENDING),
+            // En attente et pas expirée ; une expirée est passée (décision 2026-11-22-statuts-terminee-expiree).
+            'pending' => $query->awaitingAnswer(),
             'past' => $query->where(fn (Builder $past) => $past
                 ->whereIn('status', [BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED])
-                ->orWhere(fn (Builder $done) => $done->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} < ?", [$today]))),
+                ->orWhere(fn (Builder $done) => $done->where('status', BookingStatusEnum::ACCEPTED)->whereRaw("{$end} < ?", [$today]))
+                ->orWhere(fn (Builder $expired) => $expired->expired())),
             default => null,
         };
+    }
+
+    /**
+     * Le jour à partir duquel une demande en attente expire, en SQL : l'arrivée d'un séjour ; la dernière date
+     * proposée d'une visite (décision 2026-11-22-statuts-terminee-expiree).
+     */
+    private const EXPIRES_AFTER = "date(case when type = 'visit' and check_out is not null and check_out > check_in then check_out else check_in end)";
+
+    /**
+     * Les demandes en attente dont la date est passée : plus de réponse possible (décision
+     * 2026-11-22-statuts-terminee-expiree).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeExpired(Builder $query): void
+    {
+        $query->where('status', BookingStatusEnum::PENDING)->whereRaw(self::EXPIRES_AFTER.' < ?', [today()->toDateString()]);
+    }
+
+    /**
+     * Les demandes en attente d'une réponse : en attente et pas expirées.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeAwaitingAnswer(Builder $query): void
+    {
+        $query->where('status', BookingStatusEnum::PENDING)->whereRaw(self::EXPIRES_AFTER.' >= ?', [today()->toDateString()]);
     }
 
     /**
@@ -177,20 +206,66 @@ class Booking extends Model
     }
 
     /**
-     * Le membre peut l'annuler : en attente, ou acceptée et pas encore commencée.
+     * Le membre peut l'annuler : en attente (pas expirée), ou acceptée et pas encore commencée.
      */
     public function isCancellable(): bool
     {
-        return $this->status === BookingStatusEnum::PENDING
+        return $this->isAwaitingAnswer()
             || ($this->status === BookingStatusEnum::ACCEPTED && $this->check_in->isAfter(today()));
     }
 
     /**
-     * Le propriétaire peut y répondre : en attente seulement.
+     * Le propriétaire peut y répondre, le membre la modifier : en attente et pas expirée.
      */
     public function isAwaitingAnswer(): bool
     {
-        return $this->status === BookingStatusEnum::PENDING;
+        return $this->status === BookingStatusEnum::PENDING && ! $this->isExpired();
+    }
+
+    /**
+     * Le dernier jour de la demande : le départ d'un séjour, la dernière date proposée d'une visite.
+     */
+    public function lastDay(): Carbon
+    {
+        return $this->check_out !== null && $this->check_out->greaterThan($this->check_in) ? $this->check_out : $this->check_in;
+    }
+
+    /**
+     * En attente, et sa date est passée : l'arrivée d'un séjour, la dernière date proposée d'une visite
+     * (décision 2026-11-22-statuts-terminee-expiree).
+     */
+    public function isExpired(): bool
+    {
+        $day = $this->type === BookingTypeEnum::VISIT ? $this->lastDay() : $this->check_in;
+
+        return $this->status === BookingStatusEnum::PENDING && $day->copy()->startOfDay()->lessThan(today());
+    }
+
+    /**
+     * Acceptée, et son dernier jour est passé (décision 2026-11-22-statuts-terminee-expiree).
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === BookingStatusEnum::ACCEPTED && $this->lastDay()->copy()->startOfDay()->lessThan(today());
+    }
+
+    /**
+     * Le statut affiché : « Terminée » ou « Expirée » d'après les dates, sinon le statut enregistré ; pas
+     * enregistré (décision 2026-11-22-statuts-terminee-expiree).
+     *
+     * @return array{label: string, tone: string}
+     */
+    public function statusTag(): array
+    {
+        $shown = match (true) {
+            $this->isCompleted() => 'completed',
+            $this->isExpired() => 'expired',
+            default => null,
+        };
+
+        return $shown === null
+            ? ['label' => $this->status->label(), 'tone' => $this->status->tone()]
+            : ['label' => __('offer::booking.statuses.'.$shown), 'tone' => 'neutral'];
     }
 
     /**

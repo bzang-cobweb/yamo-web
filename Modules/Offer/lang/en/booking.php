@@ -5,7 +5,9 @@
 return [
     'types' => ['stay' => 'Stay', 'visit' => 'Visit'],
     'actions' => ['stay' => 'Book', 'visit' => 'Request a visit'],
-    'statuses' => ['pending' => 'Pending', 'accepted' => 'Accepted', 'refused' => 'Declined', 'cancelled' => 'Cancelled'],
+    'statuses' => ['pending' => 'Pending', 'accepted' => 'Accepted', 'refused' => 'Declined', 'cancelled' => 'Cancelled',
+        // Affichés d'après les dates, jamais enregistrés (décision 2026-11-22-statuts-terminee-expiree).
+        'completed' => 'Completed', 'expired' => 'Expired'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
         'member' => 'Member',
@@ -41,6 +43,7 @@ return [
         'visit_or' => 'on :date or :second',
     ],
     'own_offer' => 'You cannot book your own offer.',
+    'expired' => 'This request has expired: its date has passed.',
     'not_cancellable' => 'This request can no longer be cancelled.',
     'already_answered' => 'This request has already been answered.',
     'not_editable' => 'This request already has an answer: it can no longer be edited.',

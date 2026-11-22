@@ -36,7 +36,7 @@ final class BookingItem
             return ListItem::make($booking->getKey(), $built, $subtitle)
                 ->image(MediaUrl::onRequestHost($offer->photoUrl()))
                 // Le statut en pastille de couleur ; en gras, le total.
-                ->tag($booking->status->label(), $booking->status->tone())
+                ->tag(...$booking->statusTag())
                 ->highlight($booking->formattedTotal($locale));
         }
 
@@ -48,7 +48,7 @@ final class BookingItem
         return ListItem::make($booking->getKey(), $title, $line)
             ->detail($subtitle)
             ->image(MediaUrl::onRequestHost($offer->photoUrl()))
-            ->tag($booking->status->label(), $booking->status->tone())
+            ->tag(...$booking->statusTag())
             // La note des avis à droite, comme à l'accueil (décision 2026-11-21-reservations-note).
             ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)
             // En gras, comme à l'accueil : les détails puis le prix et son unité (« 45 000 FCFA / jour »,
