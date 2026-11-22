@@ -197,7 +197,8 @@ class OfferListing extends Listing
             ->tag($record->status->label(), $record->status->tone(), onImage: true)
             ->highlight(implode(' · ', array_filter([$expiration, ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
-            // « Voir » : sa fiche, brouillon compris (décision 2026-11-19-nuit-voir-editer-retirer).
+            // Toucher la carte ouvre sa fiche, brouillon compris ; « Éditer » est dans le menu (décision
+            // 2026-11-22-logements-carte-vers-fiche).
             ->link('/offers/'.$record->getKey())
             // Son calendrier : occupation, demandes, jours bloqués (décision 2026-11-19-contrat-calendrier-offre).
             ->action(__('offer::booking.calendar.button'), link: '/offers/'.$record->getKey().'/calendar')
