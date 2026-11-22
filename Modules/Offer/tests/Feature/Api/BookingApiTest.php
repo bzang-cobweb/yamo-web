@@ -330,6 +330,8 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $pending->getKey()]['delete']);
         // Sans notification dans son fil : la fiche du logement.
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
+        // Le titre en lien vers la fiche du logement (décision 2026-11-22-reservations-lien-offre).
+        $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['title_link']);
         // Avec : la page de sa dernière notification du fil (décision 2026-11-21-reservation-comme-notification).
         $copy = $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(), 'read_at' => now(),
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
