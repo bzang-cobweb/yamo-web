@@ -615,8 +615,9 @@ class OfferApiTest extends TestCase
         $this->assertNull($data[0]['favorite']);
         $this->assertStringNotContainsString('Publiée', $data[0]['highlight']);
         $this->assertStringContainsString('900', $data[0]['highlight']);
-        $this->assertSame("/v1/offers/{$mine->getKey()}", $data[0]['delete']['endpoint']);
-        // « Voir » (sa fiche) et « Éditer » (le formulaire) (décision 2026-11-19-nuit-voir-editer-retirer).
+        // Plus de « Retirer » sur la carte : il est dans la fiche (décision 2026-11-22-retirer-depuis-la-fiche).
+        $this->assertNull($data[0]['delete']);
+        // La carte ouvre sa fiche ; « Éditer » (le formulaire) dans le menu (décision 2026-11-22-logements-carte-vers-fiche).
         $this->assertSame("/offers/{$mine->getKey()}", $data[0]['link']);
         $this->assertSame('offer.offer', $data[0]['edit']['form']);
     }

@@ -8,11 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
-use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
@@ -208,18 +206,8 @@ class OfferListing extends Listing
                 __('offer::booking.profile.notifications'),
                 filter: ['offer' => (string) $record->getKey()],
                 list: ReceivedBookingListing::name(),
-            )
-            ->delete(
-                __('offer::offer.list.remove'),
-                __('offer::offer.list.confirm'),
-                Submission::toRoute(
-                    'api.v1.offers.destroy',
-                    SuccessAction::BACK,
-                    __('offer::offer.list.removed'),
-                    destructive: true,
-                    parameters: ['offer' => $record->getKey()],
-                ),
             );
+        // Plus de « Retirer » sur la carte : il est dans la barre du bas de la fiche (décision 2026-11-22-retirer-depuis-la-fiche).
 
         // Ses demandes en attente : un compteur (décision 2026-11-19-contrat-reservations-logements-profil).
         $pending = (int) ($record->pending_bookings_count ?? 0);

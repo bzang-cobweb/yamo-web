@@ -97,6 +97,10 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.booking', null)
             ->assertJsonPath('data.edit', ['label' => 'Modifier', 'form' => 'offer.offer']);
         $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.edit', null);
+        // « Retirer », pour son auteur seulement, à la place du prix (décision 2026-11-22-retirer-depuis-la-fiche).
+        $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.delete', null);
+        $delete = $this->asUser($furnished->user)->getJson("/api/v1/offers/{$furnished->getKey()}")->json('data.delete');
+        $this->assertSame(['Retirer', 'Retirer cette offre ?', 'DELETE', "/v1/offers/{$furnished->getKey()}", true, ['action' => 'back', 'message' => 'Offre retirée.']], [$delete['label'], $delete['confirm'], $delete['method'], $delete['endpoint'], $delete['destructive'], $delete['success']]);
         $this->withHeaders(['X-Country' => 'CM'])->getJson("/api/v1/offers/{$unfurnished->getKey()}")->assertJsonPath('data.edit', null);
     }
 
