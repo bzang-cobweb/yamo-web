@@ -35,9 +35,6 @@ final class ListItem
     /** Une date (ISO 8601) sous le message, à droite (« il y a 2 h ») ; `null` : aucune. */
     private ?string $date = null;
 
-    /** Il reste du non lu (des notifications d'une demande) : un point devant le titre. */
-    private bool $unread = false;
-
     /** Cœur de favori : état et point d'API (PUT ajoute, DELETE retire) ; aucun par défaut. */
     private ?bool $favoriteActive = null;
 
@@ -175,17 +172,6 @@ final class ListItem
     }
 
     /**
-     * Il reste du non lu : l'app met un point coloré devant le titre, comme une messagerie (décision
-     * 2026-11-22-demandes-point-non-lu).
-     */
-    public function unread(bool $unread = true): self
-    {
-        $this->unread = $unread;
-
-        return $this;
-    }
-
-    /**
      * Toucher le titre seul ouvre cet écran de l'app (« /members/3 »), le reste de la carte gardant son lien ;
      * le titre s'affiche alors en lien (décision 2026-11-21-demandes-lien-membre).
      */
@@ -289,8 +275,6 @@ final class ListItem
             ...($this->detail === null ? [] : ['detail' => $this->detail]),
             /** Date ISO 8601 sous le message, à droite ; absente : aucune. */
             ...($this->date === null ? [] : ['date' => $this->date]),
-            /** Du non lu : un point devant le titre ; absent : non. */
-            ...($this->unread ? ['unread' => true] : []),
             'image' => $this->image,
             /** Note moyenne (1 à 5, au dixième) et nombre de notes ; `null` sans note. */
             'rating' => $this->ratingAverage === null ? null : ['average' => $this->ratingAverage, 'count' => $this->ratingCount],
