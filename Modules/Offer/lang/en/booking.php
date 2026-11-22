@@ -138,9 +138,9 @@ return [
             'body' => ':guest sent a :request for “:offer” (:period).',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'You sent a :request for “:offer” (:period).',
-            // Le texte de la carte du propriétaire (décision 2026-11-22-nouvelle-demande-recue) ; un séjour, avec les personnes.
-            'summary' => 'You received a :request for “:offer” (:period).',
-            'summary_stay' => 'You received a :request for “:offer” (:period, :people).',
+            // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
+            'summary' => 'The :request for “:offer” (:period) has been sent.',
+            'summary_stay' => 'The :request for “:offer” (:period, :people) has been sent.',
             'sms' => ':app: :guest sent a :request for “:offer” (:period). Reply in the app.',
         ],
         'accepted' => [
