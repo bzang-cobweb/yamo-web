@@ -279,9 +279,12 @@ class BookingApiTest extends TestCase
         $this->assertNull($item['rating']);
         // Avec son libellé (décision 2026-11-21-demandes-pastille-non-lues-total).
         $this->assertStringStartsWith('Total : 135', (string) $item['highlight']);
-        // Sans menu trois points : les actions en boutons (décision 2026-11-22-demandes-sans-menu).
+        // Ni menu ni bouton : la carte ouvre le détail de la demande (décision 2026-11-22-demandes-carte-seule) ; on
+        // répond depuis le calendrier, son bouton « Traiter la demande ».
         $this->assertFalse($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
-        [$accept, $refuse] = $item['actions'];
+        $this->assertSame([], $item['actions']);
+        $day = fn (): array => $this->asUser($owner)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$booking->check_in->toDateString()}")->assertOk()->json('data.items.0.actions');
+        [$accept, $refuse] = $day();
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
         $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);
         $this->assertSame(['POST', "/v1/bookings/{$booking->getKey()}/accept"], [$accept['submission']['method'], $accept['submission']['endpoint']]);
@@ -303,8 +306,9 @@ class BookingApiTest extends TestCase
         // Plus en attente : plus de réponse possible, plus de boutons.
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/answer", ['answer' => 'accept'])->assertForbidden();
         $this->asUser($owner)->postJson("/api/v1/bookings/{$booking->getKey()}/accept")->assertForbidden();
-        // Reste « Masquer l'adresse », quel que soit le statut (décision 2026-11-21-afficher-adresse).
-        $this->assertSame(["Masquer l'adresse"], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.actions'), 'label'));
+        // Refusée : plus dans le panneau du jour ; la carte de la liste, elle, n'a jamais de bouton
+        // (décision 2026-11-22-demandes-carte-seule).
+        $this->assertSame([], $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.actions'));
     }
 
     public function test_the_guest_follows_and_cancels_their_bookings(): void

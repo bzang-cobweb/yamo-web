@@ -154,7 +154,7 @@ class OfferCalendar
         foreach ($bookings as $booking) {
             $summary = BookingText::summary($booking, 'requested');
             /** @var list<array<string, mixed>> $actions */
-            $actions = $listing->item($booking)->toArray()['actions'];
+            $actions = $listing->withAnswerActions($listing->item($booking), $booking, $locale)->toArray()['actions'];
             $tag = OfferNotificationFilter::statusTag($booking->status);
             $message = $booking->message;
             $total = $booking->formattedTotal($locale);

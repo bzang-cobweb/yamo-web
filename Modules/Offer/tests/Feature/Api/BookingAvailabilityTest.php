@@ -121,11 +121,12 @@ class BookingAvailabilityTest extends TestCase
         $after = $this->stay($offer, 8, 10);
 
         // La confirmation nomme la demande qui sera refusée.
-        $items = collect($this->asUser($offer->user)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items'))->keyBy('id');
-        $confirm = $items[(string) $chosen->getKey()]['actions'][0]['confirm'];
+        // Depuis le panneau du jour du calendrier, qui garde les boutons (décision 2026-11-22-demandes-carte-seule).
+        $actions = fn (Booking $booking): array => collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$booking->check_in->toDateString()}")->json('data.items'))->firstWhere('id', (string) $booking->getKey())['actions'];
+        $confirm = $actions($chosen)[0]['confirm'];
         $this->assertStringContainsString('Cette demande en attente chevauche ces dates et sera refusée : '.$overlapping->user->full_name, $confirm);
         $this->assertStringNotContainsString($after->user->full_name, $confirm);
-        $this->assertStringNotContainsString('chevauche', $items[(string) $after->getKey()]['actions'][0]['confirm']);
+        $this->assertStringNotContainsString('chevauche', $actions($after)[0]['confirm']);
 
         $this->asUser($offer->user)->postJson("/api/v1/bookings/{$chosen->getKey()}/accept")->assertNoContent();
 

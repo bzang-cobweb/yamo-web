@@ -210,6 +210,18 @@ class ReceivedBookingListing extends Listing
             $item->counter(trans_choice('offer::booking.profile.unread_count', $unread, ['count' => $unread], $locale), 'notifications', link: '/notifications/'.$notification, tone: 'danger');
         }
 
+        // Pas de bouton sur la carte : la toucher ouvre le détail de la demande, où l'on répond (décision
+        // 2026-11-22-demandes-carte-seule).
+        return $item;
+    }
+
+    /**
+     * Les boutons d'une demande : « Accepter », « Refuser » tant qu'elle attend, puis afficher ou masquer l'adresse.
+     * Plus sur les cartes de la liste (décision 2026-11-22-demandes-carte-seule), mais dans le panneau du jour du
+     * calendrier (décision 2026-11-19-contrat-calendrier-offre).
+     */
+    public function withAnswerActions(ListItem $item, Booking $record, string $locale): ListItem
+    {
         if ($record->isAwaitingAnswer()) {
             // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message
             // facultatif (décision 2026-11-19-contrat-reservations-logements-profil).
