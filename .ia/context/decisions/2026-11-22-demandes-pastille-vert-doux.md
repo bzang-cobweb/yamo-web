@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-demandes-pastille-vert-franc.md
+
 # « Demandes reçues » : la pastille des non lues en vert doux
 
 - **Date** : 2026-11-22
