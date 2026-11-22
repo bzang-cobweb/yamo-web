@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-demandes-message-apres-texte.md
+
 # Cartes : le message juste après la ligne du nom
 
 - **Date** : 2026-11-22
