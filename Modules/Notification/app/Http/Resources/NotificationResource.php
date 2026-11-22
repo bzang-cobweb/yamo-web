@@ -90,6 +90,8 @@ class NotificationResource extends JsonResource
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
             'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
+            /** La copie de sa propre action (« Vous avez annulé… ») : la carte nomme « Toi » comme expéditeur (décision 2026-11-22-carte-notification-toi). */
+            'own' => (bool) ($data['own'] ?? false),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
             'actor' => $this->actor($head),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */

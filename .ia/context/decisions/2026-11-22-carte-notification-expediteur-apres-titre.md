@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-carte-notification-expediteur-date-message.md
+
 # Carte de notification : l'expéditeur juste après le type
 
 - **Date** : 2026-11-22

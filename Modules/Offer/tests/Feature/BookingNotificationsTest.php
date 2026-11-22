@@ -79,6 +79,30 @@ class BookingNotificationsTest extends TestCase
         }
     }
 
+    public function test_the_answer_names_a_visit_or_a_stay_request(): void
+    {
+        // Décision 2026-11-22-reponse-visite-sejour.
+        $stay = $this->booking();
+        $visit = $this->booking();
+        $visit->forceFill(['type' => 'visit', 'check_out' => null])->save();
+        app()->setLocale('fr');
+
+        foreach (['séjour' => $stay, 'visite' => $visit] as $kind => $booking) {
+            foreach ([BookingStepEnum::ACCEPTED->value => 'acceptée', BookingStepEnum::REFUSED->value => 'refusée'] as $step => $done) {
+                $owner = $booking->offer->user;
+                $guest = (string) $booking->user->full_name;
+                $sent = BookingNotification::for($booking, BookingStepEnum::from($step));
+                $own = BookingNotification::for($booking, BookingStepEnum::from($step), own: true);
+                $verb = mb_substr($done, 0, -1);
+
+                $this->assertStringStartsWith("La demande de {$kind} pour « ", $sent->toArray($booking->user)['summary']);
+                $this->assertStringEndsWith(") a été {$done}.", $sent->toArray($booking->user)['summary']);
+                $this->assertStringStartsWith("Vous avez {$verb} la demande de {$kind} de {$guest} pour « ", $own->toArray($owner)['body']);
+                $this->assertStringContainsString("votre demande de {$kind} pour « ", $sent->toSms($booking->user));
+            }
+        }
+    }
+
     public function test_each_step_is_an_event(): void
     {
         Event::fake([BookingRequested::class, BookingAnswered::class, BookingCancelled::class]);
@@ -129,7 +153,7 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('« Réservations reçues »', $mail->introLines[2]);
 
         app()->setLocale('en');
-        $this->assertStringContainsString('your request for', BookingNotification::for($booking, BookingStepEnum::ACCEPTED)->toSms($booking->user));
+        $this->assertStringContainsString('your stay request for', BookingNotification::for($booking, BookingStepEnum::ACCEPTED)->toSms($booking->user));
     }
 
     public function test_the_real_send_reaches_the_sms_sender_in_the_recipient_language(): void
@@ -186,7 +210,7 @@ class BookingNotificationsTest extends TestCase
 
         $this->assertSame(BookingStatusEnum::ACCEPTED, $booking->fresh()->status);
         $this->assertSame('+237690000008', $this->sms->messages[0]['to']);
-        $this->assertStringContainsString('est acceptée', $this->sms->messages[0]['message']);
+        $this->assertStringContainsString('a été acceptée', $this->sms->messages[0]['message']);
     }
 
     public function test_the_owner_own_answer_stays_in_the_tab(): void
@@ -203,7 +227,7 @@ class BookingNotificationsTest extends TestCase
 
         // Seul le membre reçoit un SMS ; pas le propriétaire.
         $this->assertSame([], array_filter($this->sms->messages, fn (array $sms): bool => $sms['to'] === '+237690000009'));
-        $this->assertStringContainsString('Vous avez refusé la demande de Marie Curie', $booking->offer->user->notifications()->sole()->data['body']);
+        $this->assertStringContainsString('Vous avez refusé la demande de séjour de Marie Curie', $booking->offer->user->notifications()->sole()->data['body']);
     }
 
     public function test_a_request_lands_in_the_owner_notifications_tab_in_their_language(): void

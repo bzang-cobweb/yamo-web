@@ -146,27 +146,27 @@ return [
         ],
         'accepted' => [
             'subject' => 'Anfrage angenommen: :offer',
-            'body' => 'Ihre Anfrage für „:offer“ (:period) wurde angenommen.',
+            'body' => 'Ihre :request für „:offer“ (:period) wurde angenommen.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'Sie haben die Anfrage von :guest für „:offer“ (:period) angenommen.',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'hat Ihre Anfrage für „:offer“ (:period) angenommen.',
-            'sms' => ':app: Ihre Anfrage für „:offer“ (:period) wurde angenommen.',
+            'own' => 'Sie haben die :request von :guest für „:offer“ (:period) angenommen.',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'Die :request für „:offer“ (:period) wurde angenommen.',
+            'sms' => ':app: Ihre :request für „:offer“ (:period) wurde angenommen.',
         ],
         'refused' => [
             'subject' => 'Anfrage abgelehnt: :offer',
-            'body' => 'Ihre Anfrage für „:offer“ (:period) wurde abgelehnt.',
+            'body' => 'Ihre :request für „:offer“ (:period) wurde abgelehnt.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'Sie haben die Anfrage von :guest für „:offer“ (:period) abgelehnt.',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'hat Ihre Anfrage für „:offer“ (:period) abgelehnt.',
-            'sms' => ':app: Ihre Anfrage für „:offer“ (:period) wurde abgelehnt.',
+            'own' => 'Sie haben die :request von :guest für „:offer“ (:period) abgelehnt.',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'Die :request für „:offer“ (:period) wurde abgelehnt.',
+            'sms' => ':app: Ihre :request für „:offer“ (:period) wurde abgelehnt.',
         ],
         'cancelled' => [
             'subject' => 'Anfrage storniert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) storniert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) storniert.',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'Die :request für „:offer“ (:period) wurde storniert.',
             'sms' => ':app: :guest hat die :request für „:offer“ (:period) storniert.',
         ],

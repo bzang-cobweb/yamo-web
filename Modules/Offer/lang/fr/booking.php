@@ -146,27 +146,27 @@ return [
         ],
         'accepted' => [
             'subject' => 'Demande acceptée : :offer',
-            'body' => 'Votre demande pour « :offer » (:period) est acceptée.',
+            'body' => 'Votre :request pour « :offer » (:period) a été acceptée.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'Vous avez accepté la demande de :guest pour « :offer » (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'a accepté votre demande pour « :offer » (:period).',
-            'sms' => ':app : votre demande pour « :offer » (:period) est acceptée.',
+            'own' => 'Vous avez accepté la :request de :guest pour « :offer » (:period).',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'La :request pour « :offer » (:period) a été acceptée.',
+            'sms' => ':app : votre :request pour « :offer » (:period) a été acceptée.',
         ],
         'refused' => [
             'subject' => 'Demande refusée : :offer',
-            'body' => 'Votre demande pour « :offer » (:period) est refusée.',
+            'body' => 'Votre :request pour « :offer » (:period) a été refusée.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'Vous avez refusé la demande de :guest pour « :offer » (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'a refusé votre demande pour « :offer » (:period).',
-            'sms' => ':app : votre demande pour « :offer » (:period) est refusée.',
+            'own' => 'Vous avez refusé la :request de :guest pour « :offer » (:period).',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'La :request pour « :offer » (:period) a été refusée.',
+            'sms' => ':app : votre :request pour « :offer » (:period) a été refusée.',
         ],
         'cancelled' => [
             'subject' => 'Demande annulée : :offer',
             'body' => ':guest a annulé sa :request pour « :offer » (:period).',
             'own' => 'Vous avez annulé votre :request pour « :offer » (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'La :request pour « :offer » (:period) a été annulée.',
             'sms' => ':app : :guest a annulé sa :request pour « :offer » (:period).',
         ],

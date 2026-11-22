@@ -146,27 +146,27 @@ return [
         ],
         'accepted' => [
             'subject' => 'Request accepted: :offer',
-            'body' => 'Your request for “:offer” (:period) has been accepted.',
+            'body' => 'Your :request for “:offer” (:period) has been accepted.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'You accepted :guest’s request for “:offer” (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'accepted your request for “:offer” (:period).',
-            'sms' => ':app: your request for “:offer” (:period) has been accepted.',
+            'own' => 'You accepted :guest’s :request for “:offer” (:period).',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'The :request for “:offer” (:period) has been accepted.',
+            'sms' => ':app: your :request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
             'subject' => 'Request declined: :offer',
-            'body' => 'Your request for “:offer” (:period) has been declined.',
+            'body' => 'Your :request for “:offer” (:period) has been declined.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
-            'own' => 'You declined :guest’s request for “:offer” (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
-            'summary' => 'declined your request for “:offer” (:period).',
-            'sms' => ':app: your request for “:offer” (:period) has been declined.',
+            'own' => 'You declined :guest’s :request for “:offer” (:period).',
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
+            'summary' => 'The :request for “:offer” (:period) has been declined.',
+            'sms' => ':app: your :request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their :request for “:offer” (:period).',
             'own' => 'You cancelled your :request for “:offer” (:period).',
-            // Sans le nom de qui agit : la carte l'affiche au-dessus, avec sa photo.
+            // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'The :request for “:offer” (:period) has been cancelled.',
             'sms' => ':app: :guest cancelled their :request for “:offer” (:period).',
         ],

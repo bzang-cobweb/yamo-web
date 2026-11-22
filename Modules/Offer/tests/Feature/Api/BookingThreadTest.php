@@ -146,7 +146,7 @@ class BookingThreadTest extends TestCase
         // Sa réponse remonte la première demande en tête, dans ses mots, sans qui agit.
         $cards = $this->cards($this->owner);
         $this->assertCount(2, $cards);
-        $this->assertStringStartsWith('Vous avez accepté la demande de '.$this->guest->full_name, $cards[0]['body']);
+        $this->assertStringStartsWith('Vous avez accepté la demande de séjour de '.$this->guest->full_name, $cards[0]['body']);
         $this->assertNull($cards[0]['actor']);
         $this->assertNull($cards[0]['summary']);
         $this->assertSame(['label' => 'Acceptée', 'tone' => 'success'], $cards[0]['tag']);
