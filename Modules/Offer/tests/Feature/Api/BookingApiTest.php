@@ -431,6 +431,9 @@ class BookingApiTest extends TestCase
         // Le titre du logement dans la barre du haut (décision 2026-11-21-demandes-titre-logement-barre) ; sous les
         // filtres, le nombre de demandes, filtres compris, sans la ligne du type (décision 2026-11-21-demandes-nombre).
         $this->assertSame(OfferCardTitle::of($offer, 'fr')[0], $requests['title']);
+        // Le titre en lien vers la fiche du logement (décision 2026-11-22-demandes-lien-offre).
+        $this->assertSame('/offers/'.$offer->getKey(), $requests['title_link']);
+        $this->assertNull($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.title_link'));
         $this->assertSame(['title' => '2 demandes reçues', 'subtitle' => null], $requests['heading']);
         $this->assertSame('Aucune demande reçue', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.title'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');

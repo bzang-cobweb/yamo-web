@@ -30,6 +30,8 @@ class ListingResource extends JsonResource
         return [
             'name' => $this->resource->key(),
             'title' => $this->resource->titleFor($filters),
+            /** Écran ouvert en touchant le titre de la barre du haut (« /offers/12 ») ; `null` : le titre n'est pas un lien. */
+            'title_link' => $this->resource->titleLinkFor($filters),
             /** Intitulé sous les filtres, en tête des items : un titre et un sous-titre ; `null` : aucun. */
             'heading' => $this->resource->headingFor($filters, is_string($search) ? $search : null),
             /** Texte affiché quand la liste est vide. */

@@ -56,6 +56,14 @@ class ReceivedBookingListing extends Listing
         return $offer === null ? $this->title() : OfferCardTitle::of($offer, $this->locale())[0];
     }
 
+    /** Le titre du logement, dans la barre du haut, en lien vers sa fiche (décision 2026-11-22-demandes-lien-offre). */
+    public function titleLinkFor(array $filters): ?string
+    {
+        $offer = $this->chosenOffer($filters);
+
+        return $offer === null ? null : '/offers/'.$offer->getKey();
+    }
+
     /**
      * Sous les filtres, le nombre de demandes de la liste, recherche et filtres compris : « 3 demandes »,
      * « Aucune demande » (décision 2026-11-21-demandes-nombre).
