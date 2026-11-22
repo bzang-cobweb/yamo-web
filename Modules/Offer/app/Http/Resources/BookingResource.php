@@ -126,6 +126,21 @@ class BookingResource extends JsonResource
     }
 
     /**
+     * La ligne du total, la même que dans le détail de la demande (« Total », « Total (sans charges) ») : un séjour,
+     * son total plus la caution ; une visite, le loyer fois les mois de caution et d'avance ; `null` sans total.
+     * Aussi pour la carte de « Demandes reçues » (décision 2026-11-22-demandes-total-comme-detail).
+     *
+     * @return array{key: string, label: string, value: string}|null
+     */
+    public function totalLine(string $locale): ?array
+    {
+        $booking = $this->resource;
+        $lines = $booking->type === BookingTypeEnum::VISIT ? $this->monthly($booking, $locale) : $this->stay($booking, $locale);
+
+        return collect($lines)->firstWhere('key', 'total');
+    }
+
+    /**
      * Une visite (non meublé) : les charges du mois, le loyer, la caution et l'avance de loyer —
      * charges, caution et avance seulement si renseignées et non nulles (décision
      * 2026-11-20-lignes-vides-masquees) — le nombre de mois dans le libellé (« 2 mois de caution ») et leur montant, le

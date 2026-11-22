@@ -3,6 +3,7 @@
 namespace Modules\Offer\Lists;
 
 use Modules\Form\Support\ListItem;
+use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -23,6 +24,7 @@ final class OfferRequestItem
         return ListItem::make($booking->getKey(), $member !== '' ? $member : $when, $member !== '' ? $when : null)
             ->titleLink($member !== '' && $booking->user !== null ? '/members/'.$booking->user->getKey() : null)
             ->tag($booking->status->label(), $booking->status->tone())
-            ->highlight(($total = $booking->formattedTotal($locale)) === null ? null : __('offer::booking.list.total', ['amount' => $total], $locale));
+            // Le total du détail de la demande, avec son libellé (décision 2026-11-22-demandes-total-comme-detail).
+            ->highlight(($total = (new BookingResource($booking))->totalLine($locale)) === null ? null : __('offer::booking.list.total', ['label' => $total['label'], 'amount' => $total['value']], $locale));
     }
 }

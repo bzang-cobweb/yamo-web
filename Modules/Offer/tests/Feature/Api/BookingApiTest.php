@@ -280,6 +280,11 @@ class BookingApiTest extends TestCase
         $this->assertNull($item['rating']);
         // Avec son libellé (décision 2026-11-21-demandes-pastille-non-lues-total).
         $this->assertStringStartsWith('Total : 135', (string) $item['highlight']);
+        // Le même total que le détail : avec la caution d'un séjour (décision 2026-11-22-demandes-total-comme-detail).
+        $offer->update(['details' => [...$offer->details, 'deposit' => 50000]]);
+        $withDeposit = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.items.0.highlight');
+        $this->assertSame('Total : 185 000', mb_substr(preg_replace('/[\x{00A0}\x{202F}]/u', ' ', (string) $withDeposit), 0, 15));
+        $offer->update(['details' => [...$offer->details, 'deposit' => 0]]);
         // Ni menu ni bouton : la carte ouvre le détail de la demande (décision 2026-11-22-demandes-carte-seule) ; on
         // répond depuis le calendrier, son bouton « Traiter la demande ».
         $this->assertFalse($this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data.menu'));
