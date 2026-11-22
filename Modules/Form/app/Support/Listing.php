@@ -288,17 +288,6 @@ abstract class Listing
     }
 
     /**
-     * L'écran ouvert en touchant le titre de la barre du haut (la fiche du logement des « Demandes », décision
-     * 2026-11-22-demandes-lien-offre) ; `null` : le titre n'est pas un lien.
-     *
-     * @param  array<string, mixed>  $filters  filtres validés
-     */
-    public function titleLinkFor(array $filters): ?string
-    {
-        return null;
-    }
-
-    /**
      * Un intitulé affiché sous les filtres, en tête des items, selon les filtres choisis : un titre et, dessous,
      * un sous-titre facultatif (le logement des « Demandes » et sa ligne du type, décisions
      * 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre) ; `null` par défaut : aucun.

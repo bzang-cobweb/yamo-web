@@ -68,7 +68,6 @@ class UserAddressApiTest extends TestCase
             ->assertExactJson(['data' => [
                 'name' => 'auth.addresses',
                 'title' => 'Mes adresses',
-                'title_link' => null,
                 'heading' => null,
                 'empty' => "Aucune adresse pour l'instant.",
                 // « Ajouter une adresse » en bouton dans la barre du bas (décision 2026-11-21-ajout-adresse-barre-du-bas).
