@@ -2,7 +2,6 @@
 
 namespace Modules\Offer\Providers;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
@@ -69,15 +68,6 @@ class OfferServiceProvider extends ModuleServiceProvider
 
     /** @var list<class-string> */
     protected array $commands = [InviteReviewsCommand::class];
-
-    /**
-     * Chaque matin, l'invitation à donner son avis après un séjour ou une visite terminé (décision
-     * 2026-11-22-invitation-avis).
-     */
-    protected function configureSchedules(Schedule $schedule): void
-    {
-        $schedule->command(InviteReviewsCommand::class)->dailyAt('10:00');
-    }
 
     public function boot(): void
     {

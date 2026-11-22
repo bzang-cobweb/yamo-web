@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-invitation-avis-console.md
+
 # Invitation à donner son avis, le lendemain de la fin
 
 - **Date** : 2026-11-22
