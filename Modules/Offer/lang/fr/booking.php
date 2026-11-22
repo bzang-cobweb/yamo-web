@@ -111,6 +111,8 @@ return [
         'cancelled' => 'Demande annulée',
         'updated' => 'Demande modifiée',
     ],
+    // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
+    'detail_title' => ['stay' => 'Demande de séjour', 'visit' => 'Demande de visite'],
     'notify' => [
         'filter_rental_type' => 'Type de location',
         // Le nombre de personnes d'une demande, dans le texte de la carte.

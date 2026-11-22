@@ -72,6 +72,12 @@ class AddBookingToNotificationThread
 
         $event->data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
 
+        // Le titre de la page selon la demande : « Demande de séjour » (une location meublée), « Demande de visite »
+        // (décision 2026-11-22-detail-titre-sejour-visite).
+        if ($booking !== null) {
+            $event->data['title'] = __('offer::booking.detail_title.'.$booking->type->value);
+        }
+
         $mine = $booking !== null && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier();
 
         // L'adresse masquée par le propriétaire : la ville seule pour le demandeur ; sans ville, pas de ligne

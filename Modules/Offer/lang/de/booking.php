@@ -111,6 +111,8 @@ return [
         'cancelled' => 'Anfrage storniert',
         'updated' => 'Anfrage geändert',
     ],
+    // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
+    'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     'notify' => [
         'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
