@@ -224,16 +224,14 @@ class Booking extends Model
     }
 
     /**
-     * « du 3 déc. 2026 au 6 déc. 2026 », « le 3 déc. 2026 » (visite), dans la langue `$locale` ; avec `$numeric`, en
-     * chiffres dans l'ordre de la langue, « du 03/12/2026 au 06/12/2026 » (textes des notifications, décision
-     * 2026-11-22-date-entiere-chiffres).
+     * « du 3 déc. 2026 au 6 déc. 2026 », « le 3 déc. 2026 » (visite), dans la langue `$locale` : le mois en lettres,
+     * jamais en chiffres, pour éviter de confondre jour et mois (décision 2026-11-22-dates-sans-chiffres).
      */
-    public function period(string $locale, bool $numeric = false): string
+    public function period(string $locale): string
     {
-        $format = $numeric ? 'L' : 'll';
-        $in = $this->check_in->copy()->locale($locale)->isoFormat($format);
+        $in = $this->check_in->copy()->locale($locale)->isoFormat('ll');
 
-        $out = $this->check_out?->copy()->locale($locale)->isoFormat($format);
+        $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
 
         if ($this->type === BookingTypeEnum::VISIT) {
             // Une visite : sa date, et la seconde date proposée s'il y en a une (`check_out`).

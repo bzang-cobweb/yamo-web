@@ -246,7 +246,7 @@ class BookingThreadTest extends TestCase
             $this->assertSame(implode(' · ', array_filter([$page['booking']['offer']['rental_type'], $page['booking']['offer']['property_type']])), $page['title']);
             $this->assertStringNotContainsString(' · Douala', $page['title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            $this->assertSame('La demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr', numeric: true).', 1 personne) a été envoyée.', $page['summary']);
+            $this->assertSame('La demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été envoyée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
             // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
             $this->assertArrayNotHasKey('total', $page);
@@ -342,7 +342,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Autre visite', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
         // Le texte d'une visite : sa date, ou la seconde proposée (décision 2026-11-20-texte-demande-location).
         app()->setLocale('fr');
-        $this->assertSame('La demande de visite pour « '.$this->offer->getTranslation('title', 'fr').' » (le 28/11/2026 ou le 30/11/2026) a été envoyée.', BookingText::summary($visit, 'requested'));
+        $this->assertSame('La demande de visite pour « '.$this->offer->getTranslation('title', 'fr').' » (le 28 nov. 2026 ou le 30 nov. 2026) a été envoyée.', BookingText::summary($visit, 'requested'));
         $visit->update(['check_out' => null]);
         $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
     }

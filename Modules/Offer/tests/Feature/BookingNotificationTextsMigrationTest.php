@@ -43,7 +43,7 @@ class BookingNotificationTextsMigrationTest extends TestCase
         $migration->up();
 
         $data = fn (string $id): array => json_decode((string) DB::table('notifications')->where('id', $id)->value('data'), true);
-        $this->assertSame('La demande de visite pour « '.$offer->getTranslation('title', 'fr').' » (le 03/03/2027) a été annulée.', $data($sent)['summary']);
+        $this->assertSame('La demande de visite pour « '.$offer->getTranslation('title', 'fr').' » (le 3 mars 2027) a été annulée.', $data($sent)['summary']);
         $this->assertStringContainsString(' a annulé sa demande de visite pour « ', $data($sent)['body']);
         $this->assertSame('Gardé', $data($sent)['message']);
         $this->assertStringStartsWith('Vous avez annulé votre demande de visite pour « ', $data($own)['body']);

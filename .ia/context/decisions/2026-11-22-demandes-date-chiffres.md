@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-dates-sans-chiffres.md
+
 # « Demandes reçues » : la date à droite du nom, en chiffres quand elle est entière
 
 Remplace : 2026-11-22-demandes-date-derniere-notification.md (pour la place et le format)

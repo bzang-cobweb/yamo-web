@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-dates-sans-chiffres.md
+
 # Dates entières en chiffres, au format de la langue
 
 - **Date** : 2026-11-22
