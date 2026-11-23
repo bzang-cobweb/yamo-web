@@ -40,10 +40,9 @@ class PartnerApiTest extends TestCase
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],
             'contact_email' => 'commercial@wouri.test',
         ]);
-        // Pas publié, campagne pas commencée, campagne finie, autre pays : absents.
+        // Pas publié, campagne pas commencée, autre pays : absents.
         Partner::factory()->for($this->cameroon)->create(['published' => false]);
         Partner::factory()->for($this->cameroon)->create(['starts_at' => now()->addDay()]);
-        Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->subMinute()]);
         Partner::factory()->create();
         // Campagne en cours : présent.
         $running = Partner::factory()->for($this->cameroon)->create(['position' => 3, 'starts_at' => now()->subDay(), 'expires_at' => now()->addDay()]);
@@ -106,6 +105,23 @@ class PartnerApiTest extends TestCase
         });
         // Seuls les partenaires servis comptent une vue.
         $this->assertSame(10 + 6 * 3, (int) Partner::query()->sum('views_count'));
+    }
+
+    public function test_the_expiry_date_hides_a_partner_only_when_partner_payment_is_applied(): void
+    {
+        // Décision 2026-11-23-paiement-partenaires, comme les offres.
+        $paid = Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->addDay()]);
+        $expired = Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->subMinute()]);
+        $undated = Partner::factory()->for($this->cameroon)->create(['expires_at' => null]);
+        $ids = fn (): array => array_column($this->partners()->json('data'), 'id');
+
+        // Pas appliqué : la date est ignorée.
+        $this->assertEqualsCanonicalizing(array_map('strval', [$paid->getKey(), $expired->getKey(), $undated->getKey()]), $ids());
+
+        // Appliqué : jusqu'à la date seulement ; sans date, jamais.
+        Setting::current()->update(['partner_payment_required' => true]);
+        $this->assertSame([(string) $paid->getKey()], $ids());
+        $this->withHeader('X-Country', 'CM')->postJson("/api/v1/partners/{$expired->getKey()}/click")->assertNotFound();
     }
 
     public function test_no_partner_an_empty_list(): void

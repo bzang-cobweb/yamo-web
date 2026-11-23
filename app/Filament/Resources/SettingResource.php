@@ -55,6 +55,10 @@ class SettingResource extends AbstractResource
                                 Toggle::make('payment_required')
                                     ->label(__('settings.payment_required'))
                                     ->helperText(__('settings.help.payment_required')),
+                                // Décision 2026-11-23-paiement-partenaires.
+                                Toggle::make('partner_payment_required')
+                                    ->label(__('settings.partner_payment_required'))
+                                    ->helperText(__('settings.help.partner_payment_required')),
                             ]),
                         // Décision 2026-11-19-age-minimum.
                         Tab::make(__('settings.sections.users'))

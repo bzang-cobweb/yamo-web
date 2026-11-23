@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Models;
 
+use App\Models\Setting;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,7 +81,8 @@ class Partner extends Model implements HasMedia
     }
 
     /**
-     * Visibles dans l'app : publiés, du pays courant, campagne commencée et pas finie.
+     * Visibles dans l'app : publiés, du pays courant, campagne commencée ; le paiement des partenaires appliqué,
+     * jusqu'à leur date d'expiration, sans date jamais (décision 2026-11-23-paiement-partenaires), comme les offres.
      *
      * @param  Builder<Partner>  $query
      */
@@ -89,7 +91,7 @@ class Partner extends Model implements HasMedia
         $query->where('published', true)
             ->where('country_id', CurrentCountry::require()->getKey())
             ->where(fn (Builder $start) => $start->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn (Builder $end) => $end->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+            ->when(Setting::partnerPaymentRequired(), fn (Builder $paid) => $paid->where('expires_at', '>', now()));
     }
 
     public function logoUrl(): ?string

@@ -118,14 +118,17 @@ class ApplicationTest extends AuthFilamentTestCase
 
         // Décision 2026-11-19-contrat-paiement-visibilite-avis.
         Livewire::test(EditSettings::class)
-            ->assertSee('Appliquer le paiement')
-            ->fillForm(['payment_required' => true])
+            ->assertSee('Appliquer le paiement pour les propriétaires')
+            ->assertSee('Appliquer le paiement pour les partenaires')
+            ->fillForm(['payment_required' => true, 'partner_payment_required' => true])
             ->call('save')
             ->assertHasNoFormErrors();
 
         $this->assertTrue(Setting::paymentRequired());
+        // Décision 2026-11-23-paiement-partenaires.
+        $this->assertTrue(Setting::partnerPaymentRequired());
         // Pas servi à l'app.
-        $this->getJson('/api/v1/app')->assertJsonMissingPath('data.payment_required');
+        $this->getJson('/api/v1/app')->assertJsonMissingPath('data.payment_required')->assertJsonMissingPath('data.partner_payment_required');
     }
 
     public function test_settings_page_sets_the_home_counts(): void

@@ -9,13 +9,14 @@ use Spatie\Translatable\HasTranslations;
 /**
  * Réglages de l'application, édités dans le back-office (page Application) et
  * servis par `GET /api/v1/app` : description traduite ; « Appliquer le paiement »
- * (`payment_required`, décision 2026-11-19-contrat-paiement-visibilite-avis), non servi ;
+ * (`payment_required`, décision 2026-11-19-contrat-paiement-visibilite-avis) et pour les partenaires
+ * (`partner_payment_required`, décision 2026-11-23-paiement-partenaires), non servis ;
  * âge minimum (`minimum_age`, décision 2026-11-19-age-minimum) ; nombres d'offres par ville et de partenaires
  * sur l'accueil (décision 2026-11-23-accueil-nombres-reglables). Une seule ligne, obtenue
  * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
  * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
-#[Fillable(['description', 'payment_required', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
+#[Fillable(['description', 'payment_required', 'partner_payment_required', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
 class Setting extends Model
 {
     use HasTranslations;
@@ -30,6 +31,7 @@ class Setting extends Model
     {
         return [
             'payment_required' => 'boolean',
+            'partner_payment_required' => 'boolean',
             'minimum_age' => 'integer',
             'home_offers_per_city' => 'integer',
             'home_partners' => 'integer',
@@ -43,6 +45,15 @@ class Setting extends Model
     public static function paymentRequired(): bool
     {
         return (bool) self::query()->oldest('id')->value('payment_required');
+    }
+
+    /**
+     * Le paiement des partenaires est-il appliqué ? Alors un partenaire n'est visible dans l'app que jusqu'à sa
+     * date d'expiration ; sans date, il n'est pas visible (décision 2026-11-23-paiement-partenaires).
+     */
+    public static function partnerPaymentRequired(): bool
+    {
+        return (bool) self::query()->oldest('id')->value('partner_payment_required');
     }
 
     /**
