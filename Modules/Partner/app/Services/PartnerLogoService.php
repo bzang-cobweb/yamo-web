@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Services;
 
+use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
 use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
@@ -15,34 +16,19 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * 2026-11-24-partenaires-par-les-membres), comme les photos d'une offre, ou depuis le back-office (décision
  * 2026-11-24-partenaire-logo-optimise), comme la photo de profil.
  */
-class PartnerLogoService
+class PartnerLogoService extends ConfiguredImageService
 {
     /** Le nom du champ du formulaire. */
     public const FIELD = 'logo';
 
     /**
-     * Les types de fichier acceptés (`config('partner.logo.mime_types')`, `PARTNER_LOGO_MIME_TYPES`).
-     *
-     * @return list<string>
+     * Ses réglages : `config('partner.logo')`, `PARTNER_LOGO_*` (types, poids, qualité, plafond de l'original,
+     * conversions ; décisions 2026-11-24-partenaire-logo-config et 2026-11-24-partenaire-logo-original), lus par
+     * `ConfiguredImageService` (décision 2026-11-24-image-service-abstrait). L'original est gardé, plafonné.
      */
-    public static function acceptedMimeTypes(): array
+    protected static function configKey(): string
     {
-        return config('partner.logo.mime_types');
-    }
-
-    /** La taille maximale d'un envoi, en kilo-octets (`PARTNER_LOGO_MAX_UPLOAD_KB`). */
-    public static function maxUploadKb(): int
-    {
-        return (int) config('partner.logo.max_upload_kb');
-    }
-
-    /**
-     * Le plus grand côté du logo enregistré, en pixels : l'original envoyé, plafonné (`PARTNER_LOGO_ORIGINAL_SIZE`) ;
-     * les conversions en sont tirées (décision 2026-11-24-partenaire-logo-original).
-     */
-    public static function storedSize(): int
-    {
-        return (int) config('partner.logo.original_size');
+        return 'partner.logo';
     }
 
     /**
@@ -51,13 +37,7 @@ class PartnerLogoService
      */
     public static function minUploadSize(): int
     {
-        return (int) config('partner.logo.conversions.list');
-    }
-
-    /** La qualité du WebP enregistré (`PARTNER_LOGO_QUALITY`). */
-    private function quality(): int
-    {
-        return (int) config('partner.logo.quality');
+        return static::conversionSize('list');
     }
 
     /**
@@ -123,7 +103,7 @@ class PartnerLogoService
             Image::load($sourcePath)
                 ->orientation()
                 ->fit(Fit::Max, self::storedSize(), self::storedSize())
-                ->quality($this->quality())
+                ->quality(self::quality())
                 ->format('webp')
                 ->save($optimised);
 

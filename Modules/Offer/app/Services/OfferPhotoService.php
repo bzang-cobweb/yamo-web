@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Services;
 
+use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,48 +20,16 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * nouvelles sont optimisées comme la photo de profil ; celles qui ne sont plus
  * citées sont retirées ; l'ordre reçu devient l'ordre de l'offre.
  */
-class OfferPhotoService
+class OfferPhotoService extends ConfiguredImageService
 {
     /**
-     * Les types acceptés à l'envoi, avant optimisation (`config('offer.photos.mime_types')`, `OFFER_PHOTOS_MIME_TYPES`).
-     *
-     * @return list<string>
+     * Ses réglages : `config('offer.photos')`, `OFFER_PHOTOS_*` (types, poids, nombre, qualité, conversions ; décision
+     * 2026-11-24-avatar-photos-offre-conversions), lus par `ConfiguredImageService` (décision
+     * 2026-11-24-image-service-abstrait). La photo enregistrée a la largeur de la plus grande conversion.
      */
-    public static function acceptedMimeTypes(): array
+    protected static function configKey(): string
     {
-        return config('offer.photos.mime_types');
-    }
-
-    /** La taille maximale d'un fichier envoyé, en kilo-octets (`OFFER_PHOTOS_MAX_UPLOAD_KB`). */
-    public static function maxUploadKb(): int
-    {
-        return (int) config('offer.photos.max_upload_kb');
-    }
-
-    /** Le nombre maximal de photos d'une offre (`OFFER_PHOTOS_MAX_FILES`). */
-    public static function maxFiles(): int
-    {
-        return (int) config('offer.photos.max_files');
-    }
-
-    /** La qualité du WebP enregistré et de ses conversions (`OFFER_PHOTOS_QUALITY`). */
-    public static function quality(): int
-    {
-        return (int) config('offer.photos.quality');
-    }
-
-    /**
-     * La largeur de la photo enregistrée, en pixels : la plus grande des conversions, dont elle est la source
-     * (décision 2026-11-24-avatar-photos-offre-conversions).
-     */
-    public static function storedSize(): int
-    {
-        $sizes = array_map('intval', (array) config('offer.photos.conversions'));
-        if ($sizes === []) {
-            return 1600;
-        }
-
-        return max($sizes);
+        return 'offer.photos';
     }
 
     /**

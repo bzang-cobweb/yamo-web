@@ -132,13 +132,13 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Une conversion par endroit où la photo s'affiche (`config('offer.photos.conversions')`, décision
-     * 2026-11-24-avatar-photos-offre-conversions), bornée par la largeur (`OfferPhotoService::fit()`), produite tout
+     * Une conversion par endroit où la photo s'affiche (`OfferPhotoService::conversions()`, décision
+     * 2026-11-24-avatar-photos-offre-conversions), bornée par la largeur (`OfferPhotoService::bounds()`), produite tout
      * de suite : aucune file d'attente ne tourne.
      */
     public function registerMediaConversions(?Media $media = null): void
     {
-        foreach ((array) config('offer.photos.conversions') as $name => $size) {
+        foreach (OfferPhotoService::conversions() as $name => $size) {
             [$width, $height] = OfferPhotoService::bounds((int) $size);
             $this->addMediaConversion((string) $name)
                 ->performOnCollections(self::PHOTOS)

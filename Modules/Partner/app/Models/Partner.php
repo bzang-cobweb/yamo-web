@@ -18,6 +18,7 @@ use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Database\Factories\PartnerFactory;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Events\PartnerStatusChanged;
+use Modules\Partner\Services\PartnerLogoService;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -209,17 +210,17 @@ class Partner extends Model implements HasMedia
     }
 
     /**
-     * Une conversion par endroit où le logo s'affiche (`config('partner.logo.conversions')`, décision
+     * Une conversion par endroit où le logo s'affiche (`PartnerLogoService::conversions()`, décision
      * 2026-11-24-partenaire-logo-conversions), produite tout de suite : aucune file d'attente ne tourne.
      */
     public function registerMediaConversions(?Media $media = null): void
     {
-        foreach ((array) config('partner.logo.conversions') as $name => $size) {
+        foreach (PartnerLogoService::conversions() as $name => $size) {
             $this->addMediaConversion((string) $name)
                 ->performOnCollections(self::LOGO)
                 ->fit(Fit::Max, (int) $size, (int) $size)
                 ->format('webp')
-                ->quality((int) config('partner.logo.quality'))
+                ->quality(PartnerLogoService::quality())
                 ->nonOptimized()
                 ->nonQueued();
         }
