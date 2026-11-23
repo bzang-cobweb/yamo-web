@@ -10,6 +10,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
@@ -43,8 +44,12 @@ class BookingResource extends JsonResource
             'guests' => $booking->guests,
             /** L'offre : son titre saisi, son type de location et son type de logement, rédigés (`null` s'ils manquent). */
             'offer' => $this->offer($booking->offer),
-            /** Le titre composé avec la ville (« Location meublée · Studio · Douala »), sous le nom du logement (décision 2026-11-23-detail-titre-compose-avec-ville) ; `null` : aucun. */
-            'composed_title' => $booking->offer === null ? null : app(DomainRegistry::class)->require()->itemTypeLine($booking->offer, app()->getLocale()),
+            /**
+             * Le titre composé avec la ville (« Location meublée · Studio · Douala »), sous le nom du logement (décision
+             * 2026-11-23-detail-titre-compose-avec-ville), par la règle commune des titres d'offre (`OfferCardTitle`,
+             * décision 2026-11-24-titre-compose-regle-commune) ; `null` : aucun, ou il répète le titre.
+             */
+            'composed_title' => $booking->offer === null ? null : OfferCardTitle::of($booking->offer, app()->getLocale())[1],
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
              * arrivée, départ (ou visite, seconde date), durée, prix, total. Une

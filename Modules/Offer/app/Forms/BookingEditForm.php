@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Submission;
-use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -51,12 +51,17 @@ class BookingEditForm extends OfferBookingForm
         return array_map(fn (Field $field): Field => array_key_exists($field->name, $values) ? $field->default($values[$field->name]) : $field, parent::fields());
     }
 
-    /** Le titre saisi du logement, comme pour « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter). */
+    /**
+     * Le titre du logement, comme pour « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) :
+     * la règle commune des titres d'offre (`OfferCardTitle`, décision 2026-11-24-titre-compose-regle-commune).
+     */
     public function title(): string
     {
-        $title = $this->offer === null ? '' : (string) $this->offer->getTranslation('title', app()->getLocale());
+        if ($this->offer === null) {
+            return (string) $this->navigationTitle();
+        }
 
-        return $title !== '' ? $title : (string) $this->navigationTitle();
+        return OfferCardTitle::of($this->offer, app()->getLocale())[0];
     }
 
     /** « Modifier la demande », dans la barre du haut (décision 2026-11-23-modifier-annuler-comme-accepter). */
@@ -71,7 +76,12 @@ class BookingEditForm extends OfferBookingForm
      */
     public function subtitle(): ?string
     {
-        return $this->offer === null ? null : app(DomainRegistry::class)->require()->itemTypeLine($this->offer, app()->getLocale());
+        if ($this->offer === null) {
+            return null;
+        }
+
+        // La ligne du type, sauf si elle répète le titre (`OfferCardTitle`, décision 2026-11-24-titre-compose-regle-commune).
+        return OfferCardTitle::of($this->offer, app()->getLocale())[1];
     }
 
     /** Le titre et le sous-titre centrés (décision 2026-11-23-modifier-annuler-titre-compose). */

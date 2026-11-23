@@ -16,6 +16,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
+use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -205,6 +206,13 @@ class BookingApiTest extends TestCase
         // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
         $this->assertSame([OfferCardTitle::of($pending->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
         $this->assertNotNull($form['subtitle']);
+        // Sans titre saisi, la ligne du type devient le titre et n'est pas répétée en sous-titre ; le détail de la
+        // demande de même (règle commune `OfferCardTitle`, décision 2026-11-24-titre-compose-regle-commune).
+        $pending->offer->setTranslations('title', [])->save();
+        $untitled = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->json('data');
+        $this->assertSame([OfferCardTitle::of($pending->offer->fresh(), 'fr')[0], null], [$untitled['title'], $untitled['subtitle']]);
+        $this->assertStringContainsString('Location meublée', $untitled['title']);
+        $this->assertNull((new BookingResource($pending->fresh()))->resolve(request())['composed_title']);
         $this->assertSame('Enregistrer', $form['submit']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         $defaults = array_column($form['fields'], 'default', 'name');
