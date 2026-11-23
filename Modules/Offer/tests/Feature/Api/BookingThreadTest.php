@@ -17,6 +17,7 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingReviewInvitation;
@@ -247,9 +248,9 @@ class BookingThreadTest extends TestCase
             // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
             // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
-            // Le titre composé sans la ville, sous le nom du logement (décisions 2026-11-22-detail-titre-compose-sous-titre et
-            // 2026-11-22-detail-titre-compose-sans-ville).
-            $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
+            // Le titre composé avec la ville, sous le nom du logement (décisions 2026-11-22-detail-titre-compose-sous-titre et
+            // 2026-11-23-detail-titre-compose-avec-ville).
+            $this->assertSame(OfferCardTitle::of($this->offer->fresh(), 'fr')[1], $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);

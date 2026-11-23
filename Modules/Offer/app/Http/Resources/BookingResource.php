@@ -43,8 +43,8 @@ class BookingResource extends JsonResource
             'guests' => $booking->guests,
             /** L'offre : son titre saisi, son type de location et son type de logement, rédigés (`null` s'ils manquent). */
             'offer' => $this->offer($booking->offer),
-            /** Le titre composé sans la ville (« Location meublée · Studio »), sous le nom du logement (décision 2026-11-22-detail-titre-compose-sans-ville) ; `null` : aucun. */
-            'composed_title' => $booking->offer === null ? null : (implode(' · ', array_filter([RentalTypeEnum::of($booking->offer)?->label(), $this->propertyType($booking->offer)])) ?: null),
+            /** Le titre composé avec la ville (« Location meublée · Studio · Douala »), sous le nom du logement (décision 2026-11-23-detail-titre-compose-avec-ville) ; `null` : aucun. */
+            'composed_title' => $booking->offer === null ? null : app(DomainRegistry::class)->require()->itemTypeLine($booking->offer, app()->getLocale()),
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
              * arrivée, départ (ou visite, seconde date), durée, prix, total. Une
