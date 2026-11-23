@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-services-nommes-service.md
 # `2026-11-23` — Listeners : le traitement dans un service
 
 - **Type** : décision
