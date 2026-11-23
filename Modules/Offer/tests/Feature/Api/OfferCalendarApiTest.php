@@ -159,6 +159,20 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame('past', $this->days($offer, today()->subMonth()->format('Y-m'))[today()->subMonth()->startOfMonth()->toDateString()]['state']);
     }
 
+    public function test_two_pending_stays_on_the_same_night_are_an_overlap(): void
+    {
+        // Décision 2026-11-22-calendrier-chevauchement-en-attente.
+        $this->travelTo('2026-11-05 10:00:00');
+        $offer = $this->home();
+        $this->stay($offer, 40, 43);
+        $this->stay($offer, 42, 45);
+
+        $days = $this->days($offer, $this->monthOf(40));
+        $this->assertSame('pending', $days[$this->date(41)]['state']);
+        $this->assertSame('conflict', $days[$this->date(42)]['state']);
+        $this->assertSame('pending', $days[$this->date(43)]['state']);
+    }
+
     public function test_visits_color_their_day_like_stays(): void
     {
         // Une date fixe : les jours +40 à +42 restent dans le même mois (le 21 novembre, +41 passait en janvier).
