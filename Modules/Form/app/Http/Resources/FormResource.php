@@ -24,6 +24,8 @@ class FormResource extends JsonResource
             'name' => $this->resource->key(),
             'title' => $this->resource->title(),
             'subtitle' => $this->resource->subtitle(),
+            /** Une note sous le titre, à part (un avertissement) ; `null` : aucune. */
+            'notice' => $this->resource->notice(),
             /** Alignement du titre, du sous-titre et des titres d'étape : `start` ou `center`. */
             'title_align' => $this->resource->titleAlign(),
             // Un champ de fichiers reçoit l'adresse où envoyer chaque fichier (relative à l'API).

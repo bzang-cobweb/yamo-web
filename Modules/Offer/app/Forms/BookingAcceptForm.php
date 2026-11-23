@@ -61,31 +61,32 @@ class BookingAcceptForm extends Form
         return __('offer::booking.profile.accept_title');
     }
 
-    /**
-     * S'il y en a, d'abord l'avertissement (« 2 autres demandes chevauchent ces dates et seront refusées. »), puis
-     * « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 » (décisions 2026-11-22-accepter-nombre-chevauchements et
-     * 2026-11-22-accepter-avertissement-sous-titre).
-     */
+    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 ». */
     public function subtitle(): ?string
+    {
+        return $this->booking === null ? null : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
+    }
+
+    /**
+     * L'avertissement, à part, sous le titre : « 2 autres demandes chevauchent ces dates et seront refusées. », « 2 autres
+     * visites sont demandées ce jour-là. » (décisions 2026-11-22-accepter-nombre-chevauchements,
+     * 2026-11-22-accepter-autres-visites et 2026-11-22-formulaire-note).
+     */
+    public function notice(): ?string
     {
         if ($this->booking === null) {
             return null;
         }
 
-        $locale = app()->getLocale();
-        $subtitle = $this->booking->user->full_name.' · '.$this->booking->period($locale);
         $availability = app(OfferAvailability::class);
         $others = $availability->overlappingPending($this->booking)->count();
         $visits = $availability->sameDayPendingVisits($this->booking)->count();
-        // Les séjours qui seront refusés ; les autres visites du même jour, qui restent en attente sauf si on coche la
-        // case (décision 2026-11-22-accepter-autres-visites).
         $warnings = array_filter([
             $others === 0 ? null : trans_choice('offer::booking.profile.accept_overlaps', $others, ['count' => $others]),
             $visits === 0 ? null : trans_choice('offer::booking.profile.accept_same_day_visits', $visits, ['count' => $visits]),
         ]);
 
-        // L'avertissement juste sous le titre, puis le membre et les dates (décision 2026-11-22-accepter-avertissement-sous-titre).
-        return implode("\n", [...$warnings, $subtitle]);
+        return $warnings === [] ? null : implode(' ', $warnings);
     }
 
     public function submission(): ?Submission

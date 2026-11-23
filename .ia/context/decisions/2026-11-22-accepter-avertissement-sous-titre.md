@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-formulaire-note.md
+
 # Accepter une demande : l'avertissement juste sous le titre
 
 - **Date** : 2026-11-22

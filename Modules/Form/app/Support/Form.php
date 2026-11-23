@@ -92,6 +92,15 @@ abstract class Form
     }
 
     /**
+     * Une note sous le titre et le sous-titre, à part, traduite : un avertissement (décision
+     * 2026-11-22-formulaire-note) ; aucune par défaut.
+     */
+    public function notice(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Le formulaire est-il proposé ? Indisponible, il répond comme un formulaire
      * inconnu (404). Disponible par défaut.
      */

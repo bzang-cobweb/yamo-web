@@ -123,10 +123,10 @@ class BookingAvailabilityTest extends TestCase
 
         // Le formulaire d'acceptation avertit, sous le titre, du nombre de demandes qui seront refusées, sans leurs noms
         // (décisions 2026-11-22-accepter-avec-message et 2026-11-22-accepter-nombre-chevauchements).
-        $subtitle = fn (Booking $booking): string => (string) $this->asUser($offer->user)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->json('data.subtitle');
-        $this->assertStringStartsWith("1 autre demande chevauche ces dates et sera refusée.\n", $subtitle($chosen));
-        $this->assertStringNotContainsString((string) $overlapping->user->full_name, $subtitle($chosen));
-        $this->assertStringNotContainsString('chevauche', $subtitle($after));
+        // Une note à part, sous le titre (décision 2026-11-22-formulaire-note).
+        $notice = fn (Booking $booking): ?string => $this->asUser($offer->user)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->json('data.notice');
+        $this->assertSame('1 autre demande chevauche ces dates et sera refusée.', $notice($chosen));
+        $this->assertNull($notice($after));
 
         // Accepter avec un message : gardé, et joint à la notification du membre.
         $this->asUser($offer->user)->postJson("/api/v1/bookings/{$chosen->getKey()}/answer", ['answer' => 'accept', 'acceptance_message' => 'Bienvenue, à bientôt !'])->assertNoContent();
@@ -257,7 +257,8 @@ class BookingAvailabilityTest extends TestCase
 
         // L'avertissement sous le titre, et la case, décochée.
         $data = $form($chosen);
-        $this->assertStringStartsWith("2 autres visites sont demandées ce jour-là.\n", $data['subtitle']);
+        $this->assertSame('2 autres visites sont demandées ce jour-là.', $data['notice']);
+        $this->assertStringNotContainsString('visites', (string) $data['subtitle']);
         $box = collect($data['fields'])->firstWhere('name', 'accept_other_visits');
         $this->assertSame(['checkbox', 'Accepter aussi les 2 autres visites de ce jour', false], [$box['type'], $box['label'], $box['default']]);
         // Seule ce jour-là : ni avertissement, ni case.
