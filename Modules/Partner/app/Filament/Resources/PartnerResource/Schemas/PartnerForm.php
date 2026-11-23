@@ -32,13 +32,6 @@ abstract class PartnerForm
                         Tab::make(__('partner::partner.sections.identity'))
                             ->columns(2)
                             ->schema([
-                                Select::make('country_id')
-                                    ->label(__('partner::partner.fields.country'))
-                                    ->relationship('country', 'code')
-                                    ->getOptionLabelFromRecordUsing(fn (Country $country): string => $country->label())
-                                    ->required()
-                                    ->searchable()
-                                    ->preload(),
                                 SpatieMediaLibraryFileUpload::make('logo')
                                     ->label(__('partner::partner.fields.logo'))
                                     ->collection(Partner::LOGO)
@@ -78,6 +71,15 @@ abstract class PartnerForm
                         Tab::make(__('partner::partner.sections.contact'))
                             ->columns(2)
                             ->schema([
+                                // Le pays en premier (décision 2026-11-23-partenaire-pays-dans-contact).
+                                Select::make('country_id')
+                                    ->label(__('partner::partner.fields.country'))
+                                    ->relationship('country', 'code')
+                                    ->getOptionLabelFromRecordUsing(fn (Country $country): string => $country->label())
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->columnSpanFull(),
                                 TextInput::make('contact_email')
                                     ->label(__('partner::partner.fields.contact_email'))
                                     ->email()
