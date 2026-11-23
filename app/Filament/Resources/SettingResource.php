@@ -10,7 +10,8 @@ use App\Models\Setting;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Modules\Form\Support\Field;
@@ -34,53 +35,57 @@ class SettingResource extends AbstractResource
         return $schema
             ->columns(1)
             ->components([
-                Section::make(__('settings.sections.general'))
-                    ->schema([
-                        // Traduite : un onglet par langue.
-                        TranslatableTabs::make(fn (string $locale): array => [
-                            Textarea::make("description.{$locale}")
-                                ->label(__('settings.description'))
-                                ->helperText(__('settings.help.description'))
-                                ->maxLength(Field::TEXTAREA_MAX_LENGTH)
-                                ->rows(5),
-                        ], 'description'),
-                    ]),
-                // Décision 2026-11-19-contrat-paiement-visibilite-avis.
-                Section::make(__('settings.sections.payment'))
-                    ->schema([
-                        Toggle::make('payment_required')
-                            ->label(__('settings.payment_required'))
-                            ->helperText(__('settings.help.payment_required')),
-                    ]),
-                // Décision 2026-11-19-age-minimum.
-                Section::make(__('settings.sections.users'))
-                    ->schema([
-                        TextInput::make('minimum_age')
-                            ->label(__('settings.minimum_age'))
-                            ->helperText(__('settings.help.minimum_age'))
-                            ->integer()
-                            ->minValue(1)
-                            ->maxValue(120)
-                            ->suffix(__('settings.years')),
-                    ]),
-                // Décision 2026-11-23-accueil-nombres-reglables.
-                Section::make(__('settings.sections.home'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('home_offers_per_city')
-                            ->label(__('settings.home_offers_per_city'))
-                            ->helperText(__('settings.help.home_count'))
-                            ->integer()
-                            ->minValue(1)
-                            ->maxValue(50)
-                            ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
-                        TextInput::make('home_partners')
-                            ->label(__('settings.home_partners'))
-                            ->helperText(__('settings.help.home_count'))
-                            ->integer()
-                            ->minValue(1)
-                            ->maxValue(50)
-                            ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                // En onglets (décision 2026-11-23-application-en-onglets).
+                Tabs::make('settings')
+                    ->tabs([
+                        Tab::make(__('settings.sections.general'))
+                            ->schema([
+                                // Traduite : un onglet par langue.
+                                TranslatableTabs::make(fn (string $locale): array => [
+                                    Textarea::make("description.{$locale}")
+                                        ->label(__('settings.description'))
+                                        ->helperText(__('settings.help.description'))
+                                        ->maxLength(Field::TEXTAREA_MAX_LENGTH)
+                                        ->rows(5),
+                                ], 'description'),
+                            ]),
+                        // Décision 2026-11-19-contrat-paiement-visibilite-avis.
+                        Tab::make(__('settings.sections.payment'))
+                            ->schema([
+                                Toggle::make('payment_required')
+                                    ->label(__('settings.payment_required'))
+                                    ->helperText(__('settings.help.payment_required')),
+                            ]),
+                        // Décision 2026-11-19-age-minimum.
+                        Tab::make(__('settings.sections.users'))
+                            ->schema([
+                                TextInput::make('minimum_age')
+                                    ->label(__('settings.minimum_age'))
+                                    ->helperText(__('settings.help.minimum_age'))
+                                    ->integer()
+                                    ->minValue(1)
+                                    ->maxValue(120)
+                                    ->suffix(__('settings.years')),
+                            ]),
+                        // Décision 2026-11-23-accueil-nombres-reglables.
+                        Tab::make(__('settings.sections.home'))
+                            ->columns(2)
+                            ->schema([
+                                TextInput::make('home_offers_per_city')
+                                    ->label(__('settings.home_offers_per_city'))
+                                    ->helperText(__('settings.help.home_count'))
+                                    ->integer()
+                                    ->minValue(1)
+                                    ->maxValue(50)
+                                    ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                                TextInput::make('home_partners')
+                                    ->label(__('settings.home_partners'))
+                                    ->helperText(__('settings.help.home_count'))
+                                    ->integer()
+                                    ->minValue(1)
+                                    ->maxValue(50)
+                                    ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                            ]),
                     ]),
             ]);
     }
