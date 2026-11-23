@@ -124,6 +124,57 @@ class PartnerApiTest extends TestCase
         $this->withHeader('X-Country', 'CM')->postJson("/api/v1/partners/{$expired->getKey()}/click")->assertNotFound();
     }
 
+    public function test_the_list_gives_every_visible_partner_in_back_office_order_and_the_detail_one(): void
+    {
+        // Décision 2026-11-23-partenaires-liste-detail.
+        Setting::current()->update(['home_partners' => 1]);
+        $c = Partner::factory()->for($this->cameroon)->create(['position' => 3]);
+        $a = Partner::factory()->for($this->cameroon)->create(['position' => 1, 'name' => ['fr' => 'Assurances du Littoral']]);
+        $b = Partner::factory()->for($this->cameroon)->create(['position' => 2]);
+        $hidden = Partner::factory()->for($this->cameroon)->create(['published' => false]);
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+
+        // Tous, au-delà du nombre de l'accueil, dans l'ordre, sans compte ; sans compter de vue ; page après page
+        // comme toutes les listes.
+        $this->assertSame(array_map('strval', [$a->getKey(), $b->getKey(), $c->getKey()]), array_column($this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.items'), 'id'));
+        $this->assertSame(0, (int) Partner::query()->sum('views_count'));
+
+        // Le détail d'un visible ; 404 pour un invisible ou inconnu.
+        $this->withHeaders($headers)->getJson("/api/v1/partners/{$a->getKey()}")->assertOk()->assertJsonPath('data.name', 'Assurances du Littoral');
+        $this->withHeaders($headers)->getJson("/api/v1/partners/{$hidden->getKey()}")->assertNotFound();
+        $this->withHeaders($headers)->getJson('/api/v1/partners/999999')->assertNotFound();
+    }
+
+    public function test_the_list_is_searched_by_name_or_description_in_every_language(): void
+    {
+        // Décision 2026-11-23-partenaires-recherche : sans casse, accents compris.
+        $movers = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Déménageurs du Wouri', 'en' => 'Wouri Movers'], 'description' => ['fr' => 'Cartons fournis.']]);
+        $insurance = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Assurances du Littoral'], 'description' => ['fr' => 'Assurance habitation.']]);
+        $search = fn (string $term): array => array_column($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/lists/partner.all?search='.urlencode($term))->assertOk()->json('data.items'), 'id');
+
+        $this->assertSame([(string) $movers->getKey()], $search('déménageurs'));
+        $this->assertSame([(string) $movers->getKey()], $search('MOVERS'));
+        $this->assertSame([(string) $insurance->getKey()], $search('habitation'));
+        $this->assertSame([], $search('plomberie'));
+        $this->assertCount(2, $search('  '));
+    }
+
+    public function test_the_list_comes_page_after_page(): void
+    {
+        // Le défilement infini de toutes les listes (décision 2026-11-23-partenaires-liste-detail).
+        Partner::factory()->count(25)->for($this->cameroon)->create();
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+
+        $first = $this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data');
+        $this->assertNotNull($first['next_cursor']);
+        $next = $this->withHeaders($headers)->getJson('/api/v1/lists/partner.all?cursor='.urlencode($first['next_cursor']))->assertOk()->json('data');
+
+        $ids = array_merge(array_column($first['items'], 'id'), array_column($next['items'], 'id'));
+        $this->assertSame($ids, array_values(array_unique($ids)));
+        $this->assertCount(25, $ids);
+        $this->assertNull($next['next_cursor']);
+    }
+
     public function test_no_partner_an_empty_list(): void
     {
         $this->partners()->assertOk()->assertExactJson(['data' => []]);

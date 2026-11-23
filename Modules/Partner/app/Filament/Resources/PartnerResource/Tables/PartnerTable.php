@@ -10,6 +10,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Services\PartnerService;
 
 /**
  * Les partenaires, dans leur ordre d'affichage, triables par glisser-déposer ; leur campagne et leurs compteurs
@@ -31,8 +32,9 @@ abstract class PartnerTable
                 TextColumn::make('name')
                     ->label(__('partner::partner.fields.name'))
                     ->state(fn (Partner $record): string => (string) $record->getTranslation('name', app()->getLocale()))
-                    // Le nom traduit : la recherche porte sur toutes ses langues.
-                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where('name', 'like', '%'.$search.'%')),
+                    // Le nom traduit : la recherche porte sur toutes ses langues, comme dans l'app (décision
+                    // 2026-11-23-partenaires-recherche).
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $group) => PartnerService::search($group, $search))),
                 TextColumn::make('country.code')
                     ->label(__('partner::partner.fields.country'))
                     ->state(fn (Partner $record): string => $record->country->label()),

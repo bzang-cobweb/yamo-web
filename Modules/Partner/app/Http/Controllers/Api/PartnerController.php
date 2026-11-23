@@ -22,6 +22,14 @@ class PartnerController
     }
 
     /**
+     * Un partenaire visible ; 404 sinon (décision 2026-11-23-partenaires-liste-detail).
+     */
+    public function show(int $partner, PartnerService $partnerService): PartnerResource
+    {
+        return new PartnerResource($partnerService->find($partner) ?? abort(404));
+    }
+
+    /**
      * Un toucher sur un partenaire : un clic de plus. 404 s'il n'est pas visible.
      */
     public function click(Partner $partner, PartnerService $partnerService): Response

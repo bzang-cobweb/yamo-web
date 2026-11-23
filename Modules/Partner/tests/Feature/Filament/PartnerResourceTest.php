@@ -62,6 +62,8 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertSame(['Nouveau nom', 120], [$existing->fresh()->getTranslation('name', 'fr'), $existing->fresh()->views_count]);
         // Recherché dans toutes ses langues.
         Livewire::test(ListPartners::class)->searchTable('Littoral Insurance')->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$existing]);
+        Livewire::test(ListPartners::class)->searchTable('être rappelé')->assertCanNotSeeTableRecords([$partner]);
+        Livewire::test(ListPartners::class)->searchTable('assurances du')->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$existing]);
     }
 
     public function test_partners_are_sorted_by_drag_and_drop(): void

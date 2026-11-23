@@ -3,6 +3,8 @@
 namespace Modules\Partner\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Modules\Form\Support\ListingRegistry;
+use Modules\Partner\Lists\PartnerListing;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Policies\PartnerPolicy;
 use Nwidart\Modules\Support\ModuleServiceProvider;
@@ -14,6 +16,9 @@ class PartnerServiceProvider extends ModuleServiceProvider
         parent::boot();
 
         Gate::policy(Partner::class, PartnerPolicy::class);
+
+        // La page « Partenaires » de l'app, une liste comme les autres (décision 2026-11-23-partenaires-liste-detail).
+        $this->app->make(ListingRegistry::class)->register(PartnerListing::class);
     }
 
     /**

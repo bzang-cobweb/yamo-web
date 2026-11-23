@@ -3,6 +3,9 @@
 namespace Modules\Partner\Services;
 
 use App\Models\Setting;
+use App\Support\ContainsSearch;
+use App\Support\Locales;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Modules\Partner\Models\Partner;
 
@@ -29,6 +32,25 @@ class PartnerService
         }
 
         return $partners;
+    }
+
+    /**
+     * Le nom ou la description, dans une de leurs langues, contient `$term` (la règle commune `ContainsSearch`) :
+     * la recherche de la page « Partenaires » et du back-office (décision 2026-11-23-partenaires-recherche).
+     *
+     * @param  Builder<Partner>  $query
+     */
+    public static function search(Builder $query, string $term): void
+    {
+        ContainsSearch::orWhere($query, array_merge(...array_map(fn (string $locale): array => ["name->{$locale}", "description->{$locale}"], Locales::values())), $term);
+    }
+
+    /**
+     * Un partenaire, s'il est visible (décision 2026-11-23-partenaires-liste-detail) ; sinon `null`.
+     */
+    public function find(int $id): ?Partner
+    {
+        return Partner::query()->visible()->with('media')->find($id);
     }
 
     /**
