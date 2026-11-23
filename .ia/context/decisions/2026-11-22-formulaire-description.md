@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-formulaire-logement-en-sous-titre.md (pour l'usage dans « Accepter » et « Refuser » ; la description reste une capacité des formulaires)
+
 # Formulaires : une description sous le sous-titre ; le titre du logement pour accepter ou refuser
 
 - **Date** : 2026-11-22
