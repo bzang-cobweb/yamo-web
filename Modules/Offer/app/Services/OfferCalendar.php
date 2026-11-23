@@ -53,12 +53,14 @@ class OfferCalendar
             // En attente : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
             $stayPendingCount = $stays->filter(fn (Booking $booking): bool => $booking->isAwaitingAnswer())->count();
             $stayPending = $stayPendingCount > 0;
-            $visitPending = $visits->contains(fn (Booking $booking): bool => $booking->isAwaitingAnswer());
+            $visitPendingCount = $visits->filter(fn (Booking $booking): bool => $booking->isAwaitingAnswer())->count();
+            $visitPending = $visitPendingCount > 0;
             $accepted = $stayAccepted || $visits->contains(fn (Booking $booking): bool => in_array($booking->status, BookingStatusEnum::held(), true));
             $pending = $stayPending || $visitPending;
             // Chevauchement : un séjour en attente sur une nuit prise ou bloquée, ou deux séjours en attente sur la même nuit
-            // (décision 2026-11-22-calendrier-chevauchement-en-attente) ; une visite en attente sur un jour bloqué.
-            $conflict = ($stayPending && ($stayAccepted || $isBlocked || $stayPendingCount > 1)) || ($visitPending && $isBlocked);
+            // (décision 2026-11-22-calendrier-chevauchement-en-attente) ; une visite en attente sur un jour bloqué, ou deux
+            // visites en attente le même jour (décision 2026-11-22-calendrier-visites-chevauchement).
+            $conflict = ($stayPending && ($stayAccepted || $isBlocked || $stayPendingCount > 1)) || ($visitPending && ($isBlocked || $visitPendingCount > 1));
 
             $days[] = [
                 'date' => $date,

@@ -173,6 +173,19 @@ class OfferCalendarApiTest extends TestCase
         $this->assertSame('pending', $days[$this->date(43)]['state']);
     }
 
+    public function test_two_pending_visits_on_the_same_day_are_an_overlap(): void
+    {
+        // Décision 2026-11-22-calendrier-visites-chevauchement.
+        $this->travelTo('2026-11-05 10:00:00');
+        $offer = $this->home(false);
+        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40)]);
+        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40), 'check_out' => today()->addDays(41)]);
+
+        $days = $this->days($offer, $this->monthOf(40));
+        $this->assertSame('conflict', $days[$this->date(40)]['state']);
+        $this->assertSame('pending', $days[$this->date(41)]['state']);
+    }
+
     public function test_visits_color_their_day_like_stays(): void
     {
         // Une date fixe : les jours +40 à +42 restent dans le même mois (le 21 novembre, +41 passait en janvier).
