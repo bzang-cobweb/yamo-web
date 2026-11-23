@@ -63,4 +63,21 @@ return [
     ],
     // Les comptes qui administrent un partenaire, au back-office.
     'admins' => 'Administrateurs',
+    // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
+    'notify' => [
+        'greeting' => 'Bonjour :name,',
+        'salutation' => "L'équipe :app",
+        'title' => [
+            'pending' => 'Partenaire en attente de validation',
+            'published' => 'Partenaire publié',
+            'rejected' => 'Partenaire refusé',
+            'archived' => 'Partenaire archivé',
+        ],
+        'body' => [
+            'pending' => "Votre partenaire « :name » est en attente de validation par l'équipe.",
+            'published' => 'Votre partenaire « :name » est publié.',
+            'rejected' => "Votre partenaire « :name » a été refusé par l'équipe.",
+            'archived' => 'Votre partenaire « :name » est archivé.',
+        ],
+    ],
 ];

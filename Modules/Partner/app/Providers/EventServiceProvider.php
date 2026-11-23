@@ -3,6 +3,8 @@
 namespace Modules\Partner\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Modules\Partner\Events\PartnerStatusChanged;
+use Modules\Partner\Listeners\NotifyPartnerUsersOfStatus;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -11,14 +13,17 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<string, array<int, string>>
      */
-    protected $listen = [];
+    protected $listen = [
+        // Un changement de statut prévient les comptes du partenaire (décision 2026-11-24-partenaires-notifications).
+        PartnerStatusChanged::class => [NotifyPartnerUsersOfStatus::class],
+    ];
 
     /**
      * Indicates if events should be discovered.
      *
      * @var bool
      */
-    protected static $shouldDiscoverEvents = true;
+    protected static $shouldDiscoverEvents = false;
 
     /**
      * Configure the proper event listeners for email verification.

@@ -17,6 +17,7 @@ use Modules\Location\Models\Country;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Database\Factories\PartnerFactory;
 use Modules\Partner\Enums\PartnerStatusEnum;
+use Modules\Partner\Events\PartnerStatusChanged;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -52,12 +53,21 @@ class Partner extends Model implements HasMedia
     /** @var list<string> */
     public array $translatable = ['name', 'description', 'url', 'cta_label'];
 
-    /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables). */
+    /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables) ; un changement de statut est annoncé. */
     protected static function booted(): void
     {
         static::creating(function (Partner $partner): void {
             if (! $partner->isDirty('position')) {
                 $partner->position = (int) self::query()->max('position') + 1;
+            }
+        });
+
+        // Un changement de statut, d'où qu'il vienne, prévient ses comptes (décision 2026-11-24-partenaires-notifications) ;
+        // celui qui le change n'est pas prévenu.
+        static::updated(function (Partner $partner): void {
+            if ($partner->wasChanged('status')) {
+                $previous = $partner->getOriginal('status');
+                PartnerStatusChanged::dispatch($partner, $previous instanceof PartnerStatusEnum ? $previous : PartnerStatusEnum::from((string) $previous), request()->user()?->getKey());
             }
         });
     }
