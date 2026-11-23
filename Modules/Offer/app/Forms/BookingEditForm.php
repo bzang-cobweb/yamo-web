@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Submission;
+use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -53,6 +54,21 @@ class BookingEditForm extends OfferBookingForm
     public function title(): string
     {
         return __('offer::booking.form.edit_title');
+    }
+
+    /**
+     * Le titre composé du logement (« Location meublée · Studio · Douala »), en sous-titre ; vaut aussi pour
+     * l'annulation (décision 2026-11-23-modifier-annuler-titre-compose).
+     */
+    public function subtitle(): ?string
+    {
+        return $this->offer === null ? null : app(DomainRegistry::class)->require()->itemTypeLine($this->offer, app()->getLocale());
+    }
+
+    /** Le titre et le sous-titre centrés (décision 2026-11-23-modifier-annuler-titre-compose). */
+    public function titleAlign(): string
+    {
+        return 'center';
     }
 
     /** « Enregistrer », pas « Envoyer la demande » (décision 2026-11-21-modifier-reservation). */

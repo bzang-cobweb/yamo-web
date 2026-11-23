@@ -201,6 +201,9 @@ class BookingApiTest extends TestCase
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
         $this->assertSame('Modifier la demande', $form['title']);
+        // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
+        $this->assertSame([OfferCardTitle::of($pending->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
+        $this->assertNotNull($form['subtitle']);
         $this->assertSame('Enregistrer', $form['submit']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         $defaults = array_column($form['fields'], 'default', 'name');
@@ -227,6 +230,9 @@ class BookingApiTest extends TestCase
 
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertOk()->json('data');
         $this->assertSame('Annuler la demande', $form['title']);
+        // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
+        $this->assertSame([OfferCardTitle::of($accepted->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
+        $this->assertNotNull($form['subtitle']);
         $this->assertSame('Confirmer', $form['submit']['label']);
         $this->assertSame(['method' => 'POST', 'endpoint' => '/v1/bookings/'.$accepted->getKey().'/cancel'], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         $fields = collect($form['fields'])->keyBy('name');
