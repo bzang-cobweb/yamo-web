@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-detail-lignes-titre-dates-adresse.md (pour le titre composé et les dates ; la barre du haut reste)
+
 # Page d'une demande : « Ma réservation », titre composé et dates sur leurs lignes
 
 - **Date** : 2026-11-22

@@ -187,17 +187,17 @@ class BookingThreadTest extends TestCase
         $keys = fn (User $reader): array => array_column($this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->json('data.booking.lines'), 'key');
 
         // Masquée : la ville seule pour le demandeur (décision 2026-11-21-adresse-masquee-ville) ; le
-        // propriétaire voit l'adresse entière, en tête.
-        $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
-        $this->assertSame(['address', 'Douala'], [$lines[0]['key'], $lines[0]['value']]);
-        $this->assertSame('address', $keys($this->owner)[0]);
+        // propriétaire voit l'adresse entière, après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
+        $lines = collect($this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines'))->keyBy('key');
+        $this->assertSame('Douala', $lines['address']['value']);
+        $this->assertSame(['composed', 'arrival', 'departure', 'address'], array_slice($keys($this->owner), 0, 4));
 
         $this->app['auth']->forgetGuards();
         $this->withToken($this->guest->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/show")->assertNotFound();
         $this->app['auth']->forgetGuards();
         $this->withToken($this->owner->createToken('iPhone')->plainTextToken)->postJson("/api/v1/bookings/{$booking->getKey()}/address/show")->assertNoContent();
         $this->assertTrue($booking->fresh()->show_address);
-        $this->assertSame('address', $keys($this->guest)[0]);
+        $this->assertSame(['composed', 'arrival', 'departure', 'address'], array_slice($keys($this->guest), 0, 4));
         $this->assertNotContains('host', $keys($this->guest));
 
         $this->app['auth']->forgetGuards();
@@ -228,9 +228,9 @@ class BookingThreadTest extends TestCase
             ['key' => 'member', 'label' => 'Membre', 'value' => 'Léa Membre', 'link' => '/members/'.$this->guest->getKey()],
             ['key' => 'email', 'label' => 'E-mail', 'value' => 'membre@example.test'],
         ], $contact($this->owner));
-        // Après l'adresse ; sans adresse, en tête (décision 2026-11-21-afficher-adresse).
+        // Après l'adresse ; sans adresse, après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
         $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');
-        $this->assertSame(['phone', 'email', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 4));
+        $this->assertSame(['composed', 'arrival', 'departure', 'phone', 'email', 'guests'], array_slice(array_column($lines, 'key'), 0, 6));
     }
 
     public function test_the_page_shows_the_first_step_title_status_summary_and_price(): void
@@ -244,13 +244,10 @@ class BookingThreadTest extends TestCase
         foreach ([$this->owner, $this->guest] as $reader) {
             $page = $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data');
 
-            // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire ; dans la page, le
-            // titre composé sans ville, puis les dates (décisions 2026-11-22-detail-titre-compose et
-            // 2026-11-22-detail-titre-compose-et-dates).
+            // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
+            // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
-            $this->assertSame(implode(' · ', array_filter([$page['booking']['offer']['rental_type'], $page['booking']['offer']['property_type']])), $page['booking']['composed_title']);
-            $this->assertStringNotContainsString(' · Douala', $page['booking']['composed_title']);
-            $this->assertSame(Str::ucfirst($booking->period('fr')), $page['booking']['period']);
+            $this->assertSame(['key' => 'composed', 'label' => 'Logement', 'value' => 'Location meublée · Studio'], $page['booking']['lines'][0]);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
@@ -260,12 +257,13 @@ class BookingThreadTest extends TestCase
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
                 'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'guests' => 1,
                 'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée', 'property_type' => 'Studio'],
-            ], array_diff_key($page['booking'], ['lines' => true, 'composed_title' => true, 'period' => true]));
+            ], array_diff_key($page['booking'], ['lines' => true]));
             // Les lignes, libellé et valeur, dans l'ordre ; sans chambres renseignées, pas de ligne (décision 2026-11-20-lignes-demande).
             $this->assertSame([
-                ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
+                ['key' => 'composed', 'label' => 'Logement', 'value' => 'Location meublée · Studio'],
                 ['key' => 'arrival', 'label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')],
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
+                ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
                 ['key' => 'days', 'label' => 'Durée', 'value' => '2 jours'],
                 ['key' => 'price', 'label' => 'Prix par jour', 'value' => Number::currency(45000, 'XAF', 'fr')],
                 // La caution du meublé, toujours (décision 2026-11-20-caution-meuble-toujours).
@@ -277,10 +275,10 @@ class BookingThreadTest extends TestCase
         // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).
         $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
         $lines = (new BookingResource($booking->refresh()))->resolve(request())['lines'];
-        // La première ligne (décision 2026-11-21-afficher-adresse).
-        $this->assertSame(['address', 'guests', 'arrival'], array_slice(array_column($lines, 'key'), 0, 3));
-        $this->assertSame('Adresse', $lines[0]['label']);
-        $this->assertStringStartsWith('Rue Joss, Douala', $lines[0]['value']);
+        // Après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
+        $this->assertSame(['composed', 'arrival', 'departure', 'address', 'guests'], array_slice(array_column($lines, 'key'), 0, 5));
+        $this->assertSame('Adresse', $lines[3]['label']);
+        $this->assertStringStartsWith('Rue Joss, Douala', $lines[3]['value']);
     }
 
     public function test_the_reader_steps_say_whether_the_other_party_got_and_read_them(): void
@@ -365,6 +363,7 @@ class BookingThreadTest extends TestCase
         // Rien de renseigné : ni charges, ni caution, ni avance ; un total à 0 ne s'affiche pas
         // (décisions 2026-11-20-lignes-vides-masquees et 2026-11-20-total-positif).
         $this->assertSame([
+            'Logement' => 'Location · Appartement',
             'Visite' => '28 nov. 2026',
             'Loyer mensuel' => Number::currency(250000, 'XAF', 'fr'),
         ], $lines());
@@ -380,7 +379,7 @@ class BookingThreadTest extends TestCase
         ], array_slice($lines(), -3));
         // Les charges, puis le loyer (décision 2026-11-20-loyer-apres-charges).
         // Avec des charges, « Loyer mensuel (sans charges) » (décision 2026-11-20-loyer-sans-charges-avec-charges).
-        $this->assertSame(['Charges mensuelles', 'Loyer mensuel (sans charges)'], array_slice(array_keys($lines()), 1, 2));
+        $this->assertSame(['Charges mensuelles', 'Loyer mensuel (sans charges)'], array_slice(array_keys($lines()), 2, 2));
     }
 
     public function test_the_lines_give_the_availability_date_before_the_arrival_when_set(): void
@@ -394,7 +393,7 @@ class BookingThreadTest extends TestCase
         $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
         $labels = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
 
-        $this->assertSame(['Disponible dès le' => '1 déc. 2026', 'Visite' => '28 nov. 2026'], array_slice($labels(), 0, 2));
+        $this->assertSame(['Logement' => 'Location · Appartement', 'Disponible dès le' => '1 déc. 2026', 'Visite' => '28 nov. 2026'], array_slice($labels(), 0, 3));
 
         // Sans date : pas de ligne.
         $flat->update(['details' => [...$flat->details, 'available_from' => null]]);

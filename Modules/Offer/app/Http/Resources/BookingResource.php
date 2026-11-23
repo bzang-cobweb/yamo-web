@@ -61,15 +61,19 @@ class BookingResource extends JsonResource
         $days = $booking->days();
         $line = fn (string $key, mixed $value): ?array => $value === null || $value === '' ? null : ['key' => $key, 'label' => __('offer::booking.lines.'.$key), 'value' => (string) $value];
 
+        $offer = $booking->offer;
         $lines = [
-            // L'adresse du logement, la première ligne (décisions 2026-11-21-detail-reservation-adresse et
-            // 2026-11-21-afficher-adresse) ; retirée pour le demandeur si le propriétaire la masque.
-            $line('address', $booking->offer?->fullAddress()),
-            $line('guests', $booking->guests),
-            // La date de disponibilité du logement, si renseignée, avant la visite
-            // (décisions 2026-11-20-disponibilite-demande et 2026-11-20-disponibilite-sans-meuble).
+            // D'abord le titre composé sans ville (« Location meublée · Studio »), puis l'arrivée et le départ (ou la
+            // visite), puis l'adresse (décision 2026-11-22-detail-lignes-titre-dates-adresse).
+            $line('composed', $offer === null ? null : implode(' · ', array_filter([RentalTypeEnum::of($offer)?->label(), $this->propertyType($offer)]))),
+            // La date de disponibilité du logement, si renseignée, avant la visite (décisions
+            // 2026-11-20-disponibilite-demande et 2026-11-20-disponibilite-sans-meuble).
             $this->availableFrom($booking, $locale),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
+            // L'adresse du logement (décisions 2026-11-21-detail-reservation-adresse et 2026-11-21-afficher-adresse) ;
+            // retirée pour le demandeur si le propriétaire la masque.
+            $line('address', $offer?->fullAddress()),
+            $line('guests', $booking->guests),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             // Une visite : charges, loyer (décision 2026-11-20-loyer-apres-charges), caution et avance,
             // puis le total ; un séjour : prix, caution, puis le total, toujours, même à 0
