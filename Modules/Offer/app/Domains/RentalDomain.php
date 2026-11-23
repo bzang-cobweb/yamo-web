@@ -214,10 +214,12 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.rules.check_out_until'))
                 ->options($this->hourOptions())
                 ->visibleWhen('rental_type', RentalTypeEnum::FURNISHED->value),
-            // Oui / Non plutôt qu'un interrupteur : « non renseigné » n'est pas « non ».
+            // Oui / Non, obligatoires (décision 2026-11-23-regles-oui-non-obligatoires) : un choix sans
+            // « Aucun » dans l'app, un interrupteur au back-office.
             ...array_map(fn (string $rule): Field => Field::select($rule)
                 ->label(__('offer::rental.rules.'.$rule))
-                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]), self::YES_NO_RULES),
+                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')])
+                ->required(), self::YES_NO_RULES),
             // Les documents en dernier (décision 2026-11-19-documents-en-dernier).
             Field::multiselect('documents')
                 ->label(__('offer::rental.rules.documents'))
@@ -440,11 +442,12 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Les charges, après le loyer, dans l'onglet « Prix » (décision 2026-11-19-onglet-prix).
+     * Les charges, la caution et l'avance de loyer, après le loyer, dans l'onglet « Prix »
+     * (décisions 2026-11-19-onglet-prix et 2026-11-23-caution-avance-onglet-prix).
      */
     public function priceAttributes(): array
     {
-        return ['charges'];
+        return ['charges', 'deposit_months', 'advance_months', 'deposit'];
     }
 
     public function accessAttributes(): array

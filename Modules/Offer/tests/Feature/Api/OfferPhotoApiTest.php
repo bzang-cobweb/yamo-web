@@ -69,6 +69,10 @@ class OfferPhotoApiTest extends TestCase
             'property_type' => 'apartment',
             'rental_type' => 'long_term',
             'bedrooms' => '1',
+            // Obligatoires (décision 2026-11-23-regles-oui-non-obligatoires).
+            'pets' => 'no',
+            'smoking' => 'no',
+            'parties' => 'no',
             ...$overrides,
         ];
     }

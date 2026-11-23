@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Tests\Feature\Filament;
 
+use Filament\Forms\Components\Toggle;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
@@ -256,10 +257,12 @@ class OfferResourceTest extends AuthFilamentTestCase
         // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSee('Règles')
-            ->fillForm(['details.pets' => 'yes'])
+            ->assertFormFieldExists('details.pets', fn ($field): bool => $field instanceof Toggle)
+            ->fillForm(['details.pets' => true, 'details.smoking' => false])
             ->call('save')
             ->assertHasNoFormErrors();
         $this->assertSame('yes', $offer->fresh()->detail('pets'));
+        $this->assertSame('no', $offer->fresh()->detail('smoking'));
 
         // Les blocs d'informations, par langue (décision 2026-11-19-contrat-offer-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])

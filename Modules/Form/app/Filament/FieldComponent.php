@@ -68,6 +68,25 @@ final class FieldComponent
     {
         $name = $statePath ?? $field->name;
 
+        // Un choix Oui / Non obligatoire : un interrupteur, qui enregistre « yes » ou « no »
+        // (décision 2026-11-23-regles-oui-non-obligatoires).
+        if ($field->type === FieldType::SELECT && $field->isRequired() && array_keys($field->optionLabels()) === ['yes', 'no']) {
+            $toggle = Toggle::make($name)
+                ->default(false)
+                ->formatStateUsing(fn (mixed $state): bool => $state === 'yes' || $state === true)
+                ->dehydrateStateUsing(fn (mixed $state): string => $state ? 'yes' : 'no')
+                ->label($field->getLabel())
+                ->helperText($field->getHelp());
+
+            $condition = $field->getVisibleWhen();
+            if ($condition !== null) {
+                $prefix = str_contains($name, '.') ? substr($name, 0, (int) strrpos($name, '.') + 1) : '';
+                $toggle->visible(fn (Get $get): bool => in_array(Field::conditionValue($get($prefix.$condition['field'])), $condition['values'], true));
+            }
+
+            return $toggle;
+        }
+
         $component = match ($field->type) {
             FieldType::TEXT => TextInput::make($name)->maxLength($field->getMaxLength()),
             FieldType::NUMBER => TextInput::make($name)->numeric(),

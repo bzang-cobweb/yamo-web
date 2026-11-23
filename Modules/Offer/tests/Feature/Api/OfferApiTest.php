@@ -74,6 +74,10 @@ class OfferApiTest extends TestCase
             'surface' => '64',
             'rooms' => '3.5',
             'bedrooms' => '2',
+            // Obligatoires (décision 2026-11-23-regles-oui-non-obligatoires).
+            'pets' => 'no',
+            'smoking' => 'no',
+            'parties' => 'no',
             'available_from' => '2026-12-01',
             'charges' => '180',
             // Au moins une photo (décision 2026-11-19-contrat-champ-upload-photos).
@@ -161,16 +165,13 @@ class OfferApiTest extends TestCase
         $this->assertTrue($offer->fresh()->show_address);
     }
 
-    public function test_an_optional_yes_no_rule_can_be_cleared(): void
+    public function test_a_yes_no_rule_is_required(): void
     {
-        // Décision 2026-11-21-choix-facultatif-effacable : « Aucun » envoie une valeur vide.
+        // Décision 2026-11-23-regles-oui-non-obligatoires : plus de « Aucun », une valeur vide est refusée.
         $user = $this->member();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['smoking' => 'no']))->assertNoContent();
-        $offer = Offer::query()->sole();
-        $this->assertSame('no', $offer->detail('smoking'));
-
-        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['smoking' => '']))->assertNoContent();
-        $this->assertNull($offer->fresh()->detail('smoking'));
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['smoking' => '']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['smoking']);
     }
 
     public function test_an_offer_has_its_own_contact_phone_and_email(): void
