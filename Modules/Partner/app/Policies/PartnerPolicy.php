@@ -27,7 +27,11 @@ class PartnerPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        return ! Filament::isServing() && in_array($ability, ['view', 'update', 'delete'], true) ? null : $this->superAdminBefore($user, $ability);
+        if (! Filament::isServing() && in_array($ability, ['view', 'update', 'delete'], true)) {
+            return null;
+        }
+
+        return $this->superAdminBefore($user, $ability);
     }
 
     /** Au back-office, `partners.view` ; dans l'app, le carrousel et la liste sont publics. */
@@ -46,9 +50,14 @@ class PartnerPolicy
             return (bool) $user?->hasPermissionTo(PermissionEnum::VIEW_PARTNERS);
         }
 
-        return $partner->isVisible() || ($user !== null && $this->attached($user, $partner)->allowed())
-            ? Response::allow()
-            : Response::denyAsNotFound();
+        if ($partner->isVisible()) {
+            return Response::allow();
+        }
+        if ($user === null) {
+            return Response::denyAsNotFound();
+        }
+
+        return $this->attached($user, $partner);
     }
 
     /** Au back-office, `partners.create` ; dans l'app, tout compte connecté propose un partenaire. */
@@ -71,8 +80,14 @@ class PartnerPolicy
         }
 
         $attached = $this->attached($user, $partner);
+        if ($attached->denied()) {
+            return $attached;
+        }
+        if (! $partner->hasAdmin($user->getKey())) {
+            return Response::deny();
+        }
 
-        return $attached->denied() || $partner->hasAdmin($user->getKey()) ? $attached : Response::deny();
+        return Response::allow();
     }
 
     public function deleteAny(User $user): bool
@@ -83,8 +98,13 @@ class PartnerPolicy
     /** Rattaché au partenaire (`partner_user`), dans le pays courant ; sinon 404, comme un partenaire qui n'existe pas. */
     private function attached(User $user, Partner $partner): Response
     {
-        return (int) $partner->country_id === (int) CurrentCountry::require()->getKey() && $partner->isAdministeredBy($user->getKey())
-            ? Response::allow()
-            : Response::denyAsNotFound();
+        if ((int) $partner->country_id !== (int) CurrentCountry::require()->getKey()) {
+            return Response::denyAsNotFound();
+        }
+        if (! $partner->isAdministeredBy($user->getKey())) {
+            return Response::denyAsNotFound();
+        }
+
+        return Response::allow();
     }
 }

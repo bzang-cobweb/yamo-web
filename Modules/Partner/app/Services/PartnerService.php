@@ -98,7 +98,12 @@ class PartnerService
     {
         foreach (['name', 'slogan', 'description', 'url', 'cta_label'] as $key) {
             $value = trim((string) ($data[$key] ?? ''));
-            $value === '' ? $partner->forgetTranslation($key, $locale) : $partner->setTranslation($key, $locale, $value);
+            if ($value === '') {
+                $partner->forgetTranslation($key, $locale);
+
+                continue;
+            }
+            $partner->setTranslation($key, $locale, $value);
         }
         $partner->contact_email = filled($data['contact_email'] ?? null) ? trim((string) $data['contact_email']) : null;
         $partner->contact_phone = filled($data['contact_phone'] ?? null) ? trim((string) $data['contact_phone']) : null;

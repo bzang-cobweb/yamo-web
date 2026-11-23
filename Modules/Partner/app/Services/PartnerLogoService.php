@@ -49,6 +49,7 @@ class PartnerLogoService
     public function sync(Partner $partner, int|string $userId, array $ids): void
     {
         $current = $partner->getFirstMedia(Partner::LOGO);
+        // L'actuel, encore là : rien à faire.
         if ($current !== null && in_array((string) $current->uuid, $ids, true)) {
             return;
         }

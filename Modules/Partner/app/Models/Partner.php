@@ -123,7 +123,11 @@ class Partner extends Model implements HasMedia
      */
     public function hasAdmin(int|string|null $userId): bool
     {
-        return $userId !== null && $this->users()->whereKey($userId)->wherePivot('is_admin', true)->exists();
+        if ($userId === null) {
+            return false;
+        }
+
+        return $this->users()->whereKey($userId)->wherePivot('is_admin', true)->exists();
     }
 
     /**
@@ -131,7 +135,11 @@ class Partner extends Model implements HasMedia
      */
     public function isAdministeredBy(int|string|null $userId): bool
     {
-        return $userId !== null && $this->users()->whereKey($userId)->exists();
+        if ($userId === null) {
+            return false;
+        }
+
+        return $this->users()->whereKey($userId)->exists();
     }
 
     /**
@@ -140,9 +148,17 @@ class Partner extends Model implements HasMedia
      */
     public function isShown(bool $paymentRequired): bool
     {
-        return $this->status === PartnerStatusEnum::PUBLISHED
-            && ($this->starts_at === null || ! $this->starts_at->isFuture())
-            && (! $paymentRequired || ($this->expires_at !== null && $this->expires_at->isFuture()));
+        if ($this->status !== PartnerStatusEnum::PUBLISHED) {
+            return false;
+        }
+        if ($this->starts_at?->isFuture()) {
+            return false;
+        }
+        if (! $paymentRequired) {
+            return true;
+        }
+
+        return (bool) $this->expires_at?->isFuture();
     }
 
     /**
@@ -150,7 +166,11 @@ class Partner extends Model implements HasMedia
      */
     public function isVisible(): bool
     {
-        return (int) $this->country_id === (int) CurrentCountry::require()->getKey() && $this->isShown(Setting::partnerPaymentRequired());
+        if ((int) $this->country_id !== (int) CurrentCountry::require()->getKey()) {
+            return false;
+        }
+
+        return $this->isShown(Setting::partnerPaymentRequired());
     }
 
     /**

@@ -79,7 +79,10 @@ class MyPartnerListing extends Listing
     /** « Proposer un partenaire », dans la barre fixe en bas, comme « Ajouter un logement ». */
     public function footer(): ?array
     {
-        if ($this->user === null || ! $this->user->can('create', Partner::class)) {
+        if ($this->user === null) {
+            return null;
+        }
+        if (! $this->user->can('create', Partner::class)) {
             return null;
         }
 

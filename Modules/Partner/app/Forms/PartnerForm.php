@@ -117,7 +117,11 @@ class PartnerForm extends Form
      */
     private function hasContentLocale(): bool
     {
-        return $this->partner !== null && count(Locales::values()) > 1;
+        if ($this->partner === null) {
+            return false;
+        }
+
+        return count(Locales::values()) > 1;
     }
 
     /**
@@ -177,11 +181,16 @@ class PartnerForm extends Form
     /** La langue de saisie : celle choisie à la modification, sinon celle du compte. */
     public function locale(): string
     {
-        $chosen = request()->input(self::CONTENT_LOCALE);
-        if (is_string($chosen) && in_array($chosen, Locales::values(), true) && $this->hasContentLocale()) {
-            return $chosen;
+        $account = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
+        if (! $this->hasContentLocale()) {
+            return $account;
         }
 
-        return $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
+        $chosen = request()->input(self::CONTENT_LOCALE);
+        if (! is_string($chosen) || ! in_array($chosen, Locales::values(), true)) {
+            return $account;
+        }
+
+        return $chosen;
     }
 }
