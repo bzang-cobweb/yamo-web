@@ -62,6 +62,7 @@ return [
         'confirm' => 'Retirer cette offre ?',
         'remove' => 'Retirer',
         'removed' => 'Offre retirée.',
+        'starts' => 'Payé à partir du :date',
         'expires' => "Payé jusqu'au :date",
         'expired' => 'Paiement échu le :date',
         // Publier, dépublier (décision 2026-11-23-publier-depublier-menu).
@@ -81,6 +82,9 @@ return [
     ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Accès',
+    // Décision 2026-11-23-offre-paye-a-partir-du.
+    'starts_at' => 'Payé à partir du',
+    'starts_help' => "Si le paiement est appliqué (page Application), l'offre n'est visible des autres qu'à partir de cette date ; vide : dès maintenant.",
     'expires_at' => "Payé jusqu'au",
     'expires_help' => "Si le paiement est appliqué (page Application), l'offre n'est plus visible des autres après cette date ; vide : pas visible.",
     'reviews' => 'Avis',

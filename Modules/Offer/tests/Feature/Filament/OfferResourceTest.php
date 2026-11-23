@@ -123,6 +123,14 @@ class OfferResourceTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors();
 
         $this->assertTrue($offer->fresh()->isFeatured());
+
+        // La période payée, son début et sa fin (décision 2026-11-23-offre-paye-a-partir-du).
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
+            ->assertSee('Payé à partir du')
+            ->fillForm(['starts_at' => '2026-12-01 08:00', 'expires_at' => '2027-03-01 08:00'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(['2026-12-01 08:00', '2027-03-01 08:00'], [$offer->fresh()->starts_at->format('Y-m-d H:i'), $offer->fresh()->expires_at->format('Y-m-d H:i')]);
         Livewire::test(ListOffers::class)
             ->filterTable('featured', true)
             ->assertCanSeeTableRecords([$offer])

@@ -48,6 +48,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $email e-mail de contact (décision 2026-11-21-contact-offre)
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
+ * @property Carbon|null $starts_at début de la période payée, effectif si le paiement est appliqué (décision 2026-11-23-offre-paye-a-partir-du)
  * @property Carbon|null $expires_at date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis)
  * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
@@ -59,7 +60,7 @@ use Spatie\Translatable\HasTranslations;
  * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
  * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
  */
-#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'expires_at'])]
+#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'starts_at', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -115,6 +116,7 @@ class Offer extends Model implements HasMedia
             'show_address' => 'boolean',
             'published_at' => 'datetime',
             'featured_until' => 'datetime',
+            'starts_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
     }
@@ -314,7 +316,11 @@ class Offer extends Model implements HasMedia
     {
         $query->where($query->qualifyColumn('status'), OfferStatusEnum::PUBLISHED)
             ->where($query->qualifyColumn('country_id'), CurrentCountry::require()->getKey())
-            ->when(Setting::paymentRequired(), fn (Builder $query) => $query->where($query->qualifyColumn('expires_at'), '>', now()));
+            // Le paiement appliqué : entre le début (facultatif) et la fin de la période payée (décision
+            // 2026-11-23-offre-paye-a-partir-du).
+            ->when(Setting::paymentRequired(), fn (Builder $query) => $query
+                ->where($query->qualifyColumn('expires_at'), '>', now())
+                ->where(fn (Builder $start) => $start->whereNull($query->qualifyColumn('starts_at'))->orWhere($query->qualifyColumn('starts_at'), '<=', now())));
     }
 
     /**
@@ -338,7 +344,7 @@ class Offer extends Model implements HasMedia
     {
         return $this->status === OfferStatusEnum::PUBLISHED
             && (int) $this->country_id === (int) CurrentCountry::require()->getKey()
-            && (! Setting::paymentRequired() || ($this->expires_at !== null && $this->expires_at->isFuture()));
+            && (! Setting::paymentRequired() || ($this->expires_at !== null && $this->expires_at->isFuture() && ($this->starts_at === null || ! $this->starts_at->isFuture())));
     }
 
     /**

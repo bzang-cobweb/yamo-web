@@ -62,6 +62,7 @@ return [
         'confirm' => 'Dieses Angebot entfernen?',
         'remove' => 'Entfernen',
         'removed' => 'Angebot entfernt.',
+        'starts' => 'Bezahlt ab :date',
         'expires' => 'Bezahlt bis :date',
         'expired' => 'Bezahlung endete am :date',
         // Publier, dépublier (décision 2026-11-23-publier-depublier-menu).
@@ -81,6 +82,9 @@ return [
     ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Zugang',
+    // Décision 2026-11-23-offre-paye-a-partir-du.
+    'starts_at' => 'Bezahlt ab',
+    'starts_help' => 'Wenn die Zahlung angewendet wird (Seite Anwendung), ist das Angebot erst ab diesem Datum für andere sichtbar; leer: sofort.',
     'expires_at' => 'Bezahlt bis',
     'expires_help' => 'Wenn die Zahlung angewendet wird (Seite Anwendung), ist das Angebot nach diesem Datum für andere nicht mehr sichtbar; leer: nicht sichtbar.',
     'reviews' => 'Bewertungen',

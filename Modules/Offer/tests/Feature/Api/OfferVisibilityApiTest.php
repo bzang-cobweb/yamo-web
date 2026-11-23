@@ -132,4 +132,28 @@ class OfferVisibilityApiTest extends TestCase
         // « Mes logements » : l'auteur garde toutes les siennes.
         $this->assertCount(3, $this->api($owner, 'GET', '/api/v1/lists/offer.mine')->assertOk()->json('data.items'));
     }
+
+    public function test_with_payment_an_offer_is_visible_only_from_its_start_date(): void
+    {
+        // Décision 2026-11-23-offre-paye-a-partir-du.
+        $owner = $this->member();
+        $started = $this->home($owner, 'Douala', now()->addMonth());
+        $started->update(['starts_at' => now()->subDay()]);
+        $upcoming = $this->home($owner, 'Kribi', now()->addMonth());
+        $upcoming->update(['starts_at' => now()->addDay()]);
+
+        // Sans paiement, le début n'a pas d'effet.
+        $this->assertEqualsCanonicalizing([(string) $started->getKey(), (string) $upcoming->getKey()], $this->browse());
+
+        // Avec paiement : à partir du début seulement ; l'auteur la voit toujours.
+        Setting::current()->update(['payment_required' => true]);
+        $this->assertSame([(string) $started->getKey()], $this->browse());
+        $this->api(null, 'GET', "/api/v1/offers/{$upcoming->getKey()}")->assertNotFound();
+        $this->api($owner, 'GET', "/api/v1/offers/{$upcoming->getKey()}")->assertOk();
+
+        // « Mes logements » : « Payé à partir du … » tant que le début est à venir.
+        $items = collect($this->api($owner, 'GET', '/api/v1/lists/offer.mine')->json('data.items'))->keyBy('id');
+        $this->assertStringStartsWith('Payé à partir du ', (string) $items[(string) $upcoming->getKey()]['highlight']);
+        $this->assertStringNotContainsString('Payé à partir du', (string) $items[(string) $started->getKey()]['highlight']);
+    }
 }

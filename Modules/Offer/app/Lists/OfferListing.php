@@ -198,6 +198,13 @@ class OfferListing extends Listing
 
         // La date d'expiration, après le statut (décision 2026-11-19-expiration-mes-logements) :
         // « Expire le 30 juin 2027 », « Expirée le 2 janvier 2026 » ; sans date, rien.
+        // Le début de la période payée, tant qu'il est à venir (décision 2026-11-23-offre-paye-a-partir-du) :
+        // « Payé à partir du 1 décembre 2026 ».
+        $start = $record->starts_at === null || ! $record->starts_at->isFuture() ? null : __(
+            'offer::offer.list.starts',
+            ['date' => $record->starts_at->copy()->locale($locale)->isoFormat('LL')],
+            $locale,
+        );
         $expiration = $record->expires_at === null ? null : __(
             $record->expires_at->isFuture() ? 'offer::offer.list.expires' : 'offer::offer.list.expired',
             ['date' => $record->expires_at->copy()->locale($locale)->isoFormat('LL')],
@@ -212,7 +219,7 @@ class OfferListing extends Listing
             // Le statut en pastille de couleur (décision 2026-11-19-statut-carte-logement), sur la photo à la
             // place du cœur : le propriétaire ne met pas son logement en favori (décision 2026-11-21-statut-a-la-place-du-coeur).
             ->tag($record->status->label(), $record->status->tone(), onImage: true)
-            ->highlight(implode(' · ', array_filter([$expiration, ...$domain->itemDetails($record), $price])))
+            ->highlight(implode(' · ', array_filter([$start, $expiration, ...$domain->itemDetails($record), $price])))
             ->edit(OfferForm::name())
             // Toucher la carte ouvre sa fiche, brouillon compris ; « Éditer » est dans le menu (décision
             // 2026-11-22-logements-carte-vers-fiche).
