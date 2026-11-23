@@ -20,7 +20,7 @@ use Modules\Partner\Services\PartnerService;
  * pays courant ; pour chacun, son logo, son nom, son statut (« En validation », « Refusé », « Archivé »,
  * et, publié, « Affiché » ou « Pas affiché ») sur le logo ; la carte ouvre sa page ; le menu ⋮ : « Modifier », et
  * « Retirer » pour un administrateur (`is_admin`) (décision 2026-11-24-mes-partenaires-cartes). En tête,
- * « 3 partenaires » ; en bas, « Proposer un partenaire ».
+ * « 3 partenaires » ; en bas, « Ajouter un partenaire ».
  */
 class MyPartnerListing extends Listing
 {
@@ -76,7 +76,7 @@ class MyPartnerListing extends Listing
         return __('partner::partner.member.empty');
     }
 
-    /** « Proposer un partenaire », dans la barre fixe en bas, comme « Ajouter un logement ». */
+    /** « Ajouter un partenaire », dans la barre fixe en bas, comme « Ajouter un logement ». */
     public function footer(): ?array
     {
         if ($this->user === null) {

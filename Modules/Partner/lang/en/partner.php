@@ -50,7 +50,7 @@ return [
         'group' => 'Partner',
         'count' => '{0} No partner|{1} :count partner|[2,*] :count partners',
         'mine' => 'My partners',
-        'add' => 'Propose a partner',
+        'add' => 'Add a partner',
         'edit' => 'Edit the partner',
         'submit' => 'Send for review',
         'save' => 'Save and resend',
