@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-23-modifier-annuler-comme-accepter.md
 # `2026-11-23` — Modifier et annuler une demande : le titre composé en sous-titre, centré
 
 - **Type** : décision
