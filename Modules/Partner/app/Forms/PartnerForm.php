@@ -3,6 +3,7 @@
 namespace Modules\Partner\Forms;
 
 use App\Support\Locales;
+use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
@@ -28,11 +29,14 @@ class PartnerForm extends Form
     }
 
     /**
-     * Un partenaire qu'administre le compte, dans le pays courant ; sinon 404.
+     * Un partenaire que le compte peut modifier (`PartnerPolicy::update` : rattaché, dans le pays courant) ; sinon
+     * 404 (décision 2026-11-24-partenaires-policy-routes).
      */
     public function forRecord(string $key): static
     {
-        $this->partner = Partner::query()->administeredBy($this->user?->getAuthIdentifier())->whereKey($key)->first() ?? abort(404);
+        $partner = Partner::query()->find($key) ?? abort(404);
+        Gate::forUser($this->user)->authorize('update', $partner);
+        $this->partner = $partner;
 
         return $this;
     }

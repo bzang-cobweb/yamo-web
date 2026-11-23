@@ -8,7 +8,9 @@ use Modules\Partner\Http\Controllers\Api\MyPartnerController;
 use Modules\Partner\Http\Controllers\Api\PartnerController;
 use Modules\Partner\Models\Partner;
 
-Route::middleware('throttle:60,1')->get('v1/partners', [PartnerController::class, 'index'])->name('v1.partners.index');
+// Publiques, visiteur compris : la policy `PartnerPolicy` décide (décision 2026-11-24-partenaires-policy-routes) ; la page
+// et le clic l'appellent dans le contrôleur, avec le compte Sanctum s'il y en a un.
+Route::middleware('throttle:60,1')->get('v1/partners', [PartnerController::class, 'index'])->can('viewAny', Partner::class)->name('v1.partners.index');
 // La fiche d'un partenaire ; la page « Partenaires » est la liste `partner.all` (décision 2026-11-23-partenaires-liste-detail).
 Route::middleware('throttle:60,1')->get('v1/partners/{partner}', [PartnerController::class, 'show'])->whereNumber('partner')->name('v1.partners.show');
 Route::middleware('throttle:30,1')->post('v1/partners/{partner}/click', [PartnerController::class, 'click'])->whereNumber('partner')->name('v1.partners.click');

@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
 // La page publique d'un membre, pour un compte connecté (décision 2026-11-19-page-membre).
 Route::middleware(['auth:sanctum', RequireOfferDomain::class, 'throttle:60,1'])
     ->get('v1/members/{member}', [MemberController::class, 'show'])
+    ->can('viewMember', 'member')
     ->whereNumber('member')
     ->name('v1.members.show');
 

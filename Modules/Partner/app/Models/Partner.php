@@ -146,6 +146,14 @@ class Partner extends Model implements HasMedia
     }
 
     /**
+     * La même règle que `scopeVisible()`, pour un partenaire chargé (décision 2026-11-24-partenaires-policy-routes).
+     */
+    public function isVisible(): bool
+    {
+        return (int) $this->country_id === (int) CurrentCountry::require()->getKey() && $this->isShown(Setting::partnerPaymentRequired());
+    }
+
+    /**
      * Visibles dans l'app : publiés (décision 2026-11-24-partenaires-statuts), du pays courant, campagne commencée ; le paiement des partenaires appliqué,
      * jusqu'à leur date d'expiration, sans date jamais (décision 2026-11-23-paiement-partenaires), comme les offres.
      *

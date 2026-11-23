@@ -3,6 +3,7 @@
 namespace Modules\Offer\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
@@ -89,6 +90,9 @@ class OfferServiceProvider extends ModuleServiceProvider
         Gate::policy(OfferCategory::class, OfferCategoryPolicy::class);
         Gate::policy(OfferReview::class, OfferReviewPolicy::class);
         Gate::policy(Booking::class, BookingPolicy::class);
+        // La page d'un membre : tout compte connecté (décision 2026-11-19-page-membre) ; la règle a son domicile
+        // ici, la route porte sa garde (décision 2026-11-24-partenaires-policy-routes).
+        Gate::define('viewMember', fn (User $viewer, User $member): bool => true);
 
         // Formulaire et liste servis à l'app : indisponibles (404) sans domaine choisi.
         $this->app->make(FormRegistry::class)->register(OfferForm::class);
