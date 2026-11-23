@@ -113,8 +113,8 @@ abstract class ConfiguredImageService
     }
 
     /**
-     * La taille de l'image enregistrée, en pixels : le plafond de l'original quand il est gardé (`original_size`, le
-     * logo d'un partenaire), sinon la plus grande des conversions, dont elle est la source (les photos d'une offre).
+     * La taille de l'image enregistrée, en pixels : le plafond de l'original quand il est gardé (`original_size`, la
+     * photo de profil), sinon la plus grande des conversions, dont elle est la source (photos d'une offre, logo).
      */
     public static function storedSize(): int
     {
@@ -179,8 +179,16 @@ abstract class ConfiguredImageService
         [$width, $height] = static::bounds(static::storedSize());
 
         try {
-            Image::load($sourcePath)
-                ->orientation()
+            $image = Image::load($sourcePath)->orientation();
+            // Recadrer remplit le cadre, quitte à agrandir : le cadre est réduit à ce que l'image couvre, aux mêmes
+            // proportions, pour qu'elle ne le soit jamais (décision 2026-11-24-partenaire-logo-sans-original).
+            if (static::fit() === Fit::Crop) {
+                $scale = min(1, $image->getWidth() / $width, $image->getHeight() / $height);
+                $width = max(1, (int) floor($width * $scale));
+                $height = max(1, (int) floor($height * $scale));
+            }
+
+            $image
                 ->fit(static::fit(), $width, $height)
                 ->quality(static::quality())
                 ->format('webp')

@@ -17,7 +17,7 @@ final class AvatarService extends ConfiguredImageService
 
     /**
      * Ses réglages : `config('auth.avatar')`, `AUTH_AVATAR_*` (types, poids, qualité, conversions ; décision
-     * 2026-11-24-avatar-photos-offre-conversions). Le carré enregistré a le côté de la plus grande conversion.
+     * 2026-11-24-avatar-photos-offre-conversions). La photo envoyée est gardée, en carré plafonné à `original_size` (décision 2026-11-24-partenaire-logo-sans-original).
      */
     protected static function configKey(): string
     {

@@ -48,11 +48,12 @@ class AvatarApiTest extends TestCase
         $this->assertNotNull($media);
         $disk = Storage::disk('public');
 
-        // L'original n'est stocké nulle part : un carré WebP de la plus grande conversion (288 px), et ses conversions.
+        // L'original est gardé, recadré en carré WebP et plafonné à 1024 px (`AUTH_AVATAR_ORIGINAL_SIZE`, décision
+        // 2026-11-24-partenaire-logo-sans-original), et ses conversions.
         $this->assertSame('avatar.webp', $media->file_name);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize($disk->path($media->getPathRelativeToRoot()));
-        $this->assertSame([288, 288], [$width, $height]);
+        $this->assertSame([1024, 1024], [$width, $height]);
         $this->assertCount(1, $disk->files('auth/avatar/'.$media->uuid));
 
         // Une conversion carrée par écran, produite tout de suite, à la taille de la configuration
@@ -80,6 +81,16 @@ class AvatarApiTest extends TestCase
         $this->upload($user, UploadedFile::fake()->image('petite.png', 287, 287))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
         $this->assertNull($this->avatarOf($user));
         $this->upload($user, UploadedFile::fake()->image('juste.png', 288, 200))->assertOk();
+    }
+
+    public function test_a_small_photo_is_cropped_without_being_enlarged(): void
+    {
+        // Recadrer ne doit jamais agrandir : 400 × 300 donne un carré de 300 (décision 2026-11-24-partenaire-logo-sans-original).
+        $user = User::factory()->create();
+        $this->upload($user, UploadedFile::fake()->image('petite.jpg', 400, 300))->assertOk();
+
+        [$width, $height] = getimagesize(Storage::disk('public')->path($this->avatarOf($user)->getPathRelativeToRoot()));
+        $this->assertSame([300, 300], [$width, $height]);
     }
 
     public function test_the_avatar_url_follows_the_requested_host(): void

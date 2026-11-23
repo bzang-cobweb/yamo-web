@@ -42,7 +42,8 @@ class UserAvatarTest extends AuthFilamentTestCase
         $this->assertNotNull($media);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
-        $this->assertSame([288, 288], [$width, $height]);
+        // L'original, plafonné à 1024 px (décision 2026-11-24-partenaire-logo-sans-original).
+        $this->assertSame([1024, 1024], [$width, $height]);
         $this->assertCount(1, Storage::disk('public')->files('auth/avatar/'.$media->uuid));
     }
 

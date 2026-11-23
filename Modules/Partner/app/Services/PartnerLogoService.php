@@ -18,9 +18,9 @@ class PartnerLogoService extends ConfiguredImageService
     public const FIELD = 'logo';
 
     /**
-     * Ses réglages : `config('partner.logo')`, `PARTNER_LOGO_*` (types, poids, qualité, plafond de l'original,
-     * conversions ; décisions 2026-11-24-partenaire-logo-config et 2026-11-24-partenaire-logo-original), lus par
-     * `ConfiguredImageService` (décision 2026-11-24-image-service-abstrait). L'original est gardé, plafonné.
+     * Ses réglages : `config('partner.logo')`, `PARTNER_LOGO_*` (types, poids, qualité, conversions ; décision
+     * 2026-11-24-partenaire-logo-config), lus par `ConfiguredImageService` (décision 2026-11-24-image-service-abstrait).
+     * Le logo enregistré a la taille de la plus grande conversion (décision 2026-11-24-partenaire-logo-sans-original).
      */
     protected static function configKey(): string
     {
@@ -42,7 +42,7 @@ class PartnerLogoService extends ConfiguredImageService
     {
         $media = $partner?->getFirstMedia(Partner::LOGO);
 
-        // L'aperçu du champ : la conversion `list`, pas l'original (décision 2026-11-24-partenaire-logo-original).
+        // L'aperçu du champ : la conversion `list` (décision 2026-11-24-partenaire-logo-original).
         return $media === null ? [] : [(string) $media->uuid => (string) MediaUrl::onRequestHost($partner->logoUrl('list'))];
     }
 

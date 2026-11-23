@@ -41,8 +41,8 @@ class PartnerLogoConversionsTest extends TestCase
             $sizes[$name] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot($name)))[0];
         }
         $this->assertSame(['home' => 288, 'list' => 500, 'detail' => 360], $sizes);
-        // L'original est gardé, plafonné à 1024 px (décision 2026-11-24-partenaire-logo-original).
-        $this->assertSame([1024, 512], array_slice(getimagesize($media->getPath()), 0, 2));
+        // Le logo enregistré a la taille de la plus grande conversion (décision 2026-11-24-partenaire-logo-sans-original).
+        $this->assertSame([500, 250], array_slice(getimagesize($media->getPath()), 0, 2));
 
         // Chaque écran sert la sienne.
         $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];

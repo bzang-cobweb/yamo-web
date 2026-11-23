@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-partenaire-logo-sans-original.md
+
 # `2026-11-24` — Photo de profil et photos d'une offre : réglages dans le `.env`, une conversion par écran
 
 Remplace en partie : 2026-11-16-contrat-photo-de-profil.md, 2026-11-19-contrat-champ-upload-photos.md
