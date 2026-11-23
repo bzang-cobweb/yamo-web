@@ -4,6 +4,7 @@ namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
@@ -13,6 +14,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingRequestReceived;
 use Tests\TestCase;
 
 /**
@@ -191,6 +193,11 @@ class OfferCalendarApiTest extends TestCase
         $received = collect($this->asUser($offer->user)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->firstWhere('id', (string) $pending->getKey());
         $this->assertSame([$received['title'], $received['subtitle'], $received['tag'], $received['title_link']], [$card['title'], $card['subtitle'], $card['tag'], $card['title_link']]);
         $this->assertSame('/members/'.$pending->user_id, $card['title_link']);
+        // Sans la pastille des non lues, même avec une notification non lue (décision 2026-11-22-calendrier-sans-non-lues).
+        $offer->user->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(),
+            'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $offer->getKey(), 'booking_id' => $pending->getKey()]]);
+        $this->assertSame(1, collect($this->asUser($offer->user)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->firstWhere('id', (string) $pending->getKey())['unread_count'] ?? 0);
+        $this->assertArrayNotHasKey('unread_count', $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->json('data.items.0'));
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => "/v1/offers/{$offer->getKey()}/blocked-dates/{$this->date(41)}"], array_intersect_key($day['action']['submission'], ['method' => 1, 'endpoint' => 1]));
