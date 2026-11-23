@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-caution-avance-onglet-prix.md
 Remplace en partie : 2026-11-19-prix-dans-general.md (le prix quitte « Général ») ; 2026-11-19-onglets-localisation-informations.md (ordre des onglets).
 
 # `2026-11-19` — Back-office d'une offre : onglet « Prix », « Localisation » avant « Accès »
