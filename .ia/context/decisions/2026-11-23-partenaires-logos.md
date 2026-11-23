@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-partenaires-liste-detail.md
 Remplace en partie : 2026-11-23-module-partenaires.md (la bande de l'accueil).
 
 # `2026-11-23` — Accueil : les partenaires en carrousel de logos
