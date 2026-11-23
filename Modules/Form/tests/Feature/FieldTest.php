@@ -155,6 +155,7 @@ class FieldTest extends TestCase
             'label_hidden' => false,
             'placeholder' => null,
             'help' => null,
+            'notice' => null,
             'required' => true,
             'readonly' => false,
             'searchable' => false,
@@ -311,5 +312,14 @@ class FieldTest extends TestCase
 
         $this->expectException(\LogicException::class);
         Field::text('name')->dateRange('2026-11-19', null);
+    }
+
+    public function test_a_field_can_carry_a_notice_shown_before_its_label(): void
+    {
+        // Décision 2026-11-22-champ-note.
+        $field = Field::checkbox('accept_other_visits')->label('Accepter aussi')->notice('2 autres visites ce jour-là.');
+
+        $this->assertSame('2 autres visites ce jour-là.', $field->toArray()['notice']);
+        $this->assertNull(Field::text('name')->toArray()['notice']);
     }
 }

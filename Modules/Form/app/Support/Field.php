@@ -27,6 +27,9 @@ final class Field
 
     private ?string $help = null;
 
+    /** Une note avant le libellé : un avertissement (décision 2026-11-22-champ-note). */
+    private ?string $notice = null;
+
     private bool $required = false;
 
     /** Libellé non affiché par l'app (`hideLabel()`) ; lu par l'accessibilité, il sert aux messages. */
@@ -444,6 +447,17 @@ final class Field
     public function help(?string $help): self
     {
         $this->help = $help;
+
+        return $this;
+    }
+
+    /**
+     * Une note à afficher avant le libellé du champ, un avertissement, comme la note d'un formulaire (décision
+     * 2026-11-22-champ-note).
+     */
+    public function notice(?string $notice): self
+    {
+        $this->notice = $notice;
 
         return $this;
     }
@@ -974,6 +988,8 @@ final class Field
             'label_hidden' => $this->labelHidden,
             'placeholder' => $this->placeholder,
             'help' => $this->help,
+            /** Une note avant le libellé (un avertissement) ; `null` : aucune. */
+            'notice' => $this->notice,
             'required' => $this->required,
             'readonly' => $this->readonly,
             /** Liste déroulante : une recherche en tête des options, quel que soit leur nombre. */
