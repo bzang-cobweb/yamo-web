@@ -1,3 +1,6 @@
+Remplacée par : 2026-11-24-logo-entier-sans-cadre.md
+
+
 # `2026-11-24` — Image en entier d'une carte : marge réduite
 
 Remplace en partie : 2026-11-24-mes-partenaires-logo-entier.md
