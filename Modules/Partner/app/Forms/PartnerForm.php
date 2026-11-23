@@ -94,7 +94,8 @@ class PartnerForm extends Form
     {
         return array_values(array_filter([
             $this->hasContentLocale() ? Step::make(__('partner::partner.content_locale.step'), [self::CONTENT_LOCALE]) : null,
-            Step::make(__('partner::partner.sections.identity'), [PartnerLogoService::FIELD, 'name', 'description']),
+            // « Présentation » (décision 2026-11-24-etape-presentation).
+            Step::make(__('partner::partner.member.steps.presentation'), [PartnerLogoService::FIELD, 'name', 'description']),
             Step::make(__('partner::partner.sections.contact'), ['contact_phone', 'contact_email', 'url', 'cta_label']),
         ]));
     }

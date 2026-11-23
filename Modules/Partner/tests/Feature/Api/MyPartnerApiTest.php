@@ -63,7 +63,7 @@ class MyPartnerApiTest extends TestCase
         $form = $this->asUser($user)->getJson('/api/v1/forms/partner.partner')->assertOk()->json('data');
         $this->assertSame(['logo', 'name', 'description', 'contact_phone', 'contact_email', 'url', 'cta_label'], array_column($form['fields'], 'name'));
         // En étapes, sans « Langue » à la création (décision 2026-11-24-mes-partenaires-cartes).
-        $this->assertSame([['Partenaire', ['logo', 'name', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
+        $this->assertSame([['Présentation', ['logo', 'name', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
         $this->assertSame('Proposer un partenaire', $form['title']);
         $this->assertSame('center', $form['title_align']);
 

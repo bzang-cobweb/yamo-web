@@ -42,6 +42,10 @@ return [
     ],
     // « Mes partenaires » dans l'app (décision 2026-11-24-partenaires-par-les-membres).
     'member' => [
+        // Les étapes du formulaire de l'app (décision 2026-11-24-etape-presentation).
+        'steps' => [
+            'presentation' => 'Présentation',
+        ],
         'group' => 'Partenaire',
         'count' => '{0} Aucun partenaire|{1} :count partenaire|[2,*] :count partenaires',
         'mine' => 'Mes partenaires',
