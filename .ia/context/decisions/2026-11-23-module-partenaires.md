@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-partenaires-statuts.md, 2026-11-23-paiement-partenaires.md, 2026-11-23-accueil-nombres-reglables.md
+Remplacée en partie par : 2026-11-24-partenaire-contact.md, 2026-11-24-partenaires-statuts.md, 2026-11-23-paiement-partenaires.md, 2026-11-23-accueil-nombres-reglables.md
 Remplacée en partie par : 2026-11-23-partenaires-logos.md, 2026-11-23-partenaires-nom-traduit.md
 # `2026-11-23` — Module Partenaires : un espace payant sur l'accueil
 
