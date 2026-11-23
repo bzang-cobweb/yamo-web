@@ -43,6 +43,9 @@ return [
         'mime_types' => array_values(array_filter(array_map('trim', explode(',', (string) env('OFFER_PHOTOS_MIME_TYPES', 'image/jpeg,image/png,image/webp'))))),
         // La taille maximale d'un envoi, en kilo-octets.
         'max_upload_kb' => (int) env('OFFER_PHOTOS_MAX_UPLOAD_KB', 10240),
+        // Le plus grand côté permis à l'envoi, en pixels : garde-fou contre une image démesurée à décoder (décision
+        // 2026-11-24-image-dimension-maximale).
+        'max_dimension' => (int) env('OFFER_PHOTOS_MAX_DIMENSION', 10000),
         // Le nombre maximal de photos d'une offre.
         'max_files' => (int) env('OFFER_PHOTOS_MAX_FILES', 20),
         // La qualité du WebP enregistré, de 1 à 100.

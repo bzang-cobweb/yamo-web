@@ -57,9 +57,8 @@ final class AvatarService extends ConfiguredImageService
             'image',
             'mimetypes:'.implode(',', self::acceptedMimeTypes()),
             'max:'.self::maxUploadKb(),
-            // Garde-fou contre les images démesurées à décoder.
-            'dimensions:max_width=10000,max_height=10000',
-            // Au moins la taille enregistrée (décision 2026-11-24-image-taille-minimale-enregistree).
+            // Au moins la taille enregistrée, au plus le garde-fou contre une image démesurée (décisions
+            // 2026-11-24-image-regle-minimum-par-cadre et 2026-11-24-image-dimension-maximale).
             ...self::uploadRules(),
         ];
     }

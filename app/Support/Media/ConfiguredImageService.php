@@ -108,29 +108,42 @@ abstract class ConfiguredImageService
      * - entière dans un cadre plus haut que large (les photos d'une offre, bornées par la largeur) : la largeur ;
      * - entière dans un cadre plus large que haut : la hauteur ;
      * - entière dans un carré (le logo) : le plus grand côté (`MinImageSide`, que `dimensions` ne sait pas dire).
-     * Pour l'app (`Field::uploadRules()`), le back-office (`->rules()`) et toute validation écrite à la main.
+     * Et toujours le maximum (`maxDimension()`), contre une image démesurée à décoder (décision
+     * 2026-11-24-image-dimension-maximale). Pour l'app (`Field::uploadRules()`), le back-office (`->rules()`) et toute
+     * validation écrite à la main.
      *
      * @return list<ValidationRule|Dimensions>
      */
     public static function uploadRules(): array
     {
+        $dimensions = Rule::dimensions()->maxWidth(static::maxDimension())->maxHeight(static::maxDimension());
         $size = static::minUploadSize();
         if ($size <= 0) {
-            return [];
+            return [$dimensions];
         }
 
         [$width, $height] = static::bounds($size);
         if (static::fit() === Fit::Crop) {
-            return [Rule::dimensions()->minWidth($width)->minHeight($height)];
+            return [$dimensions->minWidth($width)->minHeight($height)];
         }
         if ($width === $height) {
-            return [new MinImageSide($width)];
+            return [$dimensions, new MinImageSide($width)];
         }
         if ($height > $width) {
-            return [Rule::dimensions()->minWidth($width)];
+            return [$dimensions->minWidth($width)];
         }
 
-        return [Rule::dimensions()->minHeight($height)];
+        return [$dimensions->minHeight($height)];
+    }
+
+    /**
+     * Le plus grand côté permis à l'envoi, en pixels : garde-fou contre une image démesurée à décoder (une image de
+     * 30 000 × 30 000 d'une couleur pèse peu, mais occupe des gigaoctets une fois décodée) ; 10 000 sans réglage
+     * (décision 2026-11-24-image-dimension-maximale).
+     */
+    public static function maxDimension(): int
+    {
+        return (int) static::setting('max_dimension', 10000);
     }
 
     /**

@@ -136,6 +136,8 @@ class OfferPhotoApiTest extends TestCase
         $this->upload($user, UploadedFile::fake()->image('petite.jpg', 1919, 1080))->assertUnprocessable()->assertJsonValidationErrors(['file']);
         $this->upload($user, UploadedFile::fake()->image('portrait-etroit.jpg', 1080, 1920))->assertUnprocessable()->assertJsonValidationErrors(['file']);
         $this->upload($user, UploadedFile::fake()->image('portrait.jpg', 1920, 2560))->assertCreated();
+        // Au plus 10 000 px (décision 2026-11-24-image-dimension-maximale).
+        $this->upload($user, UploadedFile::fake()->image('demesuree.jpg', 10001, 2000))->assertUnprocessable()->assertJsonValidationErrors(['file']);
 
         $photos = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'))->firstWhere('name', 'photos');
         $this->assertStringContainsString('au moins 1920 px de large', $photos['help']);

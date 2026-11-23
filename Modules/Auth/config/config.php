@@ -39,6 +39,9 @@ return [
         'mime_types' => array_values(array_filter(array_map('trim', explode(',', (string) env('AUTH_AVATAR_MIME_TYPES', 'image/jpeg,image/png,image/webp'))))),
         // La taille maximale d'un envoi, en kilo-octets.
         'max_upload_kb' => (int) env('AUTH_AVATAR_MAX_UPLOAD_KB', 5120),
+        // Le plus grand côté permis à l'envoi, en pixels : garde-fou contre une image démesurée à décoder (décision
+        // 2026-11-24-image-dimension-maximale).
+        'max_dimension' => (int) env('AUTH_AVATAR_MAX_DIMENSION', 10000),
         // La qualité du WebP enregistré, de 1 à 100.
         'quality' => (int) env('AUTH_AVATAR_QUALITY', 80),
         // La photo envoyée est gardée, recadrée en carré et plafonnée à ce côté, en pixels : les conversions en sont

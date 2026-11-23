@@ -35,7 +35,7 @@ class ConfiguredImageServiceTest extends TestCase
         config(['testing.image' => ['conversions' => ['card' => 540, 'page' => 1200]]]);
 
         $this->assertSame(1200, $service::minUploadSize());
-        $this->assertInstanceOf(MinImageSide::class, $service::uploadRules()[0]);
+        $this->assertInstanceOf(MinImageSide::class, $service::uploadRules()[1]);
         // Sans original gardé : la plus grande conversion.
         $this->assertSame(1200, $service::storedSize());
     }
@@ -57,7 +57,9 @@ class ConfiguredImageServiceTest extends TestCase
 
         // Entière dans un carré : le plus grand côté.
         $square = $this->service();
-        $this->assertEquals([new MinImageSide(1200)], $square::uploadRules());
+        $this->assertEquals(new MinImageSide(1200), $square::uploadRules()[1]);
+        // Toujours le maximum, 10 000 sans réglage (décision 2026-11-24-image-dimension-maximale).
+        $this->assertSame('dimensions:max_width=10000,max_height=10000', (string) $square::uploadRules()[0]);
 
         // Recadrée : les deux côtés (décision 2026-11-24-image-regle-minimum-par-cadre).
         $cropped = get_class(new class extends ConfiguredImageService
@@ -77,7 +79,7 @@ class ConfiguredImageServiceTest extends TestCase
                 return Fit::Crop;
             }
         });
-        $this->assertSame('dimensions:min_width=1200,min_height=1200', (string) $cropped::uploadRules()[0]);
+        $this->assertSame('dimensions:max_width=10000,max_height=10000,min_width=1200,min_height=1200', (string) $cropped::uploadRules()[0]);
 
         // Entière, bornée par la largeur : la largeur.
         $wide = get_class(new class extends ConfiguredImageService
@@ -97,6 +99,10 @@ class ConfiguredImageServiceTest extends TestCase
                 return [$size, 4 * $size];
             }
         });
-        $this->assertSame('dimensions:min_width=1200', (string) $wide::uploadRules()[0]);
+        $this->assertSame('dimensions:max_width=10000,max_height=10000,min_width=1200', (string) $wide::uploadRules()[0]);
+
+        // Le maximum se règle.
+        config(['testing.image.max_dimension' => 6000]);
+        $this->assertSame('dimensions:max_width=6000,max_height=6000,min_width=1200', (string) $wide::uploadRules()[0]);
     }
 }

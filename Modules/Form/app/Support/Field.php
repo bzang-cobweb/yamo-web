@@ -354,7 +354,9 @@ final class Field
             'file',
             ...($this->accept === [] ? [] : ['mimetypes:'.implode(',', $this->accept)]),
             'max:'.$this->maxSizeKb,
-            ...($images ? ['dimensions:max_width=10000,max_height=10000'] : []),
+            // Le garde-fou contre une image démesurée, sauf quand le service de l'image le donne (`uploadRules()`,
+            // décision 2026-11-24-image-dimension-maximale).
+            ...($images && $this->uploadRules === [] ? ['dimensions:max_width=10000,max_height=10000'] : []),
             ...$this->uploadRules,
         ];
     }
