@@ -14,7 +14,7 @@ return [
     ],
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
-        'pending' => 'Wartet auf Prüfung',
+        'pending' => 'In Prüfung',
         'published' => 'Veröffentlicht',
         'rejected' => 'Abgelehnt',
         'archived' => 'Archiviert',
@@ -69,13 +69,13 @@ return [
         'greeting' => 'Hallo :name,',
         'salutation' => 'Das Team von :app',
         'title' => [
-            'pending' => 'Partner wartet auf Prüfung',
+            'pending' => 'Partner in Prüfung',
             'published' => 'Partner veröffentlicht',
             'rejected' => 'Partner abgelehnt',
             'archived' => 'Partner archiviert',
         ],
         'body' => [
-            'pending' => 'Ihr Partner « :name » wartet auf die Prüfung durch das Team.',
+            'pending' => 'Ihr Partner « :name » ist beim Team in Prüfung.',
             'published' => 'Ihr Partner « :name » ist veröffentlicht.',
             'rejected' => 'Ihr Partner « :name » wurde vom Team abgelehnt.',
             'archived' => 'Ihr Partner « :name » ist archiviert.',

@@ -17,7 +17,7 @@ use Modules\Partner\Services\PartnerService;
 
 /**
  * « Mes partenaires » (décision 2026-11-24-partenaires-par-les-membres) : ceux qu'administre le compte, dans le
- * pays courant ; pour chacun, son logo, son nom, son statut (« En attente de validation », « Refusé », « Archivé »,
+ * pays courant ; pour chacun, son logo, son nom, son statut (« En validation », « Refusé », « Archivé »,
  * et, publié, « Affiché » ou « Pas affiché ») sur le logo ; la carte ouvre sa page ; le menu ⋮ : « Modifier », et
  * « Retirer » pour un administrateur (`is_admin`) (décision 2026-11-24-mes-partenaires-cartes). En tête,
  * « 3 partenaires » ; en bas, « Proposer un partenaire ».

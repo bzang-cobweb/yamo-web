@@ -74,7 +74,7 @@ class PartnerService
 
     /**
      * Un partenaire proposé par un membre (décision 2026-11-24-partenaires-par-les-membres) : dans le pays courant,
-     * ses textes dans la langue `$locale`, en attente de validation ; le membre y est rattaché en administrateur (`is_admin`).
+     * ses textes dans la langue `$locale`, en validation ; le membre y est rattaché en administrateur (`is_admin`).
      *
      * @param  array{name: string, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */
@@ -90,7 +90,7 @@ class PartnerService
 
     /**
      * Un partenaire modifié par un de ses administrateurs : seuls les textes de `$locale` changent ; il repasse en
-     * attente de validation (décision 2026-11-24-partenaires-par-les-membres).
+     * validation (décision 2026-11-24-partenaires-par-les-membres).
      *
      * @param  array{name: string, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */

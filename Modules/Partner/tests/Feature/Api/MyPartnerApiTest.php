@@ -91,7 +91,7 @@ class MyPartnerApiTest extends TestCase
         $item = $list['items'][0];
         $this->assertSame('1 partenaire', $list['heading']['title']);
         $this->assertTrue($list['menu']);
-        $this->assertSame(['Déménageurs du Wouri', 'En attente de validation', 'warning', true], [$item['title'], $item['tag']['label'], $item['tag']['tone'], $item['tag']['on_image']]);
+        $this->assertSame(['Déménageurs du Wouri', 'En validation', 'warning', true], [$item['title'], $item['tag']['label'], $item['tag']['tone'], $item['tag']['on_image']]);
         $this->assertSame([1, '/partners/'.$partner->getKey()], [$item['subtitle_lines'], $item['link']]);
         $this->assertSame('partner.partner', $item['edit']['form']);
         $this->assertNotNull($item['delete']);
@@ -126,7 +126,7 @@ class MyPartnerApiTest extends TestCase
 
         $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'logo' => []])->assertNoContent();
         $partner->refresh();
-        // Seule la langue du compte change ; il repasse en attente de validation.
+        // Seule la langue du compte change ; il repasse en validation.
         $this->assertSame(['Après', 'After', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
     }
 

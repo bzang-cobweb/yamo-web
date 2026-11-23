@@ -88,7 +88,7 @@ class PartnerStatusNotificationTest extends TestCase
         $this->withToken($helper->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr')
             ->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Wouri Déménagement'])->assertNoContent();
 
-        Notification::assertSentTo($admin, PartnerStatusNotification::class, fn (PartnerStatusNotification $notification): bool => $notification->toArray($admin)['title'] === 'Partenaire en attente de validation');
+        Notification::assertSentTo($admin, PartnerStatusNotification::class, fn (PartnerStatusNotification $notification): bool => $notification->toArray($admin)['title'] === 'Partenaire en validation');
         Notification::assertNotSentTo($helper, PartnerStatusNotification::class);
     }
 

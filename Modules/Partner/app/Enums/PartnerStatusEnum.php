@@ -3,7 +3,7 @@
 namespace Modules\Partner\Enums;
 
 /**
- * La publication d'un partenaire (décision 2026-11-24-partenaires-statuts) : en attente de validation (proposé ou
+ * La publication d'un partenaire (décision 2026-11-24-partenaires-statuts) : en validation (proposé ou
  * modifié depuis l'app), publié (affiché, selon sa campagne), refusé par l'équipe, archivé.
  */
 enum PartnerStatusEnum: string

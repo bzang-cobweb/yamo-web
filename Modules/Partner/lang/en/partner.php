@@ -14,7 +14,7 @@ return [
     ],
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
-        'pending' => 'Awaiting review',
+        'pending' => 'Under review',
         'published' => 'Published',
         'rejected' => 'Rejected',
         'archived' => 'Archived',
@@ -69,13 +69,13 @@ return [
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'title' => [
-            'pending' => 'Partner awaiting review',
+            'pending' => 'Partner under review',
             'published' => 'Partner published',
             'rejected' => 'Partner rejected',
             'archived' => 'Partner archived',
         ],
         'body' => [
-            'pending' => 'Your partner « :name » is awaiting review by the team.',
+            'pending' => 'Your partner « :name » is under review by the team.',
             'published' => 'Your partner « :name » is published.',
             'rejected' => 'Your partner « :name » was rejected by the team.',
             'archived' => 'Your partner « :name » is archived.',

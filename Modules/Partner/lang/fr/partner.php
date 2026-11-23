@@ -14,7 +14,7 @@ return [
     ],
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
-        'pending' => 'En attente de validation',
+        'pending' => 'En validation',
         'published' => 'Publié',
         'rejected' => 'Refusé',
         'archived' => 'Archivé',
@@ -69,13 +69,13 @@ return [
         'greeting' => 'Bonjour :name,',
         'salutation' => "L'équipe :app",
         'title' => [
-            'pending' => 'Partenaire en attente de validation',
+            'pending' => 'Partenaire en validation',
             'published' => 'Partenaire publié',
             'rejected' => 'Partenaire refusé',
             'archived' => 'Partenaire archivé',
         ],
         'body' => [
-            'pending' => "Votre partenaire « :name » est en attente de validation par l'équipe.",
+            'pending' => "Votre partenaire « :name » est en validation par l'équipe.",
             'published' => 'Votre partenaire « :name » est publié.',
             'rejected' => "Votre partenaire « :name » a été refusé par l'équipe.",
             'archived' => 'Votre partenaire « :name » est archivé.',
