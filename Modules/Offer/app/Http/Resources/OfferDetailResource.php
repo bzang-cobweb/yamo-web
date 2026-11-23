@@ -14,6 +14,7 @@ use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
@@ -29,7 +30,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class OfferDetailResource extends JsonResource
 {
     /**
-     * @return array{id: string, title: string, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string, tone: string}|null, favorite: array{active: bool, endpoint: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, composed_title: string|null, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string, tone: string}|null, favorite: array{active: bool, endpoint: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -50,6 +51,8 @@ class OfferDetailResource extends JsonResource
         return [
             'id' => (string) $offer->getKey(),
             'title' => (string) $offer->getTranslation('title', $locale),
+            /** Le titre composé, la ligne du type (« Location meublée · Studio · Douala »), sous le titre (décision 2026-11-22-fiche-titres-centres) ; `null` : aucune. */
+            'composed_title' => OfferCardTitle::of($offer, $locale)[1],
             /** Prix formaté avec son unité (« 60 000 FCFA / jour ») et son libellé (« Loyer ») ; `null` sans prix. */
             'price' => $offer->price === null ? null : [
                 'label' => (string) $domain->priceLabel(),

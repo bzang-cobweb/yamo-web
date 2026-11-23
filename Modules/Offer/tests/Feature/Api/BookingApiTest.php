@@ -97,6 +97,8 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.booking', null)
             ->assertJsonPath('data.edit', ['label' => 'Modifier', 'form' => 'offer.offer']);
         $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.edit', null);
+        // Le titre composé, sous le titre (décision 2026-11-22-fiche-titres-centres).
+        $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.composed_title', OfferCardTitle::of($furnished, 'fr')[1]);
         // « Retirer », pour son auteur seulement, à la place du prix (décision 2026-11-22-retirer-depuis-la-fiche).
         $this->asUser($this->member())->getJson("/api/v1/offers/{$furnished->getKey()}")->assertJsonPath('data.delete', null);
         $delete = $this->asUser($furnished->user)->getJson("/api/v1/offers/{$furnished->getKey()}")->json('data.delete');
