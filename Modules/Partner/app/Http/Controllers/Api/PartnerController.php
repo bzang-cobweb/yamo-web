@@ -28,7 +28,8 @@ class PartnerController
     public function show(Request $request, int $partner, PartnerService $partnerService): PartnerResource
     {
         // Compte facultatif (jeton Sanctum s'il y en a un) : ses comptes voient aussi un partenaire pas encore publié.
-        return new PartnerResource($partnerService->find($partner, $request->user('sanctum')?->getAuthIdentifier()) ?? abort(404));
+        // Sa page montre son e-mail et son téléphone (décision 2026-11-24-partenaire-contact).
+        return (new PartnerResource($partnerService->find($partner, $request->user('sanctum')?->getAuthIdentifier()) ?? abort(404)))->withContact();
     }
 
     /**

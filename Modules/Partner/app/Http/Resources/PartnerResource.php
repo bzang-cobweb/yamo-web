@@ -9,14 +9,25 @@ use Modules\Partner\Models\Partner;
 
 /**
  * Un partenaire tel que l'app l'affiche, ses textes et son lien dans la langue demandée (décision
- * 2026-11-23-module-partenaires). Ni contact ni compteurs : ils restent au back-office.
+ * 2026-11-23-module-partenaires). Sa page ajoute son e-mail et son téléphone (`withContact()`, décision
+ * 2026-11-24-partenaire-contact) ; les compteurs restent au back-office.
  *
  * @property Partner $resource
  */
 class PartnerResource extends JsonResource
 {
+    private bool $withContact = false;
+
+    /** Avec l'e-mail et le téléphone de contact : pour la page du partenaire seulement. */
+    public function withContact(): static
+    {
+        $this->withContact = true;
+
+        return $this;
+    }
+
     /**
-     * @return array{id: string, name: string, description: string|null, url: string|null, cta_label: string|null, logo: string|null}
+     * @return array{id: string, name: string, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -30,6 +41,7 @@ class PartnerResource extends JsonResource
             'url' => $text('url'),
             'cta_label' => $text('cta_label'),
             'logo' => MediaUrl::onRequestHost($partner->logoUrl()),
+            ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $partner->contact_phone] : []),
         ];
     }
 }

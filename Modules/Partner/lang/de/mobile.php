@@ -6,6 +6,9 @@ return [
     'partners' => [
         // La page d'un partenaire (décision 2026-11-23-partenaires-liste-detail).
         'visit' => 'Website besuchen',
+        // Le contact sur sa page (décision 2026-11-24-partenaire-contact).
+        'email' => "E-Mail",
+        'phone' => "Telefon",
         'unavailable' => 'Dieser Partner ist nicht mehr verfügbar.',
         // Le titre de la bande des partenaires, sur l'accueil (décision 2026-11-23-module-partenaires).
         'title' => 'Partner',

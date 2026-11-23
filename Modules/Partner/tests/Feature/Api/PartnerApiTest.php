@@ -142,6 +142,11 @@ class PartnerApiTest extends TestCase
 
         // Le détail d'un visible ; 404 pour un invisible ou inconnu.
         $this->withHeaders($headers)->getJson("/api/v1/partners/{$a->getKey()}")->assertOk()->assertJsonPath('data.name', 'Assurances du Littoral');
+        // Sa page : son e-mail et son téléphone (décision 2026-11-24-partenaire-contact).
+        $a->update(['contact_email' => 'contact@littoral.test', 'contact_phone' => '+237 6 70 00 00 02']);
+        $this->withHeaders($headers)->getJson("/api/v1/partners/{$a->getKey()}")
+            ->assertJsonPath('data.contact_email', 'contact@littoral.test')
+            ->assertJsonPath('data.contact_phone', '+237 6 70 00 00 02');
         $this->withHeaders($headers)->getJson("/api/v1/partners/{$hidden->getKey()}")->assertNotFound();
         $this->withHeaders($headers)->getJson('/api/v1/partners/999999')->assertNotFound();
     }
