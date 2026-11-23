@@ -179,7 +179,8 @@ class OfferCalendarApiTest extends TestCase
         $this->travelTo('2026-11-05 10:00:00');
         $offer = $this->home(false);
         Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40)]);
-        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40), 'check_out' => today()->addDays(41)]);
+        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(40)]);
+        Booking::factory()->for($offer)->for($this->member())->visit()->create(['check_in' => today()->addDays(41)]);
 
         $days = $this->days($offer, $this->monthOf(40));
         $this->assertSame('conflict', $days[$this->date(40)]['state']);

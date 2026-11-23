@@ -181,29 +181,31 @@ class BookingAvailabilityTest extends TestCase
         $this->assertSame(['unavailable' => [$day(3)], 'after' => null], $this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$visit->getKey())->json('data.fields.0.calendar'));
     }
 
-    public function test_a_visit_can_propose_a_second_date(): void
+    public function test_a_visit_has_a_single_date(): void
     {
+        // Décision 2026-11-22-visite-une-seule-date.
         $offer = $this->home(false);
         $this->block($offer, 9);
         $url = "/api/v1/offers/{$offer->getKey()}/bookings";
         $date = fn (int $days): string => today()->addDays($days)->toDateString();
 
-        // Une seconde date : gardée dans `check_out`, sans durée ni voyageurs ; écrite dans le texte.
+        // Une seconde date envoyée quand même : ignorée.
         $this->asUser($this->member())->postJson($url, ['check_in' => $date(5), 'check_out' => $date(7)])->assertNoContent();
         $booking = $offer->bookings()->latest('id')->first();
-        $this->assertSame([$date(5), $date(7)], [$booking->check_in->toDateString(), $booking->check_out->toDateString()]);
+        $this->assertSame($date(5), $booking->check_in->toDateString());
+        $this->assertNull($booking->check_out);
         $this->assertNull($booking->days());
         $this->assertNull($booking->guests);
-        $this->assertMatchesRegularExpression('/^le .+ ou \d.+$/', $booking->period('fr'));
+        $this->assertMatchesRegularExpression('/^le \d+ .+ \d{4}$/', $booking->period('fr'));
+        // Jamais un jour bloqué.
+        $this->asUser($this->member())->postJson($url, ['check_in' => $date(9)])->assertUnprocessable();
 
-        // Facultative ; jamais la même date ; jamais un jour bloqué.
-        $this->asUser($this->member())->postJson($url, ['check_in' => $date(6)])->assertNoContent();
-        $this->asUser($this->member())->postJson($url, ['check_in' => $date(8), 'check_out' => $date(8)])->assertJsonValidationErrors('check_out');
-        $this->asUser($this->member())->postJson($url, ['check_in' => $date(8), 'check_out' => $date(9)])->assertUnprocessable();
-
-        // Le calendrier colore les deux jours de la visite.
-        $days = collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar?month=".today()->addDays(7)->format('Y-m'))->json('data.days'))->keyBy('date');
-        $this->assertSame('pending', $days[$date(7)]['state']);
+        // Le calendrier ne colore que ce jour-là.
+        $days = collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar?month=".today()->addDays(5)->format('Y-m'))->json('data.days'))->keyBy('date');
+        $this->assertSame('pending', $days[$date(5)]['state']);
+        if (isset($days[$date(7)])) {
+            $this->assertSame('free', $days[$date(7)]['state']);
+        }
     }
 
     public function test_a_past_pending_request_expires_and_a_past_accepted_one_is_completed(): void

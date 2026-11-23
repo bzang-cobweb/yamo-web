@@ -205,10 +205,11 @@ class DemoSeeder extends Seeder
 
     /**
      * Demandes : visiteur (1 à 3), rang du logement publié, arrivée et départ (ou date
-     * et seconde date d'une visite) en jours depuis aujourd'hui, voyageurs, message.
+     * d'une visite, sa seule date : un départ donné est ignoré, décision 2026-11-22-visite-une-seule-date) en jours
+     * depuis aujourd'hui, voyageurs, message.
      * Rangs 1, 4, 9, 10, 14 : meublés (séjours) ; 0, 2, 3 : visites. Elles couvrent les
      * cas du texte d'une demande (décision 2026-11-20-texte-demande-location) : une personne
-     * et plusieurs, une visite avec et sans seconde date. Rejouées par `booking:reset`.
+     * et plusieurs. Rejouées par `booking:reset`.
      *
      * @var array<string, array{int, int, int, int|null, int|null, string|null}>
      */

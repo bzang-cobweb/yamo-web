@@ -33,7 +33,6 @@ return [
         'arrival' => 'Arrival',
         'departure' => 'Departure',
         'visit' => 'Visit',
-        'second' => 'Other visit',
         'from' => ':date from :time',
         'until' => ':date by :time',
     ],
@@ -41,7 +40,6 @@ return [
         'stay' => 'from :from to :to',
         'visit' => 'on :date',
         // Une visite avec une seconde date proposée.
-        'visit_or' => 'on :date or :second',
     ],
     'own_offer' => 'You cannot book your own offer.',
     // Le bouton d'une demande terminée, et de l'invitation à donner son avis (décision 2026-11-22-avis-apres-demande-terminee).
@@ -71,7 +69,6 @@ return [
         'check_in' => 'Arrival date',
         'check_out' => 'Departure date',
         'visit_date' => 'Preferred date',
-        'visit_second_date' => 'Other date (optional)',
         'guests' => 'Guests',
         'message' => 'Message to the owner',
         'message_placeholder' => 'Introduce yourself, tell them what you need…',

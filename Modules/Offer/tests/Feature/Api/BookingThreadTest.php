@@ -340,13 +340,11 @@ class BookingThreadTest extends TestCase
         $this->assertSame([['key' => 'arrival', 'label' => 'Arrivée', 'value' => '5 déc. 2026 à partir de 14:00'], ['key' => 'departure', 'label' => 'Départ', 'value' => '7 déc. 2026 au plus tard à 11:00']], $stay->refresh()->dateLines('fr'));
         $this->assertSame([['key' => 'arrival', 'label' => 'Arrival', 'value' => 'Dec 5, 2026 from 14:00'], ['key' => 'departure', 'label' => 'Departure', 'value' => 'Dec 7, 2026 by 11:00']], $stay->dateLines('en'));
 
+        // Une visite : sa seule date, même avec une ancienne seconde date (décision 2026-11-22-visite-une-seule-date).
         $visit = Booking::factory()->for($this->offer)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => '2026-11-30', 'guests' => null]);
-        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026'], ['key' => 'second', 'label' => 'Autre visite', 'value' => '30 nov. 2026']], $visit->dateLines('fr'));
-        // Le texte d'une visite : sa date, ou la seconde proposée (décision 2026-11-20-texte-demande-location).
+        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->dateLines('fr'));
         app()->setLocale('fr');
-        $this->assertSame('Une demande de visite pour « '.$this->offer->getTranslation('title', 'fr').' » (le 28 nov. 2026 ou 30 nov. 2026) a été enregistrée.', BookingText::summary($visit, 'requested'));
-        $visit->update(['check_out' => null]);
-        $this->assertSame([['key' => 'visit', 'label' => 'Visite', 'value' => '28 nov. 2026']], $visit->refresh()->dateLines('fr'));
+        $this->assertSame('Une demande de visite pour « '.$this->offer->getTranslation('title', 'fr').' » (le 28 nov. 2026) a été enregistrée.', BookingText::summary($visit, 'requested'));
     }
 
     public function test_a_visit_shows_its_charges_deposit_and_advance_when_set_and_the_total_of_the_months(): void

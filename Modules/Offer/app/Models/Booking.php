@@ -330,7 +330,8 @@ class Booking extends Model
         $line = fn (string $key, string $value): array => ['key' => $key, 'label' => __('offer::booking.dates.'.$key, [], $locale), 'value' => $value];
 
         if ($this->type === BookingTypeEnum::VISIT) {
-            return $out === null ? [$line('visit', $in)] : [$line('visit', $in), $line('second', $out)];
+            // Une seule date (décision 2026-11-22-visite-une-seule-date).
+            return [$line('visit', $in)];
         }
 
         $from = $this->offer?->detail('check_in_from');
@@ -353,14 +354,8 @@ class Booking extends Model
 
         $out = $this->check_out?->copy()->locale($locale)->isoFormat('ll');
 
-        if ($this->type === BookingTypeEnum::VISIT) {
-            // Une visite : sa date, et la seconde date proposée s'il y en a une (`check_out`).
-            return $out === null
-                ? __('offer::booking.period.visit', ['date' => $in], $locale)
-                : __('offer::booking.period.visit_or', ['date' => $in, 'second' => $out], $locale);
-        }
-
-        return $out === null
+        // Une visite : sa seule date (décision 2026-11-22-visite-une-seule-date).
+        return $this->type === BookingTypeEnum::VISIT || $out === null
             ? __('offer::booking.period.visit', ['date' => $in], $locale)
             : __('offer::booking.period.stay', ['from' => $in, 'to' => $out], $locale);
     }

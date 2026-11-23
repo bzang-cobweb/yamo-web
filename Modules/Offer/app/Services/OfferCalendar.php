@@ -205,7 +205,8 @@ class OfferCalendar
     /** Une visite tombe ce jour-là : sa date, ou la seconde date proposée. */
     private function visitsOn(Booking $booking, Carbon $day): bool
     {
-        return $booking->check_in->isSameDay($day) || ($booking->check_out?->isSameDay($day) ?? false);
+        // Une seule date de visite (décision 2026-11-22-visite-une-seule-date).
+        return $booking->check_in->isSameDay($day);
     }
 
     private function coversNight(Booking $booking, Carbon $day): bool
