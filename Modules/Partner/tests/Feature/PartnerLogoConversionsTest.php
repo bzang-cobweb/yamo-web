@@ -40,7 +40,7 @@ class PartnerLogoConversionsTest extends TestCase
             $this->assertTrue($media->fresh()->hasGeneratedConversion($name), $name);
             $sizes[$name] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot($name)))[0];
         }
-        $this->assertSame(['home' => 288, 'list' => 100, 'mine' => 480, 'detail' => 360], $sizes);
+        $this->assertSame(['home' => 288, 'list' => 100, 'mine' => 960, 'detail' => 360], $sizes);
 
         // Chaque écran sert la sienne.
         $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];

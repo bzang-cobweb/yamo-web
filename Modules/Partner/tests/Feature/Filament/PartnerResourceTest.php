@@ -150,8 +150,9 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertNotNull($media);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
-        // La plus grande conversion (« mine », 480 px) : 2000 × 600 devient 480 × 144 (décision 2026-11-24-partenaire-logo-taille-unique).
-        $this->assertSame([480, 144], [$width, $height]);
+        // La plus grande conversion (« mine », 960 px) : 2000 × 600 devient 960 × 288 (décisions 2026-11-24-partenaire-logo-taille-unique
+        // et 2026-11-24-partenaire-logo-mine-960).
+        $this->assertSame([960, 288], [$width, $height]);
         // L'original n'est pas gardé : un seul fichier dans le dossier du logo.
         $this->assertCount(1, Storage::disk('public')->files(dirname($media->getPathRelativeToRoot())));
         $this->assertSame($partner->fresh()->logoUrl(), $media->getUrl());

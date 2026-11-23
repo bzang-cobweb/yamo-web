@@ -19,8 +19,8 @@ return [
             'home' => (int) env('PARTNER_LOGO_HOME_SIZE', 288),
             // La page « Partenaires » (56 points).
             'list' => (int) env('PARTNER_LOGO_LIST_SIZE', 168),
-            // Les cartes de « Mes partenaires » (le bandeau d'une carte).
-            'mine' => (int) env('PARTNER_LOGO_MINE_SIZE', 480),
+            // Les cartes de « Mes partenaires » : la zone 16:9 d'une carte, 322 points de large (décision 2026-11-24-partenaire-logo-mine-960).
+            'mine' => (int) env('PARTNER_LOGO_MINE_SIZE', 960),
             // La page d'un partenaire (120 points).
             'detail' => (int) env('PARTNER_LOGO_DETAIL_SIZE', 360),
         ],
