@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-logo-entier-marge-reduite.md, 2026-11-24-logo-entier-sans-cadre.md
+Remplacée en partie par : 2026-11-24-logo-entier-marge-reduite.md, 2026-11-24-logo-entier-sans-cadre.md, 2026-11-24-mes-partenaires-comme-partenaires.md
 
 
 # `2026-11-24` — « Mes partenaires » : le logo en entier

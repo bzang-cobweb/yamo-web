@@ -101,13 +101,13 @@ class MyPartnerListing extends Listing
         };
         $locale = app()->getLocale();
 
-        // Le statut flottant sur le logo, en haut à gauche ; sous le nom, une ligne (slogan, sinon description) ; la carte ouvre la page
-        // du partenaire, « Modifier » et « Retirer » sont dans le menu (décision 2026-11-24-mes-partenaires-cartes).
+        // Comme la page « Partenaires » : le logo à gauche, le statut au-dessus du nom, puis une ligne (slogan, sinon
+        // description) ; la carte ouvre la page du partenaire, « Modifier » et « Retirer » sont dans le menu (décisions
+        // 2026-11-24-mes-partenaires-cartes et 2026-11-24-mes-partenaires-comme-partenaires).
         $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $record->cardLine($locale))
             ->image(MediaUrl::onRequestHost($record->logoUrl('list')))
-            // Le logo en entier, jamais rogné (décision 2026-11-24-mes-partenaires-logo-entier).
-            ->imageContain()
-            ->tag($status, $tone, onImage: true)
+            ->imageSide()
+            ->tag($status, $tone)
             ->subtitleLines(1)
             ->link('/partners/'.$record->getKey())
             ->edit(PartnerForm::name());

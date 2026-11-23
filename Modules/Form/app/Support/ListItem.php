@@ -57,6 +57,9 @@ final class ListItem
     /** L'image en entier (`contain`) plutôt que remplie (`cover`, par défaut). */
     private ?string $imageFit = null;
 
+    /** L'image à gauche du texte, en petit (`side`), plutôt qu'au-dessus (par défaut). */
+    private ?string $imageLayout = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -227,6 +230,18 @@ final class ListItem
     }
 
     /**
+     * L'image en petit, en entier, à gauche du texte, comme la page « Partenaires » ; le statut au-dessus du titre
+     * (« Mes partenaires », décision 2026-11-24-mes-partenaires-comme-partenaires) ; sans appel, au-dessus du texte.
+     */
+    public function imageSide(): self
+    {
+        $this->imageFit = 'contain';
+        $this->imageLayout = 'side';
+
+        return $this;
+    }
+
+    /**
      * Le sous-titre coupé à `$lines` lignes, la suite en « … » (la description d'un partenaire, décision
      * 2026-11-24-mes-partenaires-cartes) ; sans appel, entier.
      */
@@ -348,6 +363,7 @@ final class ListItem
             ...($this->subtitleLink === null ? [] : ['subtitle_link' => $this->subtitleLink]),
             ...($this->subtitleLines === null ? [] : ['subtitle_lines' => $this->subtitleLines]),
             ...($this->imageFit === null ? [] : ['image_fit' => $this->imageFit]),
+            ...($this->imageLayout === null ? [] : ['image_layout' => $this->imageLayout]),
             'edit' => $this->edit,
             /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [

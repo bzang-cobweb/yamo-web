@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-mes-partenaires-comme-partenaires.md
+
 # `2026-11-24` — Image en entier d'une carte : sans cadre, comme une photo de « Mes logements »
 
 Remplace : 2026-11-24-logo-entier-marge-reduite.md
