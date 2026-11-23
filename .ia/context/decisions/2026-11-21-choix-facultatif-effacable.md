@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-23-regles-oui-non-obligatoires.md
+
 # Un choix facultatif se retire
 
 - **Date** : 2026-11-21
