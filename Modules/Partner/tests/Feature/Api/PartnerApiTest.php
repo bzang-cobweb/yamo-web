@@ -5,6 +5,7 @@ namespace Modules\Partner\Tests\Feature\Api;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Country;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 use Tests\TestCase;
 
@@ -41,7 +42,7 @@ class PartnerApiTest extends TestCase
             'contact_email' => 'commercial@wouri.test',
         ]);
         // Pas publié, campagne pas commencée, autre pays : absents.
-        Partner::factory()->for($this->cameroon)->create(['published' => false]);
+        Partner::factory()->for($this->cameroon)->create(['status' => PartnerStatusEnum::PENDING]);
         Partner::factory()->for($this->cameroon)->create(['starts_at' => now()->addDay()]);
         Partner::factory()->create();
         // Campagne en cours : présent.
@@ -72,7 +73,7 @@ class PartnerApiTest extends TestCase
     public function test_each_listing_counts_a_view_and_each_touch_a_click(): void
     {
         $partner = Partner::factory()->for($this->cameroon)->create();
-        $hidden = Partner::factory()->for($this->cameroon)->create(['published' => false]);
+        $hidden = Partner::factory()->for($this->cameroon)->create(['status' => PartnerStatusEnum::PENDING]);
 
         $this->partners()->assertOk();
         $this->partners()->assertOk();
@@ -131,7 +132,7 @@ class PartnerApiTest extends TestCase
         $c = Partner::factory()->for($this->cameroon)->create(['position' => 3]);
         $a = Partner::factory()->for($this->cameroon)->create(['position' => 1, 'name' => ['fr' => 'Assurances du Littoral']]);
         $b = Partner::factory()->for($this->cameroon)->create(['position' => 2]);
-        $hidden = Partner::factory()->for($this->cameroon)->create(['published' => false]);
+        $hidden = Partner::factory()->for($this->cameroon)->create(['status' => PartnerStatusEnum::PENDING]);
         $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
 
         // Tous, au-delà du nombre de l'accueil, dans l'ordre, sans compte ; sans compter de vue ; page après page

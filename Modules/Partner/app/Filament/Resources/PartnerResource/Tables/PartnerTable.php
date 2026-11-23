@@ -3,12 +3,13 @@
 namespace Modules\Partner\Filament\Resources\PartnerResource\Tables;
 
 use App\Filament\AbstractResource;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
 
@@ -38,9 +39,11 @@ abstract class PartnerTable
                 TextColumn::make('country.code')
                     ->label(__('partner::partner.fields.country'))
                     ->state(fn (Partner $record): string => $record->country->label()),
-                IconColumn::make('published')
-                    ->label(__('partner::partner.fields.published'))
-                    ->boolean(),
+                TextColumn::make('status')
+                    ->label(__('partner::partner.fields.status'))
+                    ->badge()
+                    ->formatStateUsing(fn (PartnerStatusEnum $state): string => $state->label())
+                    ->color(fn (PartnerStatusEnum $state): string => $state->color()),
                 TextColumn::make('starts_at')
                     ->label(__('partner::partner.fields.starts_at'))
                     ->dateTime()
@@ -61,8 +64,9 @@ abstract class PartnerTable
                     ->sortable(),
             ])
             ->filters([
-                TernaryFilter::make('published')
-                    ->label(__('partner::partner.fields.published')),
+                SelectFilter::make('status')
+                    ->label(__('partner::partner.fields.status'))
+                    ->options(PartnerStatusEnum::options()),
                 // Proposés depuis l'app, à valider (décision 2026-11-24-partenaires-par-les-membres).
                 TernaryFilter::make('proposed')
                     ->label(__('partner::partner.fields.proposed'))

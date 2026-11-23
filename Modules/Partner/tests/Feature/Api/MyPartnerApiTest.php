@@ -10,6 +10,7 @@ use Modules\Auth\Models\User;
 use Modules\Form\Models\FormUpload;
 use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 use Tests\TestCase;
 
@@ -74,7 +75,7 @@ class MyPartnerApiTest extends TestCase
 
         $partner = Partner::query()->sole();
         // Dans le pays courant, la langue du compte, pas publié ; le compte en est administrateur.
-        $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', false], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->published]);
+        $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->status]);
         $this->assertNotNull($partner->logoUrl());
         $this->assertTrue($partner->hasAdmin($user->getKey()));
         // Pas visible dans l'app tant que l'équipe ne l'a pas publié.
@@ -94,7 +95,7 @@ class MyPartnerApiTest extends TestCase
     public function test_editing_prefills_saves_the_language_and_sends_it_back_for_review(): void
     {
         $user = $this->member();
-        $partner = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Avant', 'en' => 'Before'], 'published' => true]);
+        $partner = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Avant', 'en' => 'Before'], 'status' => PartnerStatusEnum::PUBLISHED]);
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
 
         $fields = collect($this->asUser($user)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}")->assertOk()->json('data.fields'))->keyBy('name');
@@ -103,7 +104,7 @@ class MyPartnerApiTest extends TestCase
         $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'logo' => []])->assertNoContent();
         $partner->refresh();
         // Seule la langue du compte change ; il repasse en attente de validation.
-        $this->assertSame(['Après', 'Before', false], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->published]);
+        $this->assertSame(['Après', 'Before', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
     }
 
     public function test_attached_accounts_edit_only_admins_remove_and_others_do_not_see_it(): void
@@ -129,5 +130,28 @@ class MyPartnerApiTest extends TestCase
         // L'administrateur retire.
         $this->asUser($admin)->deleteJson("/api/v1/partners/{$partner->getKey()}")->assertNoContent();
         $this->assertNull(Partner::query()->find($partner->getKey()));
+    }
+
+    public function test_my_partners_show_their_status(): void
+    {
+        // Décision 2026-11-24-partenaires-statuts.
+        $user = $this->member();
+        $partners = [
+            'Refusé' => ['status' => PartnerStatusEnum::REJECTED],
+            'Archivé' => ['status' => PartnerStatusEnum::ARCHIVED],
+            'Affiché' => ['status' => PartnerStatusEnum::PUBLISHED],
+            'Pas affiché' => ['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => now()->addMonth()],
+        ];
+        foreach ($partners as $name => $attributes) {
+            Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => $name], ...$attributes])->users()->attach($user->getKey(), ['is_admin' => true]);
+        }
+
+        $tags = collect($this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data.items'))
+            ->mapWithKeys(fn (array $item): array => [$item['title'] => [$item['tag']['label'], $item['tag']['tone']]])->all();
+
+        $this->assertSame(['Refusé', 'danger'], $tags['Refusé']);
+        $this->assertSame(['Archivé', 'neutral'], $tags['Archivé']);
+        $this->assertSame(['Affiché', 'success'], $tags['Affiché']);
+        $this->assertSame(['Pas affiché', 'neutral'], $tags['Pas affiché']);
     }
 }

@@ -12,7 +12,15 @@ return [
         'contact' => 'Contact',
         'stats' => 'Statistics',
     ],
+    // Décision 2026-11-24-partenaires-statuts.
+    'statuses' => [
+        'pending' => 'Awaiting review',
+        'published' => 'Published',
+        'rejected' => 'Rejected',
+        'archived' => 'Archived',
+    ],
     'fields' => [
+        'status' => 'Status',
         'user' => 'Account',
         'is_admin' => 'Administrator',
         'make_admin' => 'Make administrator',
@@ -49,7 +57,6 @@ return [
         'remove_confirm' => 'Remove this partner?',
         'removed' => 'Partner removed.',
         'status' => [
-            'pending' => 'Awaiting review',
             'shown' => 'Shown',
             'hidden' => 'Not shown',
         ],

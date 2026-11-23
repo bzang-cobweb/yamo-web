@@ -16,6 +16,7 @@ use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Database\Factories\PartnerFactory;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -27,7 +28,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int $id
  * @property int $country_id
  * @property string $name
- * @property bool $published
+ * @property PartnerStatusEnum $status
  * @property Carbon|null $starts_at
  * @property Carbon|null $expires_at
  * @property int $position
@@ -38,7 +39,7 @@ use Spatie\Translatable\HasTranslations;
  * @property-read Country $country
  * @property-read Collection<int, User> $users les comptes qui l'administrent
  */
-#[Fillable(['country_id', 'name', 'description', 'url', 'cta_label', 'published', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
+#[Fillable(['country_id', 'name', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
 #[UseFactory(PartnerFactory::class)]
 class Partner extends Model implements HasMedia
 {
@@ -64,7 +65,7 @@ class Partner extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'published' => 'boolean',
+            'status' => PartnerStatusEnum::class,
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
             'position' => 'integer',
@@ -129,20 +130,20 @@ class Partner extends Model implements HasMedia
      */
     public function isShown(bool $paymentRequired): bool
     {
-        return $this->published
+        return $this->status === PartnerStatusEnum::PUBLISHED
             && ($this->starts_at === null || ! $this->starts_at->isFuture())
             && (! $paymentRequired || ($this->expires_at !== null && $this->expires_at->isFuture()));
     }
 
     /**
-     * Visibles dans l'app : publiés, du pays courant, campagne commencée ; le paiement des partenaires appliqué,
+     * Visibles dans l'app : publiés (décision 2026-11-24-partenaires-statuts), du pays courant, campagne commencée ; le paiement des partenaires appliqué,
      * jusqu'à leur date d'expiration, sans date jamais (décision 2026-11-23-paiement-partenaires), comme les offres.
      *
      * @param  Builder<Partner>  $query
      */
     public function scopeVisible(Builder $query): void
     {
-        $query->where('published', true)
+        $query->where('status', PartnerStatusEnum::PUBLISHED)
             ->where('country_id', CurrentCountry::require()->getKey())
             ->where(fn (Builder $start) => $start->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
             ->when(Setting::partnerPaymentRequired(), fn (Builder $paid) => $paid->where('expires_at', '>', now()));

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Modules\Auth\Models\User;
 use Modules\Location\Support\CurrentCountry;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -71,13 +72,13 @@ class PartnerService
 
     /**
      * Un partenaire proposé par un membre (décision 2026-11-24-partenaires-par-les-membres) : dans le pays courant,
-     * ses textes dans la langue `$locale`, pas publié ; le membre y est rattaché en administrateur (`is_admin`).
+     * ses textes dans la langue `$locale`, en attente de validation ; le membre y est rattaché en administrateur (`is_admin`).
      *
      * @param  array{name: string, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */
     public function propose(User $user, array $data, string $locale): Partner
     {
-        $partner = new Partner(['country_id' => CurrentCountry::require()->getKey(), 'published' => false]);
+        $partner = new Partner(['country_id' => CurrentCountry::require()->getKey(), 'status' => PartnerStatusEnum::PENDING]);
         $this->fill($partner, $data, $locale);
         $partner->save();
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
@@ -94,7 +95,7 @@ class PartnerService
     public function change(Partner $partner, array $data, string $locale): void
     {
         $this->fill($partner, $data, $locale);
-        $partner->published = false;
+        $partner->status = PartnerStatusEnum::PENDING;
         $partner->save();
     }
 

@@ -10,14 +10,15 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
 
 /**
  * « Mes partenaires » (décision 2026-11-24-partenaires-par-les-membres) : ceux qu'administre le compte, dans le
- * pays courant ; pour chacun, son logo, son nom, son statut (« En attente de validation », « Affiché », « Pas
- * affiché ») ; la carte ouvre son formulaire ; « Retirer » le supprime, pour un administrateur (`is_admin`). En bas,
+ * pays courant ; pour chacun, son logo, son nom, son statut (« En attente de validation », « Refusé », « Archivé »,
+ * et, publié, « Affiché » ou « Pas affiché ») ; la carte ouvre son formulaire ; « Retirer » le supprime, pour un administrateur (`is_admin`). En bas,
  * « Proposer un partenaire ».
  */
 class MyPartnerListing extends Listing
@@ -74,8 +75,9 @@ class MyPartnerListing extends Listing
     {
         /** @var Partner $record */
         $this->paymentRequired ??= Setting::partnerPaymentRequired();
+        // Le statut (décision 2026-11-24-partenaires-statuts) ; publié, s'il est affiché maintenant ou pas (campagne).
         [$status, $tone] = match (true) {
-            ! $record->published => [__('partner::partner.member.status.pending'), 'warning'],
+            $record->status !== PartnerStatusEnum::PUBLISHED => [$record->status->label(), $record->status->tone()],
             $record->isShown($this->paymentRequired) => [__('partner::partner.member.status.shown'), 'success'],
             default => [__('partner::partner.member.status.hidden'), 'neutral'],
         };

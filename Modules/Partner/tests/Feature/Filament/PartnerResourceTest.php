@@ -7,6 +7,7 @@ use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
 use Modules\Location\Models\Country;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Filament\Resources\PartnerResource;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\CreatePartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
@@ -34,7 +35,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
                 'description' => ['fr' => 'Assurance habitation.', 'en' => 'Home insurance.'],
                 'url' => ['fr' => 'https://littoral.test/fr', 'en' => 'https://littoral.test/en'],
                 'cta_label' => ['fr' => 'Être rappelé', 'en' => 'Call me back'],
-                'published' => true,
+                'status' => PartnerStatusEnum::PUBLISHED->value,
                 'expires_at' => now()->addMonth()->toDateTimeString(),
                 'contact_email' => 'pub@littoral.test',
             ])
@@ -45,7 +46,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertSame('Littoral Insurance', $partner->getTranslation('name', 'en'));
         $this->assertSame('https://littoral.test/en', $partner->getTranslation('url', 'en'));
         $this->assertSame('Être rappelé', $partner->getTranslation('cta_label', 'fr'));
-        $this->assertTrue($partner->published);
+        $this->assertSame(PartnerStatusEnum::PUBLISHED, $partner->status);
         // Rangé à la fin (décision 2026-11-23-partenaires-triables).
         $this->assertSame($existing->position + 1, $partner->position);
 

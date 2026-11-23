@@ -4,6 +4,7 @@ namespace Modules\Partner\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Modules\Location\Models\Country;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -26,7 +27,7 @@ class PartnerFactory extends Factory
             'description' => ['fr' => 'Déménagement clés en main.', 'en' => 'Turnkey moving.'],
             'url' => ['fr' => 'https://example.test/fr', 'en' => 'https://example.test/en'],
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],
-            'published' => true,
+            'status' => PartnerStatusEnum::PUBLISHED,
         ];
     }
 }

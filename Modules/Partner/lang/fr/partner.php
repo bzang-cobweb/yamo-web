@@ -12,7 +12,15 @@ return [
         'contact' => 'Contact',
         'stats' => 'Statistiques',
     ],
+    // Décision 2026-11-24-partenaires-statuts.
+    'statuses' => [
+        'pending' => 'En attente de validation',
+        'published' => 'Publié',
+        'rejected' => 'Refusé',
+        'archived' => 'Archivé',
+    ],
     'fields' => [
+        'status' => 'Statut',
         'user' => 'Compte',
         'is_admin' => 'Administrateur',
         'make_admin' => 'Faire administrateur',
@@ -49,7 +57,6 @@ return [
         'remove_confirm' => 'Retirer ce partenaire ?',
         'removed' => 'Partenaire retiré.',
         'status' => [
-            'pending' => 'En attente de validation',
             'shown' => 'Affiché',
             'hidden' => 'Pas affiché',
         ],

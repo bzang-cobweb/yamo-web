@@ -9,11 +9,11 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Modules\Location\Models\Country;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -60,8 +60,12 @@ abstract class PartnerForm
                         Tab::make(__('partner::partner.sections.campaign'))
                             ->columns(2)
                             ->schema([
-                                Toggle::make('published')
-                                    ->label(__('partner::partner.fields.published'))
+                                // Décision 2026-11-24-partenaires-statuts.
+                                Select::make('status')
+                                    ->label(__('partner::partner.fields.status'))
+                                    ->options(PartnerStatusEnum::options())
+                                    ->default(PartnerStatusEnum::PENDING->value)
+                                    ->required()
                                     ->columnSpanFull(),
                                 DateTimePicker::make('starts_at')
                                     ->label(__('partner::partner.fields.starts_at')),
