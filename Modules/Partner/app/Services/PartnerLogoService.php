@@ -3,6 +3,7 @@
 namespace Modules\Partner\Services;
 
 use App\Support\MediaUrl;
+use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
 use Modules\Partner\Models\Partner;
 use Spatie\Image\Enums\Fit;
@@ -10,23 +11,42 @@ use Spatie\Image\Image;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- * Le logo d'un partenaire envoyé depuis l'app (décision 2026-11-24-partenaires-par-les-membres), comme les photos
- * d'une offre : le fichier en attente du formulaire devient le logo, optimisé en WebP ; un seul à la fois.
+ * Le logo d'un partenaire, optimisé en WebP, un seul à la fois : envoyé depuis l'app (décision
+ * 2026-11-24-partenaires-par-les-membres), comme les photos d'une offre, ou depuis le back-office (décision
+ * 2026-11-24-partenaire-logo-optimise), comme la photo de profil.
  */
 class PartnerLogoService
 {
     /** Le nom du champ du formulaire. */
     public const FIELD = 'logo';
 
-    public const ACCEPTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    /**
+     * Les types de fichier acceptés (`config('partner.logo.mime_types')`, `PARTNER_LOGO_MIME_TYPES`).
+     *
+     * @return list<string>
+     */
+    public static function acceptedMimeTypes(): array
+    {
+        return config('partner.logo.mime_types');
+    }
 
-    /** Taille maximale d'un envoi, en kilo-octets. */
-    public const MAX_UPLOAD_KB = 5120;
+    /** La taille maximale d'un envoi, en kilo-octets (`PARTNER_LOGO_MAX_UPLOAD_KB`). */
+    public static function maxUploadKb(): int
+    {
+        return (int) config('partner.logo.max_upload_kb');
+    }
 
-    /** Le plus grand côté du logo enregistré, en pixels. */
-    private const STORED_SIZE = 512;
+    /** Le plus grand côté du logo enregistré, en pixels (`PARTNER_LOGO_STORED_SIZE`). */
+    private function storedSize(): int
+    {
+        return (int) config('partner.logo.stored_size');
+    }
 
-    private const QUALITY = 85;
+    /** La qualité du WebP enregistré (`PARTNER_LOGO_QUALITY`). */
+    private function quality(): int
+    {
+        return (int) config('partner.logo.quality');
+    }
 
     /**
      * Le logo actuel, pour le champ du formulaire : son identifiant (uuid du média) et son adresse.
@@ -61,26 +81,41 @@ class PartnerLogoService
             return;
         }
 
-        $this->store($partner, $upload);
+        $this->storeUpload($partner, $upload);
     }
 
-    private function store(Partner $partner, FormUpload $upload): Media
+    /**
+     * Un fichier en attente du formulaire de l'app devient le logo ; il est retiré.
+     */
+    private function storeUpload(Partner $partner, FormUpload $upload): Media
+    {
+        $media = $this->store($partner, $upload->absolutePath(), $upload->uuid);
+        $upload->discard();
+
+        return $media;
+    }
+
+    /**
+     * Le fichier `$sourcePath` devient le logo, optimisé : WebP, 512 px au plus sur le grand côté, proportions
+     * gardées ; l'original n'est pas conservé ; tailles et qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
+     * 2026-11-24-partenaire-logo-optimise) ; `singleFile()` : il remplace l'ancien.
+     */
+    public function store(Partner $partner, string $sourcePath, ?string $name = null): Media
     {
         $base = (string) tempnam(sys_get_temp_dir(), 'partner');
         $optimised = $base.'.webp';
 
         try {
-            Image::load($upload->absolutePath())
+            Image::load($sourcePath)
                 ->orientation()
-                ->fit(Fit::Max, self::STORED_SIZE, self::STORED_SIZE)
-                ->quality(self::QUALITY)
+                ->fit(Fit::Max, $this->storedSize(), $this->storedSize())
+                ->quality($this->quality())
                 ->format('webp')
                 ->save($optimised);
 
-            // `singleFile()` : le nouveau remplace l'ancien.
             $media = $partner->addMedia($optimised)
                 ->usingName('logo')
-                ->usingFileName($upload->uuid.'.webp')
+                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
                 ->toMediaCollection(Partner::LOGO);
         } finally {
             foreach ([$base, $optimised] as $path) {
@@ -90,7 +125,7 @@ class PartnerLogoService
             }
         }
 
-        $upload->discard();
+        $partner->unsetRelation('media');
 
         return $media;
     }

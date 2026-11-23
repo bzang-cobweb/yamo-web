@@ -53,8 +53,8 @@ class PartnerForm extends Form
             $this->contentLocaleField(),
             Field::upload(PartnerLogoService::FIELD)
                 ->label(__('partner::partner.fields.logo'))
-                ->accept(PartnerLogoService::ACCEPTED_MIME_TYPES)
-                ->maxSize(PartnerLogoService::MAX_UPLOAD_KB)
+                ->accept(PartnerLogoService::acceptedMimeTypes())
+                ->maxSize(PartnerLogoService::maxUploadKb())
                 ->maxFiles(1)
                 ->files(app(PartnerLogoService::class)->current($partner)),
             Field::text('name')

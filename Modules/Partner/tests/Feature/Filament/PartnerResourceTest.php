@@ -2,6 +2,8 @@
 
 namespace Modules\Partner\Tests\Feature\Filament;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Models\User;
@@ -130,6 +132,42 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->fillForm(['contact_phone' => '12'])
             ->call('save')
             ->assertHasFormErrors(['contact_phone']);
+    }
+
+    public function test_a_logo_sent_from_the_back_office_is_optimised_like_from_the_app(): void
+    {
+        // Décision 2026-11-24-partenaire-logo-optimise : WebP, 512 px au plus, proportions gardées, pas d'original.
+        Storage::fake('public');
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $partner = Partner::factory()->for(Country::factory()->create())->create();
+
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->fillForm(['logo' => UploadedFile::fake()->image('logo.png', 2000, 600)])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $media = $partner->fresh()->getFirstMedia(Partner::LOGO);
+        $this->assertNotNull($media);
+        $this->assertSame('image/webp', $media->mime_type);
+        [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
+        $this->assertSame([512, 154], [$width, $height]);
+        // L'original n'est pas gardé : un seul fichier dans le dossier du logo.
+        $this->assertCount(1, Storage::disk('public')->files(dirname($media->getPathRelativeToRoot())));
+        $this->assertSame($partner->fresh()->logoUrl(), $media->getUrl());
+
+        // Les réglages viennent de la configuration (`PARTNER_LOGO_*`, décision 2026-11-24-partenaire-logo-config).
+        config(['partner.logo.stored_size' => 256]);
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->fillForm(['logo' => UploadedFile::fake()->image('logo.png', 2000, 600)])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $media = $partner->fresh()->getFirstMedia(Partner::LOGO);
+        $this->assertSame(256, getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()))[0]);
+
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->fillForm(['logo' => UploadedFile::fake()->create('plaquette.pdf', 100, 'application/pdf')])
+            ->call('save')
+            ->assertHasFormErrors(['logo']);
     }
 
     public function test_hidden_without_the_permission(): void

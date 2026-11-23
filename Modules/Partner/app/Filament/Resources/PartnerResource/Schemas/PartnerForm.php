@@ -13,10 +13,12 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Services\PartnerLogoService;
 
 /**
  * Le partenaire, en onglets (décisions 2026-11-23-module-partenaires et 2026-11-23-partenaires-nom-traduit) :
@@ -34,11 +36,19 @@ abstract class PartnerForm
                         Tab::make(__('partner::partner.sections.identity'))
                             ->columns(2)
                             ->schema([
+                                // Optimisé comme depuis l'app : WebP, 512 px au plus, l'original n'est pas gardé (décision
+                                // 2026-11-24-partenaire-logo-optimise).
                                 SpatieMediaLibraryFileUpload::make('logo')
                                     ->label(__('partner::partner.fields.logo'))
                                     ->collection(Partner::LOGO)
                                     ->image()
-                                    ->maxSize(2048),
+                                    ->acceptedFileTypes(PartnerLogoService::acceptedMimeTypes())
+                                    ->maxSize(PartnerLogoService::maxUploadKb())
+                                    ->saveUploadedFileUsing(
+                                        fn (TemporaryUploadedFile $file, Partner $record): string => app(PartnerLogoService::class)
+                                            ->store($record, $file->getRealPath())
+                                            ->uuid,
+                                    ),
                                 // Un onglet par langue : le nom, le slogan et la description.
                                 TranslatableTabs::make(fn (string $locale): array => [
                                     TextInput::make("name.{$locale}")
