@@ -18,8 +18,10 @@ use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Database\Factories\PartnerFactory;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Events\PartnerStatusChanged;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -206,10 +208,40 @@ class Partner extends Model implements HasMedia
         return $description;
     }
 
-    public function logoUrl(): ?string
+    /**
+     * Une conversion par endroit où le logo s'affiche (`config('partner.logo.conversions')`, décision
+     * 2026-11-24-partenaire-logo-conversions), produite tout de suite : aucune file d'attente ne tourne.
+     */
+    public function registerMediaConversions(?Media $media = null): void
     {
-        $url = $this->getFirstMediaUrl(self::LOGO);
+        foreach ((array) config('partner.logo.conversions') as $name => $size) {
+            $this->addMediaConversion((string) $name)
+                ->performOnCollections(self::LOGO)
+                ->fit(Fit::Max, (int) $size, (int) $size)
+                ->format('webp')
+                ->quality((int) config('partner.logo.quality'))
+                ->nonOptimized()
+                ->nonQueued();
+        }
+    }
 
-        return $url === '' ? null : $url;
+    /**
+     * L'adresse du logo ; avec `$conversion` (`home`, `list`, `mine`, `detail`), celle de sa conversion, ou celle du
+     * logo tant que la conversion n'est pas produite ; `null` sans logo.
+     */
+    public function logoUrl(?string $conversion = null): ?string
+    {
+        $media = $this->getFirstMedia(self::LOGO);
+        if ($media === null) {
+            return null;
+        }
+        if ($conversion === null) {
+            return $media->getUrl();
+        }
+        if (! $media->hasGeneratedConversion($conversion)) {
+            return $media->getUrl();
+        }
+
+        return $media->getUrl($conversion);
     }
 }

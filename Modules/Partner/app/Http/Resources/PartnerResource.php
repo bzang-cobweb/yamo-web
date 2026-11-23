@@ -19,10 +19,15 @@ class PartnerResource extends JsonResource
 {
     private bool $withContact = false;
 
+    /** La conversion du logo : `home` (le carrousel de l'accueil) par défaut, `detail` pour la page. */
+    private string $logoConversion = 'home';
+
     /** Avec l'e-mail et le téléphone de contact : pour la page du partenaire seulement. */
     public function withContact(): static
     {
         $this->withContact = true;
+        // La page d'un partenaire : son logo à la taille de la page (décision 2026-11-24-partenaire-logo-conversions).
+        $this->logoConversion = 'detail';
 
         return $this;
     }
@@ -54,7 +59,7 @@ class PartnerResource extends JsonResource
             'description' => $text('description'),
             'url' => $text('url'),
             'cta_label' => $text('cta_label'),
-            'logo' => MediaUrl::onRequestHost($partner->logoUrl()),
+            'logo' => MediaUrl::onRequestHost($partner->logoUrl($this->logoConversion)),
             ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $this->phone()] : []),
         ];
     }

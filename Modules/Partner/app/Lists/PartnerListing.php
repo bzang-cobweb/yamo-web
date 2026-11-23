@@ -61,7 +61,7 @@ class PartnerListing extends Listing
 
         // Sous le nom, le slogan, sinon la description (décision 2026-11-24-mes-partenaires-slogan).
         return ListItem::make($record->getKey(), $name, $record->cardLine(app()->getLocale()))
-            ->image(MediaUrl::onRequestHost($record->logoUrl()))
+            ->image(MediaUrl::onRequestHost($record->logoUrl('list')))
             ->link('/partners/'.$record->getKey());
     }
 }
