@@ -2,24 +2,29 @@
 
 namespace Modules\Offer\Listeners;
 
-use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
-use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Services\BookingNotifier;
 
 /**
  * Une demande : le propriétaire de l'offre est prévenu (décision
  * 2026-11-19-notifications-reservations) ; de même quand le membre la modifie (décision
  * 2026-11-21-demande-modifiee-notification).
  */
-class NotifyOwnerOfBookingRequest
+final class NotifyOwnerOfBookingRequest
 {
+    public function __construct(
+        private readonly BookingNotifier $notifier,
+    ) {}
+
     public function handle(BookingRequested|BookingUpdated $event): void
     {
-        $notification = $event instanceof BookingUpdated
-            ? BookingNotification::for($event->booking, BookingStepEnum::UPDATED, edited: $event->edited)
-            : BookingNotification::for($event->booking, BookingStepEnum::RECEIVED);
+        if ($event instanceof BookingUpdated) {
+            $this->notifier->ownerOfUpdate($event->booking, $event->edited);
 
-        $event->booking->offer->user?->notify($notification);
+            return;
+        }
+
+        $this->notifier->ownerOfRequest($event->booking);
     }
 }

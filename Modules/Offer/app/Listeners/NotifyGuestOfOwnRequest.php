@@ -2,23 +2,29 @@
 
 namespace Modules\Offer\Listeners;
 
-use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingCancelled;
-use Modules\Offer\Events\BookingRequested as BookingRequestedEvent;
-use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Events\BookingRequested;
+use Modules\Offer\Services\BookingNotifier;
 
 /**
  * Sa demande, puis son annulation : le membre les retrouve dans son propre fil, déjà lues,
  * comme le propriétaire ses réponses ; sa carte de « Mes réservations » ouvre ce fil
  * (décision 2026-11-21-reservation-comme-notification).
  */
-class NotifyGuestOfOwnRequest
+final class NotifyGuestOfOwnRequest
 {
-    public function handle(BookingRequestedEvent|BookingCancelled $event): void
-    {
-        $booking = $event->booking;
-        $step = $event instanceof BookingCancelled ? BookingStepEnum::CANCELLED : BookingStepEnum::RECEIVED;
+    public function __construct(
+        private readonly BookingNotifier $notifier,
+    ) {}
 
-        $booking->user?->notify(BookingNotification::for($booking, $step, own: true));
+    public function handle(BookingRequested|BookingCancelled $event): void
+    {
+        if ($event instanceof BookingCancelled) {
+            $this->notifier->guestOfOwnCancellation($event->booking);
+
+            return;
+        }
+
+        $this->notifier->guestOfOwnRequest($event->booking);
     }
 }

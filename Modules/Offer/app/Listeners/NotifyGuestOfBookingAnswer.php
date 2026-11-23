@@ -2,20 +2,21 @@
 
 namespace Modules\Offer\Listeners;
 
-use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingAnswered;
-use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Services\BookingNotifier;
 
 /**
  * Une réponse : le membre est prévenu, acceptée ou refusée (décision
  * 2026-11-19-notifications-reservations).
  */
-class NotifyGuestOfBookingAnswer
+final class NotifyGuestOfBookingAnswer
 {
+    public function __construct(
+        private readonly BookingNotifier $notifier,
+    ) {}
+
     public function handle(BookingAnswered $event): void
     {
-        $booking = $event->booking;
-
-        $booking->user->notify(BookingNotification::for($booking, BookingStepEnum::answer($booking->status)));
+        $this->notifier->guestOfAnswer($event->booking);
     }
 }

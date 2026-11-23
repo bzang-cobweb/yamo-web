@@ -2,20 +2,21 @@
 
 namespace Modules\Offer\Listeners;
 
-use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Events\BookingAnswered;
-use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Services\BookingNotifier;
 
 /**
  * Une réponse : le propriétaire la retrouve dans son propre fil, déjà lue, et sa carte
  * remonte en tête (décision 2026-11-20-reponse-dans-son-fil).
  */
-class NotifyOwnerOfOwnAnswer
+final class NotifyOwnerOfOwnAnswer
 {
+    public function __construct(
+        private readonly BookingNotifier $notifier,
+    ) {}
+
     public function handle(BookingAnswered $event): void
     {
-        $booking = $event->booking;
-
-        $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::answer($booking->status), own: true));
+        $this->notifier->ownerOfOwnAnswer($event->booking);
     }
 }
