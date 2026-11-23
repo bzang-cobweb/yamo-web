@@ -48,32 +48,32 @@ class AvatarApiTest extends TestCase
         $this->assertNotNull($media);
         $disk = Storage::disk('public');
 
-        // L'original est gardé, recadré en carré WebP et plafonné à 1024 px (`AUTH_AVATAR_ORIGINAL_SIZE`, décision
-        // 2026-11-24-partenaire-logo-sans-original), et ses conversions.
+        // L'original est gardé, recadré en carré WebP et plafonné à 720 px (`AUTH_AVATAR_ORIGINAL_SIZE`, décision
+        // 2026-11-24-avatar-list-detail), et ses conversions.
         $this->assertSame('avatar.webp', $media->file_name);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize($disk->path($media->getPathRelativeToRoot()));
-        $this->assertSame([1024, 1024], [$width, $height]);
+        $this->assertSame([720, 720], [$width, $height]);
         $this->assertCount(1, $disk->files('auth/avatar/'.$media->uuid));
 
         // Une conversion carrée par écran, produite tout de suite, à la taille de la configuration
         // (décision 2026-11-24-avatar-photos-offre-conversions).
         $sizes = [];
-        foreach (['profile', 'member', 'actor', 'admin'] as $name) {
+        foreach (['list', 'detail'] as $name) {
             $sizes[$name] = getimagesize($disk->path($media->getPathRelativeToRoot($name)));
             $sizes[$name] = [$sizes[$name][0], $sizes[$name][1]];
         }
-        $this->assertSame(['profile' => [288, 288], 'member' => [288, 288], 'actor' => [144, 144], 'admin' => [256, 256]], $sizes);
+        $this->assertSame(['list' => [144, 144], 'detail' => [288, 288]], $sizes);
 
         // Adresse sur l'hôte de la requête, rangée sous <module>/<champ>/<uuid>, sans numéro séquentiel.
         $this->assertStringEndsWith(
-            '/storage/auth/avatar/'.$media->uuid.'/conversions/avatar-profile.webp',
+            '/storage/auth/avatar/'.$media->uuid.'/conversions/avatar-detail.webp',
             $response->json('data.avatar_url'),
         );
         $this->assertStringNotContainsString('/storage/'.$media->getKey().'/', $response->json('data.avatar_url'));
     }
 
-    public function test_a_photo_smaller_than_the_profile_conversion_is_refused(): void
+    public function test_a_photo_smaller_than_the_detail_conversion_is_refused(): void
     {
         // Au moins la plus grande conversion (288 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-max).
         $user = User::factory()->create();
@@ -102,7 +102,7 @@ class AvatarApiTest extends TestCase
         $this->withToken($user->createToken('test')->plainTextToken)
             ->getJson('http://yamo.ddev.site/api/v1/auth/me')
             ->assertOk()
-            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/auth/avatar/'.$uuid.'/conversions/avatar-profile.webp');
+            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/auth/avatar/'.$uuid.'/conversions/avatar-detail.webp');
     }
 
     public function test_a_new_photo_replaces_the_previous_one(): void

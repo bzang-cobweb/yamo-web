@@ -149,7 +149,7 @@ abstract class UserForm
         return SpatieMediaLibraryFileUpload::make('avatar')
             ->label(__('auth::user.avatar'))
             ->collection(AvatarService::COLLECTION)
-            ->conversion('admin')
+            ->conversion('detail')
             ->avatar()
             ->image()
             ->acceptedFileTypes(AvatarService::acceptedMimeTypes())

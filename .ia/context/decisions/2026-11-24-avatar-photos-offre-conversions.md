@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-partenaire-logo-sans-original.md
+Remplacée en partie par : 2026-11-24-partenaire-logo-sans-original.md, 2026-11-24-avatar-list-detail.md
 
 # `2026-11-24` — Photo de profil et photos d'une offre : réglages dans le `.env`, une conversion par écran
 

@@ -25,7 +25,7 @@ abstract class UserTable
                 SpatieMediaLibraryImageColumn::make('avatar')
                     ->label(__('auth::user.avatar'))
                     ->collection(AvatarService::COLLECTION)
-                    ->conversion('admin')
+                    ->conversion('list')
                     ->circular()
                     ->imageSize(36),
                 // Pastille « en ligne » : vu par l'API dans les 5 dernières minutes.

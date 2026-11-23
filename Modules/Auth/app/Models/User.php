@@ -151,7 +151,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
-     * L'adresse de la photo de profil ; avec `$conversion` (`profile`, `member`, `actor`, `admin`), celle de sa
+     * L'adresse de la photo de profil ; avec `$conversion` (`list`, `detail`), celle de sa
      * conversion, ou celle de la photo tant que la conversion n'est pas produite ; `null` sans photo.
      */
     public function avatarUrl(?string $conversion = null): ?string
@@ -172,7 +172,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
 
     public function getFilamentAvatarUrl(): ?string
     {
-        return $this->avatarUrl('admin');
+        return $this->avatarUrl('list');
     }
 
     /**

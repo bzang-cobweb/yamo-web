@@ -22,7 +22,7 @@ final class ActorData
             'id' => (string) $user->getKey(),
             'name' => (string) $user->full_name,
             'initials' => (string) $user->initials,
-            'photo' => MediaUrl::onRequestHost($user->avatarUrl('actor')),
+            'photo' => MediaUrl::onRequestHost($user->avatarUrl('list')),
             'online' => (bool) $user->is_online,
             'link' => '/members/'.$user->getKey(),
         ];

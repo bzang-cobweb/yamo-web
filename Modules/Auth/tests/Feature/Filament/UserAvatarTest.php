@@ -42,8 +42,8 @@ class UserAvatarTest extends AuthFilamentTestCase
         $this->assertNotNull($media);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
-        // L'original, plafonné à 1024 px (décision 2026-11-24-partenaire-logo-sans-original).
-        $this->assertSame([1024, 1024], [$width, $height]);
+        // L'original, plafonné à 720 px (décision 2026-11-24-avatar-list-detail).
+        $this->assertSame([720, 720], [$width, $height]);
         $this->assertCount(1, Storage::disk('public')->files('auth/avatar/'.$media->uuid));
     }
 
@@ -66,13 +66,13 @@ class UserAvatarTest extends AuthFilamentTestCase
         $photo = UploadedFile::fake()->image('a.jpg', 300, 300);
         app(AvatarService::class)->store($admin, $photo->getRealPath());
 
-        $url = $admin->fresh()->avatarUrl('admin');
-        $this->assertStringContainsString('/conversions/avatar-admin.webp', (string) $url);
+        $url = $admin->fresh()->avatarUrl('list');
+        $this->assertStringContainsString('/conversions/avatar-list.webp', (string) $url);
         $this->assertStringEndsWith((string) $url, Filament::getUserAvatarUrl($admin->fresh()));
 
         // Sur le disque factice, la colonne sert une adresse signée sans `/storage` :
         // on vérifie le chemin de la vignette sur le disque.
-        $thumb = $admin->fresh()->getFirstMedia(AvatarService::COLLECTION)->getPathRelativeToRoot('admin');
+        $thumb = $admin->fresh()->getFirstMedia(AvatarService::COLLECTION)->getPathRelativeToRoot('list');
         $this->assertStringContainsString($thumb, Livewire::test(ListUsers::class)->html());
     }
 

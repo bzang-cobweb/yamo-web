@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-avatar-list-detail.md
+
 # `2026-11-24` — Logo : plus d'original gardé ; photo de profil : original gardé, plafonné à 1024 px
 
 Remplace en partie : 2026-11-24-partenaire-logo-original.md, 2026-11-24-avatar-photos-offre-conversions.md

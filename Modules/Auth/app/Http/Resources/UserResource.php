@@ -42,8 +42,8 @@ class UserResource extends JsonResource
             'last_seen_at' => $this->lastSeenAt(),
             'is_online' => $this->resource->is_online,
             'locale' => $this->locale,
-            // Le profil : sa photo à la taille du profil (décision 2026-11-24-avatar-photos-offre-conversions).
-            'avatar_url' => $this->onRequestHost($this->resource->avatarUrl('profile'), $request),
+            // Le profil : sa photo en grand (décision 2026-11-24-avatar-list-detail).
+            'avatar_url' => $this->onRequestHost($this->resource->avatarUrl('detail'), $request),
         ];
     }
 

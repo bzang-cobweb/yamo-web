@@ -36,7 +36,7 @@ class MemberProfile
             'title' => __('offer::member.title', [], $locale),
             'name' => (string) $member->full_name,
             'initials' => (string) $member->initials,
-            'photo' => MediaUrl::onRequestHost($member->avatarUrl('member')),
+            'photo' => MediaUrl::onRequestHost($member->avatarUrl('detail')),
             'since' => __('offer::member.since', ['date' => $member->created_at?->copy()->locale($locale)->isoFormat('MMMM YYYY') ?? ''], $locale),
             'description' => $description === '' ? null : $description,
             'facts' => $facts,
