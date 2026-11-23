@@ -49,6 +49,7 @@ abstract class BookingInfolist
                         TextEntry::make('message')->label(__('offer::booking.resource.message'))->placeholder('—')->columnSpanFull(),
                         TextEntry::make('created_at')->label(__('offer::booking.resource.created_at'))->dateTime(),
                         TextEntry::make('answered_at')->label(__('offer::booking.resource.answered_at'))->dateTime()->placeholder('—'),
+                        TextEntry::make('acceptance_message')->label(__('offer::booking.resource.acceptance_message'))->placeholder('—'),
                         TextEntry::make('refusal_message')->label(__('offer::booking.resource.refusal_message'))->placeholder('—'),
                         TextEntry::make('cancelled_at')->label(__('offer::booking.resource.cancelled_at'))->dateTime()->placeholder('—'),
                     ]),

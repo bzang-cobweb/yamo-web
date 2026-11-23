@@ -154,13 +154,14 @@ class BookingService
     }
 
     /**
-     * La réponse du propriétaire ; un refus peut porter un message.
+     * La réponse du propriétaire ; un refus comme une acceptation peut porter un message (décision
+     * 2026-11-22-accepter-avec-message).
      */
-    public function answer(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking
+    public function answer(Booking $booking, bool $accept, ?string $message = null): Booking
     {
-        return DB::transaction(function () use ($booking, $accept, $refusalMessage): Booking {
+        return DB::transaction(function () use ($booking, $accept, $message): Booking {
             if (! $accept) {
-                return $this->settle($booking, false, $refusalMessage);
+                return $this->settle($booking, false, $message);
             }
 
             // Accepter : jamais sur un jour bloqué ni sur un séjour déjà accepté ; les
@@ -170,7 +171,7 @@ class BookingService
             if ($this->availability->conflicts($booking->offer, $booking->type, $booking->check_in, $booking->check_out, $booking->getKey())) {
                 throw ValidationException::withMessages(['answer' => __('offer::booking.accept_unavailable')]);
             }
-            $this->settle($booking, true);
+            $this->settle($booking, true, $message);
             foreach ($this->availability->overlappingPending($booking) as $other) {
                 $this->settle($other, false, __('offer::booking.overlap_refusal', [], $other->user->preferredLocale()));
             }
@@ -204,12 +205,13 @@ class BookingService
     /**
      * Enregistre la réponse et la notifie ; un refus peut porter un message.
      */
-    private function settle(Booking $booking, bool $accept, ?string $refusalMessage = null): Booking
+    private function settle(Booking $booking, bool $accept, ?string $note = null): Booking
     {
-        $message = trim((string) $refusalMessage);
+        $message = trim((string) $note);
         $booking->fill([
             'status' => $accept ? BookingStatusEnum::ACCEPTED : BookingStatusEnum::REFUSED,
             'refusal_message' => $accept || $message === '' ? null : $message,
+            'acceptance_message' => ! $accept || $message === '' ? null : $message,
             'answered_at' => now(),
         ])->save();
         BookingAnswered::dispatch($booking);

@@ -8,18 +8,16 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
-use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
-use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Forms\BookingAcceptForm;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Services\OfferAvailability;
 
 /**
  * « Demandes » d'une offre (décision 2026-11-21-demandes-d-une-offre) : les demandes reçues sur un logement
@@ -238,33 +236,12 @@ class ReceivedBookingListing extends Listing
     public function withAnswerActions(ListItem $item, Booking $record, string $locale): ListItem
     {
         if ($record->isAwaitingAnswer()) {
-            // Sur la carte : « Accepter » après confirmation, « Refuser » avec un message
-            // facultatif (décision 2026-11-19-contrat-reservations-logements-profil).
-            $item->action(
-                __('offer::booking.profile.accept'),
-                'primary',
-                $this->acceptConfirm($record, $locale),
-                Submission::toRoute('api.v1.bookings.accept', SuccessAction::BACK, __('offer::booking.profile.accepted_notice'), parameters: ['booking' => $record->getKey()]),
-            )
+            // « Accepter » et « Refuser » ouvrent chacun leur formulaire, avec un message facultatif ; celui d'« Accepter »
+            // avertit des demandes qui chevauchent (décision 2026-11-22-accepter-avec-message).
+            $item->action(__('offer::booking.profile.accept'), 'primary', form: BookingAcceptForm::name())
                 ->action(__('offer::booking.profile.refuse'), 'destructive', form: BookingRefuseForm::name());
         }
 
         return $item;
-    }
-
-    /**
-     * « Accepter la demande de Marie Curie (du 3 au 6 mars) ? 2 autres demandes chevauchent ces dates et seront
-     * refusées. » (décisions 2026-11-19-contrat-calendrier-offre et 2026-11-22-accepter-nombre-chevauchements).
-     */
-    private function acceptConfirm(Booking $booking, string $locale): string
-    {
-        $confirm = __('offer::booking.profile.accept_confirm', ['guest' => (string) $booking->user->full_name, 'period' => $booking->period($locale)], $locale);
-        $others = app(OfferAvailability::class)->overlappingPending($booking);
-        if ($others->isEmpty()) {
-            return $confirm;
-        }
-
-        // Le nombre seul (décision 2026-11-22-accepter-nombre-chevauchements).
-        return $confirm.' '.trans_choice('offer::booking.profile.accept_overlaps', $others->count(), ['count' => $others->count()], $locale);
     }
 }

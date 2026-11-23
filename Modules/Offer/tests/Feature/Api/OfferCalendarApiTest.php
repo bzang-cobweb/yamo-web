@@ -206,11 +206,12 @@ class OfferCalendarApiTest extends TestCase
         // Sans afficher ou masquer l'adresse (décision 2026-11-22-calendrier-sans-adresse).
         $this->assertSame(['Accepter', 'Refuser'], array_column($day['items'][0]['actions'], 'label'));
         // La carte de « Demandes reçues », la même que dans la liste (décision 2026-11-22-calendrier-carte-demandes-recues) :
-        // le nom du membre vers sa page, le statut, le type et les dates.
+        // le statut, le nom du membre, le type et les dates.
         $card = $day['items'][0];
         $received = collect($this->asUser($offer->user)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->firstWhere('id', (string) $pending->getKey());
-        $this->assertSame([$received['title'], $received['subtitle'], $received['tag'], $received['title_link']], [$card['title'], $card['subtitle'], $card['tag'], $card['title_link']]);
-        $this->assertSame('/members/'.$pending->user_id, $card['title_link']);
+        $this->assertSame([$received['title'], $received['subtitle'], $received['tag']], [$card['title'], $card['subtitle'], $card['tag']]);
+        // Le nom du membre sans lien (décision 2026-11-22-calendrier-membre-sans-lien).
+        $this->assertArrayNotHasKey('title_link', $card);
         // Sans la pastille des non lues, même avec une notification non lue (décision 2026-11-22-calendrier-sans-non-lues).
         $offer->user->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(),
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $offer->getKey(), 'booking_id' => $pending->getKey()]]);

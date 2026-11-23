@@ -12,6 +12,7 @@ use Modules\Offer\Console\ExpireBookingsCommand;
 use Modules\Offer\Console\InviteReviewsCommand;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
+use Modules\Offer\Forms\BookingAcceptForm;
 use Modules\Offer\Forms\BookingAnswerForm;
 use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
@@ -105,6 +106,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(FormRegistry::class)->register(BookingCancelForm::class);
         $this->app->make(FormRegistry::class)->register(BookingAnswerForm::class);
         $this->app->make(FormRegistry::class)->register(BookingRefuseForm::class);
+        $this->app->make(FormRegistry::class)->register(BookingAcceptForm::class);
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
         $this->app->make(ListingRegistry::class)->register(ReceivedBookingListing::class);
 

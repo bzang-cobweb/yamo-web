@@ -75,6 +75,11 @@ class BookingAnswerForm extends Form
                 ->label(__('offer::booking.answer.refusal_message'))
                 ->visibleWhen('answer', self::REFUSE)
                 ->maxLength(Booking::MESSAGE_MAX_LENGTH),
+            // Un message pour une acceptation aussi (décision 2026-11-22-accepter-avec-message).
+            Field::textarea('acceptance_message')
+                ->label(__('offer::booking.answer.acceptance_message'))
+                ->visibleWhen('answer', self::ACCEPT)
+                ->maxLength(Booking::MESSAGE_MAX_LENGTH),
         ]));
     }
 

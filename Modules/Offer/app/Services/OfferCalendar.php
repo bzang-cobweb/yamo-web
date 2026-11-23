@@ -140,7 +140,7 @@ class OfferCalendar
 
     /**
      * Les demandes en cartes de « Demandes reçues », les mêmes que dans la liste (décision
-     * 2026-11-22-calendrier-carte-demandes-recues) : le nom du membre (lien vers sa page), le statut, le type de demande
+     * 2026-11-22-calendrier-carte-demandes-recues) : le nom du membre (sans lien), le statut, le type de demande
      * et les dates, la date de la dernière notification (sans le message ni la pastille des non lues) ; la carte ouvre la page de
      * la demande. Avec « Accepter » et « Refuser » tant qu'elle attend, puis afficher ou masquer l'adresse.
      *
@@ -157,9 +157,9 @@ class OfferCalendar
         $cards = [];
         foreach ($bookings as $booking) {
             $row = $rows->get((int) $booking->getKey()) ?? $booking;
-            // Sans la pastille des non lues ni le message (décisions 2026-11-22-calendrier-sans-non-lues et
-            // 2026-11-22-calendrier-sans-message).
-            $cards[] = $listing->withAnswerActions($listing->item($row)->unreadCount(0)->quote(null), $row, $locale)->toArray();
+            // Sans la pastille des non lues, ni le message, ni le lien du membre (décisions 2026-11-22-calendrier-sans-non-lues,
+            // 2026-11-22-calendrier-sans-message et 2026-11-22-calendrier-membre-sans-lien).
+            $cards[] = $listing->withAnswerActions($listing->item($row)->unreadCount(0)->quote(null)->titleLink(null), $row, $locale)->toArray();
         }
         app()->setLocale($current);
 

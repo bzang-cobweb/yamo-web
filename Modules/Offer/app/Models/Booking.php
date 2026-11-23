@@ -32,6 +32,7 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property string|null $currency
  * @property BookingStatusEnum $status
  * @property string|null $refusal_message
+ * @property string|null $acceptance_message le message facultatif d'une acceptation (décision 2026-11-22-accepter-avec-message)
  * @property string|null $cancel_message
  * @property bool $show_address l'adresse du logement visible du demandeur (décision 2026-11-21-afficher-adresse)
  * @property Carbon|null $answered_at
@@ -40,7 +41,7 @@ use Modules\Offer\Enums\BookingTypeEnum;
  * @property-read Offer $offer
  * @property-read User $user
  */
-#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'cancel_message', 'show_address', 'answered_at', 'cancelled_at', 'review_invited_at'])]
+#[Fillable(['offer_id', 'user_id', 'type', 'check_in', 'check_out', 'guests', 'message', 'unit_price', 'total', 'currency', 'status', 'refusal_message', 'acceptance_message', 'cancel_message', 'show_address', 'answered_at', 'cancelled_at', 'review_invited_at'])]
 #[UseFactory(BookingFactory::class)]
 class Booking extends Model
 {

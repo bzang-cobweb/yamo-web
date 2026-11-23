@@ -294,8 +294,12 @@ class BookingApiTest extends TestCase
         $day = fn (): array => $this->asUser($owner)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$booking->check_in->toDateString()}")->assertOk()->json('data.items.0.actions');
         [$accept, $refuse] = $day();
         $this->assertSame(['Accepter', 'primary'], [$accept['label'], $accept['style']]);
-        $this->assertStringStartsWith('Accepter la demande de ', (string) $accept['confirm']);
-        $this->assertSame(['POST', "/v1/bookings/{$booking->getKey()}/accept"], [$accept['submission']['method'], $accept['submission']['endpoint']]);
+        // « Accepter » ouvre son formulaire, comme « Refuser » (décision 2026-11-22-accepter-avec-message).
+        $this->assertSame([null, null, ['form' => 'offer.booking.accept', 'record' => (string) $booking->getKey()]], [$accept['confirm'], $accept['submission'], $accept['form']]);
+        $accepting = $this->asUser($owner)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->assertOk()->json('data');
+        $this->assertSame('Accepter la demande', $accepting['title']);
+        $this->assertSame(['answer', 'acceptance_message'], array_column($accepting['fields'], 'name'));
+        $this->assertSame(['POST', "/v1/bookings/{$booking->getKey()}/answer"], [$accepting['submit']['method'], $accepting['submit']['endpoint']]);
         $this->assertSame(['Refuser', 'destructive', ['form' => 'offer.booking.refuse', 'record' => (string) $booking->getKey()]], [$refuse['label'], $refuse['style'], $refuse['form']]);
 
         // Le formulaire du refus : « refuser » déjà choisi, un message facultatif.

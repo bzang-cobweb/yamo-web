@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-accepter-avec-message.md
+
 # Accepter une demande : le nombre des demandes qui se chevauchent, sans leurs noms
 
 - **Date** : 2026-11-22

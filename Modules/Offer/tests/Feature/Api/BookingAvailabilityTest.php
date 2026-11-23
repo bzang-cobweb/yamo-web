@@ -121,17 +121,17 @@ class BookingAvailabilityTest extends TestCase
         $overlapping = $this->stay($offer, 6, 8, guest: ['locale' => 'en']);
         $after = $this->stay($offer, 8, 10);
 
-        // La confirmation compte les demandes qui seront refusées.
-        // Depuis le panneau du jour du calendrier, qui garde les boutons (décision 2026-11-22-demandes-carte-seule).
-        $actions = fn (Booking $booking): array => collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$booking->check_in->toDateString()}")->json('data.items'))->firstWhere('id', (string) $booking->getKey())['actions'];
-        $confirm = $actions($chosen)[0]['confirm'];
-        // Le nombre seul, sans les noms (décision 2026-11-22-accepter-nombre-chevauchements).
-        $this->assertStringEndsWith(' ? 1 autre demande chevauche ces dates et sera refusée.', $confirm);
-        $this->assertStringNotContainsString((string) $overlapping->user->full_name, $confirm);
-        $this->assertStringNotContainsString($after->user->full_name, $confirm);
-        $this->assertStringNotContainsString('chevauche', $actions($after)[0]['confirm']);
+        // Le formulaire d'acceptation avertit, sous le titre, du nombre de demandes qui seront refusées, sans leurs noms
+        // (décisions 2026-11-22-accepter-avec-message et 2026-11-22-accepter-nombre-chevauchements).
+        $subtitle = fn (Booking $booking): string => (string) $this->asUser($offer->user)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->json('data.subtitle');
+        $this->assertStringEndsWith("\n1 autre demande chevauche ces dates et sera refusée.", $subtitle($chosen));
+        $this->assertStringNotContainsString((string) $overlapping->user->full_name, $subtitle($chosen));
+        $this->assertStringNotContainsString('chevauche', $subtitle($after));
 
-        $this->asUser($offer->user)->postJson("/api/v1/bookings/{$chosen->getKey()}/accept")->assertNoContent();
+        // Accepter avec un message : gardé, et joint à la notification du membre.
+        $this->asUser($offer->user)->postJson("/api/v1/bookings/{$chosen->getKey()}/answer", ['answer' => 'accept', 'acceptance_message' => 'Bienvenue, à bientôt !'])->assertNoContent();
+        $this->assertSame('Bienvenue, à bientôt !', $chosen->refresh()->acceptance_message);
+        Notification::assertSentTo($chosen->user, BookingRequestAccepted::class, fn (BookingRequestAccepted $sent): bool => $sent->toArray($chosen->user)['message'] === 'Bienvenue, à bientôt !');
 
         $this->assertSame(BookingStatusEnum::ACCEPTED, $chosen->fresh()->status);
         $this->assertSame(BookingStatusEnum::REFUSED, $overlapping->fresh()->status);
