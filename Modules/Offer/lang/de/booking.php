@@ -11,8 +11,6 @@ return [
         'completed' => 'Abgeschlossen', 'expired' => 'Abgelaufen'],
     // Les libellés des lignes d'une demande (décision 2026-11-20-lignes-demande).
     'lines' => [
-        // Le titre composé, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
-        'composed' => 'Unterkunft',
         'member' => 'Mitglied',
         'phone' => 'Telefon',
         'email' => 'E-Mail',

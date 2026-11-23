@@ -25,7 +25,7 @@ use Modules\Offer\Models\Offer;
 class BookingResource extends JsonResource
 {
     /**
-     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, guests: int|null, offer: array{title: string|null, rental_type: string|null, property_type: string|null}, lines: list<array{key: string, label: string, value: string}>}
+     * @return array{id: string, offer_id: string, type: string, status: string, check_in: string, check_out: string|null, guests: int|null, offer: array{title: string|null, rental_type: string|null, property_type: string|null}, composed_title: string|null, lines: list<array{key: string, label: string, value: string}>}
      */
     public function toArray(Request $request): array
     {
@@ -44,6 +44,8 @@ class BookingResource extends JsonResource
             'guests' => $booking->guests,
             /** L'offre : son titre saisi, son type de location et son type de logement, rédigés (`null` s'ils manquent). */
             'offer' => $this->offer($booking->offer),
+            /** Le titre composé avec la ville (« Location meublée · Studio · Douala »), sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) ; `null` : aucun. */
+            'composed_title' => $booking->offer === null ? null : OfferCardTitle::of($booking->offer, app()->getLocale())[1],
             /**
              * Les lignes à afficher, dans l'ordre, libellé et valeur rédigés : personnes,
              * arrivée, départ (ou visite, seconde date), durée, prix, total. Une
@@ -64,10 +66,8 @@ class BookingResource extends JsonResource
 
         $offer = $booking->offer;
         $lines = [
-            // D'abord le titre composé, puis l'arrivée et le départ (ou la
+            // D'abord l'arrivée et le départ (ou la
             // visite), puis l'adresse (décision 2026-11-22-detail-lignes-titre-dates-adresse).
-            // Avec la ville (« Location meublée · Studio · Douala », décision 2026-11-22-detail-logement-avec-ville).
-            $line('composed', $offer === null ? null : OfferCardTitle::of($offer, $locale)[1]),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             // L'adresse du logement (décisions 2026-11-21-detail-reservation-adresse et 2026-11-21-afficher-adresse) ;
             // retirée pour le demandeur si le propriétaire la masque.

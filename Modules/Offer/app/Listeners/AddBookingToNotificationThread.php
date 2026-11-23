@@ -51,11 +51,11 @@ class AddBookingToNotificationThread
      */
     private function afterAddress(array $lines, array $contact): array
     {
-        // Après l'adresse ; sans adresse, après le titre composé et les dates (décision
+        // Après l'adresse ; sans adresse, après les dates (décision
         // 2026-11-22-detail-lignes-titre-dates-adresse).
         $at = 0;
         foreach ($lines as $index => $line) {
-            if (in_array($line['key'] ?? null, ['composed', 'arrival', 'departure', 'visit', 'address'], true)) {
+            if (in_array($line['key'] ?? null, ['arrival', 'departure', 'visit', 'address'], true)) {
                 $at = $index + 1;
             }
         }
