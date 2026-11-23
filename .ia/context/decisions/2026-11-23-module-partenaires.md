@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-partenaires-logos.md, 2026-11-23-partenaires-nom-traduit.md
 # `2026-11-23` — Module Partenaires : un espace payant sur l'accueil
 
 - **Type** : décision
