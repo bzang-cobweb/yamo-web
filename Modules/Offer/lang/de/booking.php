@@ -49,6 +49,14 @@ return [
     'completed_count' => ':count Anfrage(n) als abgeschlossen markiert.',
     // La sortie de booking:expire (décision 2026-11-22-statut-expire-enregistre).
     'expired_count' => ':count Anfrage(n) als abgelaufen markiert.',
+    // Inviter à donner son avis depuis la page d'une demande terminée (décision 2026-11-22-inviter-avis-depuis-la-demande).
+    'invite_review' => [
+        'button' => 'Zur Bewertung einladen',
+        'title' => 'Zur Bewertung einladen',
+        'submit' => 'Einladung senden',
+        'sent' => 'Einladung gesendet.',
+        'not_possible' => 'Das Mitglied kann nicht eingeladen werden: die Anfrage ist nicht beendet oder es hat bereits bewertet.',
+    ],
     'review_cta' => 'Bewertung abgeben',
     'expired' => 'Diese Anfrage ist abgelaufen: ihr Datum ist vorbei.',
     'not_cancellable' => 'Diese Anfrage kann nicht mehr storniert werden.',

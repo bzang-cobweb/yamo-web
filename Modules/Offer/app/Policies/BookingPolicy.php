@@ -83,6 +83,19 @@ class BookingPolicy
     }
 
     /**
+     * Inviter le membre à donner son avis (décision 2026-11-22-inviter-avis-depuis-la-demande) : sur une de ses offres
+     * (sinon 404), la demande terminée et le membre sans avis sur le logement (sinon 403).
+     */
+    public function inviteReview(User $user, Booking $booking): Response
+    {
+        if ((int) $booking->offer->user_id !== (int) $user->getKey()) {
+            return Response::denyAsNotFound();
+        }
+
+        return $booking->canInviteReview() ? Response::allow() : Response::deny(__('offer::booking.invite_review.not_possible'));
+    }
+
+    /**
      * Répondre à une demande : sur une de ses offres (sinon 404), encore en attente (sinon 403).
      */
     public function answer(User $user, Booking $booking): Response

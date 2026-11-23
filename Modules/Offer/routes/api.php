@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/booki
     // Accepter d'un geste, depuis la carte de la demande (décision 2026-11-19-contrat-reservations-logements-profil).
     Route::post('{booking}/accept', [BookingController::class, 'accept'])->can('answer', 'booking')->name('accept');
     Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->can('cancel', 'booking')->name('cancel');
+    // Inviter le membre à donner son avis, une fois la demande terminée (décision 2026-11-22-inviter-avis-depuis-la-demande).
+    Route::post('{booking}/invite-review', [BookingController::class, 'inviteReview'])->can('inviteReview', 'booking')->middleware('throttle:10,1')->name('invite-review');
     // Afficher ou masquer l'adresse du logement au demandeur (décision 2026-11-21-afficher-adresse).
     Route::post('{booking}/address/show', [BookingController::class, 'showAddress'])->can('manageAddress', 'booking')->name('address.show');
     Route::post('{booking}/address/hide', [BookingController::class, 'hideAddress'])->can('manageAddress', 'booking')->name('address.hide');

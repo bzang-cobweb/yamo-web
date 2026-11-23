@@ -11,6 +11,7 @@ use Modules\Offer\Http\Requests\BookingUpdateRequest;
 use Modules\Offer\Http\Requests\OfferBookingRequest;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingReviewInvitation;
 use Modules\Offer\Services\BookingService;
 
 /**
@@ -64,6 +65,18 @@ class BookingController
     public function accept(Booking $booking): Response
     {
         $this->bookings->answer($booking, true);
+
+        return response()->noContent();
+    }
+
+    /**
+     * Inviter le membre à donner son avis, depuis la page d'une demande terminée (décision
+     * 2026-11-22-inviter-avis-depuis-la-demande) : la même invitation que la tâche du matin.
+     */
+    public function inviteReview(Booking $booking): Response
+    {
+        $booking->user->notify(new BookingReviewInvitation($booking));
+        $booking->forceFill(['review_invited_at' => now()])->save();
 
         return response()->noContent();
     }

@@ -49,6 +49,14 @@ return [
     'completed_count' => ':count demande(s) passée(s) au statut « Terminée ».',
     // La sortie de booking:expire (décision 2026-11-22-statut-expire-enregistre).
     'expired_count' => ':count demande(s) passée(s) au statut « Expirée ».',
+    // Inviter à donner son avis depuis la page d'une demande terminée (décision 2026-11-22-inviter-avis-depuis-la-demande).
+    'invite_review' => [
+        'button' => 'Inviter à donner un avis',
+        'title' => 'Inviter à donner un avis',
+        'submit' => 'Envoyer l\'invitation',
+        'sent' => 'Invitation envoyée.',
+        'not_possible' => 'Le membre ne peut pas être invité : la demande n\'est pas terminée ou il a déjà donné son avis.',
+    ],
     'review_cta' => 'Laisser un avis',
     'expired' => 'Cette demande a expiré : sa date est passée.',
     'not_cancellable' => 'Cette demande ne peut plus être annulée.',

@@ -49,6 +49,14 @@ return [
     'completed_count' => ':count request(s) marked as completed.',
     // La sortie de booking:expire (décision 2026-11-22-statut-expire-enregistre).
     'expired_count' => ':count request(s) marked as expired.',
+    // Inviter à donner son avis depuis la page d'une demande terminée (décision 2026-11-22-inviter-avis-depuis-la-demande).
+    'invite_review' => [
+        'button' => 'Invite to review',
+        'title' => 'Invite to review',
+        'submit' => 'Send the invitation',
+        'sent' => 'Invitation sent.',
+        'not_possible' => 'The member cannot be invited: the request is not over or they already reviewed.',
+    ],
     'review_cta' => 'Leave a review',
     'expired' => 'This request has expired: its date has passed.',
     'not_cancellable' => 'This request can no longer be cancelled.',

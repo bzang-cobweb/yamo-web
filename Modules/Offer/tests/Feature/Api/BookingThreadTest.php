@@ -4,6 +4,7 @@ namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\BookingReviewInvitation;
 use Modules\Offer\Services\BookingService;
 use Modules\Offer\Support\BookingText;
 use Tests\TestCase;
@@ -470,10 +472,27 @@ class BookingThreadTest extends TestCase
         // Terminée : « Laisser un avis », tant qu'il n'en a pas donné (décision 2026-11-22-avis-apres-demande-terminee).
         $this->travel(10)->days();
         $this->assertSame(['/offers/'.$booking->offer_id.'/review', 'Laisser un avis'], [$page($this->guest)['link'], $page($this->guest)['link_label']]);
-        // Le propriétaire : plus de « Traiter la demande », elle n'attend plus (décision 2026-11-22-traiter-si-en-attente).
-        $this->assertNull($page($this->owner)['link']);
-        $this->assertNull($page($this->owner)['link_label']);
+        // Le propriétaire, à la place de « Traiter la demande » : « Inviter à donner un avis » ouvre son formulaire, qui
+        // envoie l'invitation (décision 2026-11-22-inviter-avis-depuis-la-demande).
+        $this->assertSame(['/profile/offer.booking.invite-review?record='.$booking->getKey(), 'Inviter à donner un avis'], [$page($this->owner)['link'], $page($this->owner)['link_label']]);
+        $call = function (User $user, string $method, string $uri): TestResponse {
+            $this->app['auth']->forgetGuards();
+
+            return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->json($method, '/api/v1'.$uri);
+        };
+        $form = $call($this->owner, 'GET', '/forms/offer.booking.invite-review?record='.$booking->getKey())->assertOk()->json('data');
+        $this->assertSame(['Inviter à donner un avis', [], 'POST', "/v1/bookings/{$booking->getKey()}/invite-review"], [$form['title'], $form['fields'], $form['submit']['method'], $form['submit']['endpoint']]);
+        $call($this->guest, 'POST', "/bookings/{$booking->getKey()}/invite-review")->assertNotFound();
+        $call($this->owner, 'POST', "/bookings/{$booking->getKey()}/invite-review")->assertNoContent();
+        $this->assertNotNull($booking->refresh()->review_invited_at);
+        $invitation = DatabaseNotification::query()->where('notifiable_id', $this->guest->getKey())->where('type', BookingReviewInvitation::class)->sole();
+        $this->assertSame('Votre avis', $invitation->data['title']);
+        // Une carte à elle, en tête du membre : retirée pour relire la page de la demande.
+        $invitation->delete();
+        // Avec un avis du membre : plus de bouton, ni d'invitation possible.
         $booking->offer->reviews()->create(['user_id' => $this->guest->getKey(), 'rating' => 5, 'comment' => 'Parfait.']);
+        $this->assertNull($page($this->owner)['link']);
+        $call($this->owner, 'POST', "/bookings/{$booking->getKey()}/invite-review")->assertForbidden();
         $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
         $this->travelBack();
 

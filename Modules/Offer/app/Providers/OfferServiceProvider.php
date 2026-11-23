@@ -16,6 +16,7 @@ use Modules\Offer\Forms\BookingAcceptForm;
 use Modules\Offer\Forms\BookingAnswerForm;
 use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
+use Modules\Offer\Forms\BookingInviteReviewForm;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
@@ -107,6 +108,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(FormRegistry::class)->register(BookingAnswerForm::class);
         $this->app->make(FormRegistry::class)->register(BookingRefuseForm::class);
         $this->app->make(FormRegistry::class)->register(BookingAcceptForm::class);
+        $this->app->make(FormRegistry::class)->register(BookingInviteReviewForm::class);
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
         $this->app->make(ListingRegistry::class)->register(ReceivedBookingListing::class);
 

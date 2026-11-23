@@ -286,6 +286,15 @@ class Booking extends Model
     }
 
     /**
+     * Le propriétaire peut inviter le membre à donner son avis : la demande est terminée et le membre n'a pas d'avis sur
+     * le logement (décision 2026-11-22-inviter-avis-depuis-la-demande).
+     */
+    public function canInviteReview(): bool
+    {
+        return $this->isCompleted() && ! OfferReview::query()->where('offer_id', $this->offer_id)->where('user_id', $this->user_id)->exists();
+    }
+
+    /**
      * Le statut affiché : « Terminée » ou « Expirée » d'après les dates, sinon le statut enregistré ; pas
      * enregistré (décision 2026-11-22-statuts-terminee-expiree).
      *

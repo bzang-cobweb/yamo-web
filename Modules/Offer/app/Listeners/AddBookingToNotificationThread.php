@@ -8,6 +8,7 @@ use Modules\Auth\Support\PhoneNumbers;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
+use Modules\Offer\Forms\BookingInviteReviewForm;
 use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Support\BookingCache;
@@ -123,6 +124,13 @@ class AddBookingToNotificationThread
         if ($hosting && ! $mine && ! $booking->isAwaitingAnswer()) {
             $event->data['link'] = null;
             $event->data['link_label'] = null;
+        }
+
+        // Terminée, sans avis du membre : « Inviter à donner un avis », à la même place (décision
+        // 2026-11-22-inviter-avis-depuis-la-demande).
+        if ($hosting && ! $mine && $booking->canInviteReview()) {
+            $event->data['link'] = '/profile/'.BookingInviteReviewForm::name().'?record='.$booking->getKey();
+            $event->data['link_label'] = __('offer::booking.invite_review.button');
         }
 
         if ($mine && $booking->isAwaitingAnswer()) {
