@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-accueil-fleche-deux-cartes.md
 Remplace en partie : 2026-11-23-onglet-recherche.md (l'accueil n'est plus vide).
 
 # `2026-11-23` — Accueil de l'app : un carrousel par ville
