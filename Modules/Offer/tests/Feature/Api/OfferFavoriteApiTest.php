@@ -191,7 +191,7 @@ class OfferFavoriteApiTest extends TestCase
 
         $data = $this->api($user, 'GET', '/api/v1/lists/offer.favorites')->json('data');
         $this->assertNotNull($data['search']);
-        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/'], $data['footer']);
+        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/search'], $data['footer']);
         $filters = array_column($data['filters'], null, 'name');
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
 

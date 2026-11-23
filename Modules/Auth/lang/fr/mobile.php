@@ -6,6 +6,8 @@
 return [
     'tabs' => [
         'home' => 'Accueil',
+        // L'onglet de recherche des offres (décision 2026-11-23-onglet-recherche).
+        'search' => 'Recherche',
         'profile' => 'Profil',
     ],
     'auth' => [

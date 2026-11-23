@@ -542,7 +542,7 @@ class BookingApiTest extends TestCase
         $ids = fn (string $query = ''): array => array_column($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings'.$query)->json('data.items'), 'id');
 
         $data = $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data');
-        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/'], $data['footer']);
+        $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/search'], $data['footer']);
         // Décision 2026-11-21-reservations-filtre-statut : le statut réel, puis la période, en listes déroulantes.
         $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
         $filters = collect($data['filters'])->keyBy('name');

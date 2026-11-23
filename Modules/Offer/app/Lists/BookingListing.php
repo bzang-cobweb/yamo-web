@@ -70,7 +70,7 @@ class BookingListing extends Listing
      */
     public function footer(): ?array
     {
-        return ['label' => __('offer::booking.profile.search_home'), 'form' => null, 'link' => '/'];
+        return ['label' => __('offer::booking.profile.search_home'), 'form' => null, 'link' => '/search'];
     }
 
     /**
