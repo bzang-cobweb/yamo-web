@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-calendrier-deux-boutons-par-ligne.md
+
 # Calendrier d'un logement : les boutons des cartes sur toute la ligne
 
 - **Date** : 2026-11-22
