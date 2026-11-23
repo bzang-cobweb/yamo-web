@@ -10,6 +10,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
@@ -63,17 +64,18 @@ class BookingResource extends JsonResource
 
         $offer = $booking->offer;
         $lines = [
-            // D'abord le titre composé sans ville (« Location meublée · Studio »), puis l'arrivée et le départ (ou la
+            // D'abord le titre composé, puis l'arrivée et le départ (ou la
             // visite), puis l'adresse (décision 2026-11-22-detail-lignes-titre-dates-adresse).
-            $line('composed', $offer === null ? null : implode(' · ', array_filter([RentalTypeEnum::of($offer)?->label(), $this->propertyType($offer)]))),
-            // La date de disponibilité du logement, si renseignée, avant la visite (décisions
-            // 2026-11-20-disponibilite-demande et 2026-11-20-disponibilite-sans-meuble).
-            $this->availableFrom($booking, $locale),
+            // Avec la ville (« Location meublée · Studio · Douala », décision 2026-11-22-detail-logement-avec-ville).
+            $line('composed', $offer === null ? null : OfferCardTitle::of($offer, $locale)[1]),
             ...array_map(fn (array $date): array => ['key' => $date['key'], 'label' => $date['label'], 'value' => $date['value']], $booking->dateLines($locale)),
             // L'adresse du logement (décisions 2026-11-21-detail-reservation-adresse et 2026-11-21-afficher-adresse) ;
             // retirée pour le demandeur si le propriétaire la masque.
             $line('address', $offer?->fullAddress()),
             $line('guests', $booking->guests),
+            // La date de disponibilité du logement, si renseignée, à sa place, après les personnes (décisions
+            // 2026-11-20-disponibilite-demande, 2026-11-20-disponibilite-sans-meuble et 2026-11-22-detail-logement-avec-ville).
+            $this->availableFrom($booking, $locale),
             $line('days', $days === null ? null : trans_choice('offer::booking.notify.days', $days, ['count' => $days])),
             // Une visite : charges, loyer (décision 2026-11-20-loyer-apres-charges), caution et avance,
             // puis le total ; un séjour : prix, caution, puis le total, toujours, même à 0

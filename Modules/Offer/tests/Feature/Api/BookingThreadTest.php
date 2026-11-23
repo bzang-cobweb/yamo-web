@@ -17,6 +17,7 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingReviewInvitation;
@@ -247,7 +248,7 @@ class BookingThreadTest extends TestCase
             // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
             // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
-            $this->assertSame(['key' => 'composed', 'label' => 'Logement', 'value' => 'Location meublée · Studio'], $page['booking']['lines'][0]);
+            $this->assertSame(['key' => 'composed', 'label' => 'Logement', 'value' => OfferCardTitle::of($this->offer, 'fr')[1]], $page['booking']['lines'][0]);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
@@ -260,7 +261,7 @@ class BookingThreadTest extends TestCase
             ], array_diff_key($page['booking'], ['lines' => true]));
             // Les lignes, libellé et valeur, dans l'ordre ; sans chambres renseignées, pas de ligne (décision 2026-11-20-lignes-demande).
             $this->assertSame([
-                ['key' => 'composed', 'label' => 'Logement', 'value' => 'Location meublée · Studio'],
+                ['key' => 'composed', 'label' => 'Logement', 'value' => OfferCardTitle::of($this->offer, 'fr')[1]],
                 ['key' => 'arrival', 'label' => 'Arrivée', 'value' => $booking->check_in->locale('fr')->isoFormat('ll')],
                 ['key' => 'departure', 'label' => 'Départ', 'value' => (string) $booking->check_out?->locale('fr')->isoFormat('ll')],
                 ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
@@ -363,7 +364,7 @@ class BookingThreadTest extends TestCase
         // Rien de renseigné : ni charges, ni caution, ni avance ; un total à 0 ne s'affiche pas
         // (décisions 2026-11-20-lignes-vides-masquees et 2026-11-20-total-positif).
         $this->assertSame([
-            'Logement' => 'Location · Appartement',
+            'Logement' => OfferCardTitle::of($flat, 'fr')[1],
             'Visite' => '28 nov. 2026',
             'Loyer mensuel' => Number::currency(250000, 'XAF', 'fr'),
         ], $lines());
@@ -382,7 +383,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame(['Charges mensuelles', 'Loyer mensuel (sans charges)'], array_slice(array_keys($lines()), 2, 2));
     }
 
-    public function test_the_lines_give_the_availability_date_before_the_arrival_when_set(): void
+    public function test_the_lines_give_the_availability_date_after_the_dates_when_set(): void
     {
         // Décision 2026-11-20-disponibilite-demande.
         app()->setLocale('fr');
@@ -393,7 +394,8 @@ class BookingThreadTest extends TestCase
         $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
         $labels = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
 
-        $this->assertSame(['Logement' => 'Location · Appartement', 'Disponible dès le' => '1 déc. 2026', 'Visite' => '28 nov. 2026'], array_slice($labels(), 0, 3));
+        // À sa place, après les personnes : ici, après la date de visite (décision 2026-11-22-detail-logement-avec-ville).
+        $this->assertSame(['Logement' => OfferCardTitle::of($flat, 'fr')[1], 'Visite' => '28 nov. 2026', 'Disponible dès le' => '1 déc. 2026'], array_slice($labels(), 0, 3));
 
         // Sans date : pas de ligne.
         $flat->update(['details' => [...$flat->details, 'available_from' => null]]);
