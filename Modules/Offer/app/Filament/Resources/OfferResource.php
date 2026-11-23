@@ -11,6 +11,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\CreateOffer;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\EditOffer;
 use Modules\Offer\Filament\Resources\OfferResource\Pages\ListOffers;
+use Modules\Offer\Filament\Resources\OfferResource\RelationManagers\BookingsRelationManager;
 use Modules\Offer\Filament\Resources\OfferResource\RelationManagers\ReviewsRelationManager;
 use Modules\Offer\Filament\Resources\OfferResource\Schemas\OfferForm;
 use Modules\Offer\Filament\Resources\OfferResource\Tables\OfferTable;
@@ -56,6 +57,8 @@ class OfferResource extends AbstractOfferResource
     public static function getRelations(): array
     {
         return [
+            // Les demandes, puis les avis (décision 2026-11-23-demandes-dans-l-offre).
+            BookingsRelationManager::class,
             ReviewsRelationManager::class,
         ];
     }

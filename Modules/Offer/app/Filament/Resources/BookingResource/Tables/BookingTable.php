@@ -11,11 +11,12 @@ use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Booking;
 
 /**
- * Les demandes, la plus récente en tête ; filtres par statut, type, offre et membre.
+ * Les demandes, la plus récente en tête ; filtres par statut, type, offre et membre. Sur la fiche d'une
+ * offre (`$withOffer` à faux, décision 2026-11-23-demandes-dans-l-offre), sans colonne ni filtre « Offre ».
  */
 abstract class BookingTable
 {
-    public static function configure(Table $table): Table
+    public static function configure(Table $table, bool $withOffer = true): Table
     {
         return $table
             ->defaultSort('id', 'desc')
@@ -24,7 +25,8 @@ abstract class BookingTable
                 TextColumn::make('offer.title')
                     ->label(__('offer::booking.resource.offer'))
                     ->state(fn (Booking $record): string => (string) $record->offer->getTranslation('title', app()->getLocale()))
-                    ->wrap(),
+                    ->wrap()
+                    ->visible($withOffer),
                 TextColumn::make('user.name')
                     ->label(__('offer::booking.resource.guest'))
                     ->state(fn (Booking $record): string => $record->user->getFilamentName())
@@ -65,7 +67,8 @@ abstract class BookingTable
                     ->label(__('offer::booking.resource.offer'))
                     ->relationship('offer', 'title')
                     ->getOptionLabelFromRecordUsing(fn ($offer): string => (string) $offer->getTranslation('title', app()->getLocale()))
-                    ->searchable(),
+                    ->searchable()
+                    ->visible($withOffer),
                 SelectFilter::make('user_id')
                     ->label(__('offer::booking.resource.guest'))
                     ->relationship('user', 'name')
