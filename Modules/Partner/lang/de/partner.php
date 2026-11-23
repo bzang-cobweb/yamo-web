@@ -30,6 +30,8 @@ return [
         'name' => 'Name',
         'country' => 'Land',
         'logo' => 'Logo',
+        // L'aide du champ logo (décision 2026-11-24-logo-taille-minimale).
+        'logo_help' => 'Mindestens :pixels px auf der längsten Seite.',
         'description' => 'Beschreibung',
         'url' => 'Link',
         'cta_label' => 'Schaltflächentext',

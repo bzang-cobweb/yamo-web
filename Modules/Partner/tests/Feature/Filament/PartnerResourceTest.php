@@ -173,6 +173,21 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->assertHasFormErrors(['logo']);
     }
 
+    public function test_the_back_office_refuses_a_logo_smaller_than_the_largest_conversion(): void
+    {
+        // Décision 2026-11-24-logo-taille-minimale.
+        Storage::fake('public');
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $partner = Partner::factory()->for(Country::factory()->create())->create();
+
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->fillForm(['logo' => UploadedFile::fake()->image('logo.png', 500, 500)])
+            ->call('save')
+            ->assertHasFormErrors(['logo']);
+
+        $this->assertNull($partner->fresh()->getFirstMedia(Partner::LOGO));
+    }
+
     public function test_hidden_without_the_permission(): void
     {
         $this->actingAsUserWith();

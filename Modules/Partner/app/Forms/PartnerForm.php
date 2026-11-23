@@ -56,6 +56,8 @@ class PartnerForm extends Form
                 ->accept(PartnerLogoService::acceptedMimeTypes())
                 ->maxSize(PartnerLogoService::maxUploadKb())
                 ->maxFiles(1)
+                ->minImageSide(PartnerLogoService::minUploadSize())
+                ->help(__('partner::partner.fields.logo_help', ['pixels' => PartnerLogoService::minUploadSize()]))
                 ->addLabel(__('partner::partner.member.add_logo'))
                 ->files(app(PartnerLogoService::class)->current($partner)),
             Field::text('name')

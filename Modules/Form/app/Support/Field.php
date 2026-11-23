@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Models\FormUpload;
+use Modules\Form\Rules\MinImageSide;
 use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Rules\OptionBelongsToParent;
 
@@ -104,6 +105,9 @@ final class Field
     private int $maxSizeKb = 10240;
 
     private int $maxFiles = 1;
+
+    /** Plus grand côté minimal d'une image envoyée, en pixels (`minImageSide()`) ; `null` : aucun. */
+    private ?int $minImageSide = null;
 
     /** @var array<string, string> */
     private array $files = [];
@@ -291,6 +295,17 @@ final class Field
         return $this;
     }
 
+    /**
+     * Une image envoyée mesure au moins `$pixels` sur son plus grand côté (décision 2026-11-24-logo-taille-minimale).
+     */
+    public function minImageSide(int $pixels): self
+    {
+        $this->assertUpload();
+        $this->minImageSide = $pixels;
+
+        return $this;
+    }
+
     /** Nombre maximal de fichiers (1 : un seul). */
     public function maxFiles(int $count): self
     {
@@ -334,6 +349,7 @@ final class Field
             ...($this->accept === [] ? [] : ['mimetypes:'.implode(',', $this->accept)]),
             'max:'.$this->maxSizeKb,
             ...($images ? ['dimensions:max_width=10000,max_height=10000'] : []),
+            ...($this->minImageSide === null ? [] : [new MinImageSide($this->minImageSide)]),
         ];
     }
 

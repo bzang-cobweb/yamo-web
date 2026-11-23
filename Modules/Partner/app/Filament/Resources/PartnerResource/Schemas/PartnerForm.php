@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Form\Rules\MinImageSide;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
@@ -44,6 +45,9 @@ abstract class PartnerForm
                                     ->image()
                                     ->acceptedFileTypes(PartnerLogoService::acceptedMimeTypes())
                                     ->maxSize(PartnerLogoService::maxUploadKb())
+                                    // Au moins la plus grande conversion (décision 2026-11-24-logo-taille-minimale).
+                                    ->rule(new MinImageSide(PartnerLogoService::minUploadSize()))
+                                    ->helperText(__('partner::partner.fields.logo_help', ['pixels' => PartnerLogoService::minUploadSize()]))
                                     ->saveUploadedFileUsing(
                                         fn (TemporaryUploadedFile $file, Partner $record): string => app(PartnerLogoService::class)
                                             ->store($record, $file->getRealPath())

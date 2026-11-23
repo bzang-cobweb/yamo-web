@@ -50,6 +50,15 @@ class PartnerLogoService
         return max($sizes);
     }
 
+    /**
+     * Le plus grand côté minimal d'un logo envoyé : la taille enregistrée, pour que la plus grande conversion ne soit
+     * jamais un agrandissement (décision 2026-11-24-logo-taille-minimale).
+     */
+    public static function minUploadSize(): int
+    {
+        return self::storedSize();
+    }
+
     /** La qualité du WebP enregistré (`PARTNER_LOGO_QUALITY`). */
     private function quality(): int
     {
