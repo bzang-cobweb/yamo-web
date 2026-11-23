@@ -59,10 +59,12 @@ class BookingAcceptForm extends Form
         ]));
     }
 
-    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en gras en tête du contenu (décision 2026-11-22-formulaire-titre-navigation). */
+    /** Le titre saisi du logement, en gras en tête du contenu (décision 2026-11-22-formulaire-logement-en-titre). */
     public function title(): string
     {
-        return $this->booking === null ? __('offer::booking.profile.accept_title') : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
+        $title = $this->booking === null ? '' : (string) $this->booking->offer->getTranslation('title', app()->getLocale());
+
+        return $title !== '' ? $title : __('offer::booking.profile.accept_title');
     }
 
     /** « Accepter la demande », dans la barre du haut (décision 2026-11-22-formulaire-titre-navigation). */
@@ -71,10 +73,10 @@ class BookingAcceptForm extends Form
         return __('offer::booking.profile.accept_title');
     }
 
-    /** Le titre saisi du logement, en sous-titre (décision 2026-11-22-formulaire-logement-en-sous-titre). */
+    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en sous-titre (décision 2026-11-22-formulaire-logement-en-titre). */
     public function subtitle(): ?string
     {
-        return $this->booking === null ? null : ((string) $this->booking->offer->getTranslation('title', app()->getLocale()) ?: null);
+        return $this->booking === null ? null : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
     }
 
     /**

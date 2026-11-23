@@ -262,8 +262,9 @@ class BookingAvailabilityTest extends TestCase
         // Barre du haut : « Accepter la demande » ; titre : le membre et la date ; sous-titre : le logement ; pas de
         // description ; centrés (décision 2026-11-22-formulaire-titre-navigation).
         $this->assertSame('Accepter la demande', $data['navigation_title']);
-        $this->assertStringStartsWith($chosen->user->full_name.' · ', $data['title']);
-        $this->assertSame($offer->getTranslation('title', 'fr'), $data['subtitle']);
+        // Titre : le logement ; sous-titre : le membre et la date (décision 2026-11-22-formulaire-logement-en-titre).
+        $this->assertSame($offer->getTranslation('title', 'fr'), $data['title']);
+        $this->assertStringStartsWith($chosen->user->full_name.' · ', $data['subtitle']);
         $this->assertNull($data['description']);
         $this->assertSame('center', $data['title_align']);
         $box = collect($data['fields'])->firstWhere('name', 'accept_other_visits');
