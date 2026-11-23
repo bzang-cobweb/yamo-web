@@ -95,6 +95,8 @@ return [
         'refusal_message' => 'Message (optional)',
         // Le message d'une acceptation (décision 2026-11-22-accepter-avec-message).
         'acceptance_message' => 'Message (optional)',
+        'accept_other_visits' => '{1} Also accept the other visit that day|[2,*] Also accept the :count other visits that day',
+        'accept_other_visits_short' => 'Also accept the other visits that day',
         'submit' => 'Send reply',
         'accepted' => 'Request accepted.',
         'refused' => 'Request declined.',
@@ -262,6 +264,8 @@ return [
         'accept' => 'Accept',
         // Le nombre des autres demandes, sans leurs noms (décision 2026-11-22-accepter-nombre-chevauchements).
         'accept_overlaps' => '{1} :count other request overlaps these dates and will be declined.|[2,*] :count other requests overlap these dates and will be declined.',
+        // Les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
+        'accept_same_day_visits' => '{1} :count other visit is requested that day.|[2,*] :count other visits are requested that day.',
         'accepted_notice' => 'Request accepted.',
         'refuse' => 'Decline',
         'accept_title' => 'Accept the request',

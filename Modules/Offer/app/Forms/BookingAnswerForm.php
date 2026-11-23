@@ -80,6 +80,10 @@ class BookingAnswerForm extends Form
                 ->label(__('offer::booking.answer.acceptance_message'))
                 ->visibleWhen('answer', self::ACCEPT)
                 ->maxLength(Booking::MESSAGE_MAX_LENGTH),
+            // Accepter aussi les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
+            Field::checkbox('accept_other_visits')
+                ->label(__('offer::booking.answer.accept_other_visits_short'))
+                ->visibleWhen('answer', self::ACCEPT),
         ]));
     }
 

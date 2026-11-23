@@ -51,10 +51,15 @@ class BookingController
      */
     public function answer(BookingAnswerRequest $request, Booking $booking): Response
     {
-        /** @var array{answer: string, refusal_message?: string|null, acceptance_message?: string|null} $data */
+        /** @var array{answer: string, refusal_message?: string|null, acceptance_message?: string|null, accept_other_visits?: bool|string|null} $data */
         $data = $request->validated();
         $accept = $data['answer'] === BookingAnswerForm::ACCEPT;
-        $this->bookings->answer($booking, $accept, $accept ? ($data['acceptance_message'] ?? null) : ($data['refusal_message'] ?? null));
+        $this->bookings->answer(
+            $booking,
+            $accept,
+            $accept ? ($data['acceptance_message'] ?? null) : ($data['refusal_message'] ?? null),
+            $accept && filter_var($data['accept_other_visits'] ?? false, FILTER_VALIDATE_BOOL),
+        );
 
         return response()->noContent();
     }

@@ -43,6 +43,28 @@ class OfferAvailability
     }
 
     /**
+     * Les autres visites en attente du même logement, le même jour qu'une visite (décision 2026-11-22-accepter-autres-visites) ; vide pour un séjour.
+     *
+     * @return Collection<int, Booking>
+     */
+    public function sameDayPendingVisits(Booking $booking): Collection
+    {
+        if ($booking->type !== BookingTypeEnum::VISIT) {
+            return new Collection;
+        }
+
+        return Booking::query()
+            ->where('offer_id', $booking->offer_id)
+            ->where('type', BookingTypeEnum::VISIT)
+            ->awaitingAnswer()
+            ->whereKeyNot($booking->getKey())
+            ->whereDate('check_in', $booking->check_in->toDateString())
+            ->with('user')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
      * Les séjours en attente qui chevauchent `$booking`, par date d'arrivée : ils
      * sont refusés quand `$booking` est acceptée.
      *

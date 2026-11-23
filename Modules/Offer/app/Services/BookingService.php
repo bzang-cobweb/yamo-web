@@ -158,9 +158,9 @@ class BookingService
      * La réponse du propriétaire ; un refus comme une acceptation peut porter un message (décision
      * 2026-11-22-accepter-avec-message).
      */
-    public function answer(Booking $booking, bool $accept, ?string $message = null): Booking
+    public function answer(Booking $booking, bool $accept, ?string $message = null, bool $acceptOtherVisits = false): Booking
     {
-        return DB::transaction(function () use ($booking, $accept, $message): Booking {
+        return DB::transaction(function () use ($booking, $accept, $message, $acceptOtherVisits): Booking {
             if (! $accept) {
                 return $this->settle($booking, false, $message);
             }
@@ -173,6 +173,13 @@ class BookingService
                 throw ValidationException::withMessages(['answer' => __('offer::booking.accept_unavailable')]);
             }
             $this->settle($booking, true, $message);
+            // Une visite : les autres visites en attente du même jour, acceptées aussi si on le demande, avec le même
+            // message (décision 2026-11-22-accepter-autres-visites).
+            if ($acceptOtherVisits) {
+                foreach ($this->availability->sameDayPendingVisits($booking) as $visit) {
+                    $this->settle($visit, true, $message);
+                }
+            }
             foreach ($this->availability->overlappingPending($booking) as $other) {
                 $this->settle($other, false, __('offer::booking.overlap_refusal', [], $other->user->preferredLocale()));
             }

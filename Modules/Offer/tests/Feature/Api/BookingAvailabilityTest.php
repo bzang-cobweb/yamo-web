@@ -246,4 +246,31 @@ class BookingAvailabilityTest extends TestCase
         $card = collect($this->asUser($offer->user)->getJson('/api/v1/lists/offer.mine')->json('data.items'))->firstWhere('id', (string) $offer->getKey());
         $this->assertStringStartsWith('1 ', $card['counter']['label']);
     }
+
+    public function test_accepting_a_visit_can_accept_the_other_visits_of_that_day(): void
+    {
+        // Décision 2026-11-22-accepter-autres-visites.
+        $offer = $this->home(false);
+        $visit = fn (int $day) => Booking::factory()->for($offer)->for($this->member())->create(['type' => 'visit', 'check_in' => today()->addDays($day), 'check_out' => null, 'guests' => null]);
+        [$chosen, $second, $third, $other] = [$visit(5), $visit(5), $visit(5), $visit(6)];
+        $form = fn (Booking $booking): array => $this->asUser($offer->user)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->assertOk()->json('data');
+
+        // L'avertissement sous le titre, et la case, décochée.
+        $data = $form($chosen);
+        $this->assertStringEndsWith("\n2 autres visites sont demandées ce jour-là.", $data['subtitle']);
+        $box = collect($data['fields'])->firstWhere('name', 'accept_other_visits');
+        $this->assertSame(['checkbox', 'Accepter aussi les 2 autres visites de ce jour', false], [$box['type'], $box['label'], $box['default']]);
+        // Seule ce jour-là : ni avertissement, ni case.
+        $this->assertNull(collect($form($other)['fields'])->firstWhere('name', 'accept_other_visits'));
+
+        // Sans cocher : les autres restent en attente.
+        $this->asUser($offer->user)->postJson("/api/v1/bookings/{$second->getKey()}/answer", ['answer' => 'accept'])->assertNoContent();
+        $this->assertSame([BookingStatusEnum::ACCEPTED, BookingStatusEnum::PENDING, BookingStatusEnum::PENDING], [$second->refresh()->status, $chosen->refresh()->status, $third->refresh()->status]);
+
+        // En cochant : acceptées aussi, avec le même message, chacune notifiée ; pas celle d'un autre jour.
+        $this->asUser($offer->user)->postJson("/api/v1/bookings/{$chosen->getKey()}/answer", ['answer' => 'accept', 'acceptance_message' => 'À bientôt !', 'accept_other_visits' => true])->assertNoContent();
+        $this->assertSame([BookingStatusEnum::ACCEPTED, BookingStatusEnum::ACCEPTED, BookingStatusEnum::PENDING], [$chosen->refresh()->status, $third->refresh()->status, $other->refresh()->status]);
+        $this->assertSame('À bientôt !', $third->acceptance_message);
+        Notification::assertSentTo($third->user, BookingRequestAccepted::class);
+    }
 }

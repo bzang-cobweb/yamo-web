@@ -95,6 +95,8 @@ return [
         'refusal_message' => 'Nachricht (optional)',
         // Le message d'une acceptation (décision 2026-11-22-accepter-avec-message).
         'acceptance_message' => 'Nachricht (optional)',
+        'accept_other_visits' => '{1} Auch die andere Besichtigung an diesem Tag annehmen|[2,*] Auch die :count anderen Besichtigungen an diesem Tag annehmen',
+        'accept_other_visits_short' => 'Auch die anderen Besichtigungen an diesem Tag annehmen',
         'submit' => 'Antwort senden',
         'accepted' => 'Anfrage angenommen.',
         'refused' => 'Anfrage abgelehnt.',
@@ -262,6 +264,8 @@ return [
         'accept' => 'Annehmen',
         // Le nombre des autres demandes, sans leurs noms (décision 2026-11-22-accepter-nombre-chevauchements).
         'accept_overlaps' => '{1} :count weitere Anfrage überschneidet sich mit diesen Daten und wird abgelehnt.|[2,*] :count weitere Anfragen überschneiden sich mit diesen Daten und werden abgelehnt.',
+        // Les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
+        'accept_same_day_visits' => '{1} :count weitere Besichtigung ist an diesem Tag angefragt.|[2,*] :count weitere Besichtigungen sind an diesem Tag angefragt.',
         'accepted_notice' => 'Anfrage angenommen.',
         'refuse' => 'Ablehnen',
         'accept_title' => 'Anfrage annehmen',

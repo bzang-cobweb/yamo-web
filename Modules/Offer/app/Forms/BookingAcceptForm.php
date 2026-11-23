@@ -42,12 +42,18 @@ class BookingAcceptForm extends Form
 
     public function fields(): array
     {
-        return [
+        $visits = $this->booking === null ? 0 : app(OfferAvailability::class)->sameDayPendingVisits($this->booking)->count();
+
+        return array_values(array_filter([
             Field::hidden('answer')->default(BookingAnswerForm::ACCEPT),
             Field::textarea('acceptance_message')
                 ->label(__('offer::booking.answer.acceptance_message'))
                 ->maxLength(Booking::MESSAGE_MAX_LENGTH),
-        ];
+            // D'autres visites en attente le même jour : les accepter aussi, décoché par défaut (décision 2026-11-22-accepter-autres-visites).
+            $visits === 0 ? null : Field::checkbox('accept_other_visits')
+                ->label(trans_choice('offer::booking.answer.accept_other_visits', $visits, ['count' => $visits]))
+                ->default(false),
+        ]));
     }
 
     public function title(): string
@@ -67,9 +73,17 @@ class BookingAcceptForm extends Form
 
         $locale = app()->getLocale();
         $subtitle = $this->booking->user->full_name.' · '.$this->booking->period($locale);
-        $others = app(OfferAvailability::class)->overlappingPending($this->booking)->count();
+        $availability = app(OfferAvailability::class);
+        $others = $availability->overlappingPending($this->booking)->count();
+        $visits = $availability->sameDayPendingVisits($this->booking)->count();
+        // Les séjours qui seront refusés ; les autres visites du même jour, qui restent en attente sauf si on coche la
+        // case (décision 2026-11-22-accepter-autres-visites).
+        $warnings = array_filter([
+            $others === 0 ? null : trans_choice('offer::booking.profile.accept_overlaps', $others, ['count' => $others]),
+            $visits === 0 ? null : trans_choice('offer::booking.profile.accept_same_day_visits', $visits, ['count' => $visits]),
+        ]);
 
-        return $others === 0 ? $subtitle : $subtitle."\n".trans_choice('offer::booking.profile.accept_overlaps', $others, ['count' => $others]);
+        return implode("\n", [$subtitle, ...$warnings]);
     }
 
     public function submission(): ?Submission
