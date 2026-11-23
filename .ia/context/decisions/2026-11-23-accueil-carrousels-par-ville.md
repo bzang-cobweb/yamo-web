@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-accueil-nombres-reglables.md
 Remplacée en partie par : 2026-11-23-accueil-fleche-deux-cartes.md
 Remplace en partie : 2026-11-23-onglet-recherche.md (l'accueil n'est plus vide).
 
