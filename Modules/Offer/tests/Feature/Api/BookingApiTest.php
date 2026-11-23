@@ -611,10 +611,13 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-22-logements-filtre-statut-demande.
         $owner = $this->member();
         $homes = [];
-        foreach (['pending', 'accepted', 'refused', 'cancelled', 'expired'] as $status) {
+        foreach (['pending', 'accepted', 'refused', 'cancelled', 'expired', 'completed'] as $status) {
             $homes[$status] = $this->home(true, $owner);
             Booking::factory()->for($homes[$status])->status(BookingStatusEnum::from($status))->create(['check_in' => today()->addDays(10), 'check_out' => today()->addDays(12)]);
         }
+        // Acceptée mais passée : terminée, pas acceptée (décision 2026-11-22-logements-filtre-terminee).
+        $over = $this->home(true, $owner);
+        Booking::factory()->for($over)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->subDays(5), 'check_out' => today()->subDays(2)]);
         // En attente mais passée : expirée, pas en attente.
         $late = $this->home(true, $owner);
         Booking::factory()->for($late)->create(['check_in' => today()->subDays(3), 'check_out' => today()->subDay()]);
@@ -622,13 +625,14 @@ class BookingApiTest extends TestCase
 
         $filter = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'booking_status');
         $this->assertSame(['Demande', 'select'], [$filter['label'], $filter['type']]);
-        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'expired'], array_column($filter['options'], 'value'));
-        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Expirée'], array_column($filter['options'], 'label'));
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'expired', 'completed'], array_column($filter['options'], 'value'));
+        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Expirée', 'Terminée'], array_column($filter['options'], 'label'));
 
         foreach (['pending', 'accepted', 'refused', 'cancelled'] as $status) {
             $this->assertSame([(string) $homes[$status]->getKey()], $ids($status));
         }
         $this->assertSame(collect([$homes['expired'], $late])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(), $ids('expired'));
-        $this->assertCount(6, $ids(''));
+        $this->assertSame(collect([$homes['completed'], $over])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(), $ids('completed'));
+        $this->assertCount(8, $ids(''));
     }
 }

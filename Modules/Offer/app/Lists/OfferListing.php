@@ -89,7 +89,7 @@ class OfferListing extends Listing
     }
 
     /** Les statuts de demande du filtre « Demande » (décision 2026-11-22-logements-filtre-statut-demande). */
-    private const BOOKING_STATUSES = [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED, BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED, BookingStatusEnum::EXPIRED];
+    private const BOOKING_STATUSES = [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED, BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED, BookingStatusEnum::EXPIRED, BookingStatusEnum::COMPLETED];
 
     /**
      * Le statut de l'annonce, puis les filtres de l'accueil, parmi ses propres offres
@@ -117,10 +117,13 @@ class OfferListing extends Listing
         }
         $status = BookingStatusEnum::tryFrom(is_string($filters['booking_status'] ?? null) ? $filters['booking_status'] : '');
         if ($status !== null && in_array($status, self::BOOKING_STATUSES, true)) {
-            // En attente : sans les expirées ; expirée : enregistrée ou en attente et passée.
+            // En attente : sans les expirées ; expirée : enregistrée ou en attente et passée ; acceptée : pas encore
+            // terminée ; terminée : enregistrée ou acceptée et passée (décision 2026-11-22-logements-filtre-terminee).
             $query->whereHas('bookings', fn (Builder $bookings) => match ($status) {
                 BookingStatusEnum::PENDING => $bookings->awaitingAnswer(),
                 BookingStatusEnum::EXPIRED => $bookings->expired(),
+                BookingStatusEnum::ACCEPTED => $bookings->where('status', BookingStatusEnum::ACCEPTED)->whereNot(fn (Builder $past) => $past->completed()),
+                BookingStatusEnum::COMPLETED => $bookings->completed(),
                 default => $bookings->where('status', $status),
             });
         }
