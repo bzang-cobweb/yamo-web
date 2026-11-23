@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-partenaires-triables.md
 Remplace en partie : 2026-11-23-module-partenaires.md (ordre des partenaires) ; 2026-11-23-accueil-carrousels-par-ville.md (10 offres fixes).
 
 # `2026-11-23` — Accueil : nombres réglables, partenaires au hasard
