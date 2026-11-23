@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-24-partenaire-en-validation.md
 Remplace en partie : 2026-11-24-partenaires-par-les-membres.md ; 2026-11-23-module-partenaires.md (le booléen « publié »).
 
 # `2026-11-24` — Partenaires : un statut de publication
