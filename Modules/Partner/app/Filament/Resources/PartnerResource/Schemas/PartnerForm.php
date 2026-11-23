@@ -44,6 +44,10 @@ abstract class PartnerForm
                                         // Obligatoire dans la langue par défaut, comme le titre d'une offre.
                                         ->required($locale === Locales::default())
                                         ->maxLength(255),
+                                    // Facultatif (décision 2026-11-24-partenaire-slogan).
+                                    TextInput::make("slogan.{$locale}")
+                                        ->label(__('partner::partner.fields.slogan'))
+                                        ->maxLength(120),
                                     Textarea::make("description.{$locale}")
                                         ->label(__('partner::partner.fields.description'))
                                         // Obligatoire dans la langue par défaut, comme le nom (décision

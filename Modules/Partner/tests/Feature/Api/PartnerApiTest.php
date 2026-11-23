@@ -56,6 +56,7 @@ class PartnerApiTest extends TestCase
         $this->assertSame([
             'id' => (string) $first->getKey(),
             'name' => 'Déménageurs du Wouri',
+            'slogan' => null,
             'description' => 'Déménagement clés en main.',
             'url' => 'https://wouri.test/fr',
             'cta_label' => 'Demander un devis',

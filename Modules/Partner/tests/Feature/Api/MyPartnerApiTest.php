@@ -61,14 +61,15 @@ class MyPartnerApiTest extends TestCase
     {
         $user = $this->member();
         $form = $this->asUser($user)->getJson('/api/v1/forms/partner.partner')->assertOk()->json('data');
-        $this->assertSame(['logo', 'name', 'description', 'contact_phone', 'contact_email', 'url', 'cta_label'], array_column($form['fields'], 'name'));
+        $this->assertSame(['logo', 'name', 'slogan', 'description', 'contact_phone', 'contact_email', 'url', 'cta_label'], array_column($form['fields'], 'name'));
         // En étapes, sans « Langue » à la création (décision 2026-11-24-mes-partenaires-cartes).
-        $this->assertSame([['Présentation', ['logo', 'name', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
+        $this->assertSame([['Présentation', ['logo', 'name', 'slogan', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
         $this->assertSame('Proposer un partenaire', $form['title']);
         $this->assertSame('center', $form['title_align']);
 
         $this->asUser($user)->postJson('/api/v1/partners', [
             'name' => 'Déménageurs du Wouri',
+            'slogan' => 'On porte, vous respirez.',
             'logo' => [$this->pendingUpload($user, 'logo', 'partner.partner')],
             'description' => 'Déménagement clés en main.',
             'url' => 'https://wouri.test',
@@ -80,6 +81,9 @@ class MyPartnerApiTest extends TestCase
         // Dans le pays courant, la langue du compte, pas publié ; le compte en est administrateur.
         $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->status]);
         $this->assertNotNull($partner->logoUrl());
+        // Le slogan, facultatif (décision 2026-11-24-partenaire-slogan).
+        $this->assertSame('On porte, vous respirez.', $partner->getTranslation('slogan', 'fr'));
+        $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertJsonPath('data.slogan', 'On porte, vous respirez.');
         $this->assertTrue($partner->hasAdmin($user->getKey()));
         // Pas visible dans l'app, sans compte, tant que l'équipe ne l'a pas publié.
         $this->app['auth']->forgetGuards();

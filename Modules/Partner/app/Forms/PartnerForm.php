@@ -60,6 +60,11 @@ class PartnerForm extends Form
                 ->required()
                 ->maxLength(255)
                 ->default($text('name')),
+            // Facultatif, dans la langue de saisie (décision 2026-11-24-partenaire-slogan).
+            Field::text('slogan')
+                ->label(__('partner::partner.fields.slogan'))
+                ->maxLength(120)
+                ->default($text('slogan')),
             // Obligatoire ; le logo, lui, est facultatif (décision 2026-11-24-partenaire-description-obligatoire).
             Field::textarea('description')
                 ->label(__('partner::partner.fields.description'))
@@ -99,7 +104,7 @@ class PartnerForm extends Form
         return array_values(array_filter([
             $this->hasContentLocale() ? Step::make(__('partner::partner.content_locale.step'), [self::CONTENT_LOCALE]) : null,
             // « Présentation » (décision 2026-11-24-etape-presentation).
-            Step::make(__('partner::partner.member.steps.presentation'), [PartnerLogoService::FIELD, 'name', 'description']),
+            Step::make(__('partner::partner.member.steps.presentation'), [PartnerLogoService::FIELD, 'name', 'slogan', 'description']),
             Step::make(__('partner::partner.sections.contact'), ['contact_phone', 'contact_email', 'url', 'cta_label']),
         ]));
     }

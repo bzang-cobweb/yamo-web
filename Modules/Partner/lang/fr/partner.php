@@ -20,6 +20,7 @@ return [
         'archived' => 'Archivé',
     ],
     'fields' => [
+        'slogan' => 'Slogan',
         'status' => 'Statut',
         'user' => 'Compte',
         'is_admin' => 'Administrateur',

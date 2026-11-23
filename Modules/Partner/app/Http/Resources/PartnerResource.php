@@ -27,7 +27,7 @@ class PartnerResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, name: string, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null}
+     * @return array{id: string, name: string, slogan: string|null, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -37,6 +37,8 @@ class PartnerResource extends JsonResource
         return [
             'id' => (string) $partner->getKey(),
             'name' => (string) $partner->getTranslation('name', app()->getLocale()),
+            // Facultatif (décision 2026-11-24-partenaire-slogan).
+            'slogan' => $text('slogan'),
             'description' => $text('description'),
             'url' => $text('url'),
             'cta_label' => $text('cta_label'),

@@ -40,7 +40,7 @@ use Spatie\Translatable\HasTranslations;
  * @property-read Country $country
  * @property-read Collection<int, User> $users les comptes qui l'administrent
  */
-#[Fillable(['country_id', 'name', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
+#[Fillable(['country_id', 'name', 'slogan', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
 #[UseFactory(PartnerFactory::class)]
 class Partner extends Model implements HasMedia
 {
@@ -51,7 +51,7 @@ class Partner extends Model implements HasMedia
     public const LOGO = 'logo';
 
     /** @var list<string> */
-    public array $translatable = ['name', 'description', 'url', 'cta_label'];
+    public array $translatable = ['name', 'slogan', 'description', 'url', 'cta_label'];
 
     /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables) ; un changement de statut est annoncé. */
     protected static function booted(): void
