@@ -112,6 +112,26 @@ class PartnerResourceTest extends AuthFilamentTestCase
         Livewire::test(ListPartners::class)->filterTable('proposed', true)->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$alone]);
     }
 
+    public function test_the_phone_takes_the_partner_country_dial_code(): void
+    {
+        // Décision 2026-11-24-partenaire-telephone-pays.
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $cameroon = Country::factory()->create(['code' => 'CM', 'dial_code' => '+237']);
+        $partner = Partner::factory()->for($cameroon)->create(['contact_phone' => '+237670000005']);
+
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->assertFormSet(['contact_phone' => '6 70 00 00 05'])
+            ->fillForm(['contact_phone' => '6 99 98 06 23'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame('+237699980623', $partner->fresh()->contact_phone);
+
+        Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
+            ->fillForm(['contact_phone' => '12'])
+            ->call('save')
+            ->assertHasFormErrors(['contact_phone']);
+    }
+
     public function test_hidden_without_the_permission(): void
     {
         $this->actingAsUserWith();

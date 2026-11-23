@@ -8,6 +8,7 @@ use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
@@ -106,6 +107,10 @@ class PartnerService
             $partner->setTranslation($key, $locale, $value);
         }
         $partner->contact_email = filled($data['contact_email'] ?? null) ? trim((string) $data['contact_email']) : null;
-        $partner->contact_phone = filled($data['contact_phone'] ?? null) ? trim((string) $data['contact_phone']) : null;
+        // Au format international, avec l'indicatif du pays du partenaire (décision 2026-11-24-partenaire-telephone-pays).
+        $partner->contact_phone = null;
+        if (filled($data['contact_phone'] ?? null)) {
+            $partner->contact_phone = PhoneNumbers::toE164((string) $data['contact_phone'], (string) ($data['contact_phone_country'] ?? ''));
+        }
     }
 }

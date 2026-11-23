@@ -11,7 +11,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
@@ -95,9 +97,16 @@ abstract class PartnerForm
                                     ->label(__('partner::partner.fields.contact_email'))
                                     ->email()
                                     ->maxLength(255),
+                                // L'indicatif du pays du partenaire devant le numéro ; enregistré au format international
+                                // (décision 2026-11-24-partenaire-telephone-pays).
                                 TextInput::make('contact_phone')
                                     ->label(__('partner::partner.fields.contact_phone'))
                                     ->tel()
+                                    ->live(onBlur: true)
+                                    ->prefix(fn (Get $get): ?string => Country::query()->find($get('country_id'))?->dial_code)
+                                    ->formatStateUsing(fn (?string $state): ?string => blank($state) ? null : PhoneNumbers::national($state))
+                                    ->rule(fn (Get $get): string => 'phone:'.(Country::query()->find($get('country_id'))?->code ?? 'INTERNATIONAL'))
+                                    ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => blank($state) ? null : PhoneNumbers::toE164($state, (string) Country::query()->find($get('country_id'))?->code))
                                     ->maxLength(30),
                             ]),
                         // Lus seulement : l'app les tient à jour.

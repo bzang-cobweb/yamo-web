@@ -5,11 +5,13 @@ namespace Modules\Partner\Forms;
 use App\Support\Locales;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Step;
 use Modules\Form\Support\Submission;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerLogoService;
 
@@ -71,10 +73,12 @@ class PartnerForm extends Form
                 ->required()
                 ->maxLength(500)
                 ->default($text('description')),
-            Field::text('contact_phone')
+            // L'indicatif du pays du partenaire, seul proposé : choisi d'office et verrouillé (décision
+            // 2026-11-24-partenaire-telephone-pays).
+            Field::phone('contact_phone')
                 ->label(__('partner::partner.fields.contact_phone'))
-                ->maxLength(30)
-                ->default($partner?->contact_phone),
+                ->options($this->phoneCountry())
+                ->default(['country' => array_key_first($this->phoneCountry()), 'number' => $partner?->contact_phone === null ? null : PhoneNumbers::national($partner->contact_phone)]),
             Field::email('contact_email')
                 ->label(__('partner::partner.fields.contact_email'))
                 ->maxLength(255)
@@ -107,6 +111,18 @@ class PartnerForm extends Form
             Step::make(__('partner::partner.member.steps.presentation'), [PartnerLogoService::FIELD, 'name', 'slogan', 'description']),
             Step::make(__('partner::partner.sections.contact'), ['contact_phone', 'contact_email', 'url', 'cta_label']),
         ]));
+    }
+
+    /**
+     * Le pays du téléphone : celui du partenaire, sinon le pays courant (un nouveau partenaire y est créé).
+     *
+     * @return array<string, array{label: string, hint: string}>
+     */
+    private function phoneCountry(): array
+    {
+        $country = $this->partner?->country ?? CurrentCountry::require();
+
+        return [$country->code => ['label' => $country->label(), 'hint' => (string) $country->dial_code]];
     }
 
     /** Le champ de la langue de saisie, comme pour une offre. */

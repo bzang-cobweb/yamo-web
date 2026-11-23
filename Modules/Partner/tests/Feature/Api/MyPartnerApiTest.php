@@ -75,12 +75,26 @@ class MyPartnerApiTest extends TestCase
             'url' => 'https://wouri.test',
             'cta_label' => 'Demander un devis',
             'contact_email' => 'commercial@wouri.test',
+            'contact_phone' => '6 70 00 00 05',
+            'contact_phone_country' => 'CM',
         ])->assertNoContent();
 
         $partner = Partner::query()->sole();
         // Dans le pays courant, la langue du compte, pas publié ; le compte en est administrateur.
         $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->status]);
         $this->assertNotNull($partner->logoUrl());
+        // Le téléphone : l'indicatif du pays, seul proposé et verrouillé ; enregistré au format international, lu
+        // lisible (décision 2026-11-24-partenaire-telephone-pays).
+        $phone = collect($form['fields'])->firstWhere('name', 'contact_phone');
+        $this->assertSame(['phone', true, ['CM']], [$phone['type'], $phone['locked'], array_column($phone['options'], 'value')]);
+        $this->assertSame('CM', $phone['default']['country']);
+        $this->assertSame('+237670000005', $partner->contact_phone);
+        $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertJsonPath('data.contact_phone', '+237 6 70 00 00 05');
+        // Un autre pays est refusé ; un numéro qui n'est pas camerounais aussi.
+        $this->asUser($user)->postJson('/api/v1/partners', ['name' => 'X', 'description' => 'Y', 'contact_phone' => '6 70 00 00 05', 'contact_phone_country' => 'FR'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['contact_phone_country']);
+        $this->asUser($user)->postJson('/api/v1/partners', ['name' => 'X', 'description' => 'Y', 'contact_phone' => '12', 'contact_phone_country' => 'CM'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['contact_phone']);
         // Le slogan, facultatif (décision 2026-11-24-partenaire-slogan).
         $this->assertSame('On porte, vous respirez.', $partner->getTranslation('slogan', 'fr'));
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertJsonPath('data.slogan', 'On porte, vous respirez.');

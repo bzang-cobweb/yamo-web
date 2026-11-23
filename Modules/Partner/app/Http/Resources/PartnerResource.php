@@ -5,6 +5,7 @@ namespace Modules\Partner\Http\Resources;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Auth\Support\PhoneNumbers;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -26,6 +27,17 @@ class PartnerResource extends JsonResource
         return $this;
     }
 
+    /** Le téléphone lisible, au format international (« +237 6 70 00 00 05 ») ; `null` sans téléphone. */
+    private function phone(): ?string
+    {
+        $phone = $this->resource->contact_phone;
+        if ($phone === null || $phone === '') {
+            return null;
+        }
+
+        return PhoneNumbers::international($phone);
+    }
+
     /**
      * @return array{id: string, name: string, slogan: string|null, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null}
      */
@@ -43,7 +55,7 @@ class PartnerResource extends JsonResource
             'url' => $text('url'),
             'cta_label' => $text('cta_label'),
             'logo' => MediaUrl::onRequestHost($partner->logoUrl()),
-            ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $partner->contact_phone] : []),
+            ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $this->phone()] : []),
         ];
     }
 }
