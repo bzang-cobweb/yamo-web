@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-calendrier-textes-comme-detail.md
+
 # Calendrier d'un logement : le titre à la taille du texte
 
 - **Date** : 2026-11-22
