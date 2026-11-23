@@ -8,14 +8,12 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Submission;
-use Modules\Notification\Support\ActorData;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Support\BookingText;
 
 /**
  * Le calendrier d'une offre, vu par son propriétaire (décision
@@ -103,7 +101,7 @@ class OfferCalendar
      * Accepter / Refuser ; « Bloquer ce jour » (libre, à venir, sans séjour accepté)
      * ou « Débloquer ».
      *
-     * @return array{title: string, items: list<array{id: string, actor: array<string, mixed>, type: string, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
+     * @return array{title: string, items: list<array<string, mixed>>, empty: string, action: array{label: string, style: string, confirm: string|null, submission: array<string, mixed>}|null, note: string|null}
      */
     public function day(Offer $offer, Carbon $day, Authenticatable $owner, string $locale): array
     {
@@ -136,42 +134,25 @@ class OfferCalendar
     }
 
     /**
-     * Les demandes en cartes de notification (décision 2026-11-20-calendrier-cartes) :
-     * - qui demande (photo, nom, en ligne) et la date de la demande ;
-     * - la pastille du statut (« En attente », « Acceptée »…), comme dans une notification ;
-     * - le texte (dates, durée, prix, voyageurs) et le message ;
-     * - le total en gras (logement meublé) ;
-     * - Accepter et Refuser, comme dans « Demandes reçues ».
+     * Les demandes en cartes de « Demandes reçues », les mêmes que dans la liste (décision
+     * 2026-11-22-calendrier-carte-demandes-recues) : le nom du membre (lien vers sa page), le statut, le type de demande
+     * et les dates, le dernier message et les non lues, la date de la dernière notification ; la carte ouvre la page de
+     * la demande. Avec « Accepter » et « Refuser » tant qu'elle attend, puis afficher ou masquer l'adresse.
      *
      * @param  Collection<int, Booking>  $bookings
-     * @return list<array{id: string, actor: array<string, mixed>, tag: array{label: string, tone: string}, summary: string, text_links: list<array{text: string, link: string}>, message: string|null, total: string|null, created_at: string|null, actions: list<array<string, mixed>>}>
+     * @return list<array<string, mixed>>
      */
     private function cards(ReceivedBookingListing $listing, Collection $bookings, string $locale): array
     {
         $current = app()->getLocale();
         app()->setLocale($locale);
 
+        // Relues par la requête de la liste : sa notification du fil, son dernier message, ses non lues.
+        $rows = $listing->query()->whereKey($bookings->modelKeys())->get()->keyBy(fn (Booking $booking): int => (int) $booking->getKey());
         $cards = [];
         foreach ($bookings as $booking) {
-            $summary = BookingText::summary($booking, 'requested');
-            /** @var list<array<string, mixed>> $actions */
-            $actions = $listing->withAnswerActions($listing->item($booking), $booking, $locale)->toArray()['actions'];
-            $tag = $booking->statusTag();
-            $message = $booking->message;
-            $total = $booking->formattedTotal($locale);
-            $cards[] = [
-                'id' => (string) $booking->getKey(),
-                'actor' => ActorData::from($booking->user),
-                // Le type, en gras au-dessus du statut (décision 2026-11-20-type-et-statut).
-                'type' => (string) app(DomainRegistry::class)->require()->requestLabel(),
-                'tag' => ['label' => (string) $tag['label'], 'tone' => (string) $tag['tone']],
-                'summary' => $summary,
-                'text_links' => BookingText::offerLink($booking, $summary),
-                'message' => $message === null ? null : (string) $message,
-                'total' => $total === null ? null : (string) $total,
-                'created_at' => $booking->created_at === null ? null : (string) $booking->created_at->toIso8601String(),
-                'actions' => $actions,
-            ];
+            $row = $rows->get((int) $booking->getKey()) ?? $booking;
+            $cards[] = $listing->withAnswerActions($listing->item($row), $row, $locale)->toArray();
         }
         app()->setLocale($current);
 

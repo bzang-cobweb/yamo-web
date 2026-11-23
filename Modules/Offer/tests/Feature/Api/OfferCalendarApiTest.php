@@ -185,15 +185,13 @@ class OfferCalendarApiTest extends TestCase
         $day = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->assertOk()->json('data');
         $this->assertSame([(string) $pending->getKey()], array_column($day['items'], 'id'));
         $this->assertSame(['Accepter', 'Refuser', "Masquer l'adresse"], array_column($day['items'][0]['actions'], 'label'));
-        // En carte de notification : qui demande, la pastille du type, le texte, le total.
+        // La carte de « Demandes reçues », la même que dans la liste (décision 2026-11-22-calendrier-carte-demandes-recues) :
+        // le nom du membre vers sa page, le statut, le type et les dates.
         $card = $day['items'][0];
-        $this->assertSame('Demande de logement', $card['type']);
-        $this->assertSame((string) $pending->user_id, $card['actor']['id']);
+        $received = collect($this->asUser($offer->user)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->firstWhere('id', (string) $pending->getKey());
+        $this->assertSame([$received['title'], $received['subtitle'], $received['tag'], $received['title_link']], [$card['title'], $card['subtitle'], $card['tag'], $card['title_link']]);
+        $this->assertSame('/members/'.$pending->user_id, $card['title_link']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
-        // « Demande de location « … » du … au … pour … » (décision 2026-11-20-texte-demande-location).
-        $this->assertStringStartsWith('Une demande de séjour pour « ', $card['summary']);
-        $this->assertStringContainsString(' pour ', $card['summary']);
-        $this->assertSame($pending->formattedTotal('fr'), $card['total']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => "/v1/offers/{$offer->getKey()}/blocked-dates/{$this->date(41)}"], array_intersect_key($day['action']['submission'], ['method' => 1, 'endpoint' => 1]));
 
