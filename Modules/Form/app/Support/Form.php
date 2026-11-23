@@ -92,6 +92,15 @@ abstract class Form
     }
 
     /**
+     * Une description sous le sous-titre, en gris, traduite (le titre d'une offre, décision
+     * 2026-11-22-formulaire-description) ; aucune par défaut.
+     */
+    public function description(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Une note sous le titre et le sous-titre, à part, traduite : un avertissement (décision
      * 2026-11-22-formulaire-note) ; aucune par défaut.
      */

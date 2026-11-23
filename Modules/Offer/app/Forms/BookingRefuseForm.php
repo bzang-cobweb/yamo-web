@@ -59,6 +59,12 @@ class BookingRefuseForm extends Form
         return $this->booking === null ? null : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
     }
 
+    /** Le titre saisi du logement, sous le membre et les dates (décision 2026-11-22-formulaire-description). */
+    public function description(): ?string
+    {
+        return $this->booking === null ? null : ((string) $this->booking->offer->getTranslation('title', app()->getLocale()) ?: null);
+    }
+
     public function submission(): ?Submission
     {
         return $this->booking === null ? null : Submission::toRoute(

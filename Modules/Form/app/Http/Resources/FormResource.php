@@ -24,6 +24,8 @@ class FormResource extends JsonResource
             'name' => $this->resource->key(),
             'title' => $this->resource->title(),
             'subtitle' => $this->resource->subtitle(),
+            /** Une description sous le sous-titre, en gris (le titre d'une offre) ; `null` : aucune. */
+            'description' => $this->resource->description(),
             /** Une note sous le titre, à part (un avertissement) ; `null` : aucune. */
             'notice' => $this->resource->notice(),
             /** Alignement du titre, du sous-titre et des titres d'étape : `start` ou `center`. */

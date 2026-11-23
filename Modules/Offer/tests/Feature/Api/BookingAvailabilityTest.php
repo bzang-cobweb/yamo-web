@@ -258,6 +258,8 @@ class BookingAvailabilityTest extends TestCase
         // L'avertissement sous le titre, et la case, décochée.
         $data = $form($chosen);
         $this->assertSame('2 autres visites sont demandées ce jour-là.', $data['notice']);
+        // Le titre du logement en description (décision 2026-11-22-formulaire-description).
+        $this->assertSame($offer->getTranslation('title', 'fr'), $data['description']);
         $this->assertStringNotContainsString('visites', (string) $data['subtitle']);
         $box = collect($data['fields'])->firstWhere('name', 'accept_other_visits');
         $this->assertSame(['checkbox', 'Accepter aussi les 2 autres visites de ce jour', false], [$box['type'], $box['label'], $box['default']]);
