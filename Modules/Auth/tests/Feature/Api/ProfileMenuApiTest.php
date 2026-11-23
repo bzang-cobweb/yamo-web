@@ -36,9 +36,10 @@ class ProfileMenuApiTest extends TestCase
     {
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
-        $this->assertSame(['personal', 'email', 'phone', 'password', 'preferences', 'addresses'], array_column($menu, 'key'));
+        // « Mes partenaires » (module Partner) vient après le compte (décision 2026-11-24-partenaires-par-les-membres).
+        $this->assertSame(['personal', 'email', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($menu, 'key'));
         $this->assertSame(
-            ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences', 'Mes adresses'],
+            ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences', 'Mes adresses', 'Mes partenaires'],
             array_column($menu, 'label'),
         );
         $this->assertSame(
@@ -54,7 +55,7 @@ class ProfileMenuApiTest extends TestCase
     {
         config(['auth.channels' => ['email' => false, 'phone' => true]]);
 
-        $this->assertSame(['personal', 'phone', 'password', 'preferences', 'addresses'], array_column($this->menu($this->user()), 'key'));
+        $this->assertSame(['personal', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($this->menu($this->user()), 'key'));
     }
 
     public function test_labels_follow_the_account_language(): void

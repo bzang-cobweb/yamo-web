@@ -13,6 +13,11 @@ return [
         'stats' => 'Statistiques',
     ],
     'fields' => [
+        'user' => 'Compte',
+        'is_admin' => 'Administrateur',
+        'make_admin' => 'Faire administrateur',
+        'remove_admin' => "Retirer l'administration",
+        'proposed' => "Proposé depuis l'app",
         'name' => 'Nom',
         'country' => 'Pays',
         'logo' => 'Logo',
@@ -27,4 +32,28 @@ return [
         'views_count' => 'Vues',
         'clicks_count' => 'Clics',
     ],
+    // « Mes partenaires » dans l'app (décision 2026-11-24-partenaires-par-les-membres).
+    'member' => [
+        'group' => 'Partenaire',
+        'mine' => 'Mes partenaires',
+        'add' => 'Proposer un partenaire',
+        'edit' => 'Modifier le partenaire',
+        'submit' => 'Envoyer pour validation',
+        'save' => 'Enregistrer et renvoyer',
+        'submitted' => "Partenaire envoyé : l'équipe le valide avant de le publier.",
+        'saved' => "Partenaire enregistré : l'équipe le valide de nouveau avant de le publier.",
+        'review_notice' => "L'équipe valide chaque partenaire, et chaque modification, avant de l'afficher dans l'app.",
+        'cta_help' => 'Le texte du bouton qui mène à votre lien. Vide : « Visiter le site ».',
+        'empty' => "Aucun partenaire pour l'instant.",
+        'remove' => 'Retirer',
+        'remove_confirm' => 'Retirer ce partenaire ?',
+        'removed' => 'Partenaire retiré.',
+        'status' => [
+            'pending' => 'En attente de validation',
+            'shown' => 'Affiché',
+            'hidden' => 'Pas affiché',
+        ],
+    ],
+    // Les comptes qui administrent un partenaire, au back-office.
+    'admins' => 'Administrateurs',
 ];

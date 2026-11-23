@@ -97,7 +97,9 @@ class OfferApiTest extends TestCase
             ['key' => 'bookings', 'label' => 'Mes réservations', 'list' => 'offer.bookings', 'group' => $traveler],
             ['key' => 'favorites', 'label' => 'Mes favoris', 'list' => 'offer.favorites', 'group' => $traveler],
             ['key' => 'offers', 'label' => 'Mes logements', 'list' => 'offer.mine', 'group' => ['key' => 'host', 'label' => 'Hôte']],
-        ], array_slice($menu, -3));
+        ], array_slice($menu, -4, 3));
+        // Puis « Partenaire » (décision 2026-11-24-partenaires-par-les-membres).
+        $this->assertSame('partners', $menu[count($menu) - 1]['key']);
         $this->assertSame('account', $menu[0]['group']['key']);
     }
 

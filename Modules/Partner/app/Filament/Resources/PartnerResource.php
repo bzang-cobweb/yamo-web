@@ -9,6 +9,7 @@ use Filament\Tables\Table;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\CreatePartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
+use Modules\Partner\Filament\Resources\PartnerResource\RelationManagers\UsersRelationManager;
 use Modules\Partner\Filament\Resources\PartnerResource\Schemas\PartnerForm;
 use Modules\Partner\Filament\Resources\PartnerResource\Tables\PartnerTable;
 use Modules\Partner\Models\Partner;
@@ -35,6 +36,14 @@ class PartnerResource extends AbstractResource
     public static function table(Table $table): Table
     {
         return PartnerTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // Les comptes rattachés (décision 2026-11-24-partenaires-par-les-membres).
+            UsersRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

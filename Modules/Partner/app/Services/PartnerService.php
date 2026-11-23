@@ -7,6 +7,8 @@ use App\Support\ContainsSearch;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Modules\Auth\Models\User;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -65,5 +67,47 @@ class PartnerService
         $partner->increment('clicks_count');
 
         return true;
+    }
+
+    /**
+     * Un partenaire proposé par un membre (décision 2026-11-24-partenaires-par-les-membres) : dans le pays courant,
+     * ses textes dans la langue `$locale`, pas publié ; le membre y est rattaché en administrateur (`is_admin`).
+     *
+     * @param  array{name: string, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
+     */
+    public function propose(User $user, array $data, string $locale): Partner
+    {
+        $partner = new Partner(['country_id' => CurrentCountry::require()->getKey(), 'published' => false]);
+        $this->fill($partner, $data, $locale);
+        $partner->save();
+        $partner->users()->attach($user->getKey(), ['is_admin' => true]);
+
+        return $partner;
+    }
+
+    /**
+     * Un partenaire modifié par un de ses administrateurs : seuls les textes de `$locale` changent ; il repasse en
+     * attente de validation (décision 2026-11-24-partenaires-par-les-membres).
+     *
+     * @param  array{name: string, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
+     */
+    public function change(Partner $partner, array $data, string $locale): void
+    {
+        $this->fill($partner, $data, $locale);
+        $partner->published = false;
+        $partner->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function fill(Partner $partner, array $data, string $locale): void
+    {
+        foreach (['name', 'description', 'url', 'cta_label'] as $key) {
+            $value = trim((string) ($data[$key] ?? ''));
+            $value === '' ? $partner->forgetTranslation($key, $locale) : $partner->setTranslation($key, $locale, $value);
+        }
+        $partner->contact_email = filled($data['contact_email'] ?? null) ? trim((string) $data['contact_email']) : null;
+        $partner->contact_phone = filled($data['contact_phone'] ?? null) ? trim((string) $data['contact_phone']) : null;
     }
 }

@@ -63,6 +63,13 @@ abstract class PartnerTable
             ->filters([
                 TernaryFilter::make('published')
                     ->label(__('partner::partner.fields.published')),
+                // Proposés depuis l'app, à valider (décision 2026-11-24-partenaires-par-les-membres).
+                TernaryFilter::make('proposed')
+                    ->label(__('partner::partner.fields.proposed'))
+                    ->queries(
+                        true: fn ($query) => $query->has('users'),
+                        false: fn ($query) => $query->doesntHave('users'),
+                    ),
             ])
             ->recordActions(AbstractResource::getActions())
             ->toolbarActions(AbstractResource::getBulkActions());

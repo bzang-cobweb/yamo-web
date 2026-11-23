@@ -4,12 +4,14 @@ namespace Modules\Partner\Tests\Feature\Filament;
 
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
 use Modules\Location\Models\Country;
 use Modules\Partner\Filament\Resources\PartnerResource;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\CreatePartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
+use Modules\Partner\Filament\Resources\PartnerResource\RelationManagers\UsersRelationManager;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -78,6 +80,35 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->call('reorderTable', [(string) $c->getKey(), (string) $a->getKey(), (string) $b->getKey()]);
 
         $this->assertSame([1, 2, 3], [$c->fresh()->position, $a->fresh()->position, $b->fresh()->position]);
+    }
+
+    public function test_accounts_are_attached_made_admin_and_detached(): void
+    {
+        // Décision 2026-11-24-partenaires-par-les-membres.
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $country = Country::factory()->create();
+        $partner = Partner::factory()->for($country)->create();
+        $member = User::factory()->create();
+        $other = User::factory()->create();
+        $partner->users()->attach($other->getKey());
+
+        $this->assertSame('Administrateurs (1)', UsersRelationManager::getTitle($partner, EditPartner::class));
+        $manager = fn () => Livewire::test(UsersRelationManager::class, ['ownerRecord' => $partner, 'pageClass' => EditPartner::class]);
+
+        $manager()->assertCanSeeTableRecords([$other])
+            ->callTableAction('attach', data: ['recordId' => $member->getKey(), 'is_admin' => true])
+            ->assertHasNoTableActionErrors();
+        $this->assertTrue($partner->hasAdmin($member->getKey()));
+
+        $manager()->callTableAction('toggleAdmin', $other);
+        $this->assertTrue($partner->hasAdmin($other->getKey()));
+
+        $manager()->callTableAction('detach', $member);
+        $this->assertFalse($partner->isAdministeredBy($member->getKey()));
+
+        // Le filtre des partenaires proposés depuis l'app.
+        $alone = Partner::factory()->for($country)->create();
+        Livewire::test(ListPartners::class)->filterTable('proposed', true)->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$alone]);
     }
 
     public function test_hidden_without_the_permission(): void

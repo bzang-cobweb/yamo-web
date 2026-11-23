@@ -13,6 +13,11 @@ return [
         'stats' => 'Statistik',
     ],
     'fields' => [
+        'user' => 'Konto',
+        'is_admin' => 'Administrator',
+        'make_admin' => 'Zum Administrator machen',
+        'remove_admin' => 'Administration entziehen',
+        'proposed' => 'Aus der App vorgeschlagen',
         'name' => 'Name',
         'country' => 'Land',
         'logo' => 'Logo',
@@ -27,4 +32,28 @@ return [
         'views_count' => 'Aufrufe',
         'clicks_count' => 'Klicks',
     ],
+    // « Mes partenaires » dans l'app (décision 2026-11-24-partenaires-par-les-membres).
+    'member' => [
+        'group' => 'Partner',
+        'mine' => 'Meine Partner',
+        'add' => 'Partner vorschlagen',
+        'edit' => 'Partner bearbeiten',
+        'submit' => 'Zur Prüfung senden',
+        'save' => 'Speichern und erneut senden',
+        'submitted' => 'Partner gesendet: Das Team prüft ihn vor der Veröffentlichung.',
+        'saved' => 'Partner gespeichert: Das Team prüft ihn vor der Veröffentlichung erneut.',
+        'review_notice' => 'Das Team prüft jeden Partner und jede Änderung, bevor er in der App erscheint.',
+        'cta_help' => 'Der Text der Schaltfläche zu Ihrem Link. Leer: « Website besuchen ».',
+        'empty' => 'Noch kein Partner.',
+        'remove' => 'Entfernen',
+        'remove_confirm' => 'Diesen Partner entfernen?',
+        'removed' => 'Partner entfernt.',
+        'status' => [
+            'pending' => 'Wartet auf Prüfung',
+            'shown' => 'Angezeigt',
+            'hidden' => 'Nicht angezeigt',
+        ],
+    ],
+    // Les comptes qui administrent un partenaire, au back-office.
+    'admins' => 'Administratoren',
 ];
