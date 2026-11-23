@@ -377,10 +377,15 @@ final class Field
         return $this;
     }
 
-    /** Libellé du bouton d'ajout (« Ajouter une information »). */
+    /**
+     * Libellé du bouton d'ajout : d'un groupe (« Ajouter une information »), ou d'un fichier (« Ajouter un logo ») ;
+     * à défaut, celui de l'app (décision 2026-11-24-champ-fichier-libelle-ajout).
+     */
     public function addLabel(string $label): self
     {
-        $this->assertRepeater();
+        if ($this->type !== FieldType::UPLOAD) {
+            $this->assertRepeater();
+        }
         $this->addLabel = $label;
 
         return $this;
@@ -976,7 +981,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string, values: list<string>}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string, values: list<string>}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, add_label: string|null, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -1011,11 +1016,12 @@ final class Field
             'suffix' => $this->suffix,
             /** Unité qui suit la valeur d'un autre champ (`suffixes` : valeur => unité) ; `suffix` à défaut. */
             'suffix_when' => $this->suffixWhen,
-            /** Fichiers (`upload`) : types acceptés, taille maximale (Ko), nombre maximal, adresse d'envoi, fichiers déjà enregistrés ; `null` pour un autre type. */
+            /** Fichiers (`upload`) : types acceptés, taille maximale (Ko), nombre maximal, libellé du bouton d'ajout, fichiers déjà enregistrés ; `null` pour un autre type. */
             'upload' => $this->type !== FieldType::UPLOAD ? null : [
                 'accept' => $this->accept,
                 'max_size_kb' => $this->maxSizeKb,
                 'max_files' => $this->maxFiles,
+                'add_label' => $this->addLabel,
                 'files' => collect($this->files)->map(fn (string $url, string|int $id): array => ['id' => (string) $id, 'url' => $url])->values()->all(),
             ],
             /** Liste de groupes (`repeater`) : sous-champs d'un groupe, nombre maximal, libellé du bouton d'ajout ; `null` pour un autre type. */

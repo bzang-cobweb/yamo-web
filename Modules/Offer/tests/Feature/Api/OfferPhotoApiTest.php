@@ -95,6 +95,8 @@ class OfferPhotoApiTest extends TestCase
             'accept' => ['image/jpeg', 'image/png', 'image/webp'],
             'max_size_kb' => OfferPhotoService::maxUploadKb(),
             'max_files' => 20,
+            // Le libellé de l'app (« Ajouter des photos »).
+            'add_label' => null,
             'files' => [],
             'endpoint' => '/v1/forms/offer.offer/uploads/photos',
         ], $fields['photos']['upload']);

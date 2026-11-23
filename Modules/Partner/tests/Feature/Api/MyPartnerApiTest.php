@@ -66,6 +66,8 @@ class MyPartnerApiTest extends TestCase
         $this->assertSame([['Présentation', ['logo', 'name', 'slogan', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
         $this->assertSame('Ajouter un partenaire', $form['title']);
         $this->assertSame('center', $form['title_align']);
+        // Un seul logo, son propre bouton (décision 2026-11-24-champ-fichier-libelle-ajout).
+        $this->assertSame(['max_files' => 1, 'add_label' => 'Ajouter un logo'], array_intersect_key($form['fields'][0]['upload'], ['max_files' => 0, 'add_label' => 0]));
 
         $this->asUser($user)->postJson('/api/v1/partners', [
             'name' => 'Déménageurs du Wouri',
