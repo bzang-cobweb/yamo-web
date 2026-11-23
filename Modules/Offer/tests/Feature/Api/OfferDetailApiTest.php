@@ -237,11 +237,12 @@ class OfferDetailApiTest extends TestCase
         $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'pets' => 'no']]);
         $offer->update(['description' => ['fr' => 'Calme et lumineux.']]);
         $sections = $this->show($offer)->json('data.sections');
-        // Caractéristiques, description, localisation, puis le reste (décision 2026-11-22-fiche-sections-ordre).
+        // Caractéristiques, description, localisation, puis le reste ; seule la première ouverte (décisions
+        // 2026-11-22-fiche-sections-ordre et 2026-11-22-fiche-premiere-section-ouverte).
         $this->assertSame([
             ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => true],
-            ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => true],
-            ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => true],
+            ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => false],
+            ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => false],
             ['key' => 'rules', 'type' => 'rows', 'title' => 'Règles', 'open' => false],
             ['key' => 'reviews', 'type' => 'reviews', 'title' => 'Avis', 'open' => false],
         ], $this->outline($sections));

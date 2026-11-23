@@ -26,11 +26,12 @@ return [
      * sans contenu n'est pas servie ; si aucune des sections servies n'est ouverte,
      * la première l'est.
      */
-    // Caractéristiques, description, localisation, puis le reste (décision 2026-11-22-fiche-sections-ordre).
+    // Caractéristiques, description, localisation, puis le reste (décision 2026-11-22-fiche-sections-ordre) ; seule la
+    // première ouverte à l'arrivée (décision 2026-11-22-fiche-premiere-section-ouverte).
     'sections' => [
         'facts' => true,
-        'description' => true,
-        'location' => true,
+        'description' => false,
+        'location' => false,
         'rules' => false,
         'reviews' => false,
         'informations' => false,
