@@ -20,6 +20,7 @@ use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferFavorite;
 use Modules\Offer\Models\OfferReview;
 use Modules\Offer\Services\BookingService;
+use Modules\Offer\Services\OfferPhotoService;
 
 /**
  * Données de démonstration, en développement seulement : un membre camerounais
@@ -421,10 +422,15 @@ class DemoSeeder extends Seeder
 
             $type = (string) ($offer->detail('property_type') ?? 'apartment');
 
+            // Optimisées comme depuis l'app (décision 2026-11-24-avatar-photos-offre-conversions).
             foreach ([0, 1] as $shot) {
-                $offer->addMediaFromString(DemoPhoto::jpeg($type, $index + $shot * 3))
-                    ->usingFileName("demo-{$offer->getKey()}-{$shot}.jpg")
-                    ->toMediaCollection(Offer::PHOTOS);
+                $path = (string) tempnam(sys_get_temp_dir(), 'demo');
+                file_put_contents($path, DemoPhoto::jpeg($type, $index + $shot * 3));
+                try {
+                    app(OfferPhotoService::class)->store($offer, $path, "demo-{$offer->getKey()}-{$shot}");
+                } finally {
+                    unlink($path);
+                }
             }
         });
     }

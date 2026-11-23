@@ -18,7 +18,6 @@ use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * La fiche d'une offre, telle que l'app l'affiche sans connaître le domaine
@@ -173,14 +172,8 @@ class OfferDetailResource extends JsonResource
      */
     private function photos(Offer $offer): array
     {
-        $urls = [];
-
-        foreach ($offer->getMedia(Offer::PHOTOS) as $media) {
-            /** @var Media $media */
-            $urls[] = (string) MediaUrl::onRequestHost($media->getUrl());
-        }
-
-        return $urls;
+        // La fiche : ses photos à la taille du carrousel (décision 2026-11-24-avatar-photos-offre-conversions).
+        return array_map(fn (string $url): string => (string) MediaUrl::onRequestHost($url), $offer->photoUrls('detail'));
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Modules\Offer\Services;
 
 use App\Support\MediaUrl;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
 use Modules\Offer\Models\Offer;
 use Spatie\Image\Enums\Fit;
@@ -20,18 +21,59 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class OfferPhotoService
 {
-    /** Plus grand côté d'une photo enregistrée, en pixels. */
-    public const STORED_SIZE = 1600;
+    /**
+     * Les types acceptés à l'envoi, avant optimisation (`config('offer.photos.mime_types')`, `OFFER_PHOTOS_MIME_TYPES`).
+     *
+     * @return list<string>
+     */
+    public static function acceptedMimeTypes(): array
+    {
+        return config('offer.photos.mime_types');
+    }
 
-    public const QUALITY = 80;
+    /** La taille maximale d'un fichier envoyé, en kilo-octets (`OFFER_PHOTOS_MAX_UPLOAD_KB`). */
+    public static function maxUploadKb(): int
+    {
+        return (int) config('offer.photos.max_upload_kb');
+    }
 
-    /** Types acceptés (ceux de la collection `photos`). */
-    public const ACCEPTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    /** Le nombre maximal de photos d'une offre (`OFFER_PHOTOS_MAX_FILES`). */
+    public static function maxFiles(): int
+    {
+        return (int) config('offer.photos.max_files');
+    }
 
-    /** Taille maximale d'un fichier envoyé, en Ko. */
-    public const MAX_UPLOAD_KB = 10240;
+    /** La qualité du WebP enregistré et de ses conversions (`OFFER_PHOTOS_QUALITY`). */
+    public static function quality(): int
+    {
+        return (int) config('offer.photos.quality');
+    }
 
-    public const MAX_FILES = 20;
+    /**
+     * La largeur de la photo enregistrée, en pixels : la plus grande des conversions, dont elle est la source
+     * (décision 2026-11-24-avatar-photos-offre-conversions).
+     */
+    public static function storedSize(): int
+    {
+        $sizes = array_map('intval', (array) config('offer.photos.conversions'));
+        if ($sizes === []) {
+            return 1600;
+        }
+
+        return max($sizes);
+    }
+
+    /**
+     * Le cadre d'une largeur `$width` : les photos remplissent un cadre 16:9 dans l'app, c'est leur largeur qui
+     * compte ; une photo en hauteur garde ainsi toute sa largeur. La hauteur est bornée à quatre fois la largeur,
+     * contre les images démesurées.
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function bounds(int $width): array
+    {
+        return [$width, 4 * $width];
+    }
 
     /**
      * Les photos enregistrées de l'offre, dans l'ordre : identifiant => adresse (sur
@@ -46,7 +88,8 @@ class OfferPhotoService
         }
 
         return $offer->getMedia(Offer::PHOTOS)
-            ->mapWithKeys(fn (Media $media): array => [(string) $media->uuid => (string) MediaUrl::onRequestHost($media->getUrl())])
+            // Les vignettes du champ (décision 2026-11-24-avatar-photos-offre-conversions).
+            ->mapWithKeys(fn (Media $media): array => [(string) $media->uuid => (string) MediaUrl::onRequestHost(Offer::mediaUrl($media, 'form'))])
             ->all();
     }
 
@@ -62,7 +105,7 @@ class OfferPhotoService
 
         $ordered = [];
         foreach ($ids as $id) {
-            $media = $existing->get($id) ?? ($uploads->has($id) ? $this->store($offer, $uploads->get($id)) : null);
+            $media = $existing->get($id) ?? ($uploads->has($id) ? $this->storeUpload($offer, $uploads->get($id)) : null);
             if ($media !== null) {
                 $ordered[] = $media->getKey();
             }
@@ -76,25 +119,38 @@ class OfferPhotoService
     }
 
     /**
-     * Optimise un fichier en attente (WebP, 1600 px au plus, original non gardé) et
-     * l'ajoute aux photos de l'offre ; le fichier en attente est retiré.
+     * Un fichier en attente du formulaire de l'app devient une photo de l'offre ; il est retiré.
      */
-    private function store(Offer $offer, FormUpload $upload): Media
+    private function storeUpload(Offer $offer, FormUpload $upload): Media
+    {
+        $media = $this->store($offer, $upload->absolutePath(), $upload->uuid);
+        $upload->discard();
+
+        return $media;
+    }
+
+    /**
+     * Le fichier `$sourcePath` devient une photo de l'offre, optimisée : WebP, la plus grande des conversions au plus
+     * en largeur (`storedSize()`, `bounds()`), proportions gardées ; l'original n'est pas conservé. La même pour
+     * l'app, le back-office et les données de démo (décision 2026-11-24-avatar-photos-offre-conversions).
+     */
+    public function store(Offer $offer, string $sourcePath, ?string $name = null): Media
     {
         $base = (string) tempnam(sys_get_temp_dir(), 'offer');
         $optimised = $base.'.webp';
+        [$width, $height] = self::bounds(self::storedSize());
 
         try {
-            Image::load($upload->absolutePath())
+            Image::load($sourcePath)
                 ->orientation()
-                ->fit(Fit::Max, self::STORED_SIZE, self::STORED_SIZE)
-                ->quality(self::QUALITY)
+                ->fit(Fit::Max, $width, $height)
+                ->quality(self::quality())
                 ->format('webp')
                 ->save($optimised);
 
             $media = $offer->addMedia($optimised)
                 ->usingName('photo')
-                ->usingFileName($upload->uuid.'.webp')
+                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
                 ->toMediaCollection(Offer::PHOTOS);
         } finally {
             foreach ([$base, $optimised] as $path) {
@@ -104,7 +160,7 @@ class OfferPhotoService
             }
         }
 
-        $upload->discard();
+        $offer->unsetRelation('media');
 
         return $media;
     }

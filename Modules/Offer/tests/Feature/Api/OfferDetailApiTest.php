@@ -79,7 +79,8 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('Rue Njo-Njo 12, '.trim($offer->address->zip.' Douala').', '.$this->cameroon->getTranslation('name', 'fr'), $data['address']);
         $this->assertNull($data['indication']);
         $this->assertCount(2, $data['photos']);
-        $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
+        // Les photos à la taille du carrousel (décision 2026-11-24-avatar-photos-offre-conversions).
+        $this->assertStringEndsWith('salon-detail.webp', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);
         $this->assertNull($data['status']);
         // La catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville) ; plus

@@ -123,7 +123,7 @@ class OfferFavoritesListing extends Listing
         [$title, $line] = OfferCardTitle::composedFirst($offer, app()->getLocale());
 
         return ListItem::make($offer->getKey(), $title, $line)
-            ->image(MediaUrl::onRequestHost($offer->photoUrl()))
+            ->image(MediaUrl::onRequestHost($offer->photoUrl('list')))
             ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($offer), $domain->formattedPrice($offer, app()->getLocale())])) ?: null)
             ->link('/offers/'.$offer->getKey())

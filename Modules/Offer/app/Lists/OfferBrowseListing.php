@@ -140,6 +140,9 @@ class OfferBrowseListing extends Listing
         $query->orWhereHas('address', fn (Builder $address) => $address->where(fn (Builder $columns) => $this->orWhereContains($columns, ['city'], $term)));
     }
 
+    /** La conversion des photos : celle des listes, celle de l'accueil pour ses carrousels. */
+    private string $photoConversion = 'list';
+
     /**
      * L'accueil de l'app : par ville, `$perCity` offres visibles tirées au hasard, en cartes comme la liste
      * (décision 2026-11-23-accueil-carrousels-par-ville). Les villes par ordre alphabétique.
@@ -148,6 +151,9 @@ class OfferBrowseListing extends Listing
      */
     public function cityCarousels(?int $perCity = null): array
     {
+        // Les cartes de l'accueil, deux par ligne : leurs photos à cette taille (décision
+        // 2026-11-24-avatar-photos-offre-conversions).
+        $this->photoConversion = 'home';
         // Le nombre réglé dans « Application » (décision 2026-11-23-accueil-nombres-reglables).
         $perCity ??= Setting::homeOffersPerCity();
         $carousels = [];
@@ -180,7 +186,7 @@ class OfferBrowseListing extends Listing
         // et 2026-11-19-ombre-coeur-onglets-offre).
         [$title, $line] = OfferCardTitle::composedFirst($record, app()->getLocale());
         $item = ListItem::make($record->getKey(), $title, $line)
-            ->image(MediaUrl::onRequestHost($record->photoUrl()))
+            ->image(MediaUrl::onRequestHost($record->photoUrl($this->photoConversion)))
             ->rating($record->reviews_avg_rating, (int) $record->reviews_count)
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($record), $price])) ?: null)
             ->link('/offers/'.$record->getKey());

@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-avatar-photos-offre-conversions.md
+
 # `2026-11-16` — Contrat du chantier photo de profil, validé
 
 - **Type** : décision

@@ -32,4 +32,27 @@ return [
         // Jours pendant lesquels un administrateur peut restaurer le compte.
         'grace_days' => (int) env('AUTH_ACCOUNT_DELETION_GRACE_DAYS', 30),
     ],
+
+    // La photo de profil, envoyée depuis l'app ou le back-office (décision 2026-11-24-avatar-photos-offre-conversions).
+    'avatar' => [
+        // Les types de fichier acceptés, séparés par des virgules.
+        'mime_types' => array_values(array_filter(array_map('trim', explode(',', (string) env('AUTH_AVATAR_MIME_TYPES', 'image/jpeg,image/png,image/webp'))))),
+        // La taille maximale d'un envoi, en kilo-octets.
+        'max_upload_kb' => (int) env('AUTH_AVATAR_MAX_UPLOAD_KB', 5120),
+        // La qualité du WebP enregistré, de 1 à 100.
+        'quality' => (int) env('AUTH_AVATAR_QUALITY', 80),
+        // Une conversion par endroit où la photo s'affiche : le côté du carré, en pixels (trois fois l'affichage,
+        // pour les écrans haute densité), recadré au centre, en WebP. La photo enregistrée est un carré de la plus
+        // grande de ces tailles.
+        'conversions' => [
+            // Le profil, sur la photo qu'on choisit (96 points).
+            'profile' => (int) env('AUTH_AVATAR_PROFILE_SIZE', 288),
+            // La page d'un membre (96 points).
+            'member' => (int) env('AUTH_AVATAR_MEMBER_SIZE', 288),
+            // Qui agit, en tête d'une notification (48 points).
+            'actor' => (int) env('AUTH_AVATAR_ACTOR_SIZE', 144),
+            // Le back-office : la liste et le formulaire des utilisateurs.
+            'admin' => (int) env('AUTH_AVATAR_ADMIN_SIZE', 256),
+        ],
+    ],
 ];

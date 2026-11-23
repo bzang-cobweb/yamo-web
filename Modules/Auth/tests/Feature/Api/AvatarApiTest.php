@@ -48,20 +48,25 @@ class AvatarApiTest extends TestCase
         $this->assertNotNull($media);
         $disk = Storage::disk('public');
 
-        // L'original n'est stocké nulle part : un seul fichier, un WebP de 512 px au plus.
+        // L'original n'est stocké nulle part : un carré WebP de la plus grande conversion (288 px), et ses conversions.
         $this->assertSame('avatar.webp', $media->file_name);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize($disk->path($media->getPathRelativeToRoot()));
-        $this->assertSame([512, 341], [$width, $height]);
+        $this->assertSame([288, 288], [$width, $height]);
         $this->assertCount(1, $disk->files('auth/avatar/'.$media->uuid));
 
-        // Vignette carrée, produite tout de suite.
-        [$thumbWidth, $thumbHeight] = getimagesize($disk->path($media->getPathRelativeToRoot(AvatarService::THUMB)));
-        $this->assertSame([256, 256], [$thumbWidth, $thumbHeight]);
+        // Une conversion carrée par écran, produite tout de suite, à la taille de la configuration
+        // (décision 2026-11-24-avatar-photos-offre-conversions).
+        $sizes = [];
+        foreach (['profile', 'member', 'actor', 'admin'] as $name) {
+            $sizes[$name] = getimagesize($disk->path($media->getPathRelativeToRoot($name)));
+            $sizes[$name] = [$sizes[$name][0], $sizes[$name][1]];
+        }
+        $this->assertSame(['profile' => [288, 288], 'member' => [288, 288], 'actor' => [144, 144], 'admin' => [256, 256]], $sizes);
 
         // Adresse sur l'hôte de la requête, rangée sous <module>/<champ>/<uuid>, sans numéro séquentiel.
         $this->assertStringEndsWith(
-            '/storage/auth/avatar/'.$media->uuid.'/conversions/avatar-'.AvatarService::THUMB.'.webp',
+            '/storage/auth/avatar/'.$media->uuid.'/conversions/avatar-profile.webp',
             $response->json('data.avatar_url'),
         );
         $this->assertStringNotContainsString('/storage/'.$media->getKey().'/', $response->json('data.avatar_url'));
@@ -76,7 +81,7 @@ class AvatarApiTest extends TestCase
         $this->withToken($user->createToken('test')->plainTextToken)
             ->getJson('http://yamo.ddev.site/api/v1/auth/me')
             ->assertOk()
-            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/auth/avatar/'.$uuid.'/conversions/avatar-thumb.webp');
+            ->assertJsonPath('data.avatar_url', 'http://yamo.ddev.site/storage/auth/avatar/'.$uuid.'/conversions/avatar-profile.webp');
     }
 
     public function test_a_new_photo_replaces_the_previous_one(): void

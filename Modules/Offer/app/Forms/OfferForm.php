@@ -180,9 +180,9 @@ class OfferForm extends Form
                 // Le titre de l'étape « Photos » suffit (décision 2026-11-19-nuit-ordre-photos-libelle).
                 ->hideLabel()
                 ->help(__('offer::offer.photos_help'))
-                ->accept(OfferPhotoService::ACCEPTED_MIME_TYPES)
-                ->maxSize(OfferPhotoService::MAX_UPLOAD_KB)
-                ->maxFiles(OfferPhotoService::MAX_FILES)
+                ->accept(OfferPhotoService::acceptedMimeTypes())
+                ->maxSize(OfferPhotoService::maxUploadKb())
+                ->maxFiles(OfferPhotoService::maxFiles())
                 ->files(app(OfferPhotoService::class)->current($offer))
                 ->required(),
         ]));

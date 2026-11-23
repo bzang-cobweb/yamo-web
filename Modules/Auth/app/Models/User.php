@@ -133,32 +133,46 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
-     * Vignette carrée, produite tout de suite : aucune file d'attente ne tourne.
+     * Une conversion par endroit où la photo s'affiche (`config('auth.avatar.conversions')`, décision
+     * 2026-11-24-avatar-photos-offre-conversions) : un carré recadré au centre, produit tout de suite (aucune file
+     * d'attente ne tourne).
      */
     public function registerMediaConversions(?Media $media = null): void
     {
-        $this->addMediaConversion(AvatarService::THUMB)
-            ->performOnCollections(AvatarService::COLLECTION)
-            ->fit(Fit::Crop, AvatarService::THUMB_SIZE, AvatarService::THUMB_SIZE)
-            ->format('webp')
-            ->quality(AvatarService::QUALITY)
-            ->nonOptimized()
-            ->nonQueued();
+        foreach ((array) config('auth.avatar.conversions') as $name => $size) {
+            $this->addMediaConversion((string) $name)
+                ->performOnCollections(AvatarService::COLLECTION)
+                ->fit(Fit::Crop, (int) $size, (int) $size)
+                ->format('webp')
+                ->quality(AvatarService::quality())
+                ->nonOptimized()
+                ->nonQueued();
+        }
     }
 
     /**
-     * Adresse de la vignette de la photo de profil, ou `null` sans photo.
+     * L'adresse de la photo de profil ; avec `$conversion` (`profile`, `member`, `actor`, `admin`), celle de sa
+     * conversion, ou celle de la photo tant que la conversion n'est pas produite ; `null` sans photo.
      */
-    public function avatarUrl(): ?string
+    public function avatarUrl(?string $conversion = null): ?string
     {
-        $url = $this->getFirstMediaUrl(AvatarService::COLLECTION, AvatarService::THUMB);
+        $media = $this->getFirstMedia(AvatarService::COLLECTION);
+        if ($media === null) {
+            return null;
+        }
+        if ($conversion === null) {
+            return $media->getUrl();
+        }
+        if (! $media->hasGeneratedConversion($conversion)) {
+            return $media->getUrl();
+        }
 
-        return $url === '' ? null : $url;
+        return $media->getUrl($conversion);
     }
 
     public function getFilamentAvatarUrl(): ?string
     {
-        return $this->avatarUrl();
+        return $this->avatarUrl('admin');
     }
 
     /**

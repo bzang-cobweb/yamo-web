@@ -1,4 +1,5 @@
 Remplacée en partie par : 2026-11-19-nuit-ordre-photos-libelle.md (façon de changer l'ordre des photos)
+Remplacée en partie par : 2026-11-24-avatar-photos-offre-conversions.md
 
 # `2026-11-19` — Contrat du champ `upload` et de l'étape « Photos », validé
 

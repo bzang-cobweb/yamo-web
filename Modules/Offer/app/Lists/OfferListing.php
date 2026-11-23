@@ -214,7 +214,7 @@ class OfferListing extends Listing
         // En gras, « Publiée · 80 000 FCFA / mois » (décision 2026-11-19-item-titre-saisi-details).
         // La note, tant qu'elle est publiée.
         $item = ListItem::make($record->getKey(), $title, $line)
-            ->image(MediaUrl::onRequestHost($record->photoUrl()))
+            ->image(MediaUrl::onRequestHost($record->photoUrl('list')))
             ->rating($record->showsReviews() ? $record->reviews_avg_rating : null, (int) $record->reviews_count)
             // Le statut en pastille de couleur (décision 2026-11-19-statut-carte-logement), sur la photo à la
             // place du cœur : le propriétaire ne met pas son logement en favori (décision 2026-11-21-statut-a-la-place-du-coeur).

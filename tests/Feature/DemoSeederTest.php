@@ -56,7 +56,10 @@ class DemoSeederTest extends TestCase
         $this->assertSame(5, $member->addresses()->count());
         // Deux photos dessinées par logement, pas plus au second passage.
         $this->assertSame(46, Media::query()->count());
-        $this->assertStringStartsWith("\xFF\xD8", Storage::disk('public')->get(Media::query()->first()->getPathRelativeToRoot()));
+        // Optimisées comme depuis l'app : du WebP (décision 2026-11-24-avatar-photos-offre-conversions).
+        $photo = (string) Storage::disk('public')->get(Media::query()->first()->getPathRelativeToRoot());
+        $this->assertStringStartsWith('RIFF', $photo);
+        $this->assertSame('WEBP', substr($photo, 8, 4));
     }
 
     public function test_refused_in_production(): void

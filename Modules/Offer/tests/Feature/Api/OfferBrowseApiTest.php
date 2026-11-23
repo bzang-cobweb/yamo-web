@@ -120,7 +120,8 @@ class OfferBrowseApiTest extends TestCase
         $items = array_column($this->withHeaders(['X-Country' => 'CM'])->getJson('http://192.168.1.10/api/v1/lists/offer.browse')->assertOk()->json('data.items'), 'image', 'id');
 
         $this->assertStringStartsWith('http://192.168.1.10/storage/', (string) $items[(string) $with->getKey()]);
-        $this->assertStringEndsWith('salon.jpg', (string) $items[(string) $with->getKey()]);
+        // La photo à la taille des listes (décision 2026-11-24-avatar-photos-offre-conversions).
+        $this->assertStringEndsWith('salon-list.webp', (string) $items[(string) $with->getKey()]);
         $this->assertNull($items[(string) $without->getKey()]);
     }
 

@@ -34,7 +34,7 @@ final class BookingItem
 
         if (! $mine) {
             return ListItem::make($booking->getKey(), $built, $subtitle)
-                ->image(MediaUrl::onRequestHost($offer->photoUrl()))
+                ->image(MediaUrl::onRequestHost($offer->photoUrl('list')))
                 // Le statut en pastille de couleur ; en gras, le total.
                 ->tag(...$booking->statusTag())
                 ->highlight($booking->formattedTotal($locale));
@@ -47,7 +47,7 @@ final class BookingItem
 
         return ListItem::make($booking->getKey(), $title, $line)
             ->detail($subtitle)
-            ->image(MediaUrl::onRequestHost($offer->photoUrl()))
+            ->image(MediaUrl::onRequestHost($offer->photoUrl('list')))
             ->tag(...$booking->statusTag())
             // La note des avis à droite, comme à l'accueil (décision 2026-11-21-reservations-note).
             ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)

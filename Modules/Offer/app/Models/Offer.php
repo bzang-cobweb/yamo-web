@@ -23,8 +23,11 @@ use Modules\Location\Models\Country;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
+use Modules\Offer\Services\OfferPhotoService;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -124,8 +127,27 @@ class Offer extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection(self::PHOTOS)
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->acceptsMimeTypes(OfferPhotoService::acceptedMimeTypes())
             ->useDisk('public');
+    }
+
+    /**
+     * Une conversion par endroit où la photo s'affiche (`config('offer.photos.conversions')`, décision
+     * 2026-11-24-avatar-photos-offre-conversions), bornée par la largeur (`OfferPhotoService::fit()`), produite tout
+     * de suite : aucune file d'attente ne tourne.
+     */
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        foreach ((array) config('offer.photos.conversions') as $name => $size) {
+            [$width, $height] = OfferPhotoService::bounds((int) $size);
+            $this->addMediaConversion((string) $name)
+                ->performOnCollections(self::PHOTOS)
+                ->fit(Fit::Max, $width, $height)
+                ->format('webp')
+                ->quality(OfferPhotoService::quality())
+                ->nonOptimized()
+                ->nonQueued();
+        }
     }
 
     /**
@@ -356,11 +378,43 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * URL de sa première photo, ou `null` (décision 2026-11-18-liste-photo-barre-connecte).
+     * L'adresse de sa première photo (décision 2026-11-18-liste-photo-barre-connecte), ou `null` ; avec `$conversion`
+     * (`web`, `detail`, `list`, `home`, `form`), celle de sa conversion (décision 2026-11-24-avatar-photos-offre-conversions).
      */
-    public function photoUrl(): ?string
+    public function photoUrl(?string $conversion = null): ?string
     {
-        return $this->getFirstMediaUrl(self::PHOTOS) ?: null;
+        $media = $this->getFirstMedia(self::PHOTOS);
+        if ($media === null) {
+            return null;
+        }
+
+        return self::mediaUrl($media, $conversion);
+    }
+
+    /**
+     * Les adresses de ses photos, dans l'ordre, à la conversion `$conversion`.
+     *
+     * @return list<string>
+     */
+    public function photoUrls(?string $conversion = null): array
+    {
+        return $this->getMedia(self::PHOTOS)->map(fn (Media $media): string => self::mediaUrl($media, $conversion))->values()->all();
+    }
+
+    /**
+     * L'adresse d'une photo : celle de sa conversion `$conversion`, ou celle de la photo tant que la conversion n'est
+     * pas produite (photo enregistrée avant elle).
+     */
+    public static function mediaUrl(Media $media, ?string $conversion): string
+    {
+        if ($conversion === null) {
+            return $media->getUrl();
+        }
+        if (! $media->hasGeneratedConversion($conversion)) {
+            return $media->getUrl();
+        }
+
+        return $media->getUrl($conversion);
     }
 
     /**

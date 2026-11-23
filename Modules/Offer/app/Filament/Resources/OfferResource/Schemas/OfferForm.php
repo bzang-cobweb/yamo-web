@@ -18,6 +18,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Filament\FieldComponent;
@@ -32,6 +33,7 @@ use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
+use Modules\Offer\Services\OfferPhotoService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
 /**
@@ -274,7 +276,16 @@ abstract class OfferForm
                                     ->multiple()
                                     ->reorderable()
                                     ->image()
-                                    ->maxFiles(20),
+                                    ->acceptedFileTypes(OfferPhotoService::acceptedMimeTypes())
+                                    ->maxSize(OfferPhotoService::maxUploadKb())
+                                    ->maxFiles(OfferPhotoService::maxFiles())
+                                    ->conversion('form')
+                                    // Optimisées comme depuis l'app (décision 2026-11-24-avatar-photos-offre-conversions).
+                                    ->saveUploadedFileUsing(
+                                        fn (TemporaryUploadedFile $file, Offer $record): string => app(OfferPhotoService::class)
+                                            ->store($record, $file->getRealPath())
+                                            ->uuid,
+                                    ),
                             ]),
                     ]),
             ]);

@@ -93,7 +93,7 @@ class OfferPhotoApiTest extends TestCase
         $this->assertFalse($fields['title']['label_hidden']);
         $this->assertSame([
             'accept' => ['image/jpeg', 'image/png', 'image/webp'],
-            'max_size_kb' => OfferPhotoService::MAX_UPLOAD_KB,
+            'max_size_kb' => OfferPhotoService::maxUploadKb(),
             'max_files' => 20,
             'files' => [],
             'endpoint' => '/v1/forms/offer.offer/uploads/photos',
@@ -118,7 +118,7 @@ class OfferPhotoApiTest extends TestCase
         $user = $this->member();
 
         $this->upload($user, UploadedFile::fake()->create('bail.pdf', 100, 'application/pdf'))->assertUnprocessable()->assertJsonValidationErrors(['file']);
-        $this->upload($user, UploadedFile::fake()->image('enorme.jpg')->size(OfferPhotoService::MAX_UPLOAD_KB + 1))->assertUnprocessable()->assertJsonValidationErrors(['file']);
+        $this->upload($user, UploadedFile::fake()->image('enorme.jpg')->size(OfferPhotoService::maxUploadKb() + 1))->assertUnprocessable()->assertJsonValidationErrors(['file']);
         // Un champ qui n'est pas un champ de fichiers, ou inconnu : 404.
         $this->upload($user, UploadedFile::fake()->image('a.jpg'), 'title')->assertNotFound();
         $this->upload($user, UploadedFile::fake()->image('a.jpg'), 'nope')->assertNotFound();
@@ -142,9 +142,9 @@ class OfferPhotoApiTest extends TestCase
         $media = Offer::query()->sole()->getMedia(Offer::PHOTOS);
         $this->assertSame([$second.'.webp', $first.'.webp'], $media->pluck('file_name')->all());
         $this->assertSame(['image/webp', 'image/webp'], $media->pluck('mime_type')->all());
-        // 1600 px au plus sur le grand côté.
+        // La largeur de la plus grande conversion au plus (décision 2026-11-24-avatar-photos-offre-conversions).
         [$width] = getimagesize($media[1]->getPath());
-        $this->assertSame(1600, $width);
+        $this->assertSame(OfferPhotoService::storedSize(), $width);
         // Les fichiers en attente sont retirés une fois utilisés.
         $this->assertSame(0, FormUpload::query()->count());
         $this->assertSame([], Storage::disk(FormUpload::DISK)->allFiles('form-uploads'));

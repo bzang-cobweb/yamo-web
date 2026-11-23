@@ -17,24 +17,41 @@ final class AvatarService
 {
     public const COLLECTION = 'avatar';
 
-    public const THUMB = 'thumb';
+    /**
+     * Les types acceptés à l'envoi, avant optimisation (`config('auth.avatar.mime_types')`, `AUTH_AVATAR_MIME_TYPES`).
+     *
+     * @return list<string>
+     */
+    public static function acceptedMimeTypes(): array
+    {
+        return config('auth.avatar.mime_types');
+    }
 
-    /** Types acceptés à l'envoi (avant optimisation). */
-    public const ACCEPTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    /** La taille maximale d'un envoi, en kilo-octets (`AUTH_AVATAR_MAX_UPLOAD_KB`). */
+    public static function maxUploadKb(): int
+    {
+        return (int) config('auth.avatar.max_upload_kb');
+    }
 
-    /** Extensions correspondantes, pour la règle de validation `mimes`. */
-    public const ACCEPTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+    /** La qualité du WebP enregistré et de ses conversions (`AUTH_AVATAR_QUALITY`). */
+    public static function quality(): int
+    {
+        return (int) config('auth.avatar.quality');
+    }
 
-    /** Taille maximale à l'envoi, en kilo-octets (5 Mo). */
-    public const MAX_UPLOAD_KB = 5120;
+    /**
+     * Le côté du carré enregistré, en pixels : la plus grande des conversions, dont il est la source (décision
+     * 2026-11-24-avatar-photos-offre-conversions).
+     */
+    public static function storedSize(): int
+    {
+        $sizes = array_map('intval', (array) config('auth.avatar.conversions'));
+        if ($sizes === []) {
+            return 512;
+        }
 
-    /** Côté maximal de l'image enregistrée, en pixels. */
-    public const STORED_SIZE = 512;
-
-    /** Côté de la vignette affichée, en pixels. */
-    public const THUMB_SIZE = 256;
-
-    public const QUALITY = 80;
+        return max($sizes);
+    }
 
     /**
      * Règles de validation d'un fichier envoyé.
@@ -49,8 +66,8 @@ final class AvatarService
             'required',
             'file',
             'image',
-            'mimes:'.implode(',', self::ACCEPTED_EXTENSIONS),
-            'max:'.self::MAX_UPLOAD_KB,
+            'mimetypes:'.implode(',', self::acceptedMimeTypes()),
+            'max:'.self::maxUploadKb(),
             // Garde-fou contre les images démesurées à décoder.
             'dimensions:max_width=10000,max_height=10000',
         ];
@@ -58,7 +75,8 @@ final class AvatarService
 
     /**
      * Optimise l'image de `$sourcePath` et l'enregistre comme photo du compte, à la
-     * place de la précédente. Le fichier source n'est pas modifié.
+     * place de la précédente : un carré recadré au centre, de la plus grande des
+     * conversions (`storedSize()`), en WebP. Le fichier source n'est pas modifié.
      */
     public function store(User $user, string $sourcePath): Media
     {
@@ -68,8 +86,8 @@ final class AvatarService
         try {
             Image::load($sourcePath)
                 ->orientation()
-                ->fit(Fit::Max, self::STORED_SIZE, self::STORED_SIZE)
-                ->quality(self::QUALITY)
+                ->fit(Fit::Crop, self::storedSize(), self::storedSize())
+                ->quality(self::quality())
                 ->format('webp')
                 ->save($optimised);
 
