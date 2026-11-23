@@ -82,10 +82,9 @@ class OfferDetailApiTest extends TestCase
         $this->assertStringEndsWith('salon.jpg', $data['photos'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);
         $this->assertNull($data['status']);
-        // Type, type de location, catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville).
+        // La catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville) ; plus
+        // les types de logement et de location, dans le titre composé (décision 2026-11-22-fiche-sections-ordre).
         $this->assertSame([
-            ['label' => 'Type de logement', 'value' => 'Appartement'],
-            ['label' => 'Type de location', 'value' => 'Location'],
             ['label' => 'Catégorie', 'value' => 'Standing'],
             ['label' => 'Surface', 'value' => '85 m²'],
             ['label' => 'Pièces', 'value' => '3,5'],
@@ -149,7 +148,8 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame('3-room flat in Bonapriso', $data['title']);
         $this->assertSame('Rent', $data['price']['label']);
         $this->assertStringEndsWith(' / month', $data['price']['value']);
-        $this->assertContains(['label' => 'Rental type', 'value' => 'Rental'], $data['facts']);
+        $this->assertNotContains(['label' => 'Rental type', 'value' => 'Rental'], $data['facts']);
+        $this->assertSame('Rental · Apartment · '.$data['location'], $data['composed_title']);
         $this->assertContains(['label' => 'Area', 'value' => '85 m²'], $data['facts']);
     }
 
@@ -235,17 +235,21 @@ class OfferDetailApiTest extends TestCase
     {
         // Décision 2026-11-19-sections-fiche-laravel ; complètes (décision 2026-11-19-sections-construites-laravel).
         $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'pets' => 'no']]);
+        $offer->update(['description' => ['fr' => 'Calme et lumineux.']]);
         $sections = $this->show($offer)->json('data.sections');
+        // Caractéristiques, description, localisation, puis le reste (décision 2026-11-22-fiche-sections-ordre).
         $this->assertSame([
+            ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => true],
+            ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => true],
             ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => true],
-            ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => false],
             ['key' => 'rules', 'type' => 'rows', 'title' => 'Règles', 'open' => false],
             ['key' => 'reviews', 'type' => 'reviews', 'title' => 'Avis', 'open' => false],
         ], $this->outline($sections));
-        // Le contenu avec : l'adresse et son indication, les lignes.
-        $this->assertSame($this->show($offer)->json('data.address'), $sections[0]['text']);
-        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[2]['rows']);
-        $this->assertSame($this->show($offer)->json('data.facts'), $sections[1]['rows']);
+        // Le contenu avec : les lignes, la description, l'adresse et son indication.
+        $this->assertSame($this->show($offer)->json('data.facts'), $sections[0]['rows']);
+        $this->assertSame('Calme et lumineux.', $sections[1]['text']);
+        $this->assertSame($this->show($offer)->json('data.address'), $sections[2]['text']);
+        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[3]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
         config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);
@@ -253,7 +257,7 @@ class OfferDetailApiTest extends TestCase
 
         // Aucune ouverte parmi celles servies : la première l'est.
         config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
-        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'pets' => 'no']]);
+        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'surface' => 30, 'pets' => 'no']]);
         $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
     }
 

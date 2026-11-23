@@ -47,6 +47,7 @@ class OfferDetailResource extends JsonResource
         $rules = [...$this->minimumAge(), ...array_values($this->displayed($offer, $domain, $locale, fn (string $name): bool => in_array($name, $domain->ruleAttributes(), true)))];
         $informations = $this->informations($offer, $locale);
         $reviews = $this->reviews($offer, $request);
+        $description = $offer->getTranslation('description', $locale) ?: null;
 
         return [
             'id' => (string) $offer->getKey(),
@@ -67,7 +68,7 @@ class OfferDetailResource extends JsonResource
             'indication' => $indication,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
-            'description' => $offer->getTranslation('description', $locale) ?: null,
+            'description' => $description,
             /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
             'facts' => $facts,
             /** Règles lisibles : l'âge minimum de l'application s'il est réglé (décision 2026-11-19-age-minimum-de-l-app), puis les règles renseignées de l'offre, dans l'ordre du domaine (décision 2026-11-19-contrat-regles-informations). */
@@ -89,7 +90,7 @@ class OfferDetailResource extends JsonResource
              * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
              * d'informations est une section `text` à lui seul.
              */
-            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null),
+            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */
@@ -273,7 +274,7 @@ class OfferDetailResource extends JsonResource
      * @param  list<array{id: string, title: string, description: string}>  $informations
      * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null}>
      */
-    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews): array
+    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null): array
     {
         $sections = [];
 
@@ -284,6 +285,8 @@ class OfferDetailResource extends JsonResource
             array_push($sections, ...match ((string) $key) {
                 'location' => $address === null ? [] : [['key' => 'location', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $address, 'note' => $indication]],
                 'facts' => $facts === [] ? [] : [['key' => 'facts', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $facts]],
+                // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
+                'description' => $description === null ? [] : [['key' => 'description', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $description, 'note' => null]],
                 'rules' => $rules === [] ? [] : [['key' => 'rules', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $rules]],
                 'reviews' => $hasReviews ? [['key' => 'reviews', 'type' => 'reviews', 'title' => $title, 'open' => $open]] : [],
                 'informations' => array_map(fn (array $information): array => [

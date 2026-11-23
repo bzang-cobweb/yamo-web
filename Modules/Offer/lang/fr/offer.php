@@ -124,6 +124,7 @@ return [
     ],
     // Titres des sections de la fiche, servis avec elles (décision 2026-11-19-sections-construites-laravel).
     'section_titles' => [
+        'description' => 'Description',
         'location' => 'Localisation',
         'facts' => 'Caractéristiques',
         'rules' => 'Règles',

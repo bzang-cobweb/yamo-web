@@ -262,6 +262,10 @@ class RentalDomain extends Domain
      */
     public function adjustFacts(Offer $offer, array $facts, string $locale): array
     {
+        // Le type de logement et le type de location sont dans le titre composé, sous le titre : plus dans les
+        // caractéristiques (décision 2026-11-22-fiche-sections-ordre).
+        unset($facts['property_type'], $facts['rental_type']);
+
         // La caution d'un meublé, elle, s'affiche toujours, 0 sans montant (décision 2026-11-20-caution-meuble-toujours).
         foreach (['charges', 'deposit_months', 'advance_months'] as $name) {
             if (! is_numeric($value = $offer->detail($name)) || (float) $value <= 0) {
@@ -312,7 +316,7 @@ class RentalDomain extends Domain
      */
     public function leadingFacts(): array
     {
-        return ['property_type', 'rental_type', 'category_id'];
+        return ['category_id'];
     }
 
     public function formSteps(): array
