@@ -74,7 +74,7 @@ class AvatarApiTest extends TestCase
 
     public function test_a_photo_smaller_than_the_profile_conversion_is_refused(): void
     {
-        // Au moins la conversion `profile` (288 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-commune).
+        // Au moins la plus grande conversion (288 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-max).
         $user = User::factory()->create();
 
         $this->upload($user, UploadedFile::fake()->image('petite.png', 287, 287))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);

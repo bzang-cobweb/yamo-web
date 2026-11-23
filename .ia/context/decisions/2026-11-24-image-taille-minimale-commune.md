@@ -1,3 +1,6 @@
+Remplacée par : 2026-11-24-image-taille-minimale-max.md
+
+
 # `2026-11-24` — Taille minimale à l'envoi : commune aux trois images
 
 Remplace en partie : 2026-11-24-logo-taille-minimale.md, 2026-11-24-partenaire-logo-original.md

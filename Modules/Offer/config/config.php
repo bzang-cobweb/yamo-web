@@ -47,9 +47,6 @@ return [
         'max_files' => (int) env('OFFER_PHOTOS_MAX_FILES', 20),
         // La qualité du WebP enregistré, de 1 à 100.
         'quality' => (int) env('OFFER_PHOTOS_QUALITY', 80),
-        // La conversion qui fixe le minimum à l'envoi, sur le plus grand côté : `detail`, le carrousel de la fiche
-        // (décision 2026-11-24-image-taille-minimale-commune).
-        'min_upload' => (string) env('OFFER_PHOTOS_MIN_UPLOAD', 'detail'),
         // Une conversion par endroit où la photo s'affiche : la largeur, en pixels (trois fois l'affichage, pour les
         // écrans haute densité) ; les photos remplissent un cadre 16:9, c'est la largeur qui compte. Proportions
         // gardées, en WebP ; la photo enregistrée prend la plus grande de ces largeurs.

@@ -14,14 +14,13 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * Une image envoyée : ses réglages, lus dans la configuration de son module, sa taille minimale à l'envoi et son
- * enregistrement (décisions 2026-11-24-image-service-abstrait et 2026-11-24-image-taille-minimale-commune) ; un seul
+ * enregistrement (décisions 2026-11-24-image-service-abstrait et 2026-11-24-image-taille-minimale-max) ; un seul
  * domicile pour les trois. Chaque service d'image (`OfferPhotoService`, `PartnerLogoService`, `AvatarService`)
  * l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`, `auth.avatar`) et sa collection ; ce qui lui est
  * propre (cadre d'une photo, envoi depuis l'app) reste chez lui.
  *
  * Clés lues sous `configKey()` : `mime_types`, `max_upload_kb`, `max_files` (1 par défaut), `quality`,
- * `original_size` (facultative), `min_upload` (facultative : le nom de la conversion qui fixe le minimum à l'envoi) et
- * `conversions` (nom => taille, en pixels).
+ * `original_size` (facultative) et `conversions` (nom => taille, en pixels).
  */
 abstract class ConfiguredImageService
 {
@@ -79,17 +78,23 @@ abstract class ConfiguredImageService
     }
 
     /**
-     * Le plus grand côté minimal d'une image envoyée, en pixels : la taille de la conversion nommée par `min_upload`
-     * (la plus grande place où l'image doit rester nette) ; 0 : aucun minimum.
+     * Le plus grand côté minimal d'une image envoyée, en pixels : la plus grande des conversions, pour qu'aucune ne
+     * soit un agrandissement (décision 2026-11-24-image-taille-minimale-max) ; 0 sans conversion, aucun minimum.
      */
     public static function minUploadSize(): int
     {
-        $conversion = (string) static::setting('min_upload', '');
-        if ($conversion === '') {
+        return static::largestConversion();
+    }
+
+    /** La taille de la plus grande des conversions, en pixels ; 0 sans conversion. */
+    public static function largestConversion(): int
+    {
+        $sizes = static::conversions();
+        if ($sizes === []) {
             return 0;
         }
 
-        return static::conversionSize($conversion);
+        return max($sizes);
     }
 
     /**
@@ -118,12 +123,12 @@ abstract class ConfiguredImageService
             return $original;
         }
 
-        $sizes = static::conversions();
-        if ($sizes === []) {
+        $largest = static::largestConversion();
+        if ($largest === 0) {
             return 1024;
         }
 
-        return max($sizes);
+        return $largest;
     }
 
     /** La collection de médias de l'image (`Offer::PHOTOS`, `Partner::LOGO`). */

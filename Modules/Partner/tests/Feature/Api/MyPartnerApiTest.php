@@ -61,7 +61,7 @@ class MyPartnerApiTest extends TestCase
     public function test_a_logo_smaller_than_the_largest_conversion_is_refused(): void
     {
         // Au moins la conversion `list` (720 px) sur le plus grand côté (décisions 2026-11-24-logo-taille-minimale et
-        // 2026-11-24-partenaire-logo-original).
+        // 2026-11-24-image-taille-minimale-max).
         Storage::fake(FormUpload::DISK);
         $user = $this->member();
         $send = fn (int $width, int $height) => $this->asUser($user)->post('/api/v1/forms/partner.partner/uploads/logo', ['file' => UploadedFile::fake()->image('logo.png', $width, $height)], ['Accept' => 'application/json']);

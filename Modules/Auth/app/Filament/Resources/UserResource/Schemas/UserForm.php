@@ -154,7 +154,7 @@ abstract class UserForm
             ->image()
             ->acceptedFileTypes(AvatarService::acceptedMimeTypes())
             ->maxSize(AvatarService::maxUploadKb())
-            // Au moins la conversion du profil (décision 2026-11-24-image-taille-minimale-commune).
+            // Au moins la plus grande conversion (décision 2026-11-24-image-taille-minimale-max).
             ->rules(AvatarService::uploadRules())
             ->saveUploadedFileUsing(
                 fn (TemporaryUploadedFile $file, User $record): string => app(AvatarService::class)

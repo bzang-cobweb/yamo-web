@@ -182,7 +182,7 @@ class OfferForm extends Form
                 ->help(__('offer::offer.photos_help', ['pixels' => OfferPhotoService::minUploadSize()]))
                 ->accept(OfferPhotoService::acceptedMimeTypes())
                 ->maxSize(OfferPhotoService::maxUploadKb())
-                // Au moins la conversion de la fiche (décision 2026-11-24-image-taille-minimale-commune).
+                // Au moins la plus grande conversion (décision 2026-11-24-image-taille-minimale-max).
                 ->minImageSide(OfferPhotoService::minUploadSize())
                 ->maxFiles(OfferPhotoService::maxFiles())
                 ->files(app(OfferPhotoService::class)->current($offer))

@@ -14,9 +14,6 @@ return [
         // Le logo envoyé est gardé, plafonné à ce plus grand côté, en pixels : les conversions en sont tirées, et
         // peuvent grandir jusque-là sans redemander les logos (décision 2026-11-24-partenaire-logo-original).
         'original_size' => (int) env('PARTNER_LOGO_ORIGINAL_SIZE', 1024),
-        // La conversion qui fixe le minimum à l'envoi, sur le plus grand côté : `list`, la plus grande place du logo
-        // (décisions 2026-11-24-partenaire-logo-original et 2026-11-24-image-taille-minimale-commune).
-        'min_upload' => (string) env('PARTNER_LOGO_MIN_UPLOAD', 'list'),
         // Une conversion par endroit où le logo s'affiche : le plus grand côté, en pixels (trois fois l'affichage,
         // pour les écrans haute densité) ; proportions gardées, en WebP (décision 2026-11-24-partenaire-logo-conversions).
         'conversions' => [
