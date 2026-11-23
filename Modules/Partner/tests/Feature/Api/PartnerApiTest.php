@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Tests\Feature\Api;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Country;
 use Modules\Partner\Models\Partner;
@@ -28,7 +29,7 @@ class PartnerApiTest extends TestCase
         return $this->withHeaders(['Accept-Language' => $locale, 'X-Country' => 'CM'])->getJson('/api/v1/partners');
     }
 
-    public function test_only_visible_partners_of_the_country_in_their_order_with_their_texts_in_the_language(): void
+    public function test_only_visible_partners_of_the_country_with_their_texts_in_the_language(): void
     {
         $second = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Second'], 'position' => 2]);
         $first = Partner::factory()->for($this->cameroon)->create([
@@ -49,7 +50,9 @@ class PartnerApiTest extends TestCase
 
         $data = $this->partners()->assertOk()->json('data');
 
-        $this->assertSame([(string) $first->getKey(), (string) $second->getKey(), (string) $running->getKey()], array_column($data, 'id'));
+        // Au hasard (décision 2026-11-23-accueil-nombres-reglables) : les visibles, dans n'importe quel ordre.
+        $this->assertEqualsCanonicalizing([(string) $first->getKey(), (string) $second->getKey(), (string) $running->getKey()], array_column($data, 'id'));
+        $data = collect($data)->keyBy('id')->all();
         $this->assertSame([
             'id' => (string) $first->getKey(),
             'name' => 'Déménageurs du Wouri',
@@ -57,13 +60,14 @@ class PartnerApiTest extends TestCase
             'url' => 'https://wouri.test/fr',
             'cta_label' => 'Demander un devis',
             'logo' => null,
-        ], $data[0]);
+        ], $data[(string) $first->getKey()]);
         // Ni contact ni compteurs dans l'app.
-        $this->assertArrayNotHasKey('contact_email', $data[0]);
-        $this->assertArrayNotHasKey('views_count', $data[0]);
+        $this->assertArrayNotHasKey('contact_email', $data[(string) $first->getKey()]);
+        $this->assertArrayNotHasKey('views_count', $data[(string) $first->getKey()]);
 
         // Un nom et un lien par langue.
-        $this->assertSame(['Wouri Movers', 'https://wouri.test/en'], [$this->partners('en')->json('data.0.name'), $this->partners('en')->json('data.0.url')]);
+        $english = collect($this->partners('en')->json('data'))->firstWhere('id', (string) $first->getKey());
+        $this->assertSame(['Wouri Movers', 'https://wouri.test/en'], [$english['name'], $english['url']]);
     }
 
     public function test_each_listing_counts_a_view_and_each_touch_a_click(): void
@@ -79,6 +83,21 @@ class PartnerApiTest extends TestCase
         // Un partenaire invisible ne compte rien.
         $this->withHeader('X-Country', 'CM')->postJson("/api/v1/partners/{$hidden->getKey()}/click")->assertNotFound();
         $this->assertSame([0, 0], [$hidden->fresh()->views_count, $hidden->fresh()->clicks_count]);
+    }
+
+    public function test_as_many_partners_as_set_in_the_application_drawn_at_random(): void
+    {
+        // Décision 2026-11-23-accueil-nombres-reglables : 10 sans réglage, sinon le nombre réglé.
+        Partner::factory()->count(12)->for($this->cameroon)->create();
+        $this->assertCount(10, $this->partners()->json('data'));
+
+        Setting::current()->update(['home_partners' => 3]);
+        $draws = collect(range(1, 6))->map(fn (): array => array_column($this->partners()->json('data'), 'id'));
+        $draws->each(fn (array $ids) => $this->assertCount(3, $ids));
+        // Le tirage change d'un appel à l'autre.
+        $this->assertGreaterThan(1, $draws->map(fn (array $ids): string => implode(',', $ids))->unique()->count());
+        // Seuls les partenaires servis comptent une vue.
+        $this->assertSame(10 + 6 * 3, (int) Partner::query()->sum('views_count'));
     }
 
     public function test_no_partner_an_empty_list(): void

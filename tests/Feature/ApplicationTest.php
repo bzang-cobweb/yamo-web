@@ -127,4 +127,23 @@ class ApplicationTest extends AuthFilamentTestCase
         // Pas servi à l'app.
         $this->getJson('/api/v1/app')->assertJsonMissingPath('data.payment_required');
     }
+
+    public function test_settings_page_sets_the_home_counts(): void
+    {
+        // Décision 2026-11-23-accueil-nombres-reglables : 10 sans réglage.
+        $this->actingAsUserWith(PermissionEnum::UPDATE_SETTINGS);
+        $this->assertSame([10, 10], [Setting::homeOffersPerCity(), Setting::homePartners()]);
+
+        Livewire::test(EditSettings::class)
+            ->assertSee('Offres par ville')
+            ->fillForm(['home_offers_per_city' => 6, 'home_partners' => 4])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame([6, 4], [Setting::homeOffersPerCity(), Setting::homePartners()]);
+
+        Livewire::test(EditSettings::class)
+            ->fillForm(['home_offers_per_city' => 0, 'home_partners' => 51])
+            ->call('save')
+            ->assertHasFormErrors(['home_offers_per_city' => 'min', 'home_partners' => 'max']);
+    }
 }

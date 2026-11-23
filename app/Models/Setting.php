@@ -10,11 +10,12 @@ use Spatie\Translatable\HasTranslations;
  * Réglages de l'application, édités dans le back-office (page Application) et
  * servis par `GET /api/v1/app` : description traduite ; « Appliquer le paiement »
  * (`payment_required`, décision 2026-11-19-contrat-paiement-visibilite-avis), non servi ;
- * âge minimum (`minimum_age`, décision 2026-11-19-age-minimum). Une seule ligne, obtenue
+ * âge minimum (`minimum_age`, décision 2026-11-19-age-minimum) ; nombres d'offres par ville et de partenaires
+ * sur l'accueil (décision 2026-11-23-accueil-nombres-reglables). Une seule ligne, obtenue
  * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
  * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
-#[Fillable(['description', 'payment_required', 'minimum_age'])]
+#[Fillable(['description', 'payment_required', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
 class Setting extends Model
 {
     use HasTranslations;
@@ -30,6 +31,8 @@ class Setting extends Model
         return [
             'payment_required' => 'boolean',
             'minimum_age' => 'integer',
+            'home_offers_per_city' => 'integer',
+            'home_partners' => 'integer',
         ];
     }
 
@@ -51,6 +54,26 @@ class Setting extends Model
         $age = self::query()->oldest('id')->value('minimum_age');
 
         return $age === null ? null : (int) $age;
+    }
+
+    /** Sans réglage, 10 offres par ville et 10 partenaires sur l'accueil. */
+    public const HOME_DEFAULT_COUNT = 10;
+
+    /**
+     * Combien d'offres par ville dans les carrousels de l'accueil (décision 2026-11-23-accueil-nombres-reglables).
+     */
+    public static function homeOffersPerCity(): int
+    {
+        return (int) (self::query()->oldest('id')->value('home_offers_per_city') ?? self::HOME_DEFAULT_COUNT);
+    }
+
+    /**
+     * Combien de partenaires, tirés au hasard, dans le carrousel de l'accueil (décision
+     * 2026-11-23-accueil-nombres-reglables).
+     */
+    public static function homePartners(): int
+    {
+        return (int) (self::query()->oldest('id')->value('home_partners') ?? self::HOME_DEFAULT_COUNT);
     }
 
     /**

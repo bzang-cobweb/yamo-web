@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Tests\Feature\Api;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -67,6 +68,16 @@ class HomeApiTest extends TestCase
         // Au hasard : sur plusieurs appels, le tirage change au moins une fois.
         $draws = collect(range(1, 5))->map(fn (): string => implode(',', array_column($this->home()->json('data.carousels.0.items'), 'id')));
         $this->assertGreaterThan(1, $draws->unique()->count());
+    }
+
+    public function test_as_many_offers_per_city_as_set_in_the_application(): void
+    {
+        // Décision 2026-11-23-accueil-nombres-reglables.
+        $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
+        Offer::factory()->count(6)->at($douala)->create(['status' => 'published']);
+        Setting::current()->update(['home_offers_per_city' => 4]);
+
+        $this->assertCount(4, $this->home()->json('data.carousels.0.items'));
     }
 
     public function test_no_city_no_carousel(): void

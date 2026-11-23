@@ -63,6 +63,25 @@ class SettingResource extends AbstractResource
                             ->maxValue(120)
                             ->suffix(__('settings.years')),
                     ]),
+                // Décision 2026-11-23-accueil-nombres-reglables.
+                Section::make(__('settings.sections.home'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('home_offers_per_city')
+                            ->label(__('settings.home_offers_per_city'))
+                            ->helperText(__('settings.help.home_count'))
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(50)
+                            ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                        TextInput::make('home_partners')
+                            ->label(__('settings.home_partners'))
+                            ->helperText(__('settings.help.home_count'))
+                            ->integer()
+                            ->minValue(1)
+                            ->maxValue(50)
+                            ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                    ]),
             ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Lists;
 
+use App\Models\Setting;
 use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -145,8 +146,10 @@ class OfferBrowseListing extends Listing
      *
      * @return list<array{city: string, items: list<array<string, mixed>>}>
      */
-    public function cityCarousels(int $perCity = 10): array
+    public function cityCarousels(?int $perCity = null): array
     {
+        // Le nombre réglé dans « Application » (décision 2026-11-23-accueil-nombres-reglables).
+        $perCity ??= Setting::homeOffersPerCity();
         $carousels = [];
         foreach ($this->offerCities(Offer::query()->visibleToOthers()) as $city) {
             $items = $this->base()
