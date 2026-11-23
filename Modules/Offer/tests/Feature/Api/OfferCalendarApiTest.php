@@ -202,6 +202,9 @@ class OfferCalendarApiTest extends TestCase
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $offer->getKey(), 'booking_id' => $pending->getKey()]]);
         $this->assertSame(1, collect($this->asUser($offer->user)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}")->json('data.items'))->firstWhere('id', (string) $pending->getKey())['unread_count'] ?? 0);
         $this->assertArrayNotHasKey('unread_count', $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->json('data.items.0'));
+        // Sans le message (décision 2026-11-22-calendrier-sans-message).
+        $pending->update(['message' => 'J’arrive tard.']);
+        $this->assertNull($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->json('data.items.0.quote'));
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $card['tag']);
         $this->assertSame('Bloquer ce jour', $day['action']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => "/v1/offers/{$offer->getKey()}/blocked-dates/{$this->date(41)}"], array_intersect_key($day['action']['submission'], ['method' => 1, 'endpoint' => 1]));
