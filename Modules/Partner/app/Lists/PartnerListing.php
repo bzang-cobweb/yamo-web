@@ -14,7 +14,7 @@ use Modules\Partner\Services\PartnerService;
 /**
  * La page « Partenaires » de l'app (décisions 2026-11-23-partenaires-liste-detail et
  * 2026-11-23-partenaires-recherche) : tous les partenaires visibles, dans l'ordre du back-office, page après page
- * comme toutes les listes ; cherchables par nom ou description. Pour chacun : son logo, son nom, sa description ;
+ * comme toutes les listes ; cherchables par nom ou description. Pour chacun : son logo, son nom, son slogan (sinon sa description) ;
  * la carte ouvre sa page. Ne compte pas de vue : les vues sont celles de l'accueil.
  */
 class PartnerListing extends Listing
@@ -58,9 +58,9 @@ class PartnerListing extends Listing
     {
         /** @var Partner $record */
         $name = (string) $record->getTranslation('name', app()->getLocale());
-        $description = (string) $record->getTranslation('description', app()->getLocale());
 
-        return ListItem::make($record->getKey(), $name, $description === '' ? null : $description)
+        // Sous le nom, le slogan, sinon la description (décision 2026-11-24-mes-partenaires-slogan).
+        return ListItem::make($record->getKey(), $name, $record->cardLine(app()->getLocale()))
             ->image(MediaUrl::onRequestHost($record->logoUrl()))
             ->link('/partners/'.$record->getKey());
     }

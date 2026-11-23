@@ -100,15 +100,10 @@ class MyPartnerListing extends Listing
             default => [__('partner::partner.member.status.hidden'), 'neutral'],
         };
         $locale = app()->getLocale();
-        // Sous le nom : le slogan s'il y en a un, sinon la description (décision 2026-11-24-mes-partenaires-slogan).
-        $line = (string) $record->getTranslation('slogan', $locale);
-        if ($line === '') {
-            $line = (string) $record->getTranslation('description', $locale);
-        }
 
-        // Le statut flottant sur le logo, en haut à gauche ; la description sur une ligne ; la carte ouvre la page
+        // Le statut flottant sur le logo, en haut à gauche ; sous le nom, une ligne (slogan, sinon description) ; la carte ouvre la page
         // du partenaire, « Modifier » et « Retirer » sont dans le menu (décision 2026-11-24-mes-partenaires-cartes).
-        $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $line === '' ? null : $line)
+        $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $record->cardLine($locale))
             ->image(MediaUrl::onRequestHost($record->logoUrl()))
             ->tag($status, $tone, onImage: true)
             ->subtitleLines(1)

@@ -160,6 +160,11 @@ class PartnerApiTest extends TestCase
         $search = fn (string $term): array => array_column($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/lists/partner.all?search='.urlencode($term))->assertOk()->json('data.items'), 'id');
 
         $this->assertSame([(string) $movers->getKey()], $search('déménageurs'));
+        // Sous le nom, le slogan, sinon la description (décision 2026-11-24-mes-partenaires-slogan).
+        $movers->setTranslation('slogan', 'fr', 'On porte, vous respirez.')->save();
+        $items = collect($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/lists/partner.all')->json('data.items'))->keyBy('id');
+        $this->assertSame('On porte, vous respirez.', $items[(string) $movers->getKey()]['subtitle']);
+        $this->assertSame('Assurance habitation.', $items[(string) $insurance->getKey()]['subtitle']);
         $this->assertSame([(string) $movers->getKey()], $search('MOVERS'));
         $this->assertSame([(string) $insurance->getKey()], $search('habitation'));
         $this->assertSame([], $search('plomberie'));

@@ -187,6 +187,25 @@ class Partner extends Model implements HasMedia
             ->when(Setting::partnerPaymentRequired(), fn (Builder $paid) => $paid->where('expires_at', '>', now()));
     }
 
+    /**
+     * La ligne sous le nom d'une carte : le slogan, sinon la description ; `null` sans l'un ni l'autre (décision
+     * 2026-11-24-mes-partenaires-slogan), sur « Mes partenaires » comme sur la page « Partenaires ».
+     */
+    public function cardLine(string $locale): ?string
+    {
+        $slogan = (string) $this->getTranslation('slogan', $locale);
+        if ($slogan !== '') {
+            return $slogan;
+        }
+
+        $description = (string) $this->getTranslation('description', $locale);
+        if ($description === '') {
+            return null;
+        }
+
+        return $description;
+    }
+
     public function logoUrl(): ?string
     {
         $url = $this->getFirstMediaUrl(self::LOGO);
