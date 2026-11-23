@@ -17,7 +17,6 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
-use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingReviewInvitation;
@@ -248,8 +247,9 @@ class BookingThreadTest extends TestCase
             // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
             // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
-            // Le titre composé avec la ville, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre).
-            $this->assertSame(OfferCardTitle::of($this->offer, 'fr')[1], $page['booking']['composed_title']);
+            // Le titre composé sans la ville, sous le nom du logement (décisions 2026-11-22-detail-titre-compose-sous-titre et
+            // 2026-11-22-detail-titre-compose-sans-ville).
+            $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
@@ -393,8 +393,10 @@ class BookingThreadTest extends TestCase
         $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
         $labels = fn (): array => array_column((new BookingResource($visit->refresh()))->resolve(request())['lines'], 'value', 'label');
 
-        // À sa place, après les personnes : ici, après la date de visite (décision 2026-11-22-detail-logement-avec-ville).
+        // Après la date de visite, avant l'adresse (décision 2026-11-22-detail-disponible-avant-adresse).
         $this->assertSame(['Visite' => '28 nov. 2026', 'Disponible dès le' => '1 déc. 2026'], array_slice($labels(), 0, 2));
+        $flat->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
+        $this->assertSame(['Visite', 'Disponible dès le', 'Adresse'], array_slice(array_keys($labels()), 0, 3));
 
         // Sans date : pas de ligne.
         $flat->update(['details' => [...$flat->details, 'available_from' => null]]);
