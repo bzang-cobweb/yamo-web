@@ -51,6 +51,9 @@ final class ListItem
 
     private ?string $subtitleLink = null;
 
+    /** Le nombre de lignes du sous-titre ; `null` : entier. */
+    private ?int $subtitleLines = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -210,6 +213,17 @@ final class ListItem
     }
 
     /**
+     * Le sous-titre coupé à `$lines` lignes, la suite en « … » (la description d'un partenaire, décision
+     * 2026-11-24-mes-partenaires-cartes) ; sans appel, entier.
+     */
+    public function subtitleLines(int $lines): self
+    {
+        $this->subtitleLines = $lines;
+
+        return $this;
+    }
+
+    /**
      * Toucher l'item ouvre le formulaire `$form` lié à cet enregistrement.
      */
     public function edit(string $form, string|int|null $record = null): self
@@ -318,6 +332,7 @@ final class ListItem
             /** Écran ouvert en touchant le titre seul ; absent : le titre ouvre la carte. */
             ...($this->titleLink === null ? [] : ['title_link' => $this->titleLink]),
             ...($this->subtitleLink === null ? [] : ['subtitle_link' => $this->subtitleLink]),
+            ...($this->subtitleLines === null ? [] : ['subtitle_lines' => $this->subtitleLines]),
             'edit' => $this->edit,
             /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [

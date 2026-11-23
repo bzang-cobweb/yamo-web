@@ -18,8 +18,9 @@ use Modules\Partner\Services\PartnerService;
 /**
  * « Mes partenaires » (décision 2026-11-24-partenaires-par-les-membres) : ceux qu'administre le compte, dans le
  * pays courant ; pour chacun, son logo, son nom, son statut (« En attente de validation », « Refusé », « Archivé »,
- * et, publié, « Affiché » ou « Pas affiché ») ; la carte ouvre son formulaire ; « Retirer » le supprime, pour un administrateur (`is_admin`). En bas,
- * « Proposer un partenaire ».
+ * et, publié, « Affiché » ou « Pas affiché ») sur le logo ; la carte ouvre sa page ; le menu ⋮ : « Modifier », et
+ * « Retirer » pour un administrateur (`is_admin`) (décision 2026-11-24-mes-partenaires-cartes). En tête,
+ * « 3 partenaires » ; en bas, « Proposer un partenaire ».
  */
 class MyPartnerListing extends Listing
 {
@@ -56,6 +57,20 @@ class MyPartnerListing extends Listing
         PartnerService::search($query, $term);
     }
 
+    /** « 3 partenaires », en tête des cartes (décision 2026-11-24-mes-partenaires-cartes). */
+    public function headingFor(array $filters, ?string $search = null): array
+    {
+        $count = $this->countFor($search, $filters);
+
+        return ['title' => trans_choice('partner::partner.member.count', $count, ['count' => $count]), 'subtitle' => null];
+    }
+
+    /** Modifier et Retirer dans un menu ⋮ ; toucher la carte ouvre la page du partenaire. */
+    public function actionsMenu(): bool
+    {
+        return true;
+    }
+
     public function emptyText(): string
     {
         return __('partner::partner.member.empty');
@@ -84,9 +99,13 @@ class MyPartnerListing extends Listing
         $locale = app()->getLocale();
         $description = (string) $record->getTranslation('description', $locale);
 
+        // Le statut flottant sur le logo, en haut à gauche ; la description sur une ligne ; la carte ouvre la page
+        // du partenaire, « Modifier » et « Retirer » sont dans le menu (décision 2026-11-24-mes-partenaires-cartes).
         $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $description === '' ? null : $description)
             ->image(MediaUrl::onRequestHost($record->logoUrl()))
-            ->tag($status, $tone)
+            ->tag($status, $tone, onImage: true)
+            ->subtitleLines(1)
+            ->link('/partners/'.$record->getKey())
             ->edit(PartnerForm::name());
 
         // « Retirer » : pour un administrateur seulement.

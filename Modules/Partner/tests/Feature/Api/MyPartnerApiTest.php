@@ -61,8 +61,11 @@ class MyPartnerApiTest extends TestCase
     {
         $user = $this->member();
         $form = $this->asUser($user)->getJson('/api/v1/forms/partner.partner')->assertOk()->json('data');
-        $this->assertSame(['name', 'logo', 'description', 'url', 'cta_label', 'contact_email', 'contact_phone'], array_column($form['fields'], 'name'));
+        $this->assertSame(['logo', 'name', 'description', 'contact_phone', 'contact_email', 'url', 'cta_label'], array_column($form['fields'], 'name'));
+        // En étapes, sans « Langue » à la création (décision 2026-11-24-mes-partenaires-cartes).
+        $this->assertSame([['Partenaire', ['logo', 'name', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
         $this->assertSame('Proposer un partenaire', $form['title']);
+        $this->assertSame('center', $form['title_align']);
 
         $this->asUser($user)->postJson('/api/v1/partners', [
             'name' => 'Déménageurs du Wouri',
@@ -78,14 +81,23 @@ class MyPartnerApiTest extends TestCase
         $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->status]);
         $this->assertNotNull($partner->logoUrl());
         $this->assertTrue($partner->hasAdmin($user->getKey()));
-        // Pas visible dans l'app tant que l'équipe ne l'a pas publié.
-        $this->withHeader('X-Country', 'CM')->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
+        // Pas visible dans l'app, sans compte, tant que l'équipe ne l'a pas publié.
+        $this->app['auth']->forgetGuards();
+        $this->flushHeaders()->withHeader('X-Country', 'CM')->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
 
-        // « Mes partenaires » : en attente de validation, modifiable et retirable.
-        $item = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data.items.0');
-        $this->assertSame(['Déménageurs du Wouri', 'En attente de validation', 'warning'], [$item['title'], $item['tag']['label'], $item['tag']['tone']]);
+        // « Mes partenaires » : « 1 partenaire » ; le statut sur le logo, la description sur une ligne ; la carte
+        // ouvre sa page, « Modifier » et « Retirer » dans le menu (décision 2026-11-24-mes-partenaires-cartes).
+        $list = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data');
+        $item = $list['items'][0];
+        $this->assertSame('1 partenaire', $list['heading']['title']);
+        $this->assertTrue($list['menu']);
+        $this->assertSame(['Déménageurs du Wouri', 'En attente de validation', 'warning', true], [$item['title'], $item['tag']['label'], $item['tag']['tone'], $item['tag']['on_image']]);
+        $this->assertSame([1, '/partners/'.$partner->getKey()], [$item['subtitle_lines'], $item['link']]);
         $this->assertSame('partner.partner', $item['edit']['form']);
         $this->assertNotNull($item['delete']);
+        // Sa page, pas encore publiée : pour ses comptes seulement.
+        $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
+        $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
         $this->assertSame('partner.partner', $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer.form'));
 
         // Invalides : un nom manquant, un lien qui n'en est pas un.
@@ -98,13 +110,24 @@ class MyPartnerApiTest extends TestCase
         $partner = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Avant', 'en' => 'Before'], 'status' => PartnerStatusEnum::PUBLISHED]);
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
 
-        $fields = collect($this->asUser($user)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}")->assertOk()->json('data.fields'))->keyBy('name');
+        $form = $this->asUser($user)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}")->assertOk()->json('data');
+        $fields = collect($form['fields'])->keyBy('name');
         $this->assertSame('Avant', $fields['name']['default']);
+        // L'étape « Langue » d'abord, comme une offre (décision 2026-11-24-mes-partenaires-cartes).
+        $this->assertSame(['Langue', ['content_locale']], [$form['steps'][0]['title'], $form['steps'][0]['fields']]);
+        $this->assertSame('fr', $fields['content_locale']['default']);
+        $this->assertTrue($fields['content_locale']['reloads']);
+
+        // En anglais : le formulaire pré-rempli en anglais, l'envoi n'écrit que l'anglais.
+        $english = collect($this->asUser($user)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}&content_locale=en")->json('data.fields'))->keyBy('name');
+        $this->assertSame('Before', $english['name']['default']);
+        $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['content_locale' => 'en', 'name' => 'After', 'logo' => []])->assertNoContent();
+        $this->assertSame(['Avant', 'After'], [$partner->fresh()->getTranslation('name', 'fr'), $partner->fresh()->getTranslation('name', 'en')]);
 
         $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'logo' => []])->assertNoContent();
         $partner->refresh();
         // Seule la langue du compte change ; il repasse en attente de validation.
-        $this->assertSame(['Après', 'Before', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
+        $this->assertSame(['Après', 'After', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
     }
 
     public function test_attached_accounts_edit_only_admins_remove_and_others_do_not_see_it(): void

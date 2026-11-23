@@ -43,6 +43,7 @@ return [
     // « Mes partenaires » dans l'app (décision 2026-11-24-partenaires-par-les-membres).
     'member' => [
         'group' => 'Partner',
+        'count' => '{0} No partner|{1} :count partner|[2,*] :count partners',
         'mine' => 'My partners',
         'add' => 'Propose a partner',
         'edit' => 'Edit the partner',
@@ -79,5 +80,13 @@ return [
             'rejected' => 'Your partner « :name » was rejected by the team.',
             'archived' => 'Your partner « :name » is archived.',
         ],
+    ],
+    // La langue de saisie à la modification (décision 2026-11-24-mes-partenaires-cartes).
+    'content_locale' => [
+        'step' => 'Language',
+        'label' => 'Writing language',
+        'help' => 'In which language are you editing this partner? A language to translate is prefilled with an existing text.',
+        'translated' => 'translated',
+        'to_translate' => 'to translate',
     ],
 ];

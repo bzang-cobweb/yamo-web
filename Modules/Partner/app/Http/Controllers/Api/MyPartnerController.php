@@ -37,7 +37,8 @@ class MyPartnerController
         $user = $request->user();
 
         DB::transaction(function () use ($request, $partner, $partnerService, $partnerLogoService, $user): void {
-            $partnerService->change($partner, $request->validated(), (new PartnerForm($user))->locale());
+            // La langue choisie à l'étape « Langue », sinon celle du compte.
+            $partnerService->change($partner, $request->validated(), (new PartnerForm($user))->forRecord((string) $partner->getKey())->locale());
             $partnerLogoService->sync($partner, $user->getKey(), $request->validated(PartnerLogoService::FIELD, []));
         });
 

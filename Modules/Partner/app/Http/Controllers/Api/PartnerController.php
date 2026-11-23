@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Http\Controllers\Api;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Modules\Partner\Http\Resources\PartnerResource;
@@ -24,9 +25,10 @@ class PartnerController
     /**
      * Un partenaire visible ; 404 sinon (décision 2026-11-23-partenaires-liste-detail).
      */
-    public function show(int $partner, PartnerService $partnerService): PartnerResource
+    public function show(Request $request, int $partner, PartnerService $partnerService): PartnerResource
     {
-        return new PartnerResource($partnerService->find($partner) ?? abort(404));
+        // Compte facultatif (jeton Sanctum s'il y en a un) : ses comptes voient aussi un partenaire pas encore publié.
+        return new PartnerResource($partnerService->find($partner, $request->user('sanctum')?->getAuthIdentifier()) ?? abort(404));
     }
 
     /**

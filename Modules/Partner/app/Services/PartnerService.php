@@ -49,11 +49,13 @@ class PartnerService
     }
 
     /**
-     * Un partenaire, s'il est visible (décision 2026-11-23-partenaires-liste-detail) ; sinon `null`.
+     * Un partenaire, s'il est visible (décision 2026-11-23-partenaires-liste-detail), ou, quel que soit son statut,
+     * pour un compte qui lui est rattaché (décision 2026-11-24-mes-partenaires-cartes) ; sinon `null`.
      */
-    public function find(int $id): ?Partner
+    public function find(int $id, int|string|null $userId = null): ?Partner
     {
-        return Partner::query()->visible()->with('media')->find($id);
+        return Partner::query()->visible()->with('media')->find($id)
+            ?? ($userId === null ? null : Partner::query()->administeredBy($userId)->with('media')->find($id));
     }
 
     /**
