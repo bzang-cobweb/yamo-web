@@ -220,7 +220,7 @@ class AccountDeletionApiTest extends TestCase
         Storage::fake('public');
         $user = $this->user();
         $this->withToken($user->createToken('test')->plainTextToken)
-            ->post('/api/v1/auth/me/avatar', ['avatar' => UploadedFile::fake()->image('a.jpg', 400, 400)], ['Accept' => 'application/json'])
+            ->post('/api/v1/auth/me/avatar', ['avatar' => UploadedFile::fake()->image('a.jpg', 800, 800)], ['Accept' => 'application/json'])
             ->assertOk();
         $this->travelTo(now()->subDays(31), fn () => $user->fresh()->delete());
         $this->assertSame(1, Media::count());

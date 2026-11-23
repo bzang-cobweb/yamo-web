@@ -19,7 +19,7 @@ return [
             // La page « Partenaires » (56 points) et les cartes de « Mes partenaires » : un logo carré y prend la
             // hauteur de la zone 16:9, 207 points sur les plus grands téléphones, net jusqu'à 3,5 fois. La plus grande
             // conversion : le minimum exigé à l'envoi et la taille du logo enregistré (décisions
-            // 2026-11-24-image-taille-minimale-max et 2026-11-24-partenaire-logo-sans-original).
+            // 2026-11-24-image-taille-minimale-enregistree et 2026-11-24-partenaire-logo-sans-original).
             'list' => (int) env('PARTNER_LOGO_LIST_SIZE', 720),
             // La page d'un partenaire (120 points).
             'detail' => (int) env('PARTNER_LOGO_DETAIL_SIZE', 360),

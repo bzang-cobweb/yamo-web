@@ -59,7 +59,7 @@ final class AvatarService extends ConfiguredImageService
             'max:'.self::maxUploadKb(),
             // Garde-fou contre les images démesurées à décoder.
             'dimensions:max_width=10000,max_height=10000',
-            // Au moins la plus grande conversion (décision 2026-11-24-image-taille-minimale-max).
+            // Au moins la taille enregistrée (décision 2026-11-24-image-taille-minimale-enregistree).
             ...self::uploadRules(),
         ];
     }

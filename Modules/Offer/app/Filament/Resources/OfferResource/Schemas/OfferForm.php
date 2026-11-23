@@ -279,7 +279,7 @@ abstract class OfferForm
                                     ->acceptedFileTypes(OfferPhotoService::acceptedMimeTypes())
                                     ->maxSize(OfferPhotoService::maxUploadKb())
                                     ->maxFiles(OfferPhotoService::maxFiles())
-                                    // Au moins la plus grande conversion (décision 2026-11-24-image-taille-minimale-max).
+                                    // Au moins la taille enregistrée (décision 2026-11-24-image-taille-minimale-enregistree).
                                     ->rules(OfferPhotoService::uploadRules())
                                     ->helperText(__('offer::offer.photos_help', ['pixels' => OfferPhotoService::minUploadSize()]))
                                     ->conversion('form')

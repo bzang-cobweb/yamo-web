@@ -14,7 +14,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * Une image envoyée : ses réglages, lus dans la configuration de son module, sa taille minimale à l'envoi et son
- * enregistrement (décisions 2026-11-24-image-service-abstrait et 2026-11-24-image-taille-minimale-max) ; un seul
+ * enregistrement (décisions 2026-11-24-image-service-abstrait et 2026-11-24-image-taille-minimale-enregistree) ; un seul
  * domicile pour les trois. Chaque service d'image (`OfferPhotoService`, `PartnerLogoService`, `AvatarService`)
  * l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`, `auth.avatar`) et sa collection ; ce qui lui est
  * propre (cadre d'une photo, envoi depuis l'app) reste chez lui.
@@ -78,12 +78,13 @@ abstract class ConfiguredImageService
     }
 
     /**
-     * Le plus grand côté minimal d'une image envoyée, en pixels : la plus grande des conversions, pour qu'aucune ne
-     * soit un agrandissement (décision 2026-11-24-image-taille-minimale-max) ; 0 sans conversion, aucun minimum.
+     * Le plus grand côté minimal d'une image envoyée, en pixels : la taille enregistrée (`storedSize()`), pour que ni
+     * l'image enregistrée, qui peut s'ouvrir en grand, ni aucune conversion ne soit un agrandissement (décision
+     * 2026-11-24-image-taille-minimale-enregistree).
      */
     public static function minUploadSize(): int
     {
-        return static::largestConversion();
+        return static::storedSize();
     }
 
     /** La taille de la plus grande des conversions, en pixels ; 0 sans conversion. */

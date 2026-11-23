@@ -73,21 +73,24 @@ class AvatarApiTest extends TestCase
         $this->assertStringNotContainsString('/storage/'.$media->getKey().'/', $response->json('data.avatar_url'));
     }
 
-    public function test_a_photo_smaller_than_the_detail_conversion_is_refused(): void
+    public function test_a_photo_smaller_than_the_stored_size_is_refused(): void
     {
-        // Au moins la plus grande conversion (288 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-max).
+        // Au moins la taille enregistrée (l'original, 720 px) sur le plus grand côté : il peut s'ouvrir en grand
+        // (décision 2026-11-24-image-taille-minimale-enregistree).
         $user = User::factory()->create();
 
-        $this->upload($user, UploadedFile::fake()->image('petite.png', 287, 287))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
+        $this->upload($user, UploadedFile::fake()->image('petite.png', 719, 719))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
         $this->assertNull($this->avatarOf($user));
-        $this->upload($user, UploadedFile::fake()->image('juste.png', 288, 200))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('juste.png', 720, 500))->assertOk();
     }
 
     public function test_a_small_photo_is_cropped_without_being_enlarged(): void
     {
-        // Recadrer ne doit jamais agrandir : 400 × 300 donne un carré de 300 (décision 2026-11-24-partenaire-logo-sans-original).
+        // Recadrer ne doit jamais agrandir : 400 × 300 donne un carré de 300 (décision 2026-11-24-partenaire-logo-sans-original) ;
+        // l'envoi le refuse, l'enregistrement direct (back-office, démo) reste protégé.
         $user = User::factory()->create();
-        $this->upload($user, UploadedFile::fake()->image('petite.jpg', 400, 300))->assertOk();
+        $photo = UploadedFile::fake()->image('petite.jpg', 400, 300);
+        app(AvatarService::class)->store($user, $photo->getRealPath());
 
         [$width, $height] = getimagesize(Storage::disk('public')->path($this->avatarOf($user)->getPathRelativeToRoot()));
         $this->assertSame([300, 300], [$width, $height]);
@@ -96,7 +99,7 @@ class AvatarApiTest extends TestCase
     public function test_the_avatar_url_follows_the_requested_host(): void
     {
         $user = User::factory()->create();
-        $this->upload($user, UploadedFile::fake()->image('a.png', 300, 300))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('a.png', 800, 800))->assertOk();
         $uuid = $this->avatarOf($user)->uuid;
 
         $this->withToken($user->createToken('test')->plainTextToken)
@@ -111,7 +114,7 @@ class AvatarApiTest extends TestCase
         $this->upload($user, UploadedFile::fake()->image('first.jpg', 800, 800))->assertOk();
         $first = $this->avatarOf($user);
 
-        $this->upload($user, UploadedFile::fake()->image('second.png', 600, 600))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('second.png', 900, 900))->assertOk();
 
         $second = $this->avatarOf($user);
         $this->assertNotSame($first->uuid, $second->uuid);
@@ -122,7 +125,7 @@ class AvatarApiTest extends TestCase
     public function test_removing_the_photo_deletes_its_files(): void
     {
         $user = User::factory()->create();
-        $this->upload($user, UploadedFile::fake()->image('a.jpg', 400, 400))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('a.jpg', 800, 800))->assertOk();
 
         $this->withToken($user->createToken('test')->plainTextToken)
             ->deleteJson('/api/v1/auth/me/avatar')
@@ -136,7 +139,7 @@ class AvatarApiTest extends TestCase
     public function test_a_file_that_is_not_an_image_is_refused_without_touching_the_current_photo(): void
     {
         $user = User::factory()->create();
-        $this->upload($user, UploadedFile::fake()->image('a.jpg', 400, 400))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('a.jpg', 800, 800))->assertOk();
         $current = $this->avatarOf($user)->uuid;
 
         $this->upload($user, UploadedFile::fake()->create('cv.pdf', 100, 'application/pdf'))
@@ -151,7 +154,7 @@ class AvatarApiTest extends TestCase
     {
         $user = User::factory()->create(['locale' => 'fr']);
 
-        $response = $this->upload($user, UploadedFile::fake()->image('big.jpg', 400, 400)->size(5121))
+        $response = $this->upload($user, UploadedFile::fake()->image('big.jpg', 800, 800)->size(5121))
             ->assertUnprocessable();
 
         $this->assertStringContainsString('photo de profil', $response->json('errors.avatar.0'));
@@ -168,7 +171,7 @@ class AvatarApiTest extends TestCase
     public function test_the_photo_stays_until_the_account_is_purged(): void
     {
         $user = User::factory()->create();
-        $this->upload($user, UploadedFile::fake()->image('a.jpg', 400, 400))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('a.jpg', 800, 800))->assertOk();
 
         // Suppression récupérable : la photo reste, pour une restauration.
         $user->fresh()->delete();

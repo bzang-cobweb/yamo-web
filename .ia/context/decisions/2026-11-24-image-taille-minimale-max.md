@@ -1,3 +1,6 @@
+Remplacée par : 2026-11-24-image-taille-minimale-enregistree.md
+
+
 # `2026-11-24` — Taille minimale à l'envoi : la plus grande conversion, sans réglage
 
 Remplace : 2026-11-24-image-taille-minimale-commune.md

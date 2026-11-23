@@ -129,7 +129,7 @@ class OfferPhotoApiTest extends TestCase
 
     public function test_a_photo_smaller_than_the_largest_conversion_is_refused(): void
     {
-        // Au moins la plus grande conversion (`web`, 1920 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-max).
+        // Au moins la plus grande conversion (`web`, 1920 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-enregistree).
         $user = $this->member();
 
         $this->upload($user, UploadedFile::fake()->image('petite.jpg', 1919, 1080))->assertUnprocessable()
