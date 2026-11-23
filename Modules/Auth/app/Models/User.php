@@ -133,13 +133,13 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
-     * Une conversion par endroit où la photo s'affiche (`config('auth.avatar.conversions')`, décision
+     * Une conversion par endroit où la photo s'affiche (`AvatarService::conversions()`, décision
      * 2026-11-24-avatar-photos-offre-conversions) : un carré recadré au centre, produit tout de suite (aucune file
      * d'attente ne tourne).
      */
     public function registerMediaConversions(?Media $media = null): void
     {
-        foreach ((array) config('auth.avatar.conversions') as $name => $size) {
+        foreach (AvatarService::conversions() as $name => $size) {
             $this->addMediaConversion((string) $name)
                 ->performOnCollections(AvatarService::COLLECTION)
                 ->fit(Fit::Crop, (int) $size, (int) $size)

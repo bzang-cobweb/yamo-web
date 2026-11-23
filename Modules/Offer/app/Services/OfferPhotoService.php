@@ -93,15 +93,4 @@ class OfferPhotoService extends ConfiguredImageService
         DB::transaction(fn () => Media::setNewOrder($ordered));
         $offer->unsetRelation('media');
     }
-
-    /**
-     * Un fichier en attente du formulaire de l'app devient une photo de l'offre ; il est retiré.
-     */
-    private function storeUpload(Offer $offer, FormUpload $upload): Media
-    {
-        $media = $this->store($offer, $upload->absolutePath(), $upload->uuid);
-        $upload->discard();
-
-        return $media;
-    }
 }

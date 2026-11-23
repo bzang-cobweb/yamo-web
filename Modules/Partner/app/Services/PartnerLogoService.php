@@ -6,7 +6,6 @@ use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
 use Modules\Form\Models\FormUpload;
 use Modules\Partner\Models\Partner;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * Le logo d'un partenaire, optimisé en WebP, un seul à la fois : envoyé depuis l'app (décision
@@ -78,16 +77,5 @@ class PartnerLogoService extends ConfiguredImageService
         }
 
         $this->storeUpload($partner, $upload);
-    }
-
-    /**
-     * Un fichier en attente du formulaire de l'app devient le logo ; il est retiré.
-     */
-    private function storeUpload(Partner $partner, FormUpload $upload): Media
-    {
-        $media = $this->store($partner, $upload->absolutePath(), $upload->uuid);
-        $upload->discard();
-
-        return $media;
     }
 }

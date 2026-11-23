@@ -4,6 +4,7 @@ namespace App\Support\Media;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Modules\Form\Models\FormUpload;
 use Spatie\Image\Enums\Fit;
 use Spatie\Image\Image;
 use Spatie\MediaLibrary\HasMedia;
@@ -113,6 +114,21 @@ abstract class ConfiguredImageService
     }
 
     /**
+     * Comment l'image tient dans son cadre : entière, proportions gardées (`Fit::Max`) par défaut ; recadrée pour le
+     * remplir (`Fit::Crop`) quand le format est imposé (une photo de profil carrée).
+     */
+    protected static function fit(): Fit
+    {
+        return Fit::Max;
+    }
+
+    /** Le nom du fichier enregistré : `$name` (l'identifiant de l'envoi) ou un uuid, en `.webp`. */
+    protected static function fileName(?string $name): string
+    {
+        return ($name ?? (string) Str::uuid()).'.webp';
+    }
+
+    /**
      * Le fichier `$sourcePath` devient une image de `$model`, dans sa collection : redressée (EXIF), en WebP, tenue
      * dans le cadre de la taille enregistrée (`bounds(storedSize())`), jamais agrandie ; le fichier envoyé tel quel
      * n'est pas gardé (décision 2026-11-24-image-service-abstrait). Le même pour l'app, le back-office et les données
@@ -127,14 +143,14 @@ abstract class ConfiguredImageService
         try {
             Image::load($sourcePath)
                 ->orientation()
-                ->fit(Fit::Max, $width, $height)
+                ->fit(static::fit(), $width, $height)
                 ->quality(static::quality())
                 ->format('webp')
                 ->save($optimised);
 
             $media = $model->addMedia($optimised)
                 ->usingName(static::mediaName())
-                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
+                ->usingFileName(static::fileName($name))
                 ->toMediaCollection(static::collection());
         } finally {
             foreach ([$base, $optimised] as $path) {
@@ -148,6 +164,18 @@ abstract class ConfiguredImageService
         if ($model instanceof Model) {
             $model->unsetRelation('media');
         }
+
+        return $media;
+    }
+
+    /**
+     * Un fichier envoyé depuis un formulaire de l'app, en attente, devient une image de `$model` (`store()`) ; il est
+     * ensuite retiré.
+     */
+    protected function storeUpload(HasMedia $model, FormUpload $upload): Media
+    {
+        $media = $this->store($model, $upload->absolutePath(), $upload->uuid);
+        $upload->discard();
 
         return $media;
     }
