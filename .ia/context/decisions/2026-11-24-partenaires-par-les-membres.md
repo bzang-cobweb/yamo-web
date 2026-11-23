@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-mes-partenaires-cartes.md, 2026-11-24-partenaires-statuts.md
+Remplacée en partie par : 2026-11-24-partenaires-policy-routes.md, 2026-11-24-mes-partenaires-cartes.md, 2026-11-24-partenaires-statuts.md
 # `2026-11-24` — Les membres proposent et gèrent leurs partenaires
 
 - **Type** : décision
