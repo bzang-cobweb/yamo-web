@@ -253,9 +253,8 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * « Accepter la demande de Marie Curie (du 3 au 6 mars) ? », suivi des demandes
-     * en attente qui la chevauchent et seront refusées (décision
-     * 2026-11-19-contrat-calendrier-offre).
+     * « Accepter la demande de Marie Curie (du 3 au 6 mars) ? 2 autres demandes chevauchent ces dates et seront
+     * refusées. » (décisions 2026-11-19-contrat-calendrier-offre et 2026-11-22-accepter-nombre-chevauchements).
      */
     private function acceptConfirm(Booking $booking, string $locale): string
     {
@@ -265,8 +264,7 @@ class ReceivedBookingListing extends Listing
             return $confirm;
         }
 
-        $names = $others->map(fn (Booking $other): string => $other->user->full_name.' ('.$other->period($locale).')')->implode(', ');
-
-        return $confirm.' '.trans_choice('offer::booking.profile.accept_overlaps', $others->count(), ['requests' => $names], $locale);
+        // Le nombre seul (décision 2026-11-22-accepter-nombre-chevauchements).
+        return $confirm.' '.trans_choice('offer::booking.profile.accept_overlaps', $others->count(), ['count' => $others->count()], $locale);
     }
 }

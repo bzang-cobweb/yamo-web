@@ -121,11 +121,13 @@ class BookingAvailabilityTest extends TestCase
         $overlapping = $this->stay($offer, 6, 8, guest: ['locale' => 'en']);
         $after = $this->stay($offer, 8, 10);
 
-        // La confirmation nomme la demande qui sera refusée.
+        // La confirmation compte les demandes qui seront refusées.
         // Depuis le panneau du jour du calendrier, qui garde les boutons (décision 2026-11-22-demandes-carte-seule).
         $actions = fn (Booking $booking): array => collect($this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$booking->check_in->toDateString()}")->json('data.items'))->firstWhere('id', (string) $booking->getKey())['actions'];
         $confirm = $actions($chosen)[0]['confirm'];
-        $this->assertStringContainsString('Cette demande en attente chevauche ces dates et sera refusée : '.$overlapping->user->full_name, $confirm);
+        // Le nombre seul, sans les noms (décision 2026-11-22-accepter-nombre-chevauchements).
+        $this->assertStringEndsWith(' ? 1 autre demande chevauche ces dates et sera refusée.', $confirm);
+        $this->assertStringNotContainsString((string) $overlapping->user->full_name, $confirm);
         $this->assertStringNotContainsString($after->user->full_name, $confirm);
         $this->assertStringNotContainsString('chevauche', $actions($after)[0]['confirm']);
 

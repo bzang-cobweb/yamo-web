@@ -251,7 +251,8 @@ return [
         'address_hidden' => 'Address hidden from the guest.',
         'accept' => 'Accept',
         'accept_confirm' => 'Accept the request from :guest (:period)?',
-        'accept_overlaps' => '{1} This pending request overlaps these dates and will be declined: :requests.|[2,*] These :count pending requests overlap these dates and will be declined: :requests.',
+        // Le nombre des autres demandes, sans leurs noms (décision 2026-11-22-accepter-nombre-chevauchements).
+        'accept_overlaps' => '{1} :count other request overlaps these dates and will be declined.|[2,*] :count other requests overlap these dates and will be declined.',
         'accepted_notice' => 'Request accepted.',
         'refuse' => 'Decline',
         'refuse_title' => 'Decline the request',

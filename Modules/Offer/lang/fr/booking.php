@@ -251,7 +251,8 @@ return [
         'address_hidden' => 'Adresse masquée au voyageur.',
         'accept' => 'Accepter',
         'accept_confirm' => 'Accepter la demande de :guest (:period) ?',
-        'accept_overlaps' => '{1} Cette demande en attente chevauche ces dates et sera refusée : :requests.|[2,*] Ces :count demandes en attente chevauchent ces dates et seront refusées : :requests.',
+        // Le nombre des autres demandes, sans leurs noms (décision 2026-11-22-accepter-nombre-chevauchements).
+        'accept_overlaps' => '{1} :count autre demande chevauche ces dates et sera refusée.|[2,*] :count autres demandes chevauchent ces dates et seront refusées.',
         'accepted_notice' => 'Demande acceptée.',
         'refuse' => 'Refuser',
         'refuse_title' => 'Refuser la demande',

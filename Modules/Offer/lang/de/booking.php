@@ -251,7 +251,8 @@ return [
         'address_hidden' => 'Adresse für den Gast ausgeblendet.',
         'accept' => 'Annehmen',
         'accept_confirm' => 'Die Anfrage von :guest (:period) annehmen?',
-        'accept_overlaps' => '{1} Diese offene Anfrage überschneidet sich mit diesen Daten und wird abgelehnt: :requests.|[2,*] Diese :count offenen Anfragen überschneiden sich mit diesen Daten und werden abgelehnt: :requests.',
+        // Le nombre des autres demandes, sans leurs noms (décision 2026-11-22-accepter-nombre-chevauchements).
+        'accept_overlaps' => '{1} :count weitere Anfrage überschneidet sich mit diesen Daten und wird abgelehnt.|[2,*] :count weitere Anfragen überschneiden sich mit diesen Daten und werden abgelehnt.',
         'accepted_notice' => 'Anfrage angenommen.',
         'refuse' => 'Ablehnen',
         'refuse_title' => 'Anfrage ablehnen',
