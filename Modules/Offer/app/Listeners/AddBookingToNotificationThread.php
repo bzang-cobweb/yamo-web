@@ -72,16 +72,25 @@ class AddBookingToNotificationThread
 
         $event->data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
 
-        // Le titre de la page : le titre composé sans ville (« Location meublée · Studio », décision
+        // Sous le nom du logement, sur une ligne, le titre composé sans ville (« Location meublée · Studio », décision
         // 2026-11-22-detail-titre-compose) ; sans type, selon la demande, « Demande de séjour » ou « Demande de visite »
-        // (décision 2026-11-22-detail-titre-sejour-visite).
+        // (décision 2026-11-22-detail-titre-sejour-visite) ; sur une autre, les dates (décision
+        // 2026-11-22-detail-titre-compose-et-dates).
         if ($booking !== null && is_array($event->data['booking'])) {
             $offer = $event->data['booking']['offer'] ?? [];
             $composed = implode(' · ', array_filter([$offer['rental_type'] ?? null, $offer['property_type'] ?? null]));
-            $event->data['title'] = $composed !== '' ? $composed : __('offer::booking.detail_title.'.$booking->type->value);
+            $event->data['booking']['composed_title'] = $composed !== '' ? $composed : __('offer::booking.detail_title.'.$booking->type->value);
+            $event->data['booking']['period'] = Str::ucfirst($booking->period(app()->getLocale()));
         }
 
         $mine = $booking !== null && (string) $booking->user_id === (string) request()->user()?->getAuthIdentifier();
+
+        // Le titre de la barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire
+        // (décision 2026-11-22-detail-titre-compose-et-dates) ; le titre composé est dans la page.
+        if ($booking !== null) {
+            $owner = (string) $booking->offer?->user_id === (string) request()->user()?->getAuthIdentifier();
+            $event->data['title'] = $mine ? __('offer::booking.detail.mine') : ($owner ? __('offer::booking.detail.received') : ($event->data['booking']['composed_title'] ?? $event->data['title']));
+        }
 
         // L'adresse masquée par le propriétaire : la ville seule pour le demandeur ; sans ville, pas de ligne
         // (décisions 2026-11-21-afficher-adresse et 2026-11-21-adresse-masquee-ville).

@@ -129,6 +129,8 @@ return [
     ],
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
+    // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
+    'detail' => ['mine' => 'Meine Buchung', 'received' => 'Erhaltene Anfrage'],
     'notify' => [
         // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.

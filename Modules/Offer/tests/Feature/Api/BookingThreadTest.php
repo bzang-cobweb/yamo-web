@@ -244,9 +244,13 @@ class BookingThreadTest extends TestCase
         foreach ([$this->owner, $this->guest] as $reader) {
             $page = $this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->assertOk()->json('data');
 
-            // Le titre composé sans ville (décision 2026-11-22-detail-titre-compose).
-            $this->assertSame(implode(' · ', array_filter([$page['booking']['offer']['rental_type'], $page['booking']['offer']['property_type']])), $page['title']);
-            $this->assertStringNotContainsString(' · Douala', $page['title']);
+            // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire ; dans la page, le
+            // titre composé sans ville, puis les dates (décisions 2026-11-22-detail-titre-compose et
+            // 2026-11-22-detail-titre-compose-et-dates).
+            $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
+            $this->assertSame(implode(' · ', array_filter([$page['booking']['offer']['rental_type'], $page['booking']['offer']['property_type']])), $page['booking']['composed_title']);
+            $this->assertStringNotContainsString(' · Douala', $page['booking']['composed_title']);
+            $this->assertSame(Str::ucfirst($booking->period('fr')), $page['booking']['period']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
@@ -256,7 +260,7 @@ class BookingThreadTest extends TestCase
                 'id' => (string) $booking->getKey(), 'offer_id' => (string) $this->offer->getKey(), 'type' => 'stay', 'status' => 'refused',
                 'check_in' => $booking->check_in->toDateString(), 'check_out' => $booking->check_out?->toDateString(), 'guests' => 1,
                 'offer' => ['title' => $this->offer->getTranslation('title', 'fr'), 'rental_type' => 'Location meublée', 'property_type' => 'Studio'],
-            ], array_diff_key($page['booking'], ['lines' => true]));
+            ], array_diff_key($page['booking'], ['lines' => true, 'composed_title' => true, 'period' => true]));
             // Les lignes, libellé et valeur, dans l'ordre ; sans chambres renseignées, pas de ligne (décision 2026-11-20-lignes-demande).
             $this->assertSame([
                 ['key' => 'guests', 'label' => 'Personnes', 'value' => '1'],
