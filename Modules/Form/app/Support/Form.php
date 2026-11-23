@@ -84,6 +84,15 @@ abstract class Form
     }
 
     /**
+     * Le titre de la barre du haut, traduit ; `null` : le titre (décision 2026-11-22-formulaire-titre-navigation). Avec lui, le titre s'affiche en
+     * gras en tête du contenu, le sous-titre dessous.
+     */
+    public function navigationTitle(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Sous-titre affiché sous le titre, traduit ; aucun par défaut.
      */
     public function subtitle(): ?string

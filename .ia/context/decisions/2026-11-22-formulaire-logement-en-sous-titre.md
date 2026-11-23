@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-22-formulaire-titre-navigation.md
+
 # Accepter ou refuser une demande : le logement en sous-titre, le membre en description, centrés
 
 Remplace : 2026-11-22-formulaire-description.md (pour l'usage dans « Accepter » et « Refuser »)

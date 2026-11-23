@@ -296,7 +296,7 @@ class BookingApiTest extends TestCase
         // « Accepter » ouvre son formulaire, comme « Refuser » (décision 2026-11-22-accepter-avec-message).
         $this->assertSame([null, null, ['form' => 'offer.booking.accept', 'record' => (string) $booking->getKey()]], [$accept['confirm'], $accept['submission'], $accept['form']]);
         $accepting = $this->asUser($owner)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->assertOk()->json('data');
-        $this->assertSame('Accepter la demande', $accepting['title']);
+        $this->assertSame('Accepter la demande', $accepting['navigation_title']);
         $this->assertSame(['answer', 'acceptance_message'], array_column($accepting['fields'], 'name'));
         $this->assertSame(['POST', "/v1/bookings/{$booking->getKey()}/answer"], [$accepting['submit']['method'], $accepting['submit']['endpoint']]);
         $this->assertSame(['Refuser', 'destructive', ['form' => 'offer.booking.refuse', 'record' => (string) $booking->getKey()]], [$refuse['label'], $refuse['style'], $refuse['form']]);

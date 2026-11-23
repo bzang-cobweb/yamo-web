@@ -24,6 +24,8 @@ class FormResource extends JsonResource
             'name' => $this->resource->key(),
             'title' => $this->resource->title(),
             'subtitle' => $this->resource->subtitle(),
+            /** Le titre de la barre du haut ; `null` : le titre (décision 2026-11-22-formulaire-titre-navigation). */
+            'navigation_title' => $this->resource->navigationTitle(),
             /** Une description sous le sous-titre, en gris (le titre d'une offre) ; `null` : aucune. */
             'description' => $this->resource->description(),
             /** Une note sous le titre, à part (un avertissement) ; `null` : aucune. */

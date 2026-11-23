@@ -49,7 +49,14 @@ class BookingRefuseForm extends Form
         ];
     }
 
+    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en gras en tête du contenu (décision 2026-11-22-formulaire-titre-navigation). */
     public function title(): string
+    {
+        return $this->booking === null ? __('offer::booking.profile.refuse_title') : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
+    }
+
+    /** « Refuser la demande », dans la barre du haut (décision 2026-11-22-formulaire-titre-navigation). */
+    public function navigationTitle(): ?string
     {
         return __('offer::booking.profile.refuse_title');
     }
@@ -58,12 +65,6 @@ class BookingRefuseForm extends Form
     public function subtitle(): ?string
     {
         return $this->booking === null ? null : ((string) $this->booking->offer->getTranslation('title', app()->getLocale()) ?: null);
-    }
-
-    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en description (décision 2026-11-22-formulaire-logement-en-sous-titre). */
-    public function description(): ?string
-    {
-        return $this->booking === null ? null : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
     }
 
     /** Le titre, le sous-titre et la description centrés (décision 2026-11-22-formulaire-logement-en-sous-titre). */

@@ -51,12 +51,22 @@ class BookingAcceptForm extends Form
                 ->maxLength(Booking::MESSAGE_MAX_LENGTH),
             // D'autres visites en attente le même jour : les accepter aussi, décoché par défaut (décision 2026-11-22-accepter-autres-visites).
             $visits === 0 ? null : Field::checkbox('accept_other_visits')
+                // L'avertissement des autres visites, en note de la case, avant son libellé (décision
+                // 2026-11-22-accepter-visites-note-case).
+                ->notice(trans_choice('offer::booking.profile.accept_same_day_visits', $visits, ['count' => $visits]))
                 ->label(trans_choice('offer::booking.answer.accept_other_visits', $visits, ['count' => $visits]))
                 ->default(false),
         ]));
     }
 
+    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en gras en tête du contenu (décision 2026-11-22-formulaire-titre-navigation). */
     public function title(): string
+    {
+        return $this->booking === null ? __('offer::booking.profile.accept_title') : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
+    }
+
+    /** « Accepter la demande », dans la barre du haut (décision 2026-11-22-formulaire-titre-navigation). */
+    public function navigationTitle(): ?string
     {
         return __('offer::booking.profile.accept_title');
     }
@@ -78,21 +88,11 @@ class BookingAcceptForm extends Form
             return null;
         }
 
-        $availability = app(OfferAvailability::class);
-        $others = $availability->overlappingPending($this->booking)->count();
-        $visits = $availability->sameDayPendingVisits($this->booking)->count();
-        $warnings = array_filter([
-            $others === 0 ? null : trans_choice('offer::booking.profile.accept_overlaps', $others, ['count' => $others]),
-            $visits === 0 ? null : trans_choice('offer::booking.profile.accept_same_day_visits', $visits, ['count' => $visits]),
-        ]);
+        // Les séjours qui seront refusés ; les autres visites du jour sont en note de leur case (décision
+        // 2026-11-22-accepter-visites-note-case).
+        $others = app(OfferAvailability::class)->overlappingPending($this->booking)->count();
 
-        return $warnings === [] ? null : implode(' ', $warnings);
-    }
-
-    /** « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », en description (décision 2026-11-22-formulaire-logement-en-sous-titre). */
-    public function description(): ?string
-    {
-        return $this->booking === null ? null : $this->booking->user->full_name.' · '.$this->booking->period(app()->getLocale());
+        return $others === 0 ? null : trans_choice('offer::booking.profile.accept_overlaps', $others, ['count' => $others]);
     }
 
     /** Le titre, le sous-titre et la description centrés (décision 2026-11-22-formulaire-logement-en-sous-titre). */
