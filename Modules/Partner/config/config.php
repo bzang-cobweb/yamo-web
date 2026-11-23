@@ -17,10 +17,9 @@ return [
         'conversions' => [
             // Le carrousel de l'accueil (96 points).
             'home' => (int) env('PARTNER_LOGO_HOME_SIZE', 288),
-            // La page « Partenaires » (56 points).
-            'list' => (int) env('PARTNER_LOGO_LIST_SIZE', 168),
-            // Les cartes de « Mes partenaires » : la zone 16:9 d'une carte, 322 points de large (décision 2026-11-24-partenaire-logo-mine-960).
-            'mine' => (int) env('PARTNER_LOGO_MINE_SIZE', 960),
+            // La page « Partenaires » (56 points) et les cartes de « Mes partenaires » : un logo carré y prend la
+            // hauteur de la zone 16:9, 203 points sur le plus grand iPhone (décision 2026-11-24-partenaire-logo-list-608).
+            'list' => (int) env('PARTNER_LOGO_LIST_SIZE', 608),
             // La page d'un partenaire (120 points).
             'detail' => (int) env('PARTNER_LOGO_DETAIL_SIZE', 360),
         ],

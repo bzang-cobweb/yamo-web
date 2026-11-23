@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-partenaire-logo-list-608.md
+
 # `2026-11-24` — Logo d'un partenaire : 960 px au moins à l'envoi
 
 - **Type** : décision

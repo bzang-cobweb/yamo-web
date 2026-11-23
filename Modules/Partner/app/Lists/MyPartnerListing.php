@@ -104,7 +104,7 @@ class MyPartnerListing extends Listing
         // Le statut flottant sur le logo, en haut à gauche ; sous le nom, une ligne (slogan, sinon description) ; la carte ouvre la page
         // du partenaire, « Modifier » et « Retirer » sont dans le menu (décision 2026-11-24-mes-partenaires-cartes).
         $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $record->cardLine($locale))
-            ->image(MediaUrl::onRequestHost($record->logoUrl('mine')))
+            ->image(MediaUrl::onRequestHost($record->logoUrl('list')))
             // Le logo en entier, jamais rogné (décision 2026-11-24-mes-partenaires-logo-entier).
             ->imageContain()
             ->tag($status, $tone, onImage: true)

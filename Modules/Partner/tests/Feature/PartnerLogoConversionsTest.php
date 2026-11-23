@@ -24,7 +24,7 @@ class PartnerLogoConversionsTest extends TestCase
     public function test_each_screen_serves_its_own_conversion_sized_by_the_configuration(): void
     {
         Storage::fake('public');
-        config(['partner.logo.conversions.list' => 100]);
+        config(['partner.logo.conversions.list' => 500]);
         $cameroon = Country::factory()->create(['code' => 'CM']);
         $partner = Partner::factory()->for($cameroon)->create();
         $member = User::factory()->create(['locale' => 'fr']);
@@ -36,18 +36,19 @@ class PartnerLogoConversionsTest extends TestCase
 
         // Produites tout de suite, à leur taille (le grand côté), en WebP.
         $sizes = [];
-        foreach (['home', 'list', 'mine', 'detail'] as $name) {
+        foreach (['home', 'list', 'detail'] as $name) {
             $this->assertTrue($media->fresh()->hasGeneratedConversion($name), $name);
             $sizes[$name] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot($name)))[0];
         }
-        $this->assertSame(['home' => 288, 'list' => 100, 'mine' => 960, 'detail' => 360], $sizes);
+        $this->assertSame(['home' => 288, 'list' => 500, 'detail' => 360], $sizes);
 
         // Chaque écran sert la sienne.
         $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
         $this->assertStringContainsString('-home.webp', $this->withHeaders($headers)->getJson('/api/v1/partners')->json('data.0.logo'));
         $this->assertStringContainsString('-detail.webp', $this->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")->json('data.logo'));
         $this->assertStringContainsString('-list.webp', $this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->json('data.items.0.image'));
-        $this->assertStringContainsString('-mine.webp', $this->withHeaders($headers)->withToken($member->createToken('iPhone')->plainTextToken)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.image'));
+        // « Mes partenaires » sert celle de la page « Partenaires » (décision 2026-11-24-partenaire-logo-list-608).
+        $this->assertStringContainsString('-list.webp', $this->withHeaders($headers)->withToken($member->createToken('iPhone')->plainTextToken)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.image'));
     }
 
     public function test_without_its_conversion_the_logo_itself_is_served(): void

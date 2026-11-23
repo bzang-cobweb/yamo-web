@@ -226,7 +226,7 @@ class Partner extends Model implements HasMedia
     }
 
     /**
-     * L'adresse du logo ; avec `$conversion` (`home`, `list`, `mine`, `detail`), celle de sa conversion, ou celle du
+     * L'adresse du logo ; avec `$conversion` (`home`, `list`, `detail`), celle de sa conversion, ou celle du
      * logo tant que la conversion n'est pas produite ; `null` sans logo.
      */
     public function logoUrl(?string $conversion = null): ?string

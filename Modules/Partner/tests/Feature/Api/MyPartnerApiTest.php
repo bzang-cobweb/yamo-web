@@ -60,18 +60,19 @@ class MyPartnerApiTest extends TestCase
 
     public function test_a_logo_smaller_than_the_largest_conversion_is_refused(): void
     {
-        // Au moins 960 px sur le plus grand côté (décision 2026-11-24-logo-taille-minimale).
+        // Au moins la plus grande conversion (608 px) sur le plus grand côté (décisions 2026-11-24-logo-taille-minimale et
+        // 2026-11-24-partenaire-logo-list-608).
         Storage::fake(FormUpload::DISK);
         $user = $this->member();
         $send = fn (int $width, int $height) => $this->asUser($user)->post('/api/v1/forms/partner.partner/uploads/logo', ['file' => UploadedFile::fake()->image('logo.png', $width, $height)], ['Accept' => 'application/json']);
 
-        $send(959, 959)->assertUnprocessable()->assertJsonPath('errors.file.0', "L'image doit mesurer au moins 960 px sur son plus grand côté.");
+        $send(607, 607)->assertUnprocessable()->assertJsonPath('errors.file.0', "L'image doit mesurer au moins 608 px sur son plus grand côté.");
         // Un bandeau ou un logo en hauteur : son grand côté suffit.
         $send(1600, 400)->assertCreated();
-        $send(640, 960)->assertCreated();
+        $send(400, 608)->assertCreated();
 
         $logo = collect($this->asUser($user)->getJson('/api/v1/forms/partner.partner')->json('data.fields'))->firstWhere('name', 'logo');
-        $this->assertSame('Au moins 960 px sur le plus grand côté.', $logo['help']);
+        $this->assertSame('Au moins 608 px sur le plus grand côté.', $logo['help']);
     }
 
     public function test_a_member_proposes_a_partner_waiting_for_review_and_administers_it(): void

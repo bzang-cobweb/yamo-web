@@ -1,3 +1,6 @@
+Remplacée par : 2026-11-24-partenaire-logo-list-608.md
+
+
 # `2026-11-24` — Logo d'un partenaire : la conversion `mine` à 960 px
 
 Remplace en partie : 2026-11-24-partenaire-logo-conversions.md

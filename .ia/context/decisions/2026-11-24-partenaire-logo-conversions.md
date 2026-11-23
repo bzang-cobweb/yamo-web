@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-partenaire-logo-mine-960.md
+Remplacée en partie par : 2026-11-24-partenaire-logo-mine-960.md, 2026-11-24-partenaire-logo-list-608.md
 
 
 # `2026-11-24` — Logo d'un partenaire : une conversion par écran
