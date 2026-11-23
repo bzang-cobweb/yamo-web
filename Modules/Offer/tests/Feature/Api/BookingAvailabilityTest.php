@@ -124,7 +124,7 @@ class BookingAvailabilityTest extends TestCase
         // Le formulaire d'acceptation avertit, sous le titre, du nombre de demandes qui seront refusées, sans leurs noms
         // (décisions 2026-11-22-accepter-avec-message et 2026-11-22-accepter-nombre-chevauchements).
         $subtitle = fn (Booking $booking): string => (string) $this->asUser($offer->user)->getJson('/api/v1/forms/offer.booking.accept?record='.$booking->getKey())->json('data.subtitle');
-        $this->assertStringEndsWith("\n1 autre demande chevauche ces dates et sera refusée.", $subtitle($chosen));
+        $this->assertStringStartsWith("1 autre demande chevauche ces dates et sera refusée.\n", $subtitle($chosen));
         $this->assertStringNotContainsString((string) $overlapping->user->full_name, $subtitle($chosen));
         $this->assertStringNotContainsString('chevauche', $subtitle($after));
 
@@ -257,7 +257,7 @@ class BookingAvailabilityTest extends TestCase
 
         // L'avertissement sous le titre, et la case, décochée.
         $data = $form($chosen);
-        $this->assertStringEndsWith("\n2 autres visites sont demandées ce jour-là.", $data['subtitle']);
+        $this->assertStringStartsWith("2 autres visites sont demandées ce jour-là.\n", $data['subtitle']);
         $box = collect($data['fields'])->firstWhere('name', 'accept_other_visits');
         $this->assertSame(['checkbox', 'Accepter aussi les 2 autres visites de ce jour', false], [$box['type'], $box['label'], $box['default']]);
         // Seule ce jour-là : ni avertissement, ni case.

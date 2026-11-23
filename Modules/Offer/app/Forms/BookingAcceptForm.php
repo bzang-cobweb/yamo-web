@@ -62,8 +62,9 @@ class BookingAcceptForm extends Form
     }
 
     /**
-     * « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 », puis, s'il y en a, « 2 autres demandes chevauchent ces dates et
-     * seront refusées. » (décision 2026-11-22-accepter-nombre-chevauchements).
+     * S'il y en a, d'abord l'avertissement (« 2 autres demandes chevauchent ces dates et seront refusées. »), puis
+     * « Marie Curie · du 3 déc. 2026 au 6 déc. 2026 » (décisions 2026-11-22-accepter-nombre-chevauchements et
+     * 2026-11-22-accepter-avertissement-sous-titre).
      */
     public function subtitle(): ?string
     {
@@ -83,7 +84,8 @@ class BookingAcceptForm extends Form
             $visits === 0 ? null : trans_choice('offer::booking.profile.accept_same_day_visits', $visits, ['count' => $visits]),
         ]);
 
-        return implode("\n", [$subtitle, ...$warnings]);
+        // L'avertissement juste sous le titre, puis le membre et les dates (décision 2026-11-22-accepter-avertissement-sous-titre).
+        return implode("\n", [...$warnings, $subtitle]);
     }
 
     public function submission(): ?Submission
