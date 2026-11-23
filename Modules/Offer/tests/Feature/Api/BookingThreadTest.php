@@ -450,6 +450,24 @@ class BookingThreadTest extends TestCase
         $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande annulée']['read']);
     }
 
+    public function test_opening_a_request_from_a_read_step_still_marks_the_whole_thread_read(): void
+    {
+        // Décision 2026-11-22-detail-marque-tout-le-fil.
+        $booking = $this->request(3);
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($booking, true);
+        $own = $this->guest->notifications()->where('thread', $booking->thread())->whereNotNull('read_at')->get()->first(fn ($notification): bool => (bool) ($notification->data['own'] ?? false));
+        $this->assertNotNull($own);
+        $this->assertSame(1, $this->guest->unreadNotifications()->where('thread', $booking->thread())->count());
+
+        // Sa propre copie, déjà lue, ouverte : la page dit non lue, puisqu'une étape du fil l'est encore.
+        $this->assertFalse($this->api($this->guest, 'GET', '/'.$own->getKey())->assertOk()->json('data.read'));
+        // L'app la marque lue : tout le fil l'est.
+        $this->api($this->guest, 'POST', '/'.$own->getKey().'/read')->assertNoContent();
+        $this->assertSame(0, $this->guest->unreadNotifications()->where('thread', $booking->thread())->count());
+        $this->assertTrue($this->api($this->guest, 'GET', '/'.$own->getKey())->json('data.read'));
+    }
+
     public function test_the_requester_button_edits_the_request_while_it_is_pending(): void
     {
         $booking = $this->request(3);

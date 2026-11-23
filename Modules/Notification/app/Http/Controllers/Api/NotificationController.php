@@ -71,11 +71,21 @@ class NotificationController
     /**
      * Une de ses notifications, pour sa page (404 pour une autre).
      */
-    public function show(Request $request, string $notification): NotificationResource
+    public function show(Request $request, string $notification, NotificationThreads $threads): NotificationResource
     {
+        $user = $this->user($request);
+        $found = $user->notifications()->whereKey($notification)->firstOrFail();
+        $resource = (new NotificationResource($found))->withThread();
+        // Non lue tant qu'une notification de son fil, adressée au lecteur, l'est : l'app la marque alors lue, et tout
+        // le fil avec (décision 2026-11-22-detail-marque-tout-le-fil).
+        $thread = $found->getAttribute('thread');
+        if (is_string($thread)) {
+            $resource->withRead($threads->unreadThreads($user, [$thread]) === []);
+        }
+
         // Et son fil : le suivi, des deux côtés, et ce qu'y ajoute son module (décisions
         // 2026-11-20-suivi-demande et 2026-11-20-notification-generique).
-        return (new NotificationResource($this->user($request)->notifications()->whereKey($notification)->firstOrFail()))->withThread();
+        return $resource;
     }
 
     /**
