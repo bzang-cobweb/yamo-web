@@ -10,6 +10,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Policies\Concerns\HasBeforeAbility;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 
@@ -137,6 +138,31 @@ class OfferPolicy
         }
 
         return $this->owns($user, $offer);
+    }
+
+    /** Publier son brouillon, depuis le menu de « Mes logements » (décision 2026-11-23-publier-depublier-menu). */
+    public function publish(User $user, Offer $offer): Response
+    {
+        $owns = $this->owns($user, $offer);
+
+        return $owns->denied() || $offer->status === OfferStatusEnum::DRAFT ? $owns : Response::deny();
+    }
+
+    /**
+     * Repasser en brouillon son logement publié, sauf avec une demande en cours (décisions
+     * 2026-11-22-logement-verrouille-par-demandes et 2026-11-23-publier-depublier-menu).
+     */
+    public function unpublish(User $user, Offer $offer): Response
+    {
+        $owns = $this->owns($user, $offer);
+        if ($owns->denied()) {
+            return $owns;
+        }
+        if ($offer->status !== OfferStatusEnum::PUBLISHED) {
+            return Response::deny();
+        }
+
+        return $offer->hasOpenBookings() ? Response::deny(__('offer::offer.status_locked')) : Response::allow();
     }
 
     public function delete(User $user, Offer $offer): bool|Response

@@ -64,6 +64,11 @@ return [
         'removed' => 'Offer removed.',
         'expires' => 'Paid until :date',
         'expired' => 'Payment ended on :date',
+        // Publier, dépublier (décision 2026-11-23-publier-depublier-menu).
+        'publish' => 'Publish',
+        'published' => 'Home published.',
+        'unpublish' => 'Unpublish',
+        'unpublished' => 'Home moved back to draft.',
     ],
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Featured until',

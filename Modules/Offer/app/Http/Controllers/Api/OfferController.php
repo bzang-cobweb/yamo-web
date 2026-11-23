@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Http\Requests\OfferRequest;
 use Modules\Offer\Http\Resources\OfferDetailResource;
@@ -76,6 +77,26 @@ class OfferController
     /**
      * Retirer une de ses offres (suppression douce).
      */
+    /**
+     * Publier son brouillon (décision 2026-11-23-publier-depublier-menu).
+     */
+    public function publish(Offer $offer, OfferService $service): Response
+    {
+        $service->changeStatus($offer, OfferStatusEnum::PUBLISHED);
+
+        return response()->noContent();
+    }
+
+    /**
+     * Repasser en brouillon son logement publié (décision 2026-11-23-publier-depublier-menu).
+     */
+    public function unpublish(Offer $offer, OfferService $service): Response
+    {
+        $service->changeStatus($offer, OfferStatusEnum::DRAFT);
+
+        return response()->noContent();
+    }
+
     public function destroy(Offer $offer, OfferService $service): Response
     {
         $service->delete($offer);

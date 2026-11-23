@@ -24,6 +24,9 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     Route::post('/', [OfferController::class, 'store'])->can('create', Offer::class)->name('store');
     Route::patch('{offer}', [OfferController::class, 'update'])->can('update', 'offer')->name('update');
     Route::delete('{offer}', [OfferController::class, 'destroy'])->can('delete', 'offer')->name('destroy');
+    // Publier ou repasser en brouillon, depuis le menu de « Mes logements » (décision 2026-11-23-publier-depublier-menu).
+    Route::post('{offer}/publish', [OfferController::class, 'publish'])->can('publish', 'offer')->name('publish');
+    Route::post('{offer}/unpublish', [OfferController::class, 'unpublish'])->can('unpublish', 'offer')->name('unpublish');
 
     // Son avis sur une offre (décision 2026-11-19-contrat-avis-offres).
     Route::put('{offer}/review', [OfferReviewController::class, 'save'])->can('review', 'offer')->name('review.save');

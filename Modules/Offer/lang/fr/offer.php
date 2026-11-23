@@ -64,6 +64,11 @@ return [
         'removed' => 'Offre retirée.',
         'expires' => "Payé jusqu'au :date",
         'expired' => 'Paiement échu le :date',
+        // Publier, dépublier (décision 2026-11-23-publier-depublier-menu).
+        'publish' => 'Publier',
+        'published' => 'Logement publié.',
+        'unpublish' => 'Dépublier',
+        'unpublished' => 'Logement repassé en brouillon.',
     ],
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => "En vedette jusqu'au",

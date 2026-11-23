@@ -323,6 +323,11 @@ class Offer extends Model implements HasMedia
      */
     public function hasOpenBookings(): bool
     {
+        // Déjà chargé par la liste (`withExists`, « Mes logements ») : sans requête de plus.
+        if (array_key_exists('has_open_bookings', $this->attributes)) {
+            return (bool) $this->attributes['has_open_bookings'];
+        }
+
         return $this->bookings()->open()->exists();
     }
 

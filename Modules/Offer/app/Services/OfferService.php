@@ -10,6 +10,7 @@ use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
 use Modules\Location\Services\AddressService;
 use Modules\Offer\Domains\Domain;
+use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 use Modules\Offer\Models\OfferInformation;
@@ -55,6 +56,15 @@ class OfferService
         $this->syncInformations($offer, $data, $locale ?? $offer->user->preferredLocale());
 
         return $offer->refresh();
+    }
+
+    /**
+     * Le statut seul, depuis le menu de « Mes logements » (décision 2026-11-23-publier-depublier-menu) ;
+     * la date de publication est posée par le modèle à la première publication.
+     */
+    public function changeStatus(Offer $offer, OfferStatusEnum $status): void
+    {
+        $offer->update(['status' => $status]);
     }
 
     /**

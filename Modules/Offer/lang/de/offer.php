@@ -64,6 +64,11 @@ return [
         'removed' => 'Angebot entfernt.',
         'expires' => 'Bezahlt bis :date',
         'expired' => 'Bezahlung endete am :date',
+        // Publier, dépublier (décision 2026-11-23-publier-depublier-menu).
+        'publish' => 'Veröffentlichen',
+        'published' => 'Unterkunft veröffentlicht.',
+        'unpublish' => 'Zurückziehen',
+        'unpublished' => 'Unterkunft wieder als Entwurf gespeichert.',
     ],
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Hervorgehoben bis',

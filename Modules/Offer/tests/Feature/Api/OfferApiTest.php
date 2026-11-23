@@ -713,6 +713,48 @@ class OfferApiTest extends TestCase
         $this->asUser($user)->deleteJson("/api/v1/offers/{$offer->getKey()}")->assertNoContent();
     }
 
+    public function test_the_menu_publishes_a_draft_and_unpublishes_a_home_without_open_requests(): void
+    {
+        // Décision 2026-11-23-publier-depublier-menu.
+        $user = $this->member();
+        $draft = Offer::factory()->for($user)->create(['status' => OfferStatusEnum::DRAFT]);
+        $published = Offer::factory()->for($user)->create(['status' => OfferStatusEnum::PUBLISHED]);
+        $locked = Offer::factory()->for($user)->create(['status' => OfferStatusEnum::PUBLISHED]);
+        Booking::factory()->for($locked)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(7)]);
+        $archived = Offer::factory()->for($user)->create(['status' => OfferStatusEnum::ARCHIVED]);
+
+        // Le menu : « Publier » sur le brouillon, « Dépublier » sur le publié sans demande en cours, rien sinon.
+        $items = collect($this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()->json('data.items'))->keyBy('id');
+        $labels = fn (Offer $offer): array => array_column($items[(string) $offer->getKey()]['actions'], 'label');
+        $this->assertContains('Publier', $labels($draft));
+        $this->assertNotContains('Dépublier', $labels($draft));
+        $this->assertContains('Dépublier', $labels($published));
+        $this->assertNotContains('Publier', $labels($published));
+        foreach ([$locked, $archived] as $offer) {
+            $this->assertEmpty(array_intersect(['Publier', 'Dépublier'], $labels($offer)));
+        }
+        $publish = collect($items[(string) $draft->getKey()]['actions'])->firstWhere('label', 'Publier')['submission'];
+        $this->assertSame(['POST', "/v1/offers/{$draft->getKey()}/publish", 'Logement publié.'], [$publish['method'], $publish['endpoint'], $publish['success']['message']]);
+
+        // Les envois.
+        $this->asUser($user)->postJson("/api/v1/offers/{$draft->getKey()}/publish")->assertNoContent();
+        $this->assertSame(OfferStatusEnum::PUBLISHED, $draft->fresh()->status);
+        $this->assertNotNull($draft->fresh()->published_at);
+        $this->asUser($user)->postJson("/api/v1/offers/{$published->getKey()}/unpublish")->assertNoContent();
+        $this->assertSame(OfferStatusEnum::DRAFT, $published->fresh()->status);
+
+        // Refusés : une demande en cours, une archivée, déjà au bon statut, l'offre d'un autre.
+        $this->asUser($user)->postJson("/api/v1/offers/{$locked->getKey()}/unpublish")->assertForbidden()
+            ->assertJsonPath('message', __('offer::offer.status_locked'));
+        $this->asUser($user)->postJson("/api/v1/offers/{$archived->getKey()}/publish")->assertForbidden();
+        $this->asUser($user)->postJson("/api/v1/offers/{$archived->getKey()}/unpublish")->assertForbidden();
+        $this->asUser($user)->postJson("/api/v1/offers/{$draft->getKey()}/publish")->assertForbidden();
+        // Un autre compte : le garde oublie le précédent, comme entre deux vraies requêtes.
+        $this->app['auth']->forgetGuards();
+        $this->asUser($this->member())->postJson("/api/v1/offers/{$draft->getKey()}/unpublish")->assertNotFound();
+        $this->assertSame(OfferStatusEnum::PUBLISHED, $locked->fresh()->status);
+    }
+
     public function test_searching_my_offers_by_title(): void
     {
         $user = $this->member();

@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
+use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
+use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
@@ -160,6 +162,8 @@ class OfferListing extends Listing
             ->withReviewSummary()
             // Les demandes en attente, pour le compteur de la carte.
             // Sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+            // Une demande en cours bloque « Dépublier » (décision 2026-11-23-publier-depublier-menu), sans requête par carte.
+            ->withExists(['bookings as has_open_bookings' => fn (Builder $bookings) => $bookings->open()])
             ->withCount(['bookings as pending_bookings_count' => fn (Builder $bookings) => $bookings->awaitingAnswer()])
             // Ses notifications non lues de ce logement, quel que soit le statut de la demande, une demande (un fil)
             // comptant pour une, pour le second compteur (décision 2026-11-21-compteur-non-lues-sans-statut).
@@ -222,6 +226,17 @@ class OfferListing extends Listing
                 filter: ['offer' => (string) $record->getKey()],
                 list: ReceivedBookingListing::name(),
             );
+        // Publier un brouillon, repasser en brouillon un logement publié sans demande en cours (décision
+        // 2026-11-23-publier-depublier-menu) ; jamais pour une offre archivée.
+        if ($this->user?->can('publish', $record)) {
+            $item->action(__('offer::offer.list.publish'), submission: Submission::toRoute(
+                'api.v1.offers.publish', SuccessAction::BACK, __('offer::offer.list.published'), parameters: ['offer' => $record->getKey()],
+            ));
+        } elseif ($this->user?->can('unpublish', $record)) {
+            $item->action(__('offer::offer.list.unpublish'), submission: Submission::toRoute(
+                'api.v1.offers.unpublish', SuccessAction::BACK, __('offer::offer.list.unpublished'), parameters: ['offer' => $record->getKey()],
+            ));
+        }
         // Plus de « Retirer » sur la carte : il est dans la barre du bas de la fiche (décision 2026-11-22-retirer-depuis-la-fiche).
 
         // Ses demandes en attente : un compteur (décision 2026-11-19-contrat-reservations-logements-profil).
