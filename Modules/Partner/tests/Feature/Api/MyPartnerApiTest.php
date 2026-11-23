@@ -111,6 +111,8 @@ class MyPartnerApiTest extends TestCase
         $this->assertTrue($list['menu']);
         $this->assertSame(['Déménageurs du Wouri', 'En validation', 'warning', true], [$item['title'], $item['tag']['label'], $item['tag']['tone'], $item['tag']['on_image']]);
         $this->assertSame([1, '/partners/'.$partner->getKey()], [$item['subtitle_lines'], $item['link']]);
+        // Le logo en entier, jamais rogné (décision 2026-11-24-mes-partenaires-logo-entier).
+        $this->assertSame('contain', $item['image_fit']);
         // Sous le nom, le slogan ; sans slogan, la description (décision 2026-11-24-mes-partenaires-slogan).
         $this->assertSame('On porte, vous respirez.', $item['subtitle']);
         $partner->forgetTranslation('slogan', 'fr')->save();

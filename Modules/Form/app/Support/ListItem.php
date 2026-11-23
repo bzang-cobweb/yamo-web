@@ -54,6 +54,9 @@ final class ListItem
     /** Le nombre de lignes du sous-titre ; `null` : entier. */
     private ?int $subtitleLines = null;
 
+    /** L'image en entier (`contain`) plutôt que remplie (`cover`, par défaut). */
+    private ?string $imageFit = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -213,6 +216,17 @@ final class ListItem
     }
 
     /**
+     * L'image affichée en entier, au centre de son emplacement, plutôt que remplie et rognée : pour un logo (décision
+     * 2026-11-24-mes-partenaires-logo-entier) ; sans appel, remplie comme une photo.
+     */
+    public function imageContain(): self
+    {
+        $this->imageFit = 'contain';
+
+        return $this;
+    }
+
+    /**
      * Le sous-titre coupé à `$lines` lignes, la suite en « … » (la description d'un partenaire, décision
      * 2026-11-24-mes-partenaires-cartes) ; sans appel, entier.
      */
@@ -333,6 +347,7 @@ final class ListItem
             ...($this->titleLink === null ? [] : ['title_link' => $this->titleLink]),
             ...($this->subtitleLink === null ? [] : ['subtitle_link' => $this->subtitleLink]),
             ...($this->subtitleLines === null ? [] : ['subtitle_lines' => $this->subtitleLines]),
+            ...($this->imageFit === null ? [] : ['image_fit' => $this->imageFit]),
             'edit' => $this->edit,
             /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [

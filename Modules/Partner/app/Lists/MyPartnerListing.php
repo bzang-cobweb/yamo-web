@@ -105,6 +105,8 @@ class MyPartnerListing extends Listing
         // du partenaire, « Modifier » et « Retirer » sont dans le menu (décision 2026-11-24-mes-partenaires-cartes).
         $item = ListItem::make($record->getKey(), (string) $record->getTranslation('name', $locale), $record->cardLine($locale))
             ->image(MediaUrl::onRequestHost($record->logoUrl()))
+            // Le logo en entier, jamais rogné (décision 2026-11-24-mes-partenaires-logo-entier).
+            ->imageContain()
             ->tag($status, $tone, onImage: true)
             ->subtitleLines(1)
             ->link('/partners/'.$record->getKey())
