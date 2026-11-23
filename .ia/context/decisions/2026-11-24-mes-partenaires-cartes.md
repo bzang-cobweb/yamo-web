@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-etape-presentation.md
+Remplacée en partie par : 2026-11-24-mes-partenaires-slogan.md, 2026-11-24-etape-presentation.md
 Remplace en partie : 2026-11-24-partenaires-par-les-membres.md (cartes et formulaire de « Mes partenaires »).
 
 # `2026-11-24` — « Mes partenaires » : cartes, menu et formulaire en étapes
