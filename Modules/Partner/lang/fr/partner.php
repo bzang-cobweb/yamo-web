@@ -30,8 +30,8 @@ return [
         'name' => 'Nom',
         'country' => 'Pays',
         'logo' => 'Logo',
-        // L'aide du champ logo (décision 2026-11-24-logo-taille-minimale).
-        'logo_help' => 'Au moins :pixels px sur le plus grand côté.',
+        // L'aide du champ logo : la conversion `list` en minimum (décisions 2026-11-24-logo-taille-minimale et 2026-11-24-partenaire-logo-original).
+        'logo_help' => 'Logo carré, au moins :pixels × :pixels px.',
         'description' => 'Description',
         'url' => 'Lien',
         'cta_label' => 'Libellé du bouton',

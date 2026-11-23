@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-partenaire-logo-taille-unique.md
+Remplacée en partie par : 2026-11-24-partenaire-logo-taille-unique.md, 2026-11-24-partenaire-logo-original.md
 # `2026-11-24` — Logo d'un partenaire : optimisé aussi depuis le back-office, réglé par la configuration
 
 - **Type** : décision

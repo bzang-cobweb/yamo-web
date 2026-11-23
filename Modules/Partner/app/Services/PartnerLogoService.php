@@ -37,26 +37,21 @@ class PartnerLogoService
     }
 
     /**
-     * Le plus grand côté du logo enregistré, en pixels : la plus grande des conversions, dont il est la source (une
-     * image n'est jamais agrandie) ; une seule règle (décision 2026-11-24-partenaire-logo-taille-unique).
+     * Le plus grand côté du logo enregistré, en pixels : l'original envoyé, plafonné (`PARTNER_LOGO_ORIGINAL_SIZE`) ;
+     * les conversions en sont tirées (décision 2026-11-24-partenaire-logo-original).
      */
     public static function storedSize(): int
     {
-        $sizes = array_map('intval', (array) config('partner.logo.conversions'));
-        if ($sizes === []) {
-            return 512;
-        }
-
-        return max($sizes);
+        return (int) config('partner.logo.original_size');
     }
 
     /**
-     * Le plus grand côté minimal d'un logo envoyé : la taille enregistrée, pour que la plus grande conversion ne soit
-     * jamais un agrandissement (décision 2026-11-24-logo-taille-minimale).
+     * Le plus grand côté minimal d'un logo envoyé : la conversion `list`, la plus grande place où il s'affiche (cartes
+     * de « Mes partenaires »), pour qu'elle ne soit jamais un agrandissement (décision 2026-11-24-partenaire-logo-original).
      */
     public static function minUploadSize(): int
     {
-        return self::storedSize();
+        return (int) config('partner.logo.conversions.list');
     }
 
     /** La qualité du WebP enregistré (`PARTNER_LOGO_QUALITY`). */
@@ -74,7 +69,8 @@ class PartnerLogoService
     {
         $media = $partner?->getFirstMedia(Partner::LOGO);
 
-        return $media === null ? [] : [(string) $media->uuid => (string) MediaUrl::onRequestHost($media->getUrl())];
+        // L'aperçu du champ : la conversion `list`, pas l'original (décision 2026-11-24-partenaire-logo-original).
+        return $media === null ? [] : [(string) $media->uuid => (string) MediaUrl::onRequestHost($partner->logoUrl('list'))];
     }
 
     /**
@@ -113,8 +109,9 @@ class PartnerLogoService
     }
 
     /**
-     * Le fichier `$sourcePath` devient le logo, optimisé : WebP, la plus grande des conversions au plus sur le grand
-     * côté (`storedSize()`), proportions gardées ; l'original n'est pas conservé ; tailles et qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
+     * Le fichier `$sourcePath` devient le logo : l'original gardé en WebP, plafonné sur son grand côté (`storedSize()`,
+     * décision 2026-11-24-partenaire-logo-original), proportions gardées ; les conversions en sont tirées ; tailles et
+     * qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
      * 2026-11-24-partenaire-logo-optimise) ; `singleFile()` : il remplace l'ancien.
      */
     public function store(Partner $partner, string $sourcePath, ?string $name = null): Media

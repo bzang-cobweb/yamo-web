@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-partenaire-logo-original.md
+
 # `2026-11-24` — Logo d'un partenaire : carré, la conversion `list` à 608 px sert aussi « Mes partenaires »
 
 Remplace : 2026-11-24-partenaire-logo-mine-960.md

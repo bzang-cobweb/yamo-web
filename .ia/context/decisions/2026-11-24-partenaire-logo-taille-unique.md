@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-24-partenaire-logo-original.md
 Remplace en partie : 2026-11-24-partenaire-logo-optimise.md (taille du logo enregistré).
 
 # `2026-11-24` — Logo d'un partenaire : la taille enregistrée est la plus grande conversion
