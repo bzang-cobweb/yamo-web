@@ -200,7 +200,8 @@ class BookingApiTest extends TestCase
 
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
-        $this->assertSame('Modifier la demande', $form['title']);
+        // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
+        $this->assertSame(['Modifier la demande', $pending->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
         // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
         $this->assertSame([OfferCardTitle::of($pending->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
         $this->assertNotNull($form['subtitle']);
@@ -229,7 +230,8 @@ class BookingApiTest extends TestCase
         $accepted = Booking::factory()->for($offer)->for($guest)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(8), 'guests' => 2, 'message' => 'Bonjour !']);
 
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertOk()->json('data');
-        $this->assertSame('Annuler la demande', $form['title']);
+        // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
+        $this->assertSame(['Annuler la demande', $accepted->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
         // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
         $this->assertSame([OfferCardTitle::of($accepted->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
         $this->assertNotNull($form['subtitle']);

@@ -40,7 +40,8 @@ class BookingCancelForm extends BookingEditForm
             : $field->readonly(), parent::fields());
     }
 
-    public function title(): string
+    /** « Annuler la demande », dans la barre du haut ; le titre du logement en tête (décision 2026-11-23-modifier-annuler-comme-accepter). */
+    public function navigationTitle(): ?string
     {
         return __('offer::booking.cancel.label');
     }

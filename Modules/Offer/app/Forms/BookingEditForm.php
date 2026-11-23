@@ -51,7 +51,16 @@ class BookingEditForm extends OfferBookingForm
         return array_map(fn (Field $field): Field => array_key_exists($field->name, $values) ? $field->default($values[$field->name]) : $field, parent::fields());
     }
 
+    /** Le titre saisi du logement, comme pour « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter). */
     public function title(): string
+    {
+        $title = $this->offer === null ? '' : (string) $this->offer->getTranslation('title', app()->getLocale());
+
+        return $title !== '' ? $title : (string) $this->navigationTitle();
+    }
+
+    /** « Modifier la demande », dans la barre du haut (décision 2026-11-23-modifier-annuler-comme-accepter). */
+    public function navigationTitle(): ?string
     {
         return __('offer::booking.form.edit_title');
     }
