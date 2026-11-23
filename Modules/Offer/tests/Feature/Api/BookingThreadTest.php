@@ -251,6 +251,7 @@ class BookingThreadTest extends TestCase
             // Le titre composé avec la ville, sous le nom du logement (décisions 2026-11-22-detail-titre-compose-sous-titre et
             // 2026-11-23-detail-titre-compose-avec-ville).
             $this->assertSame(OfferCardTitle::of($this->offer->fresh(), 'fr')[1], $page['booking']['composed_title']);
+            $this->assertStringStartsWith('Location meublée · Studio · ', $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
