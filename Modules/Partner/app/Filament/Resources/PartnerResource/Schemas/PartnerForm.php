@@ -39,7 +39,7 @@ abstract class PartnerForm
                                     ->collection(Partner::LOGO)
                                     ->image()
                                     ->maxSize(2048),
-                                // Un onglet par langue : le nom, la description, le lien et le libellé du bouton.
+                                // Un onglet par langue : le nom, le slogan et la description.
                                 TranslatableTabs::make(fn (string $locale): array => [
                                     TextInput::make("name.{$locale}")
                                         ->label(__('partner::partner.fields.name'))
@@ -57,13 +57,6 @@ abstract class PartnerForm
                                         ->required($locale === Locales::default())
                                         ->rows(3)
                                         ->maxLength(500),
-                                    TextInput::make("url.{$locale}")
-                                        ->label(__('partner::partner.fields.url'))
-                                        ->url()
-                                        ->maxLength(2048),
-                                    TextInput::make("cta_label.{$locale}")
-                                        ->label(__('partner::partner.fields.cta_label'))
-                                        ->maxLength(60),
                                 ], 'content')->columnSpanFull(),
                             ]),
                         Tab::make(__('partner::partner.sections.campaign'))
@@ -108,6 +101,16 @@ abstract class PartnerForm
                                     ->rule(fn (Get $get): string => 'phone:'.(Country::query()->find($get('country_id'))?->code ?? 'INTERNATIONAL'))
                                     ->dehydrateStateUsing(fn (?string $state, Get $get): ?string => blank($state) ? null : PhoneNumbers::toE164($state, (string) Country::query()->find($get('country_id'))?->code))
                                     ->maxLength(30),
+                                // Le lien et le libellé de son bouton, un onglet par langue (décision 2026-11-24-partenaire-lien-dans-contact).
+                                TranslatableTabs::make(fn (string $locale): array => [
+                                    TextInput::make("url.{$locale}")
+                                        ->label(__('partner::partner.fields.url'))
+                                        ->url()
+                                        ->maxLength(2048),
+                                    TextInput::make("cta_label.{$locale}")
+                                        ->label(__('partner::partner.fields.cta_label'))
+                                        ->maxLength(60),
+                                ], 'links')->columnSpanFull(),
                             ]),
                         // Lus seulement : l'app les tient à jour.
                         Tab::make(__('partner::partner.sections.stats'))
