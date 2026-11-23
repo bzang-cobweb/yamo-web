@@ -46,6 +46,16 @@ class Partner extends Model implements HasMedia
     /** @var list<string> */
     public array $translatable = ['name', 'description', 'url', 'cta_label'];
 
+    /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables). */
+    protected static function booted(): void
+    {
+        static::creating(function (Partner $partner): void {
+            if (! $partner->isDirty('position')) {
+                $partner->position = (int) self::query()->max('position') + 1;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

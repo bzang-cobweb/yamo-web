@@ -22,8 +22,6 @@ return [
         'published' => 'Veröffentlicht',
         'starts_at' => 'Beginn',
         'expires_at' => 'Läuft ab am',
-        'position' => 'Reihenfolge',
-        'position_help' => 'Kleinste zuerst.',
         'contact_email' => 'Kontakt-E-Mail',
         'contact_phone' => 'Kontakttelefon',
         'views_count' => 'Aufrufe',

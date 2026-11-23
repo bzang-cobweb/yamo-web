@@ -74,12 +74,6 @@ abstract class PartnerForm
                                     ->label(__('partner::partner.fields.starts_at')),
                                 DateTimePicker::make('expires_at')
                                     ->label(__('partner::partner.fields.expires_at')),
-                                TextInput::make('position')
-                                    ->label(__('partner::partner.fields.position'))
-                                    ->helperText(__('partner::partner.fields.position_help'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->default(0),
                             ]),
                         Tab::make(__('partner::partner.sections.contact'))
                             ->columns(2)

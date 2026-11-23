@@ -22,8 +22,6 @@ return [
         'published' => 'Published',
         'starts_at' => 'Starts',
         'expires_at' => 'Expires on',
-        'position' => 'Order',
-        'position_help' => 'Smallest first.',
         'contact_email' => 'Contact email',
         'contact_phone' => 'Contact phone',
         'views_count' => 'Views',

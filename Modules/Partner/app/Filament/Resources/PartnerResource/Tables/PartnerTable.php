@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Partner\Models\Partner;
 
 /**
- * Les partenaires, dans leur ordre d'affichage ; leur campagne et leurs compteurs (décision
- * 2026-11-23-module-partenaires).
+ * Les partenaires, dans leur ordre d'affichage, triables par glisser-déposer ; leur campagne et leurs compteurs
+ * (décisions 2026-11-23-module-partenaires et 2026-11-23-partenaires-triables).
  */
 abstract class PartnerTable
 {
@@ -21,6 +21,8 @@ abstract class PartnerTable
     {
         return $table
             ->defaultSort('position')
+            // Glisser-déposer pour l'ordre d'affichage dans l'app (décision 2026-11-23-partenaires-triables).
+            ->reorderable('position')
             ->modifyQueryUsing(fn ($query) => $query->with(['country', 'media']))
             ->columns([
                 SpatieMediaLibraryImageColumn::make('logo')
@@ -46,9 +48,6 @@ abstract class PartnerTable
                     ->label(__('partner::partner.fields.expires_at'))
                     ->dateTime()
                     ->placeholder('—')
-                    ->sortable(),
-                TextColumn::make('position')
-                    ->label(__('partner::partner.fields.position'))
                     ->sortable(),
                 TextColumn::make('views_count')
                     ->label(__('partner::partner.fields.views_count'))

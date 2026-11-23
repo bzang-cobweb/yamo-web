@@ -88,7 +88,7 @@ class PartnerApiTest extends TestCase
     public function test_as_many_partners_as_set_in_the_application_drawn_at_random(): void
     {
         // Décision 2026-11-23-accueil-nombres-reglables : 10 sans réglage, sinon le nombre réglé.
-        Partner::factory()->count(12)->for($this->cameroon)->create();
+        Partner::factory()->count(12)->for($this->cameroon)->sequence(fn ($sequence) => ['position' => 12 - $sequence->index])->create();
         $this->assertCount(10, $this->partners()->json('data'));
 
         Setting::current()->update(['home_partners' => 3]);
@@ -96,6 +96,14 @@ class PartnerApiTest extends TestCase
         $draws->each(fn (array $ids) => $this->assertCount(3, $ids));
         // Le tirage change d'un appel à l'autre.
         $this->assertGreaterThan(1, $draws->map(fn (array $ids): string => implode(',', $ids))->unique()->count());
+        // Tirés au hasard, puis rangés dans l'ordre du back-office (décision 2026-11-23-partenaires-triables).
+        $positions = Partner::query()->pluck('position', 'id');
+        $draws->each(function (array $ids) use ($positions): void {
+            $order = array_map(fn (string $id): int => (int) $positions[(int) $id], $ids);
+            $sorted = $order;
+            sort($sorted);
+            $this->assertSame($sorted, $order);
+        });
         // Seuls les partenaires servis comptent une vue.
         $this->assertSame(10 + 6 * 3, (int) Partner::query()->sum('views_count'));
     }

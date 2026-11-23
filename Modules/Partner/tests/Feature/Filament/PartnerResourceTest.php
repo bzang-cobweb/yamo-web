@@ -34,7 +34,6 @@ class PartnerResourceTest extends AuthFilamentTestCase
                 'cta_label' => ['fr' => 'Être rappelé', 'en' => 'Call me back'],
                 'published' => true,
                 'expires_at' => now()->addMonth()->toDateTimeString(),
-                'position' => 2,
                 'contact_email' => 'pub@littoral.test',
             ])
             ->call('create')
@@ -45,7 +44,8 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertSame('https://littoral.test/en', $partner->getTranslation('url', 'en'));
         $this->assertSame('Être rappelé', $partner->getTranslation('cta_label', 'fr'));
         $this->assertTrue($partner->published);
-        $this->assertSame(2, $partner->position);
+        // Rangé à la fin (décision 2026-11-23-partenaires-triables).
+        $this->assertSame($existing->position + 1, $partner->position);
 
         // Le nom, obligatoire dans la langue par défaut.
         Livewire::test(CreatePartner::class)
@@ -62,6 +62,20 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertSame(['Nouveau nom', 120], [$existing->fresh()->getTranslation('name', 'fr'), $existing->fresh()->views_count]);
         // Recherché dans toutes ses langues.
         Livewire::test(ListPartners::class)->searchTable('Littoral Insurance')->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$existing]);
+    }
+
+    public function test_partners_are_sorted_by_drag_and_drop(): void
+    {
+        // Décision 2026-11-23-partenaires-triables.
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $country = Country::factory()->create();
+        [$a, $b, $c] = Partner::factory()->count(3)->for($country)->sequence(['position' => 1], ['position' => 2], ['position' => 3])->create()->all();
+
+        Livewire::test(ListPartners::class)
+            ->assertCanSeeTableRecords([$a, $b, $c], inOrder: true)
+            ->call('reorderTable', [(string) $c->getKey(), (string) $a->getKey(), (string) $b->getKey()]);
+
+        $this->assertSame([1, 2, 3], [$c->fresh()->position, $a->fresh()->position, $b->fresh()->position]);
     }
 
     public function test_hidden_without_the_permission(): void

@@ -27,7 +27,6 @@ class PartnerFactory extends Factory
             'url' => ['fr' => 'https://example.test/fr', 'en' => 'https://example.test/en'],
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],
             'published' => true,
-            'position' => 0,
         ];
     }
 }

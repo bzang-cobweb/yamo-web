@@ -14,13 +14,15 @@ class PartnerService
 {
     /**
      * Des partenaires visibles tirés au hasard, autant que réglé dans « Application » (décision
-     * 2026-11-23-accueil-nombres-reglables) ; chacun compte une vue.
+     * 2026-11-23-accueil-nombres-reglables), puis rangés dans l'ordre du back-office (décision
+     * 2026-11-23-partenaires-triables) ; chacun compte une vue.
      *
      * @return Collection<int, Partner>
      */
     public function shown(): Collection
     {
-        $partners = Partner::query()->visible()->with('media')->inRandomOrder()->limit(Setting::homePartners())->get();
+        $partners = Partner::query()->visible()->with('media')->inRandomOrder()->limit(Setting::homePartners())->get()
+            ->sortBy([['position', 'asc'], ['id', 'asc']])->values();
 
         if ($partners->isNotEmpty()) {
             Partner::query()->whereKey($partners->modelKeys())->increment('views_count');
