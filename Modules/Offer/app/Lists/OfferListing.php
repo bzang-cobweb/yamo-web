@@ -88,6 +88,9 @@ class OfferListing extends Listing
         return ['label' => $domain->addLabel(), 'form' => OfferForm::name(), 'link' => null];
     }
 
+    /** Les statuts de demande du filtre « Demande » (décision 2026-11-22-logements-filtre-statut-demande). */
+    private const BOOKING_STATUSES = [BookingStatusEnum::PENDING, BookingStatusEnum::ACCEPTED, BookingStatusEnum::REFUSED, BookingStatusEnum::CANCELLED, BookingStatusEnum::EXPIRED];
+
     /**
      * Le statut de l'annonce, puis les filtres de l'accueil, parmi ses propres offres
      * (décision 2026-11-19-contrat-reservations-logements-profil).
@@ -98,8 +101,11 @@ class OfferListing extends Listing
             Field::select('status')
                 ->label(__('offer::booking.profile.offer_status'))
                 ->options(OfferStatusEnum::options()),
-            // Les logements qui ont au moins une demande dans ce statut : à venir, en attente, passée.
-            BookingFilters::statusSelect('booking_status', __('offer::booking.profile.filter_booking_status')),
+            // Les logements qui ont au moins une demande dans ce statut : en attente, acceptée, refusée, annulée, expirée
+            // (décision 2026-11-22-logements-filtre-statut-demande).
+            Field::select('booking_status')
+                ->label(__('offer::booking.profile.filter_booking_status'))
+                ->options(collect(self::BOOKING_STATUSES)->mapWithKeys(fn (BookingStatusEnum $status): array => [$status->value => $status->label()])->all()),
             ...$this->offerFilters($this->mine()),
         ];
     }
@@ -109,9 +115,14 @@ class OfferListing extends Listing
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        $group = BookingFilters::group($filters, 'booking_status');
-        if ($group !== null) {
-            $query->whereHas('bookings', fn (Builder $bookings) => $bookings->inStatusGroup($group));
+        $status = BookingStatusEnum::tryFrom(is_string($filters['booking_status'] ?? null) ? $filters['booking_status'] : '');
+        if ($status !== null && in_array($status, self::BOOKING_STATUSES, true)) {
+            // En attente : sans les expirées ; expirée : enregistrée ou en attente et passée.
+            $query->whereHas('bookings', fn (Builder $bookings) => match ($status) {
+                BookingStatusEnum::PENDING => $bookings->awaitingAnswer(),
+                BookingStatusEnum::EXPIRED => $bookings->expired(),
+                default => $bookings->where('status', $status),
+            });
         }
         $this->applyOfferFilters($query, $filters);
     }

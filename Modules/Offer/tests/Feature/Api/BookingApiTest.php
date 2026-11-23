@@ -608,23 +608,27 @@ class BookingApiTest extends TestCase
 
     public function test_my_homes_are_filtered_by_the_status_of_their_requests(): void
     {
+        // Décision 2026-11-22-logements-filtre-statut-demande.
         $owner = $this->member();
-        $pending = $this->home(true, $owner);
-        $upcoming = $this->home(true, $owner);
-        $quiet = $this->home(true, $owner);
-        Booking::factory()->for($pending)->create();
-        Booking::factory()->for($upcoming)->status(BookingStatusEnum::ACCEPTED)->create();
-        Booking::factory()->for($quiet)->status(BookingStatusEnum::REFUSED)->create();
-        $ids = fn (string $group): array => collect($this->asUser($owner)->getJson("/api/v1/lists/offer.mine?filter[booking_status]={$group}")->json('data.items'))->pluck('id')->sort()->values()->all();
+        $homes = [];
+        foreach (['pending', 'accepted', 'refused', 'cancelled', 'expired'] as $status) {
+            $homes[$status] = $this->home(true, $owner);
+            Booking::factory()->for($homes[$status])->status(BookingStatusEnum::from($status))->create(['check_in' => today()->addDays(10), 'check_out' => today()->addDays(12)]);
+        }
+        // En attente mais passée : expirée, pas en attente.
+        $late = $this->home(true, $owner);
+        Booking::factory()->for($late)->create(['check_in' => today()->subDays(3), 'check_out' => today()->subDay()]);
+        $ids = fn (string $status): array => collect($this->asUser($owner)->getJson("/api/v1/lists/offer.mine?filter[booking_status]={$status}")->json('data.items'))->pluck('id')->sort()->values()->all();
 
         $filter = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'booking_status');
-        $this->assertSame('Demande', $filter['label']);
-        $this->assertSame('select', $filter['type']);
-        $this->assertSame(['upcoming', 'pending', 'past'], array_column($filter['options'], 'value'));
+        $this->assertSame(['Demande', 'select'], [$filter['label'], $filter['type']]);
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'expired'], array_column($filter['options'], 'value'));
+        $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Expirée'], array_column($filter['options'], 'label'));
 
-        $this->assertSame([(string) $pending->getKey()], $ids('pending'));
-        $this->assertSame([(string) $upcoming->getKey()], $ids('upcoming'));
-        $this->assertSame([(string) $quiet->getKey()], $ids('past'));
-        $this->assertCount(3, $ids(''));
+        foreach (['pending', 'accepted', 'refused', 'cancelled'] as $status) {
+            $this->assertSame([(string) $homes[$status]->getKey()], $ids($status));
+        }
+        $this->assertSame(collect([$homes['expired'], $late])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(), $ids('expired'));
+        $this->assertCount(6, $ids(''));
     }
 }

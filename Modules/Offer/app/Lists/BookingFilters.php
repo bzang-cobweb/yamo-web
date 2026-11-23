@@ -29,17 +29,6 @@ final class BookingFilters
     }
 
     /**
-     * Le même filtre en liste déroulante, sans « Tous » (vide : toutes) : pour une liste
-     * où il côtoie d'autres listes déroulantes (« Mes logements »).
-     */
-    public static function statusSelect(string $name, string $label): Field
-    {
-        return Field::select($name)
-            ->label($label)
-            ->options(collect(Booking::STATUS_GROUPS)->mapWithKeys(fn (string $group): array => [$group => __('offer::booking.profile.filter_'.$group)])->all());
-    }
-
-    /**
      * La période d'une demande, d'après ses dates seulement : à venir, en cours, passées ; vide :
      * toutes (décision 2026-11-21-reservations-periode-dates).
      */
