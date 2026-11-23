@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-accueil-carrousels-par-ville.md
 # `2026-11-23` — App : un onglet « Recherche », l'accueil vidé
 
 - **Type** : décision
