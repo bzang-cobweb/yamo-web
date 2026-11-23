@@ -1,3 +1,4 @@
+Remplacée par : 2026-11-23-detail-titre-compose-avec-ville.md
 # Page d'une demande : le titre composé sans la ville ; « Disponible dès le » avant l'adresse
 
 - **Date** : 2026-11-22
