@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-23-partenaire-pays-dans-contact.md
 Remplace en partie : 2026-11-23-module-partenaires.md (le nom, le formulaire).
 
 # `2026-11-23` — Partenaires : le nom traduit, le formulaire en onglets
