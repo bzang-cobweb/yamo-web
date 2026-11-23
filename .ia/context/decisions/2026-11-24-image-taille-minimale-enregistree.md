@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-image-regle-minimum-par-cadre.md
+
 # `2026-11-24` — Taille minimale à l'envoi : la taille enregistrée
 
 Remplace : 2026-11-24-image-taille-minimale-max.md

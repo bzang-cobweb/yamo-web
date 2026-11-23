@@ -24,7 +24,7 @@ return [
     'delete_locked' => 'This home has a pending or accepted request: it cannot be removed until it is settled or over.',
     'published_at' => 'Published on',
     'photos' => 'Photos',
-    'photos_help' => 'The first one is the main photo. JPEG, PNG or WebP, at least :pixels px on the longest side.',
+    'photos_help' => 'The first one is the main photo. JPEG, PNG or WebP, at least :pixels px wide.',
     'attributes' => 'Features',
     'statuses' => [
         'draft' => 'Draft',

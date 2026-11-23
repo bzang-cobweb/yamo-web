@@ -24,7 +24,7 @@ return [
     'delete_locked' => 'Diese Unterkunft hat eine ausstehende oder angenommene Anfrage: sie kann erst entfernt werden, wenn sie erledigt oder beendet ist.',
     'published_at' => 'Veröffentlicht am',
     'photos' => 'Fotos',
-    'photos_help' => 'Das erste ist das Hauptfoto. JPEG, PNG oder WebP, mindestens :pixels px auf der längsten Seite.',
+    'photos_help' => 'Das erste ist das Hauptfoto. JPEG, PNG oder WebP, mindestens :pixels px breit.',
     'attributes' => 'Merkmale',
     'statuses' => [
         'draft' => 'Entwurf',

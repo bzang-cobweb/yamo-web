@@ -1,4 +1,4 @@
-Remplacée en partie par : 2026-11-24-partenaire-logo-list-608.md, 2026-11-24-partenaire-logo-original.md, 2026-11-24-image-taille-minimale-commune.md
+Remplacée en partie par : 2026-11-24-partenaire-logo-list-608.md, 2026-11-24-partenaire-logo-original.md, 2026-11-24-image-taille-minimale-commune.md, 2026-11-24-image-regle-minimum-par-cadre.md
 
 # `2026-11-24` — Logo d'un partenaire : 960 px au moins à l'envoi
 

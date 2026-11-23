@@ -4,6 +4,7 @@ namespace Tests\Unit\Support;
 
 use App\Support\Media\ConfiguredImageService;
 use Modules\Form\Rules\MinImageSide;
+use Spatie\Image\Enums\Fit;
 use Tests\TestCase;
 
 /**
@@ -48,5 +49,54 @@ class ConfiguredImageServiceTest extends TestCase
         $this->assertSame(2048, $service::storedSize());
         $this->assertSame(2048, $service::minUploadSize());
         $this->assertSame(1, $service::maxFiles());
+    }
+
+    public function test_the_rule_follows_the_frame_and_the_fit(): void
+    {
+        config(['testing.image' => ['conversions' => ['card' => 540, 'page' => 1200]]]);
+
+        // Entière dans un carré : le plus grand côté.
+        $square = $this->service();
+        $this->assertEquals([new MinImageSide(1200)], $square::uploadRules());
+
+        // Recadrée : les deux côtés (décision 2026-11-24-image-regle-minimum-par-cadre).
+        $cropped = get_class(new class extends ConfiguredImageService
+        {
+            protected static function configKey(): string
+            {
+                return 'testing.image';
+            }
+
+            protected static function collection(): string
+            {
+                return 'images';
+            }
+
+            protected static function fit(): Fit
+            {
+                return Fit::Crop;
+            }
+        });
+        $this->assertSame('dimensions:min_width=1200,min_height=1200', (string) $cropped::uploadRules()[0]);
+
+        // Entière, bornée par la largeur : la largeur.
+        $wide = get_class(new class extends ConfiguredImageService
+        {
+            protected static function configKey(): string
+            {
+                return 'testing.image';
+            }
+
+            protected static function collection(): string
+            {
+                return 'images';
+            }
+
+            public static function bounds(int $size): array
+            {
+                return [$size, 4 * $size];
+            }
+        });
+        $this->assertSame('dimensions:min_width=1200', (string) $wide::uploadRules()[0]);
     }
 }

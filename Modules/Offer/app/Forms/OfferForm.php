@@ -183,7 +183,7 @@ class OfferForm extends Form
                 ->accept(OfferPhotoService::acceptedMimeTypes())
                 ->maxSize(OfferPhotoService::maxUploadKb())
                 // Au moins la taille enregistrée (décision 2026-11-24-image-taille-minimale-enregistree).
-                ->minImageSide(OfferPhotoService::minUploadSize())
+                ->uploadRules(OfferPhotoService::uploadRules())
                 ->maxFiles(OfferPhotoService::maxFiles())
                 ->files(app(OfferPhotoService::class)->current($offer))
                 ->required(),

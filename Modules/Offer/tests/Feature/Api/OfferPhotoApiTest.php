@@ -127,17 +127,18 @@ class OfferPhotoApiTest extends TestCase
         $this->assertSame(0, FormUpload::query()->count());
     }
 
-    public function test_a_photo_smaller_than_the_largest_conversion_is_refused(): void
+    public function test_a_photo_narrower_than_the_stored_width_is_refused(): void
     {
-        // Au moins la plus grande conversion (`web`, 1920 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-enregistree).
+        // Bornée par la largeur : au moins 1920 px de large, une photo en hauteur aussi (décision
+        // 2026-11-24-image-regle-minimum-par-cadre).
         $user = $this->member();
 
-        $this->upload($user, UploadedFile::fake()->image('petite.jpg', 1919, 1080))->assertUnprocessable()
-            ->assertJsonPath('errors.file.0', "L'image doit mesurer au moins 1920 px sur son plus grand côté.");
-        $this->upload($user, UploadedFile::fake()->image('portrait.jpg', 1080, 1920))->assertCreated();
+        $this->upload($user, UploadedFile::fake()->image('petite.jpg', 1919, 1080))->assertUnprocessable()->assertJsonValidationErrors(['file']);
+        $this->upload($user, UploadedFile::fake()->image('portrait-etroit.jpg', 1080, 1920))->assertUnprocessable()->assertJsonValidationErrors(['file']);
+        $this->upload($user, UploadedFile::fake()->image('portrait.jpg', 1920, 2560))->assertCreated();
 
         $photos = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'))->firstWhere('name', 'photos');
-        $this->assertStringContainsString('au moins 1920 px', $photos['help']);
+        $this->assertStringContainsString('au moins 1920 px de large', $photos['help']);
     }
 
     public function test_a_guest_cannot_send_a_file(): void

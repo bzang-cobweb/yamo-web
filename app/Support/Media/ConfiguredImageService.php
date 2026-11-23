@@ -5,6 +5,8 @@ namespace App\Support\Media;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Dimensions;
 use Modules\Form\Models\FormUpload;
 use Modules\Form\Rules\MinImageSide;
 use Spatie\Image\Enums\Fit;
@@ -78,7 +80,7 @@ abstract class ConfiguredImageService
     }
 
     /**
-     * Le plus grand côté minimal d'une image envoyée, en pixels : la taille enregistrée (`storedSize()`), pour que ni
+     * La taille minimale d'une image envoyée, en pixels : la taille enregistrée (`storedSize()`), pour que ni
      * l'image enregistrée, qui peut s'ouvrir en grand, ni aucune conversion ne soit un agrandissement (décision
      * 2026-11-24-image-taille-minimale-enregistree).
      */
@@ -99,18 +101,36 @@ abstract class ConfiguredImageService
     }
 
     /**
-     * Les règles d'un fichier envoyé propres à l'image, au-delà du type et du poids : le minimum à l'envoi s'il y en
-     * a un. Pour le back-office (`->rules()`) et toute validation écrite à la main.
+     * Les règles d'un fichier envoyé propres à l'image, au-delà du type et du poids : le minimum à l'envoi, tiré du
+     * cadre de l'image enregistrée (`bounds(minUploadSize())`) et de la façon d'y tenir (`fit()`), pour qu'elle ne
+     * soit jamais agrandie (décision 2026-11-24-image-regle-minimum-par-cadre) :
+     * - recadrée (`Fit::Crop`, la photo de profil) : les deux côtés au moins ceux du cadre (`dimensions`) ;
+     * - entière dans un cadre plus haut que large (les photos d'une offre, bornées par la largeur) : la largeur ;
+     * - entière dans un cadre plus large que haut : la hauteur ;
+     * - entière dans un carré (le logo) : le plus grand côté (`MinImageSide`, que `dimensions` ne sait pas dire).
+     * Pour l'app (`Field::uploadRules()`), le back-office (`->rules()`) et toute validation écrite à la main.
      *
-     * @return list<ValidationRule>
+     * @return list<ValidationRule|Dimensions>
      */
     public static function uploadRules(): array
     {
-        if (static::minUploadSize() <= 0) {
+        $size = static::minUploadSize();
+        if ($size <= 0) {
             return [];
         }
 
-        return [new MinImageSide(static::minUploadSize())];
+        [$width, $height] = static::bounds($size);
+        if (static::fit() === Fit::Crop) {
+            return [Rule::dimensions()->minWidth($width)->minHeight($height)];
+        }
+        if ($width === $height) {
+            return [new MinImageSide($width)];
+        }
+        if ($height > $width) {
+            return [Rule::dimensions()->minWidth($width)];
+        }
+
+        return [Rule::dimensions()->minHeight($height)];
     }
 
     /**

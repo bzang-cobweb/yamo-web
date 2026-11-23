@@ -12,7 +12,6 @@ use Illuminate\Validation\Rule;
 use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Models\FormUpload;
-use Modules\Form\Rules\MinImageSide;
 use Modules\Form\Rules\NoContactDetails;
 use Modules\Form\Rules\OptionBelongsToParent;
 
@@ -106,8 +105,12 @@ final class Field
 
     private int $maxFiles = 1;
 
-    /** Plus grand côté minimal d'une image envoyée, en pixels (`minImageSide()`) ; `null` : aucun. */
-    private ?int $minImageSide = null;
+    /**
+     * Règles de plus pour chaque fichier envoyé (`uploadRules()`) : le minimum d'une image.
+     *
+     * @var list<mixed>
+     */
+    private array $uploadRules = [];
 
     /** @var array<string, string> */
     private array $files = [];
@@ -296,13 +299,15 @@ final class Field
     }
 
     /**
-     * Une image envoyée mesure au moins `$pixels` sur son plus grand côté (décision 2026-11-24-logo-taille-minimale).
+     * Des règles de plus pour chaque fichier envoyé, après le type et le poids : le minimum d'une image, celui de son
+     * service (`ConfiguredImageService::uploadRules()`, décision 2026-11-24-image-regle-minimum-par-cadre).
+     *
+     * @param  list<mixed>  $rules
      */
-    public function minImageSide(int $pixels): self
+    public function uploadRules(array $rules): self
     {
         $this->assertUpload();
-        // 0 : aucun minimum (`ConfiguredImageService::minUploadSize()` sans réglage).
-        $this->minImageSide = $pixels > 0 ? $pixels : null;
+        $this->uploadRules = $rules;
 
         return $this;
     }
@@ -350,7 +355,7 @@ final class Field
             ...($this->accept === [] ? [] : ['mimetypes:'.implode(',', $this->accept)]),
             'max:'.$this->maxSizeKb,
             ...($images ? ['dimensions:max_width=10000,max_height=10000'] : []),
-            ...($this->minImageSide === null ? [] : [new MinImageSide($this->minImageSide)]),
+            ...$this->uploadRules,
         ];
     }
 

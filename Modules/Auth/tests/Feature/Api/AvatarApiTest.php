@@ -75,13 +75,14 @@ class AvatarApiTest extends TestCase
 
     public function test_a_photo_smaller_than_the_stored_size_is_refused(): void
     {
-        // Au moins la taille enregistrée (l'original, 720 px) sur le plus grand côté : il peut s'ouvrir en grand
-        // (décision 2026-11-24-image-taille-minimale-enregistree).
+        // Recadrée en carré de 720 px (l'original, qui peut s'ouvrir en grand) : les deux côtés au moins 720 (décisions
+        // 2026-11-24-image-taille-minimale-enregistree et 2026-11-24-image-regle-minimum-par-cadre).
         $user = User::factory()->create();
 
         $this->upload($user, UploadedFile::fake()->image('petite.png', 719, 719))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
         $this->assertNull($this->avatarOf($user));
-        $this->upload($user, UploadedFile::fake()->image('juste.png', 720, 500))->assertOk();
+        $this->upload($user, UploadedFile::fake()->image('basse.png', 1200, 500))->assertUnprocessable()->assertJsonValidationErrors(['avatar']);
+        $this->upload($user, UploadedFile::fake()->image('juste.png', 720, 720))->assertOk();
     }
 
     public function test_a_small_photo_is_cropped_without_being_enlarged(): void
