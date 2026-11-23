@@ -11,7 +11,7 @@ use Modules\Offer\Notifications\BookingNotification;
  * l'autre partie est prévenue, et qui agit retrouve son étape dans son propre fil, déjà lue (décisions
  * 2026-11-20-reponse-dans-son-fil et 2026-11-21-reservation-comme-notification).
  */
-class BookingNotifier
+class BookingNotifierService
 {
     /** Une demande : le propriétaire est prévenu. */
     public function ownerOfRequest(Booking $booking): void

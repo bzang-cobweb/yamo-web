@@ -6,16 +6,16 @@ use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Offer\Models\Booking;
-use Modules\Offer\Services\BookingThreadDetails;
+use Modules\Offer\Services\BookingThreadDetailsService;
 
 /**
  * Sur la page d'une notification du fil d'une demande (`booking:12`), la demande et ce qu'en voit
- * le lecteur (décision 2026-11-20-notification-generique) : le travail est fait par `BookingThreadDetails`.
+ * le lecteur (décision 2026-11-20-notification-generique) : le travail est fait par `BookingThreadDetailsService`.
  */
 final class AddBookingToNotificationThread
 {
     public function __construct(
-        private readonly BookingThreadDetails $details,
+        private readonly BookingThreadDetailsService $bookingThreadDetailsService,
     ) {}
 
     public function handle(NotificationThreadSerializing $event): void
@@ -28,6 +28,6 @@ final class AddBookingToNotificationThread
         $reader = request()->user();
 
         // 2. Appeler le service ; un identifiant illisible vaut une demande supprimée.
-        $event->data = $this->details->forThread(ctype_digit($id) ? (int) $id : null, $event->data, $reader instanceof User ? $reader : null);
+        $event->data = $this->bookingThreadDetailsService->forThread(ctype_digit($id) ? (int) $id : null, $event->data, $reader instanceof User ? $reader : null);
     }
 }

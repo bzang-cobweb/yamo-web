@@ -80,9 +80,9 @@ class OfferController
     /**
      * Publier son brouillon (décision 2026-11-23-publier-depublier-menu).
      */
-    public function publish(Offer $offer, OfferService $service): Response
+    public function publish(Offer $offer, OfferService $offerService): Response
     {
-        $service->changeStatus($offer, OfferStatusEnum::PUBLISHED);
+        $offerService->changeStatus($offer, OfferStatusEnum::PUBLISHED);
 
         return response()->noContent();
     }
@@ -90,9 +90,9 @@ class OfferController
     /**
      * Repasser en brouillon son logement publié (décision 2026-11-23-publier-depublier-menu).
      */
-    public function unpublish(Offer $offer, OfferService $service): Response
+    public function unpublish(Offer $offer, OfferService $offerService): Response
     {
-        $service->changeStatus($offer, OfferStatusEnum::DRAFT);
+        $offerService->changeStatus($offer, OfferStatusEnum::DRAFT);
 
         return response()->noContent();
     }

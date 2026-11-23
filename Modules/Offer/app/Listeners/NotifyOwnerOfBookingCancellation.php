@@ -3,7 +3,7 @@
 namespace Modules\Offer\Listeners;
 
 use Modules\Offer\Events\BookingCancelled;
-use Modules\Offer\Services\BookingNotifier;
+use Modules\Offer\Services\BookingNotifierService;
 
 /**
  * Une annulation : le propriétaire de l'offre est prévenu (décision
@@ -12,11 +12,11 @@ use Modules\Offer\Services\BookingNotifier;
 final class NotifyOwnerOfBookingCancellation
 {
     public function __construct(
-        private readonly BookingNotifier $notifier,
+        private readonly BookingNotifierService $bookingNotifierService,
     ) {}
 
     public function handle(BookingCancelled $event): void
     {
-        $this->notifier->ownerOfCancellation($event->booking);
+        $this->bookingNotifierService->ownerOfCancellation($event->booking);
     }
 }

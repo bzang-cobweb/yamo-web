@@ -3,7 +3,7 @@
 namespace Modules\Offer\Listeners;
 
 use Modules\Offer\Events\BookingAnswered;
-use Modules\Offer\Services\BookingNotifier;
+use Modules\Offer\Services\BookingNotifierService;
 
 /**
  * Une réponse : le membre est prévenu, acceptée ou refusée (décision
@@ -12,11 +12,11 @@ use Modules\Offer\Services\BookingNotifier;
 final class NotifyGuestOfBookingAnswer
 {
     public function __construct(
-        private readonly BookingNotifier $notifier,
+        private readonly BookingNotifierService $bookingNotifierService,
     ) {}
 
     public function handle(BookingAnswered $event): void
     {
-        $this->notifier->guestOfAnswer($event->booking);
+        $this->bookingNotifierService->guestOfAnswer($event->booking);
     }
 }

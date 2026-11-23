@@ -18,8 +18,8 @@ use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
 use Modules\Offer\Listeners\NotifyOwnerOfOwnAnswer;
 use Modules\Offer\Models\Booking;
-use Modules\Offer\Services\BookingNotifier;
-use Modules\Offer\Services\BookingThreadDetails;
+use Modules\Offer\Services\BookingNotifierService;
+use Modules\Offer\Services\BookingThreadDetailsService;
 use Tests\TestCase;
 
 /**
@@ -45,14 +45,14 @@ class BookingListenersTest extends TestCase
     public function test_the_notify_listeners_call_the_notifier_with_the_booking(): void
     {
         $booking = new Booking;
-        $this->mock(BookingNotifier::class, function (MockInterface $notifier) use ($booking): void {
-            $notifier->shouldReceive('ownerOfRequest')->once()->with($booking);
-            $notifier->shouldReceive('ownerOfUpdate')->once()->with($booking, true);
-            $notifier->shouldReceive('ownerOfCancellation')->once()->with($booking);
-            $notifier->shouldReceive('ownerOfOwnAnswer')->once()->with($booking);
-            $notifier->shouldReceive('guestOfAnswer')->once()->with($booking);
-            $notifier->shouldReceive('guestOfOwnRequest')->once()->with($booking);
-            $notifier->shouldReceive('guestOfOwnCancellation')->once()->with($booking);
+        $this->mock(BookingNotifierService::class, function (MockInterface $bookingNotifierService) use ($booking): void {
+            $bookingNotifierService->shouldReceive('ownerOfRequest')->once()->with($booking);
+            $bookingNotifierService->shouldReceive('ownerOfUpdate')->once()->with($booking, true);
+            $bookingNotifierService->shouldReceive('ownerOfCancellation')->once()->with($booking);
+            $bookingNotifierService->shouldReceive('ownerOfOwnAnswer')->once()->with($booking);
+            $bookingNotifierService->shouldReceive('guestOfAnswer')->once()->with($booking);
+            $bookingNotifierService->shouldReceive('guestOfOwnRequest')->once()->with($booking);
+            $bookingNotifierService->shouldReceive('guestOfOwnCancellation')->once()->with($booking);
         });
 
         app(NotifyOwnerOfBookingRequest::class)->handle(new BookingRequested($booking));
@@ -68,10 +68,10 @@ class BookingListenersTest extends TestCase
     {
         $reader = new User;
         request()->setUserResolver(fn (): User => $reader);
-        $this->mock(BookingThreadDetails::class, function (MockInterface $details) use ($reader): void {
-            $details->shouldReceive('forThread')->once()->with(12, ['title' => 'Avant'], $reader)->andReturn(['title' => 'Après']);
+        $this->mock(BookingThreadDetailsService::class, function (MockInterface $bookingThreadDetailsService) use ($reader): void {
+            $bookingThreadDetailsService->shouldReceive('forThread')->once()->with(12, ['title' => 'Avant'], $reader)->andReturn(['title' => 'Après']);
             // Un identifiant illisible : comme une demande supprimée.
-            $details->shouldReceive('forThread')->once()->with(null, [], $reader)->andReturn(['booking' => null]);
+            $bookingThreadDetailsService->shouldReceive('forThread')->once()->with(null, [], $reader)->andReturn(['booking' => null]);
         });
 
         $event = new NotificationThreadSerializing(new DatabaseNotification, Booking::THREAD_PREFIX.'12', ['title' => 'Avant']);
@@ -85,7 +85,7 @@ class BookingListenersTest extends TestCase
 
     public function test_the_thread_listener_ignores_other_threads(): void
     {
-        $this->mock(BookingThreadDetails::class, fn (MockInterface $details) => $details->shouldNotReceive('forThread'));
+        $this->mock(BookingThreadDetailsService::class, fn (MockInterface $bookingThreadDetailsService) => $bookingThreadDetailsService->shouldNotReceive('forThread'));
 
         $event = new NotificationThreadSerializing(new DatabaseNotification, 'review:3', ['title' => 'Avis']);
         app(AddBookingToNotificationThread::class)->handle($event);

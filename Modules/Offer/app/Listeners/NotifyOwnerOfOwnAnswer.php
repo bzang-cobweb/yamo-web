@@ -3,7 +3,7 @@
 namespace Modules\Offer\Listeners;
 
 use Modules\Offer\Events\BookingAnswered;
-use Modules\Offer\Services\BookingNotifier;
+use Modules\Offer\Services\BookingNotifierService;
 
 /**
  * Une réponse : le propriétaire la retrouve dans son propre fil, déjà lue, et sa carte
@@ -12,11 +12,11 @@ use Modules\Offer\Services\BookingNotifier;
 final class NotifyOwnerOfOwnAnswer
 {
     public function __construct(
-        private readonly BookingNotifier $notifier,
+        private readonly BookingNotifierService $bookingNotifierService,
     ) {}
 
     public function handle(BookingAnswered $event): void
     {
-        $this->notifier->ownerOfOwnAnswer($event->booking);
+        $this->bookingNotifierService->ownerOfOwnAnswer($event->booking);
     }
 }

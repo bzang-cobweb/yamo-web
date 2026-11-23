@@ -18,7 +18,7 @@ use Modules\Offer\Support\BookingCache;
  * (décision 2026-11-21-detail-reservation-modifier) ; tant qu'il peut l'annuler, un second bouton,
  * « Annuler », ouvre son formulaire d'annulation (décision 2026-11-21-annuler-depuis-le-detail).
  */
-class BookingThreadDetails
+class BookingThreadDetailsService
 {
     public function __construct(
         private readonly BookingCache $cache,
