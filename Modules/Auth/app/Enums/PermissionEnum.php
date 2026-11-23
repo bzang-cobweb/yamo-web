@@ -45,6 +45,12 @@ enum PermissionEnum: string
     case VIEW_OFFER_REVIEWS = 'offer_reviews.view';
     case DELETE_OFFER_REVIEWS = 'offer_reviews.delete';
 
+    // Les partenaires de l'accueil (décision 2026-11-23-module-partenaires).
+    case VIEW_PARTNERS = 'partners.view';
+    case CREATE_PARTNERS = 'partners.create';
+    case UPDATE_PARTNERS = 'partners.update';
+    case DELETE_PARTNERS = 'partners.delete';
+
     case UPDATE_SETTINGS = 'settings.update';
 
     public function label(): string

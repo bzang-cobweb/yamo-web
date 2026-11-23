@@ -43,6 +43,11 @@ enum RoleEnum: string
                 PermissionEnum::CREATE_OFFERS,
                 PermissionEnum::UPDATE_OFFERS,
                 PermissionEnum::DELETE_OFFERS,
+                // Les partenaires de l'accueil (décision 2026-11-23-module-partenaires).
+                PermissionEnum::VIEW_PARTNERS,
+                PermissionEnum::CREATE_PARTNERS,
+                PermissionEnum::UPDATE_PARTNERS,
+                PermissionEnum::DELETE_PARTNERS,
             ],
         };
     }

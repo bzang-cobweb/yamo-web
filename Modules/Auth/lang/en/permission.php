@@ -57,6 +57,12 @@ return [
             'view' => 'View offer reviews',
             'delete' => 'Delete offer reviews',
         ],
+        'partners' => [
+            'view' => 'View partners',
+            'create' => 'Create partners',
+            'update' => 'Edit partners',
+            'delete' => 'Delete partners',
+        ],
         'settings' => [
             'update' => 'Edit the application settings',
         ],

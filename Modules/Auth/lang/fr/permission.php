@@ -57,6 +57,12 @@ return [
             'view' => 'Voir les avis sur les offres',
             'delete' => 'Supprimer des avis sur les offres',
         ],
+        'partners' => [
+            'view' => 'Voir les partenaires',
+            'create' => 'Créer des partenaires',
+            'update' => 'Modifier les partenaires',
+            'delete' => 'Supprimer des partenaires',
+        ],
         'settings' => [
             'update' => 'Modifier les réglages de l\'application',
         ],

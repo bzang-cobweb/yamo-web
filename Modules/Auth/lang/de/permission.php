@@ -57,6 +57,12 @@ return [
             'view' => 'Bewertungen von Angeboten ansehen',
             'delete' => 'Bewertungen von Angeboten löschen',
         ],
+        'partners' => [
+            'view' => 'Partner anzeigen',
+            'create' => 'Partner erstellen',
+            'update' => 'Partner bearbeiten',
+            'delete' => 'Partner löschen',
+        ],
         'settings' => [
             'update' => 'Einstellungen der Anwendung bearbeiten',
         ],

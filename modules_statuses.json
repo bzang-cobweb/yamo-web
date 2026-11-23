@@ -3,5 +3,6 @@
     "Form": true,
     "Location": true,
     "Offer": true,
-    "Notification": true
+    "Notification": true,
+    "Partner": true
 }

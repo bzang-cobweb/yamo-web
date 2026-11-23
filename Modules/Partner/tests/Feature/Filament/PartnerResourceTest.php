@@ -1,0 +1,64 @@
+<?php
+
+namespace Modules\Partner\Tests\Feature\Filament;
+
+use Livewire\Livewire;
+use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
+use Modules\Location\Models\Country;
+use Modules\Partner\Filament\Resources\PartnerResource;
+use Modules\Partner\Filament\Resources\PartnerResource\Pages\CreatePartner;
+use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
+use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
+use Modules\Partner\Models\Partner;
+
+/**
+ * Les partenaires au back-office (décision 2026-11-23-module-partenaires).
+ */
+class PartnerResourceTest extends AuthFilamentTestCase
+{
+    public function test_partners_are_listed_created_and_edited_with_texts_per_language(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::CREATE_PARTNERS, PermissionEnum::UPDATE_PARTNERS, PermissionEnum::DELETE_PARTNERS);
+        $country = Country::factory()->create();
+        $existing = Partner::factory()->for($country)->create(['views_count' => 120, 'clicks_count' => 7]);
+
+        Livewire::test(ListPartners::class)->assertCanSeeTableRecords([$existing]);
+
+        Livewire::test(CreatePartner::class)
+            ->fillForm([
+                'name' => 'Assurances du Littoral',
+                'country_id' => $country->getKey(),
+                'description' => ['fr' => 'Assurance habitation.', 'en' => 'Home insurance.'],
+                'url' => ['fr' => 'https://littoral.test/fr', 'en' => 'https://littoral.test/en'],
+                'cta_label' => ['fr' => 'Être rappelé', 'en' => 'Call me back'],
+                'published' => true,
+                'expires_at' => now()->addMonth()->toDateTimeString(),
+                'position' => 2,
+                'contact_email' => 'pub@littoral.test',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $partner = Partner::query()->where('name', 'Assurances du Littoral')->sole();
+        $this->assertSame('https://littoral.test/en', $partner->getTranslation('url', 'en'));
+        $this->assertSame('Être rappelé', $partner->getTranslation('cta_label', 'fr'));
+        $this->assertTrue($partner->published);
+        $this->assertSame(2, $partner->position);
+
+        // Les compteurs se lisent, ils ne s'écrivent pas.
+        Livewire::test(EditPartner::class, ['record' => $existing->getKey()])
+            ->assertFormSet(['views_count' => 120, 'clicks_count' => 7])
+            ->fillForm(['name' => 'Nouveau nom', 'views_count' => 0])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(['Nouveau nom', 120], [$existing->fresh()->name, $existing->fresh()->views_count]);
+    }
+
+    public function test_hidden_without_the_permission(): void
+    {
+        $this->actingAsUserWith();
+
+        $this->get(PartnerResource::getUrl('index'))->assertForbidden();
+    }
+}
