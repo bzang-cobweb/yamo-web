@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-24-partenaires-statuts.md
 # `2026-11-24` — Les membres proposent et gèrent leurs partenaires
 
 - **Type** : décision
