@@ -189,7 +189,8 @@ class OfferCalendarApiTest extends TestCase
 
         $day = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar/{$this->date(41)}")->assertOk()->json('data');
         $this->assertSame([(string) $pending->getKey()], array_column($day['items'], 'id'));
-        $this->assertSame(['Accepter', 'Refuser', "Masquer l'adresse"], array_column($day['items'][0]['actions'], 'label'));
+        // Sans afficher ou masquer l'adresse (décision 2026-11-22-calendrier-sans-adresse).
+        $this->assertSame(['Accepter', 'Refuser'], array_column($day['items'][0]['actions'], 'label'));
         // La carte de « Demandes reçues », la même que dans la liste (décision 2026-11-22-calendrier-carte-demandes-recues) :
         // le nom du membre vers sa page, le statut, le type et les dates.
         $card = $day['items'][0];

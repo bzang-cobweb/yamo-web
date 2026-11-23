@@ -231,9 +231,9 @@ class ReceivedBookingListing extends Listing
     }
 
     /**
-     * Les boutons d'une demande : « Accepter », « Refuser » tant qu'elle attend, puis afficher ou masquer l'adresse.
-     * Plus sur les cartes de la liste (décision 2026-11-22-demandes-carte-seule), mais dans le panneau du jour du
-     * calendrier (décision 2026-11-19-contrat-calendrier-offre).
+     * Les boutons d'une demande : « Accepter », « Refuser » tant qu'elle attend. Plus sur les cartes de la liste
+     * (décision 2026-11-22-demandes-carte-seule), mais dans le panneau du jour du calendrier (décision
+     * 2026-11-19-contrat-calendrier-offre), sans afficher ou masquer l'adresse (décision 2026-11-22-calendrier-sans-adresse).
      */
     public function withAnswerActions(ListItem $item, Booking $record, string $locale): ListItem
     {
@@ -249,16 +249,7 @@ class ReceivedBookingListing extends Listing
                 ->action(__('offer::booking.profile.refuse'), 'destructive', form: BookingRefuseForm::name());
         }
 
-        // Puis, quel que soit le statut, afficher ou masquer l'adresse au demandeur (décision 2026-11-21-afficher-adresse).
-        return $item->action(
-            __('offer::booking.profile.'.($record->show_address ? 'hide_address' : 'show_address')),
-            submission: Submission::toRoute(
-                'api.v1.bookings.address.'.($record->show_address ? 'hide' : 'show'),
-                SuccessAction::BACK,
-                __('offer::booking.profile.'.($record->show_address ? 'address_hidden' : 'address_shown')),
-                parameters: ['booking' => $record->getKey()],
-            ),
-        );
+        return $item;
     }
 
     /**
