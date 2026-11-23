@@ -4,11 +4,8 @@ namespace Modules\Partner\Services;
 
 use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
-use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
 use Modules\Partner\Models\Partner;
-use Spatie\Image\Enums\Fit;
-use Spatie\Image\Image;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -29,6 +26,12 @@ class PartnerLogoService extends ConfiguredImageService
     protected static function configKey(): string
     {
         return 'partner.logo';
+    }
+
+    /** Un seul logo : `singleFile()`, un nouveau remplace l'ancien (`store()` de `ConfiguredImageService`). */
+    protected static function collection(): string
+    {
+        return Partner::LOGO;
     }
 
     /**
@@ -84,42 +87,6 @@ class PartnerLogoService extends ConfiguredImageService
     {
         $media = $this->store($partner, $upload->absolutePath(), $upload->uuid);
         $upload->discard();
-
-        return $media;
-    }
-
-    /**
-     * Le fichier `$sourcePath` devient le logo : l'original gardé en WebP, plafonné sur son grand côté (`storedSize()`,
-     * décision 2026-11-24-partenaire-logo-original), proportions gardées ; les conversions en sont tirées ; tailles et
-     * qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
-     * 2026-11-24-partenaire-logo-optimise) ; `singleFile()` : il remplace l'ancien.
-     */
-    public function store(Partner $partner, string $sourcePath, ?string $name = null): Media
-    {
-        $base = (string) tempnam(sys_get_temp_dir(), 'partner');
-        $optimised = $base.'.webp';
-
-        try {
-            Image::load($sourcePath)
-                ->orientation()
-                ->fit(Fit::Max, self::storedSize(), self::storedSize())
-                ->quality(self::quality())
-                ->format('webp')
-                ->save($optimised);
-
-            $media = $partner->addMedia($optimised)
-                ->usingName('logo')
-                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
-                ->toMediaCollection(Partner::LOGO);
-        } finally {
-            foreach ([$base, $optimised] as $path) {
-                if (is_file($path)) {
-                    unlink($path);
-                }
-            }
-        }
-
-        $partner->unsetRelation('media');
 
         return $media;
     }

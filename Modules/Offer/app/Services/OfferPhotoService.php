@@ -5,11 +5,8 @@ namespace Modules\Offer\Services;
 use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
 use Modules\Offer\Models\Offer;
-use Spatie\Image\Enums\Fit;
-use Spatie\Image\Image;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -32,16 +29,26 @@ class OfferPhotoService extends ConfiguredImageService
         return 'offer.photos';
     }
 
+    protected static function collection(): string
+    {
+        return Offer::PHOTOS;
+    }
+
+    protected static function mediaName(): string
+    {
+        return 'photo';
+    }
+
     /**
-     * Le cadre d'une largeur `$width` : les photos remplissent un cadre 16:9 dans l'app, c'est leur largeur qui
+     * Le cadre d'une largeur `$size` : les photos remplissent un cadre 16:9 dans l'app, c'est leur largeur qui
      * compte ; une photo en hauteur garde ainsi toute sa largeur. La hauteur est bornée à quatre fois la largeur,
      * contre les images démesurées.
      *
      * @return array{0: int, 1: int}
      */
-    public static function bounds(int $width): array
+    public static function bounds(int $size): array
     {
-        return [$width, 4 * $width];
+        return [$size, 4 * $size];
     }
 
     /**
@@ -94,42 +101,6 @@ class OfferPhotoService extends ConfiguredImageService
     {
         $media = $this->store($offer, $upload->absolutePath(), $upload->uuid);
         $upload->discard();
-
-        return $media;
-    }
-
-    /**
-     * Le fichier `$sourcePath` devient une photo de l'offre, optimisée : WebP, la plus grande des conversions au plus
-     * en largeur (`storedSize()`, `bounds()`), proportions gardées ; l'original n'est pas conservé. La même pour
-     * l'app, le back-office et les données de démo (décision 2026-11-24-avatar-photos-offre-conversions).
-     */
-    public function store(Offer $offer, string $sourcePath, ?string $name = null): Media
-    {
-        $base = (string) tempnam(sys_get_temp_dir(), 'offer');
-        $optimised = $base.'.webp';
-        [$width, $height] = self::bounds(self::storedSize());
-
-        try {
-            Image::load($sourcePath)
-                ->orientation()
-                ->fit(Fit::Max, $width, $height)
-                ->quality(self::quality())
-                ->format('webp')
-                ->save($optimised);
-
-            $media = $offer->addMedia($optimised)
-                ->usingName('photo')
-                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
-                ->toMediaCollection(Offer::PHOTOS);
-        } finally {
-            foreach ([$base, $optimised] as $path) {
-                if (is_file($path)) {
-                    unlink($path);
-                }
-            }
-        }
-
-        $offer->unsetRelation('media');
 
         return $media;
     }

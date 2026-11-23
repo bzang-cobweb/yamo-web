@@ -2,11 +2,18 @@
 
 namespace App\Support\Media;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Spatie\Image\Enums\Fit;
+use Spatie\Image\Image;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
 /**
- * Les réglages d'une image envoyée, lus dans la configuration de son module (décision
- * 2026-11-24-image-service-abstrait) : un seul domicile pour leur lecture. Chaque service d'image (`OfferPhotoService`,
- * `PartnerLogoService`) l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`) ; ce qui lui est propre
- * (cadre d'une photo, minimum à l'envoi d'un logo) reste chez lui.
+ * Une image envoyée : ses réglages, lus dans la configuration de son module, et son enregistrement (décision
+ * 2026-11-24-image-service-abstrait) ; un seul domicile pour les deux. Chaque service d'image (`OfferPhotoService`,
+ * `PartnerLogoService`) l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`) et sa collection ; ce qui
+ * lui est propre (cadre d'une photo, minimum à l'envoi d'un logo, envoi depuis l'app) reste chez lui.
  *
  * Clés lues sous `configKey()` : `mime_types`, `max_upload_kb`, `max_files` (1 par défaut), `quality`,
  * `original_size` (facultative) et `conversions` (nom => taille, en pixels).
@@ -83,5 +90,65 @@ abstract class ConfiguredImageService
         }
 
         return max($sizes);
+    }
+
+    /** La collection de médias de l'image (`Offer::PHOTOS`, `Partner::LOGO`). */
+    abstract protected static function collection(): string;
+
+    /** Le nom donné au média enregistré ; celui de la collection par défaut. */
+    protected static function mediaName(): string
+    {
+        return static::collection();
+    }
+
+    /**
+     * Le cadre d'une taille `$size` (largeur, hauteur), dans lequel l'image tient, proportions gardées : un carré par
+     * défaut (le plus grand côté) ; un service peut le redéfinir (une photo bornée par sa largeur).
+     *
+     * @return array{0: int, 1: int}
+     */
+    public static function bounds(int $size): array
+    {
+        return [$size, $size];
+    }
+
+    /**
+     * Le fichier `$sourcePath` devient une image de `$model`, dans sa collection : redressée (EXIF), en WebP, tenue
+     * dans le cadre de la taille enregistrée (`bounds(storedSize())`), jamais agrandie ; le fichier envoyé tel quel
+     * n'est pas gardé (décision 2026-11-24-image-service-abstrait). Le même pour l'app, le back-office et les données
+     * de démo ; une collection `singleFile()` remplace l'image précédente.
+     */
+    public function store(HasMedia $model, string $sourcePath, ?string $name = null): Media
+    {
+        $base = (string) tempnam(sys_get_temp_dir(), 'image');
+        $optimised = $base.'.webp';
+        [$width, $height] = static::bounds(static::storedSize());
+
+        try {
+            Image::load($sourcePath)
+                ->orientation()
+                ->fit(Fit::Max, $width, $height)
+                ->quality(static::quality())
+                ->format('webp')
+                ->save($optimised);
+
+            $media = $model->addMedia($optimised)
+                ->usingName(static::mediaName())
+                ->usingFileName(($name ?? (string) Str::uuid()).'.webp')
+                ->toMediaCollection(static::collection());
+        } finally {
+            foreach ([$base, $optimised] as $path) {
+                if (is_file($path)) {
+                    unlink($path);
+                }
+            }
+        }
+
+        // Sans quoi le modèle garde en mémoire ses anciens médias, et `getFirstMedia()` l'image remplacée.
+        if ($model instanceof Model) {
+            $model->unsetRelation('media');
+        }
+
+        return $media;
     }
 }
