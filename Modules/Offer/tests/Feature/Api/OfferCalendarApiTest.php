@@ -12,6 +12,7 @@ use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingRequestReceived;
@@ -114,6 +115,8 @@ class OfferCalendarApiTest extends TestCase
         $data = $this->asUser($offer->user)->getJson("/api/v1/offers/{$offer->getKey()}/calendar")->assertOk()->json('data');
         $this->assertSame(today()->format('Y-m'), $data['month']);
         $this->assertSame('Calendrier', $data['title']);
+        // Le titre composé, sous le titre (décision 2026-11-22-calendrier-titre-compose).
+        $this->assertSame(OfferCardTitle::of($offer, 'fr')[1], $data['composed_title']);
         $this->assertSame($offer->getTranslation('title', 'fr'), $data['heading']);
         $this->assertSame($offer->fullAddress(), $data['address']);
         $this->assertSame($offer->indication('fr'), $data['indication']);

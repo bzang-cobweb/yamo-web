@@ -11,6 +11,7 @@ use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -81,6 +82,8 @@ class OfferCalendar
             'title' => __('offer::booking.calendar.title', [], $locale),
             /** Titre du contenu : le titre saisi de l'offre (« Studio photos »). */
             'heading' => $this->offerTitle($offer, $locale),
+            /** Le titre composé, sous le titre (« Location meublée · Studio · Douala », décision 2026-11-22-calendrier-titre-compose) ; `null` : aucun. */
+            'composed_title' => OfferCardTitle::of($offer, $locale)[1],
             /** Son adresse sous le titre (« Rue Njo-Njo, Bonapriso, 00237 Douala, Cameroun »), ou `null`. */
             'address' => $this->offerAddress($offer, $locale),
             /** Les indications de l'adresse, dessous (« Portail vert, 2e étage »), ou `null`. */
