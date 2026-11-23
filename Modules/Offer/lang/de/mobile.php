@@ -4,6 +4,10 @@
 // (App\Support\MobileMessages). Variables use the :name format.
 
 return [
+    // L'accueil : « Voir tout » d'une ville ouvre la recherche filtrée sur elle (décision 2026-11-23-accueil-voir-tout).
+    'home' => [
+        'seeAll' => 'Alle anzeigen',
+    ],
     'offer' => [
         'unavailable' => 'Dieses Angebot ist nicht mehr verfügbar.',
         'publishedOn' => 'Veröffentlicht am :date',
