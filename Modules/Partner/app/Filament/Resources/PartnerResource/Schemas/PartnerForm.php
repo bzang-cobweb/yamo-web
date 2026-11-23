@@ -36,7 +36,7 @@ abstract class PartnerForm
                         Tab::make(__('partner::partner.sections.identity'))
                             ->columns(2)
                             ->schema([
-                                // Optimisé comme depuis l'app : WebP, 512 px au plus, l'original n'est pas gardé (décision
+                                // Optimisé comme depuis l'app : WebP, la plus grande conversion au plus, l'original n'est pas gardé (décision
                                 // 2026-11-24-partenaire-logo-optimise).
                                 SpatieMediaLibraryFileUpload::make('logo')
                                     ->label(__('partner::partner.fields.logo'))

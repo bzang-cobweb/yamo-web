@@ -9,12 +9,11 @@ return [
         'mime_types' => array_values(array_filter(array_map('trim', explode(',', (string) env('PARTNER_LOGO_MIME_TYPES', 'image/jpeg,image/png,image/webp'))))),
         // La taille maximale d'un envoi, en kilo-octets.
         'max_upload_kb' => (int) env('PARTNER_LOGO_MAX_UPLOAD_KB', 5120),
-        // Le plus grand côté du logo enregistré, en pixels.
-        'stored_size' => (int) env('PARTNER_LOGO_STORED_SIZE', 512),
         // La qualité du WebP enregistré, de 1 à 100.
         'quality' => (int) env('PARTNER_LOGO_QUALITY', 85),
         // Une conversion par endroit où le logo s'affiche : le plus grand côté, en pixels (trois fois l'affichage,
         // pour les écrans haute densité) ; proportions gardées, en WebP (décision 2026-11-24-partenaire-logo-conversions).
+        // Le logo enregistré prend la plus grande de ces tailles (décision 2026-11-24-partenaire-logo-taille-unique).
         'conversions' => [
             // Le carrousel de l'accueil (96 points).
             'home' => (int) env('PARTNER_LOGO_HOME_SIZE', 288),

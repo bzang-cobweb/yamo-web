@@ -36,10 +36,18 @@ class PartnerLogoService
         return (int) config('partner.logo.max_upload_kb');
     }
 
-    /** Le plus grand côté du logo enregistré, en pixels (`PARTNER_LOGO_STORED_SIZE`). */
-    private function storedSize(): int
+    /**
+     * Le plus grand côté du logo enregistré, en pixels : la plus grande des conversions, dont il est la source (une
+     * image n'est jamais agrandie) ; une seule règle (décision 2026-11-24-partenaire-logo-taille-unique).
+     */
+    public static function storedSize(): int
     {
-        return (int) config('partner.logo.stored_size');
+        $sizes = array_map('intval', (array) config('partner.logo.conversions'));
+        if ($sizes === []) {
+            return 512;
+        }
+
+        return max($sizes);
     }
 
     /** La qualité du WebP enregistré (`PARTNER_LOGO_QUALITY`). */
@@ -96,8 +104,8 @@ class PartnerLogoService
     }
 
     /**
-     * Le fichier `$sourcePath` devient le logo, optimisé : WebP, 512 px au plus sur le grand côté, proportions
-     * gardées ; l'original n'est pas conservé ; tailles et qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
+     * Le fichier `$sourcePath` devient le logo, optimisé : WebP, la plus grande des conversions au plus sur le grand
+     * côté (`storedSize()`), proportions gardées ; l'original n'est pas conservé ; tailles et qualité réglées dans `config('partner.logo')`. Le même pour l'app et le back-office (décision
      * 2026-11-24-partenaire-logo-optimise) ; `singleFile()` : il remplace l'ancien.
      */
     public function store(Partner $partner, string $sourcePath, ?string $name = null): Media
@@ -108,7 +116,7 @@ class PartnerLogoService
         try {
             Image::load($sourcePath)
                 ->orientation()
-                ->fit(Fit::Max, $this->storedSize(), $this->storedSize())
+                ->fit(Fit::Max, self::storedSize(), self::storedSize())
                 ->quality($this->quality())
                 ->format('webp')
                 ->save($optimised);

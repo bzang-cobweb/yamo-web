@@ -150,13 +150,15 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertNotNull($media);
         $this->assertSame('image/webp', $media->mime_type);
         [$width, $height] = getimagesize(Storage::disk('public')->path($media->getPathRelativeToRoot()));
-        $this->assertSame([512, 154], [$width, $height]);
+        // La plus grande conversion (« mine », 480 px) : 2000 × 600 devient 480 × 144 (décision 2026-11-24-partenaire-logo-taille-unique).
+        $this->assertSame([480, 144], [$width, $height]);
         // L'original n'est pas gardé : un seul fichier dans le dossier du logo.
         $this->assertCount(1, Storage::disk('public')->files(dirname($media->getPathRelativeToRoot())));
         $this->assertSame($partner->fresh()->logoUrl(), $media->getUrl());
 
-        // Les réglages viennent de la configuration (`PARTNER_LOGO_*`, décision 2026-11-24-partenaire-logo-config).
-        config(['partner.logo.stored_size' => 256]);
+        // Les réglages viennent de la configuration (`PARTNER_LOGO_*`, décision 2026-11-24-partenaire-logo-config) : la
+        // plus grande conversion fixe la taille enregistrée.
+        config(['partner.logo.conversions' => ['home' => 200, 'list' => 100, 'mine' => 256, 'detail' => 250]]);
         Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
             ->fillForm(['logo' => UploadedFile::fake()->image('logo.png', 2000, 600)])
             ->call('save')
