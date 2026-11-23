@@ -461,6 +461,7 @@ class BookingThreadTest extends TestCase
 
         // Une fois répondue : « Mes réservations » revient.
         app(BookingService::class)->answer($booking, true);
+        $this->assertNull($page($this->owner)['link']);
         $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
         $this->assertSame('Mes réservations', $page($this->guest)['link_label']);
         // Acceptée, pas encore commencée : toujours annulable.
@@ -469,7 +470,9 @@ class BookingThreadTest extends TestCase
         // Terminée : « Laisser un avis », tant qu'il n'en a pas donné (décision 2026-11-22-avis-apres-demande-terminee).
         $this->travel(10)->days();
         $this->assertSame(['/offers/'.$booking->offer_id.'/review', 'Laisser un avis'], [$page($this->guest)['link'], $page($this->guest)['link_label']]);
-        $this->assertSame('Traiter la demande', $page($this->owner)['link_label']);
+        // Le propriétaire : plus de « Traiter la demande », elle n'attend plus (décision 2026-11-22-traiter-si-en-attente).
+        $this->assertNull($page($this->owner)['link']);
+        $this->assertNull($page($this->owner)['link_label']);
         $booking->offer->reviews()->create(['user_id' => $this->guest->getKey(), 'rating' => 5, 'comment' => 'Parfait.']);
         $this->assertSame('/profile/lists/offer.bookings', $page($this->guest)['link']);
         $this->travelBack();

@@ -118,6 +118,13 @@ class AddBookingToNotificationThread
             $event->data['link_label'] = __('offer::booking.review_cta');
         }
 
+        // Le propriétaire : « Traiter la demande » seulement tant qu'elle attend une réponse (décision
+        // 2026-11-22-traiter-si-en-attente).
+        if ($hosting && ! $mine && ! $booking->isAwaitingAnswer()) {
+            $event->data['link'] = null;
+            $event->data['link_label'] = null;
+        }
+
         if ($mine && $booking->isAwaitingAnswer()) {
             $event->data['link'] = '/profile/'.BookingEditForm::name().'?record='.$booking->getKey();
             $event->data['link_label'] = __('offer::booking.form.edit');
