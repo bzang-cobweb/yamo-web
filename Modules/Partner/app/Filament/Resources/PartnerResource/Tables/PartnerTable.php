@@ -8,6 +8,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -27,8 +28,9 @@ abstract class PartnerTable
                     ->collection(Partner::LOGO),
                 TextColumn::make('name')
                     ->label(__('partner::partner.fields.name'))
-                    ->searchable()
-                    ->sortable(),
+                    ->state(fn (Partner $record): string => (string) $record->getTranslation('name', app()->getLocale()))
+                    // Le nom traduit : la recherche porte sur toutes ses langues.
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where('name', 'like', '%'.$search.'%')),
                 TextColumn::make('country.code')
                     ->label(__('partner::partner.fields.country'))
                     ->state(fn (Partner $record): string => $record->country->label()),

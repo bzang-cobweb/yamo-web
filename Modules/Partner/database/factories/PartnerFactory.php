@@ -18,9 +18,11 @@ class PartnerFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->company();
+
         return [
             'country_id' => Country::factory(),
-            'name' => fake()->company(),
+            'name' => ['fr' => $name, 'en' => $name],
             'description' => ['fr' => 'Déménagement clés en main.', 'en' => 'Turnkey moving.'],
             'url' => ['fr' => 'https://example.test/fr', 'en' => 'https://example.test/en'],
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],

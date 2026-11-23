@@ -44,7 +44,7 @@ class Partner extends Model implements HasMedia
     public const LOGO = 'logo';
 
     /** @var list<string> */
-    public array $translatable = ['description', 'url', 'cta_label'];
+    public array $translatable = ['name', 'description', 'url', 'cta_label'];
 
     protected function casts(): array
     {

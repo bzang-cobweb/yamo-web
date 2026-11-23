@@ -25,7 +25,7 @@ class PartnerResource extends JsonResource
 
         return [
             'id' => (string) $partner->getKey(),
-            'name' => $partner->name,
+            'name' => (string) $partner->getTranslation('name', app()->getLocale()),
             'description' => $text('description'),
             'url' => $text('url'),
             'cta_label' => $text('cta_label'),

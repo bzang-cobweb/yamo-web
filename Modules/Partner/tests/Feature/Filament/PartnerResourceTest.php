@@ -27,7 +27,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
 
         Livewire::test(CreatePartner::class)
             ->fillForm([
-                'name' => 'Assurances du Littoral',
+                'name' => ['fr' => 'Assurances du Littoral', 'en' => 'Littoral Insurance'],
                 'country_id' => $country->getKey(),
                 'description' => ['fr' => 'Assurance habitation.', 'en' => 'Home insurance.'],
                 'url' => ['fr' => 'https://littoral.test/fr', 'en' => 'https://littoral.test/en'],
@@ -40,19 +40,28 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $partner = Partner::query()->where('name', 'Assurances du Littoral')->sole();
+        $partner = Partner::query()->where('name->fr', 'Assurances du Littoral')->sole();
+        $this->assertSame('Littoral Insurance', $partner->getTranslation('name', 'en'));
         $this->assertSame('https://littoral.test/en', $partner->getTranslation('url', 'en'));
         $this->assertSame('Être rappelé', $partner->getTranslation('cta_label', 'fr'));
         $this->assertTrue($partner->published);
         $this->assertSame(2, $partner->position);
 
+        // Le nom, obligatoire dans la langue par défaut.
+        Livewire::test(CreatePartner::class)
+            ->fillForm(['name' => ['en' => 'Only English'], 'country_id' => $country->getKey()])
+            ->call('create')
+            ->assertHasFormErrors(['name.fr' => 'required']);
+
         // Les compteurs se lisent, ils ne s'écrivent pas.
         Livewire::test(EditPartner::class, ['record' => $existing->getKey()])
             ->assertFormSet(['views_count' => 120, 'clicks_count' => 7])
-            ->fillForm(['name' => 'Nouveau nom', 'views_count' => 0])
+            ->fillForm(['name' => ['fr' => 'Nouveau nom'], 'views_count' => 0])
             ->call('save')
             ->assertHasNoFormErrors();
-        $this->assertSame(['Nouveau nom', 120], [$existing->fresh()->name, $existing->fresh()->views_count]);
+        $this->assertSame(['Nouveau nom', 120], [$existing->fresh()->getTranslation('name', 'fr'), $existing->fresh()->views_count]);
+        // Recherché dans toutes ses langues.
+        Livewire::test(ListPartners::class)->searchTable('Littoral Insurance')->assertCanSeeTableRecords([$partner])->assertCanNotSeeTableRecords([$existing]);
     }
 
     public function test_hidden_without_the_permission(): void

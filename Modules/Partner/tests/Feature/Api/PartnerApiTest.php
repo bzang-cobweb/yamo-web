@@ -30,9 +30,9 @@ class PartnerApiTest extends TestCase
 
     public function test_only_visible_partners_of_the_country_in_their_order_with_their_texts_in_the_language(): void
     {
-        $second = Partner::factory()->for($this->cameroon)->create(['name' => 'Second', 'position' => 2]);
+        $second = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Second'], 'position' => 2]);
         $first = Partner::factory()->for($this->cameroon)->create([
-            'name' => 'Déménageurs du Wouri',
+            'name' => ['fr' => 'Déménageurs du Wouri', 'en' => 'Wouri Movers'],
             'position' => 1,
             'description' => ['fr' => 'Déménagement clés en main.', 'en' => 'Turnkey moving.'],
             'url' => ['fr' => 'https://wouri.test/fr', 'en' => 'https://wouri.test/en'],
@@ -62,8 +62,8 @@ class PartnerApiTest extends TestCase
         $this->assertArrayNotHasKey('contact_email', $data[0]);
         $this->assertArrayNotHasKey('views_count', $data[0]);
 
-        // Un lien par langue.
-        $this->assertSame('https://wouri.test/en', $this->partners('en')->json('data.0.url'));
+        // Un nom et un lien par langue.
+        $this->assertSame(['Wouri Movers', 'https://wouri.test/en'], [$this->partners('en')->json('data.0.name'), $this->partners('en')->json('data.0.url')]);
     }
 
     public function test_each_listing_counts_a_view_and_each_touch_a_click(): void
