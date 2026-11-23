@@ -139,6 +139,32 @@ class OfferBrowseListing extends Listing
         $query->orWhereHas('address', fn (Builder $address) => $address->where(fn (Builder $columns) => $this->orWhereContains($columns, ['city'], $term)));
     }
 
+    /**
+     * L'accueil de l'app : par ville, `$perCity` offres visibles tirées au hasard, en cartes comme la liste
+     * (décision 2026-11-23-accueil-carrousels-par-ville). Les villes par ordre alphabétique.
+     *
+     * @return list<array{city: string, items: list<array<string, mixed>>}>
+     */
+    public function cityCarousels(int $perCity = 10): array
+    {
+        $carousels = [];
+        foreach ($this->offerCities(Offer::query()->visibleToOthers()) as $city) {
+            $items = $this->base()
+                ->whereHas('address', fn (Builder $address) => $address->where('city', $city))
+                ->inRandomOrder()
+                ->limit($perCity)
+                ->get()
+                ->map(fn (Offer $offer): array => $this->item($offer)->toArray())
+                ->values()
+                ->all();
+            if ($items !== []) {
+                $carousels[] = ['city' => (string) $city, 'items' => $items];
+            }
+        }
+
+        return $carousels;
+    }
+
     public function item(Model $record): ListItem
     {
         /** @var Offer $record */

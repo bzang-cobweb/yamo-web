@@ -6,6 +6,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Offer\Http\Controllers\Api\BookingController;
+use Modules\Offer\Http\Controllers\Api\HomeController;
 use Modules\Offer\Http\Controllers\Api\MemberController;
 use Modules\Offer\Http\Controllers\Api\OfferCalendarController;
 use Modules\Offer\Http\Controllers\Api\OfferController;
@@ -16,6 +17,8 @@ use Modules\Offer\Models\Offer;
 
 // Fiche d'une offre, ouverte sans connexion (décision 2026-11-18-fiche-offre) :
 // l'autorisation (policy `show`, compte facultatif) est faite dans le contrôleur.
+// L'accueil de l'app : un carrousel par ville (décision 2026-11-23-accueil-carrousels-par-ville).
+Route::middleware([RequireOfferDomain::class, 'throttle:60,1'])->get('v1/home', [HomeController::class, 'index'])->name('v1.home');
 Route::middleware(RequireOfferDomain::class)->get('v1/offers/{offer}', [OfferController::class, 'show'])->name('v1.offers.show');
 // Tous ses avis, par pages, ouverts sans connexion comme la fiche (décision 2026-11-19-nuit-tous-les-avis).
 Route::middleware([RequireOfferDomain::class, 'throttle:60,1'])->get('v1/offers/{offer}/reviews', [OfferReviewController::class, 'index'])->name('v1.offers.reviews.index');
