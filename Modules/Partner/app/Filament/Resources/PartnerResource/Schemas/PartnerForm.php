@@ -46,6 +46,9 @@ abstract class PartnerForm
                                         ->maxLength(255),
                                     Textarea::make("description.{$locale}")
                                         ->label(__('partner::partner.fields.description'))
+                                        // Obligatoire dans la langue par défaut, comme le nom (décision
+                                        // 2026-11-24-partenaire-description-obligatoire).
+                                        ->required($locale === Locales::default())
                                         ->rows(3)
                                         ->maxLength(500),
                                     TextInput::make("url.{$locale}")

@@ -56,8 +56,10 @@ class PartnerForm extends Form
                 ->required()
                 ->maxLength(255)
                 ->default($text('name')),
+            // Obligatoire ; le logo, lui, est facultatif (décision 2026-11-24-partenaire-description-obligatoire).
             Field::textarea('description')
                 ->label(__('partner::partner.fields.description'))
+                ->required()
                 ->maxLength(500)
                 ->default($text('description')),
             Field::text('contact_phone')

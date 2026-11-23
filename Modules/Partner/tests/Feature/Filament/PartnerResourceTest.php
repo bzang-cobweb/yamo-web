@@ -54,7 +54,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
         Livewire::test(CreatePartner::class)
             ->fillForm(['name' => ['en' => 'Only English'], 'country_id' => $country->getKey()])
             ->call('create')
-            ->assertHasFormErrors(['name.fr' => 'required']);
+            ->assertHasFormErrors(['name.fr' => 'required', 'description.fr' => 'required']);
 
         // Les compteurs se lisent, ils ne s'écrivent pas.
         Livewire::test(EditPartner::class, ['record' => $existing->getKey()])

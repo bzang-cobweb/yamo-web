@@ -100,8 +100,11 @@ class MyPartnerApiTest extends TestCase
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
         $this->assertSame('partner.partner', $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer.form'));
 
-        // Invalides : un nom manquant, un lien qui n'en est pas un.
-        $this->asUser($user)->postJson('/api/v1/partners', ['url' => 'pas un lien'])->assertUnprocessable()->assertJsonValidationErrors(['name', 'url']);
+        // Invalides : un nom ou une description manquants, un lien qui n'en est pas un ; le logo est facultatif
+        // (décision 2026-11-24-partenaire-description-obligatoire).
+        $this->asUser($user)->postJson('/api/v1/partners', ['url' => 'pas un lien'])->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'description', 'url'])->assertJsonMissingValidationErrors(['logo']);
+        $this->asUser($user)->postJson('/api/v1/partners', ['name' => 'Sans logo', 'description' => 'Facultatif.'])->assertNoContent();
     }
 
     public function test_editing_prefills_saves_the_language_and_sends_it_back_for_review(): void
@@ -121,10 +124,10 @@ class MyPartnerApiTest extends TestCase
         // En anglais : le formulaire pré-rempli en anglais, l'envoi n'écrit que l'anglais.
         $english = collect($this->asUser($user)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}&content_locale=en")->json('data.fields'))->keyBy('name');
         $this->assertSame('Before', $english['name']['default']);
-        $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['content_locale' => 'en', 'name' => 'After', 'logo' => []])->assertNoContent();
+        $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['content_locale' => 'en', 'name' => 'After', 'description' => 'Text.', 'logo' => []])->assertNoContent();
         $this->assertSame(['Avant', 'After'], [$partner->fresh()->getTranslation('name', 'fr'), $partner->fresh()->getTranslation('name', 'en')]);
 
-        $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'logo' => []])->assertNoContent();
+        $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'description' => 'Texte.', 'logo' => []])->assertNoContent();
         $partner->refresh();
         // Seule la langue du compte change ; il repasse en validation.
         $this->assertSame(['Après', 'After', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
@@ -146,7 +149,7 @@ class MyPartnerApiTest extends TestCase
         $this->assertSame([], $this->asUser($stranger)->getJson('/api/v1/lists/partner.mine')->json('data.items'));
 
         // Un compte rattaché sans être administrateur : il modifie, il ne retire pas.
-        $this->asUser($helper)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié'])->assertNoContent();
+        $this->asUser($helper)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertNoContent();
         $this->asUser($helper)->deleteJson("/api/v1/partners/{$partner->getKey()}")->assertForbidden();
         $this->assertNull($this->asUser($helper)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.delete'));
 
