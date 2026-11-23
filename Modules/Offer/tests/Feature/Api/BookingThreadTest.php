@@ -17,7 +17,6 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Http\Resources\BookingResource;
-use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingReviewInvitation;
@@ -248,10 +247,8 @@ class BookingThreadTest extends TestCase
             // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
             // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
-            // Le titre composé avec la ville, sous le nom du logement (décisions 2026-11-22-detail-titre-compose-sous-titre et
-            // 2026-11-23-detail-titre-compose-avec-ville).
-            $this->assertSame(OfferCardTitle::of($this->offer->fresh(), 'fr')[1], $page['booking']['composed_title']);
-            $this->assertStringStartsWith('Location meublée · Studio · ', $page['booking']['composed_title']);
+            // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
+            $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
             $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
@@ -277,7 +274,10 @@ class BookingThreadTest extends TestCase
 
         // L'adresse du logement, avant les dates (décision 2026-11-21-detail-reservation-adresse).
         $this->offer->offerAddress()->create(['address_id' => Address::factory()->create(['street' => 'Rue Joss', 'zip' => '', 'city' => 'Douala'])->getKey()]);
-        $lines = (new BookingResource($booking->refresh()))->resolve(request())['lines'];
+        $resource = (new BookingResource($booking->refresh()))->resolve(request());
+        // La ville au bout du titre composé (décision 2026-11-23-detail-titre-compose-avec-ville).
+        $this->assertSame('Location meublée · Studio · Douala', $resource['composed_title']);
+        $lines = $resource['lines'];
         // Après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
         $this->assertSame(['arrival', 'departure', 'address', 'guests'], array_slice(array_column($lines, 'key'), 0, 4));
         $this->assertSame('Adresse', $lines[2]['label']);
