@@ -1,3 +1,6 @@
+Remplacée en partie par : 2026-11-24-logo-entier-marge-reduite.md
+
+
 # `2026-11-24` — « Mes partenaires » : le logo en entier
 
 - **Type** : décision
