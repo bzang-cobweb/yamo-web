@@ -34,15 +34,6 @@ class PartnerLogoService extends ConfiguredImageService
     }
 
     /**
-     * Le plus grand côté minimal d'un logo envoyé : la conversion `list`, la plus grande place où il s'affiche (cartes
-     * de « Mes partenaires »), pour qu'elle ne soit jamais un agrandissement (décision 2026-11-24-partenaire-logo-original).
-     */
-    public static function minUploadSize(): int
-    {
-        return static::conversionSize('list');
-    }
-
-    /**
      * Le logo actuel, pour le champ du formulaire : son identifiant (uuid du média) et son adresse.
      *
      * @return array<string, string>

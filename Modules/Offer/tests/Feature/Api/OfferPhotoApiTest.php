@@ -127,6 +127,19 @@ class OfferPhotoApiTest extends TestCase
         $this->assertSame(0, FormUpload::query()->count());
     }
 
+    public function test_a_photo_smaller_than_the_detail_conversion_is_refused(): void
+    {
+        // Au moins la conversion `detail` (1200 px) sur le plus grand côté (décision 2026-11-24-image-taille-minimale-commune).
+        $user = $this->member();
+
+        $this->upload($user, UploadedFile::fake()->image('petite.jpg', 1199, 800))->assertUnprocessable()
+            ->assertJsonPath('errors.file.0', "L'image doit mesurer au moins 1200 px sur son plus grand côté.");
+        $this->upload($user, UploadedFile::fake()->image('portrait.jpg', 900, 1200))->assertCreated();
+
+        $photos = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'))->firstWhere('name', 'photos');
+        $this->assertStringContainsString('au moins 1200 px', $photos['help']);
+    }
+
     public function test_a_guest_cannot_send_a_file(): void
     {
         $this->post('/api/v1/forms/offer.offer/uploads/photos', ['file' => UploadedFile::fake()->image('a.jpg')], ['Accept' => 'application/json'])

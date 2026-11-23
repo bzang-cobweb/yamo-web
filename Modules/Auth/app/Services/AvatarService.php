@@ -45,7 +45,7 @@ final class AvatarService extends ConfiguredImageService
     /**
      * Règles de validation d'un fichier envoyé.
      *
-     * @return list<string>
+     * @return list<mixed>
      */
     public static function rules(): array
     {
@@ -59,6 +59,8 @@ final class AvatarService extends ConfiguredImageService
             'max:'.self::maxUploadKb(),
             // Garde-fou contre les images démesurées à décoder.
             'dimensions:max_width=10000,max_height=10000',
+            // Au moins la conversion du profil (décision 2026-11-24-image-taille-minimale-commune).
+            ...self::uploadRules(),
         ];
     }
 

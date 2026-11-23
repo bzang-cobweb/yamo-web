@@ -2,22 +2,26 @@
 
 namespace App\Support\Media;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Modules\Form\Models\FormUpload;
+use Modules\Form\Rules\MinImageSide;
 use Spatie\Image\Enums\Fit;
 use Spatie\Image\Image;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- * Une image envoyée : ses réglages, lus dans la configuration de son module, et son enregistrement (décision
- * 2026-11-24-image-service-abstrait) ; un seul domicile pour les deux. Chaque service d'image (`OfferPhotoService`,
- * `PartnerLogoService`) l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`) et sa collection ; ce qui
- * lui est propre (cadre d'une photo, minimum à l'envoi d'un logo, envoi depuis l'app) reste chez lui.
+ * Une image envoyée : ses réglages, lus dans la configuration de son module, sa taille minimale à l'envoi et son
+ * enregistrement (décisions 2026-11-24-image-service-abstrait et 2026-11-24-image-taille-minimale-commune) ; un seul
+ * domicile pour les trois. Chaque service d'image (`OfferPhotoService`, `PartnerLogoService`, `AvatarService`)
+ * l'étend et ne déclare que sa clé (`offer.photos`, `partner.logo`, `auth.avatar`) et sa collection ; ce qui lui est
+ * propre (cadre d'une photo, envoi depuis l'app) reste chez lui.
  *
  * Clés lues sous `configKey()` : `mime_types`, `max_upload_kb`, `max_files` (1 par défaut), `quality`,
- * `original_size` (facultative) et `conversions` (nom => taille, en pixels).
+ * `original_size` (facultative), `min_upload` (facultative : le nom de la conversion qui fixe le minimum à l'envoi) et
+ * `conversions` (nom => taille, en pixels).
  */
 abstract class ConfiguredImageService
 {
@@ -72,6 +76,35 @@ abstract class ConfiguredImageService
     public static function conversionSize(string $name): int
     {
         return static::conversions()[$name] ?? 0;
+    }
+
+    /**
+     * Le plus grand côté minimal d'une image envoyée, en pixels : la taille de la conversion nommée par `min_upload`
+     * (la plus grande place où l'image doit rester nette) ; 0 : aucun minimum.
+     */
+    public static function minUploadSize(): int
+    {
+        $conversion = (string) static::setting('min_upload', '');
+        if ($conversion === '') {
+            return 0;
+        }
+
+        return static::conversionSize($conversion);
+    }
+
+    /**
+     * Les règles d'un fichier envoyé propres à l'image, au-delà du type et du poids : le minimum à l'envoi s'il y en
+     * a un. Pour le back-office (`->rules()`) et toute validation écrite à la main.
+     *
+     * @return list<ValidationRule>
+     */
+    public static function uploadRules(): array
+    {
+        if (static::minUploadSize() <= 0) {
+            return [];
+        }
+
+        return [new MinImageSide(static::minUploadSize())];
     }
 
     /**

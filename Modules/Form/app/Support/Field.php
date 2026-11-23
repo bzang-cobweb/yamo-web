@@ -301,7 +301,8 @@ final class Field
     public function minImageSide(int $pixels): self
     {
         $this->assertUpload();
-        $this->minImageSide = $pixels;
+        // 0 : aucun minimum (`ConfiguredImageService::minUploadSize()` sans réglage).
+        $this->minImageSide = $pixels > 0 ? $pixels : null;
 
         return $this;
     }

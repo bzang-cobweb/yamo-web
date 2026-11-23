@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-image-taille-minimale-commune.md
+
 # `2026-11-24` — Logo d'un partenaire : l'original gardé (1024 px au plus), `list` à 720 px et minimum à l'envoi
 
 Remplace : 2026-11-24-partenaire-logo-taille-unique.md, 2026-11-24-partenaire-logo-list-608.md

@@ -41,6 +41,9 @@ return [
         'max_upload_kb' => (int) env('AUTH_AVATAR_MAX_UPLOAD_KB', 5120),
         // La qualité du WebP enregistré, de 1 à 100.
         'quality' => (int) env('AUTH_AVATAR_QUALITY', 80),
+        // La conversion qui fixe le minimum à l'envoi, sur le plus grand côté : `profile`, la photo du profil
+        // (décision 2026-11-24-image-taille-minimale-commune).
+        'min_upload' => (string) env('AUTH_AVATAR_MIN_UPLOAD', 'profile'),
         // Une conversion par endroit où la photo s'affiche : le côté du carré, en pixels (trois fois l'affichage,
         // pour les écrans haute densité), recadré au centre, en WebP. La photo enregistrée est un carré de la plus
         // grande de ces tailles.
