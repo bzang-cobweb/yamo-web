@@ -237,19 +237,19 @@ class OfferDetailApiTest extends TestCase
         $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'pets' => 'no']]);
         $offer->update(['description' => ['fr' => 'Calme et lumineux.']]);
         $sections = $this->show($offer)->json('data.sections');
-        // Caractéristiques, description, localisation, puis le reste ; seule la première ouverte (décisions
-        // 2026-11-22-fiche-sections-ordre et 2026-11-22-fiche-premiere-section-ouverte).
+        // Caractéristiques, localisation, description, puis le reste ; seule la première ouverte (décisions
+        // 2026-11-22-fiche-localisation-apres-caracteristiques et 2026-11-22-fiche-premiere-section-ouverte).
         $this->assertSame([
             ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => true],
-            ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => false],
             ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => false],
+            ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => false],
             ['key' => 'rules', 'type' => 'rows', 'title' => 'Règles', 'open' => false],
             ['key' => 'reviews', 'type' => 'reviews', 'title' => 'Avis', 'open' => false],
         ], $this->outline($sections));
-        // Le contenu avec : les lignes, la description, l'adresse et son indication.
+        // Le contenu avec : les lignes, l'adresse et son indication, la description.
         $this->assertSame($this->show($offer)->json('data.facts'), $sections[0]['rows']);
-        $this->assertSame('Calme et lumineux.', $sections[1]['text']);
-        $this->assertSame($this->show($offer)->json('data.address'), $sections[2]['text']);
+        $this->assertSame($this->show($offer)->json('data.address'), $sections[1]['text']);
+        $this->assertSame('Calme et lumineux.', $sections[2]['text']);
         $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[3]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
