@@ -62,10 +62,14 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     /** @var list<string> */
     public array $translatable = ['name', 'url', 'slogan', 'description', 'website', 'cta_label'];
 
-    /** Le slug `url`, tiré du nom dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires). */
+    /**
+     * Le slug `url`, tiré du nom dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires), unique par
+     * pays et par langue (décision 2026-11-25-slug-unique-par-pays).
+     */
     public function getSlugOptions(): SlugOptions
     {
-        return SlugOptions::create()->generateSlugsFrom('name')->saveSlugsTo('url');
+        return SlugOptions::create()->generateSlugsFrom('name')->saveSlugsTo('url')
+            ->extraScope(fn (Builder $query): Builder => $query->where('country_id', $this->country_id));
     }
 
     /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables) ; un changement de statut est annoncé. */

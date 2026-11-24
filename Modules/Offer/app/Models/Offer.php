@@ -93,10 +93,14 @@ class Offer extends Model implements HasMedia
             ?? $this->translatableLocale($key, $locale, $useFallbackLocale);
     }
 
-    /** Le slug `url`, tiré du titre dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires). */
+    /**
+     * Le slug `url`, tiré du titre dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires), unique par
+     * pays et par langue (décision 2026-11-25-slug-unique-par-pays).
+     */
     public function getSlugOptions(): SlugOptions
     {
-        return SlugOptions::create()->generateSlugsFrom('title')->saveSlugsTo('url');
+        return SlugOptions::create()->generateSlugsFrom('title')->saveSlugsTo('url')
+            ->extraScope(fn (Builder $query): Builder => $query->where('country_id', $this->country_id));
     }
 
     /**
