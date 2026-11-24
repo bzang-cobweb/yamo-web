@@ -73,6 +73,13 @@ return [
     ],
     // Les comptes qui administrent un partenaire, au back-office.
     'admins' => 'Administrateurs',
+    // « Valider » au back-office (décision 2026-11-24-partenaires-validation-back-office).
+    'validate' => [
+        'label' => 'Valider',
+        'heading' => 'Valider ce partenaire ?',
+        'description' => 'Il passe en « Publié » et ses comptes sont prévenus.',
+        'done' => 'Partenaire accepté.',
+    ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'notify' => [
         'greeting' => 'Bonjour :name,',

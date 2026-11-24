@@ -7,6 +7,7 @@ Branche : nuit/2026-11-24 (web depuis main@16b147a, mobile depuis main@0bacba0)
 
 ## Fait
 - **1. Notifications de mise en validation** (web `bbf0f18`) : ajout ou modification depuis l'app → `PartnerSubmitted` → tous les comptes rattachés, auteur compris, chacun son texte ; plus de notification « statut changé » en double ; la publication s'annonce « accepté ». Tests du module Partner : 32 passent.
+- **2. Validation au back-office** : action « Valider » (liste et page), visible si en validation et droit de modifier ; publie, notifie les comptes (« Partenaire accepté »). Tests du module Partner : 34 passent.
 
 ## Reste à faire
 1. Ajout ou modification d'un partenaire : en validation, notifications aux autres administrateurs et à l'auteur.

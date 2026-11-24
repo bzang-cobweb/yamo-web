@@ -73,6 +73,13 @@ return [
     ],
     // Les comptes qui administrent un partenaire, au back-office.
     'admins' => 'Administratoren',
+    // « Valider » au back-office (décision 2026-11-24-partenaires-validation-back-office).
+    'validate' => [
+        'label' => 'Freigeben',
+        'heading' => 'Diesen Partner freigeben?',
+        'description' => 'Er wird « Veröffentlicht » und seine Konten werden benachrichtigt.',
+        'done' => 'Partner angenommen.',
+    ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'notify' => [
         'greeting' => 'Hallo :name,',

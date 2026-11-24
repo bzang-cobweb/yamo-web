@@ -10,6 +10,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Partner\Enums\PartnerStatusEnum;
+use Modules\Partner\Filament\Resources\PartnerResource;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
 
@@ -75,7 +76,8 @@ abstract class PartnerTable
                         false: fn ($query) => $query->doesntHave('users'),
                     ),
             ])
-            ->recordActions(AbstractResource::getActions())
+            // « Valider » avant Modifier et Supprimer (décision 2026-11-24-partenaires-validation-back-office).
+            ->recordActions([PartnerResource::validateAction(), ...AbstractResource::getActions()])
             ->toolbarActions(AbstractResource::getBulkActions());
     }
 }

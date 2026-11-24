@@ -3,6 +3,7 @@
 namespace Modules\Partner\Tests\Feature\Filament;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
@@ -16,6 +17,7 @@ use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
 use Modules\Partner\Filament\Resources\PartnerResource\RelationManagers\UsersRelationManager;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerStatusNotification;
 
 /**
  * Les partenaires au back-office (décision 2026-11-23-module-partenaires).
@@ -185,6 +187,38 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->assertHasFormErrors(['logo']);
 
         $this->assertNull($partner->fresh()->getFirstMedia(Partner::LOGO));
+    }
+
+    public function test_the_team_validates_a_pending_partner_and_its_accounts_are_notified(): void
+    {
+        // Décision 2026-11-24-partenaires-validation-back-office.
+        Notification::fake();
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $pending = Partner::factory()->for(Country::factory()->create())->create(['status' => PartnerStatusEnum::PENDING]);
+        $published = Partner::factory()->for($pending->country)->create(['status' => PartnerStatusEnum::PUBLISHED]);
+        $member = User::factory()->create(['locale' => 'fr']);
+        $pending->users()->attach($member->getKey(), ['is_admin' => true]);
+
+        Livewire::test(ListPartners::class)
+            ->assertTableActionVisible('validate', $pending)
+            ->assertTableActionHidden('validate', $published)
+            ->callTableAction('validate', $pending);
+
+        $this->assertSame(PartnerStatusEnum::PUBLISHED, $pending->fresh()->status);
+        Notification::assertSentTo($member, PartnerStatusNotification::class, fn (PartnerStatusNotification $notification): bool => $notification->toArray($member)['title'] === 'Partenaire accepté');
+
+        // Sur la page du partenaire aussi.
+        $other = Partner::factory()->for($pending->country)->create(['status' => PartnerStatusEnum::PENDING]);
+        Livewire::test(EditPartner::class, ['record' => $other->getKey()])->callAction('validate');
+        $this->assertSame(PartnerStatusEnum::PUBLISHED, $other->fresh()->status);
+    }
+
+    public function test_without_the_right_to_edit_there_is_no_validate(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS);
+        $pending = Partner::factory()->for(Country::factory()->create())->create(['status' => PartnerStatusEnum::PENDING]);
+
+        Livewire::test(ListPartners::class)->assertTableActionHidden('validate', $pending);
     }
 
     public function test_hidden_without_the_permission(): void

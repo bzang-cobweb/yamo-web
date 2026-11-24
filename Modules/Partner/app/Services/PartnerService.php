@@ -98,6 +98,16 @@ class PartnerService
     }
 
     /**
+     * Validé au back-office : il passe en « Publié » ; le changement de statut prévient ses comptes (« Partenaire
+     * accepté », décision 2026-11-24-partenaires-validation-back-office).
+     */
+    public function accept(Partner $partner): void
+    {
+        $partner->status = PartnerStatusEnum::PUBLISHED;
+        $partner->save();
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     private function fill(Partner $partner, array $data, string $locale): void
