@@ -690,11 +690,7 @@ final class Field
     }
 
     /**
-     * `parent` : l'option du champ parent (`dependsOn()`) dont elle dépend ; `group` : la valeur de l'option qui la
-     * regroupe, dans la même liste (« Demande de logement » pour « Demande acceptée », décision
-     * 2026-11-24-notifications-types-groupes-statut) : l'app l'affiche en retrait, sous son groupe.
-     *
-     * @param  array<string, string|array{label: string, hint?: string|null, parent?: string|int|null, group?: string|null}>  $options
+     * @param  array<string, string|array{label: string, hint?: string|null, parent?: string|int|null}>  $options
      */
     public function options(array $options): self
     {
@@ -1009,7 +1005,7 @@ final class Field
     /**
      * Ce que l'app reçoit pour afficher le champ.
      *
-     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string, values: list<string>}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, add_label: string|null, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null, group: string|null}>}
+     * @return array{name: string, type: string, label: string|null, label_hidden: bool, placeholder: string|null, help: string|null, required: bool, readonly: bool, locked: bool, depends_on: string|null, visible_when: array{field: string, value: string, values: list<string>}|null, reloads: bool, suggestions: string|null, max_length: int|null, suffix: string|null, suffix_when: array{field: string, suffixes: array<string, string>}|null, upload: array{accept: list<string>, max_size_kb: int, max_files: int, add_label: string|null, files: list<array{id: string, url: string}>}|null, repeater: array{fields: list<array<string, mixed>>, max_items: int, add_label: string|null}|null, default: mixed, options: list<array{value: string, label: string, hint: string|null, parent: string|null}>}
      */
     public function toArray(): array
     {
@@ -1065,7 +1061,6 @@ final class Field
                     'label' => is_array($option) ? $option['label'] : $option,
                     'hint' => is_array($option) ? ($option['hint'] ?? null) : null,
                     'parent' => is_array($option) && isset($option['parent']) ? (string) $option['parent'] : null,
-                    'group' => is_array($option) && isset($option['group']) ? (string) $option['group'] : null,
                 ])
                 ->values()
                 ->all(),

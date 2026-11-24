@@ -16,5 +16,5 @@ Remplace : 2026-11-24-notifications-types-groupes-statut.md (le regroupement des
 - **Motif** : la demande.
 - **Corollaires** :
   - Les classes par action et par statut restent : elles donnent le titre et la pastille des cartes, et elles servent au filtre « Statut » d'un partenaire.
-  - La possibilité qu'a une option de liste d'avoir un `group` (gras, puis options en retrait) reste dans `Field` et dans l'app. Elle ne sert plus nulle part pour l'instant.
-- **Tranché par** : humain
+  - Le regroupement des options d'une liste (`group` : en gras, puis options en retrait) est retiré de `Field` et de l'app, car plus rien ne s'en sert. Une liste dépendante ne compare plus que la valeur du parent (`dependentOptions`).
+- **Tranché par** : humain (dont le retrait du regroupement des options)

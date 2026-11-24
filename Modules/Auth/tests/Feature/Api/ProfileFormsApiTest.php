@@ -43,7 +43,7 @@ class ProfileFormsApiTest extends TestCase
             ->assertJsonPath('data.fields.2.type', 'select')
             ->assertJsonPath('data.fields.2.required', true)
             ->assertJsonPath('data.fields.2.default', 'female')
-            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme', 'hint' => null, 'parent' => null, 'group' => null], ['value' => 'female', 'label' => 'Femme', 'hint' => null, 'parent' => null, 'group' => null]])
+            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme', 'hint' => null, 'parent' => null], ['value' => 'female', 'label' => 'Femme', 'hint' => null, 'parent' => null]])
             // Date de naissance : type date, facultative.
             ->assertJsonPath('data.fields.3.type', 'date')
             ->assertJsonPath('data.fields.3.required', false)
@@ -166,7 +166,7 @@ class ProfileFormsApiTest extends TestCase
         $form = $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
         $region = collect($form->json('data.fields'))->firstWhere('name', 'region_id');
         $this->assertSame('country_id', $region['depends_on']);
-        $this->assertContains(['value' => (string) $geneva->getKey(), 'label' => (string) $geneva->name, 'hint' => null, 'parent' => (string) $switzerland->getKey(), 'group' => null], $region['options']);
+        $this->assertContains(['value' => (string) $geneva->getKey(), 'label' => (string) $geneva->name, 'hint' => null, 'parent' => (string) $switzerland->getKey()], $region['options']);
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'country_id' => (string) $switzerland->getKey(), 'region_id' => (string) $brittany->getKey()])
             ->assertUnprocessable()

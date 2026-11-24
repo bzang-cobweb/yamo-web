@@ -173,8 +173,8 @@ class FieldTest extends TestCase
             'repeater' => null,
             'default' => null,
             'options' => [
-                ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null, 'group' => null],
-                ['value' => 'vd', 'label' => 'Vaud', 'hint' => null, 'parent' => null, 'group' => null],
+                ['value' => 'ge', 'label' => 'Genève', 'hint' => null, 'parent' => null],
+                ['value' => 'vd', 'label' => 'Vaud', 'hint' => null, 'parent' => null],
             ],
         ], $city);
     }

@@ -35,8 +35,8 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertJsonPath('data.fields.0.type', 'segmented')
             ->assertJsonPath('data.fields.0.default', 'email')
             ->assertJsonPath('data.fields.0.options', [
-                ['value' => 'email', 'label' => 'E-mail', 'hint' => null, 'parent' => null, 'group' => null],
-                ['value' => 'phone', 'label' => 'Téléphone', 'hint' => null, 'parent' => null, 'group' => null],
+                ['value' => 'email', 'label' => 'E-mail', 'hint' => null, 'parent' => null],
+                ['value' => 'phone', 'label' => 'Téléphone', 'hint' => null, 'parent' => null],
             ])
             ->assertJsonPath('data.fields.1.name', 'email')
             ->assertJsonPath('data.fields.1.type', 'email')
@@ -102,8 +102,8 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertJsonPath('data.fields.0.type', 'select')
             ->assertJsonPath('data.fields.0.default', 'en')
             ->assertJsonPath('data.fields.0.options', [
-                ['value' => 'fr', 'label' => 'Français', 'hint' => null, 'parent' => null, 'group' => null],
-                ['value' => 'en', 'label' => 'English', 'hint' => null, 'parent' => null, 'group' => null],
+                ['value' => 'fr', 'label' => 'Français', 'hint' => null, 'parent' => null],
+                ['value' => 'en', 'label' => 'English', 'hint' => null, 'parent' => null],
             ])
             // Compte connecté : la langue du compte l'emporte sur l'en-tête.
             ->assertJsonPath('data.fields.0.label', 'Language')
