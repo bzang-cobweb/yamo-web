@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-partenaire-notification-par-statut.md
+
 # `2026-11-24` — « Notifications » : retrouver celles des partenaires, par statut
 
 - **Type** : décision

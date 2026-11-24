@@ -7,36 +7,44 @@ use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 
 /**
- * Les notifications des partenaires dans la liste « Notifications » (décision
- * 2026-11-24-partenaires-notifications-filtre) :
- * - un type, « Partenaire » : ajout, modification, changement de statut ;
- * - pour ce type, le filtre « Statut du partenaire » : le statut que la notification annonce ;
- * - la pastille de ce statut sur chaque carte ;
+ * Les notifications des partenaires dans la liste « Notifications » (décisions
+ * 2026-11-24-partenaires-notifications-filtre et 2026-11-24-partenaire-notification-par-statut) :
+ * - le filtre « Type » : le groupe « Partenaire », tous statuts, puis une option par statut (« Partenaire en
+ *   validation », « Partenaire accepté », « Partenaire refusé », « Partenaire archivé »), chacune sa classe de
+ *   notification, comme les demandes de logement ;
+ * - la pastille du statut notifié sur chaque carte, et son titre dans la langue du lecteur ;
  * - la recherche, dans le nom du partenaire.
  */
 class PartnerNotificationFilter implements NotificationFilter
 {
-    /** La clé du type « Partenaire » dans le filtre « Type ». */
+    /** La clé du groupe « Partenaire » dans le filtre « Type » : tous les statuts. */
     public const PARTNER = 'partner';
-
-    /** Les classes de ses notifications. */
-    private const NOTIFICATIONS = [PartnerSubmittedNotification::class, PartnerStatusNotification::class];
 
     public function types(): array
     {
-        return [self::PARTNER => ['label' => __('partner::partner.notify.filter_type'), 'types' => self::NOTIFICATIONS]];
+        $types = [self::PARTNER => ['label' => __('partner::partner.notify.filter_type'), 'types' => PartnerStatusEnum::notifications()]];
+        foreach (PartnerStatusEnum::cases() as $status) {
+            $types[self::status($status)] = ['label' => PartnerNotification::title($status), 'types' => [$status->notification()]];
+        }
+
+        return $types;
     }
 
-    /** La pastille du statut annoncé (« En validation », « Publié »…). */
+    /** La clé d'un statut dans le filtre « Type » (`partner_published`). */
+    public static function status(PartnerStatusEnum $status): string
+    {
+        return self::PARTNER.'_'.$status->value;
+    }
+
+    /** La pastille du statut notifié (« En validation », « Publié »…). */
     public function tag(DatabaseNotification $notification): ?array
     {
-        $status = $this->status($notification);
+        $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
         if ($status === null) {
             return null;
         }
@@ -49,35 +57,27 @@ class PartnerNotificationFilter implements NotificationFilter
         return null;
     }
 
+    /** « Partenaire accepté », « Partenaire modifié »…, dans la langue du lecteur ; `null` pour une autre notification. */
     public function cardTitle(DatabaseNotification $notification): ?string
     {
-        return null;
+        $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
+        if ($status === null) {
+            return null;
+        }
+
+        $created = ((array) $notification->data)['created'] ?? null;
+
+        return PartnerNotification::title($status, is_bool($created) ? $created : null);
     }
 
     public function prepare(array $notifications): void {}
 
     public function fields(User $user): array
     {
-        return [
-            Field::select('partner_status')
-                ->label(__('partner::partner.notify.filter_status'))
-                ->options(PartnerStatusEnum::options())
-                ->visibleWhen('type', [self::PARTNER]),
-        ];
+        return [];
     }
 
-    public function apply(Builder $query, array $filters, User $user): void
-    {
-        $status = $filters['partner_status'] ?? null;
-        if (! is_string($status)) {
-            return;
-        }
-        if (PartnerStatusEnum::tryFrom($status) === null) {
-            return;
-        }
-
-        $query->whereIn('type', self::NOTIFICATIONS)->where('data->partner_status', $status);
-    }
+    public function apply(Builder $query, array $filters, User $user): void {}
 
     public function orSearch(Builder $query, string $term): void
     {
@@ -90,15 +90,5 @@ class PartnerNotificationFilter implements NotificationFilter
         if ($ids !== []) {
             $query->orWhereIn('data->partner_id', $ids);
         }
-    }
-
-    /** Le statut qu'annonce une notification de partenaire ; `null` pour une autre notification. */
-    private function status(DatabaseNotification $notification): ?PartnerStatusEnum
-    {
-        if (! in_array($notification->getAttribute('type'), self::NOTIFICATIONS, true)) {
-            return null;
-        }
-
-        return PartnerStatusEnum::tryFrom((string) (((array) $notification->data)['partner_status'] ?? ''));
     }
 }

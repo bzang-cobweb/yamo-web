@@ -17,7 +17,7 @@ use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
 use Modules\Partner\Filament\Resources\PartnerResource\RelationManagers\UsersRelationManager;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Notifications\PartnerStatusNotification;
+use Modules\Partner\Notifications\PartnerPublished;
 
 /**
  * Les partenaires au back-office (décision 2026-11-23-module-partenaires).
@@ -205,7 +205,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->callTableAction('validate', $pending);
 
         $this->assertSame(PartnerStatusEnum::PUBLISHED, $pending->fresh()->status);
-        Notification::assertSentTo($member, PartnerStatusNotification::class, fn (PartnerStatusNotification $notification): bool => $notification->toArray($member)['title'] === 'Partenaire accepté');
+        Notification::assertSentTo($member, PartnerPublished::class, fn (PartnerPublished $notification): bool => $notification->toArray($member)['title'] === 'Partenaire accepté');
 
         // Sur la page du partenaire aussi.
         $other = Partner::factory()->for($pending->country)->create(['status' => PartnerStatusEnum::PENDING]);

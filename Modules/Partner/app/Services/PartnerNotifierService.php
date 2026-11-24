@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Notification;
 use Modules\Auth\Models\User;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Notifications\PartnerStatusNotification;
-use Modules\Partner\Notifications\PartnerSubmittedNotification;
+use Modules\Partner\Notifications\PartnerNotification;
 
 /**
- * Les notifications d'un partenaire (décision 2026-11-24-partenaires-notifications).
+ * Les notifications d'un partenaire, une classe par statut (décisions 2026-11-24-partenaires-notifications et
+ * 2026-11-24-partenaire-notification-par-statut).
  */
 class PartnerNotifierService
 {
@@ -28,7 +28,7 @@ class PartnerNotifierService
         $recipients = $partner->users()->when($actorId !== null, fn ($users) => $users->whereKeyNot($actorId))->get();
 
         if ($recipients->isNotEmpty()) {
-            Notification::send($recipients, new PartnerStatusNotification($partner));
+            Notification::send($recipients, PartnerNotification::for($partner, $partner->status));
         }
     }
 
@@ -45,6 +45,6 @@ class PartnerNotifierService
 
         $actor = User::query()->find($actorId);
         $actorName = $actor === null ? '' : (string) $actor->full_name;
-        Notification::send($recipients, new PartnerSubmittedNotification($partner, $actorId, $actorName, $created));
+        Notification::send($recipients, PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $actorId, $actorName, $created));
     }
 }

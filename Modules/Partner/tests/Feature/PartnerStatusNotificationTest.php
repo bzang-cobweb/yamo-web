@@ -16,8 +16,9 @@ use Modules\Partner\Events\PartnerSubmitted;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfStatus;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfSubmission;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Notifications\PartnerStatusNotification;
-use Modules\Partner\Notifications\PartnerSubmittedNotification;
+use Modules\Partner\Notifications\PartnerNotification;
+use Modules\Partner\Notifications\PartnerPending;
+use Modules\Partner\Notifications\PartnerPublished;
 use Modules\Partner\Services\PartnerNotifierService;
 use Tests\TestCase;
 
@@ -69,7 +70,7 @@ class PartnerStatusNotificationTest extends TestCase
         $partner->update(['status' => PartnerStatusEnum::PUBLISHED]);
 
         foreach ([$admin, $helper] as $user) {
-            Notification::assertSentTo($user, PartnerStatusNotification::class, function (PartnerStatusNotification $notification) use ($user, $partner): bool {
+            Notification::assertSentTo($user, PartnerPublished::class, function (PartnerPublished $notification) use ($user, $partner): bool {
                 $data = $notification->toArray($user);
 
                 // « Accepté » (décision 2026-11-24-partenaires-validation-notifications).
@@ -81,7 +82,7 @@ class PartnerStatusNotificationTest extends TestCase
                     && in_array('database', $notification->via($user), true);
             });
         }
-        Notification::assertNotSentTo($stranger, PartnerStatusNotification::class);
+        Notification::assertNotSentTo($stranger, PartnerPublished::class);
     }
 
     public function test_a_member_editing_notifies_the_others_and_himself_each_with_his_text(): void
@@ -94,7 +95,7 @@ class PartnerStatusNotificationTest extends TestCase
             ->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();
 
         $this->assertSame(PartnerStatusEnum::PENDING, $partner->fresh()->status);
-        Notification::assertSentTo($admin, PartnerSubmittedNotification::class, function (PartnerSubmittedNotification $notification) use ($admin, $helper): bool {
+        Notification::assertSentTo($admin, PartnerPending::class, function (PartnerPending $notification) use ($admin, $helper): bool {
             $data = $notification->toArray($admin);
 
             return $data['title'] === 'Partenaire modifié'
@@ -102,14 +103,15 @@ class PartnerStatusNotificationTest extends TestCase
                 && $data['own'] === false
                 && $data['partner_status'] === 'pending';
         });
-        Notification::assertSentTo($helper, PartnerSubmittedNotification::class, function (PartnerSubmittedNotification $notification) use ($helper): bool {
+        Notification::assertSentTo($helper, PartnerPending::class, function (PartnerPending $notification) use ($helper): bool {
             $data = $notification->toArray($helper);
 
             return $data['own'] === true
                 && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe vérifie vos modifications avant de l'afficher.";
         });
         // Pas de « statut changé » en plus pour le passage en validation.
-        Notification::assertNotSentTo([$admin, $helper], PartnerStatusNotification::class);
+        Notification::assertSentToTimes($admin, PartnerPending::class, 1);
+        Notification::assertNotSentTo([$admin, $helper], PartnerPublished::class);
     }
 
     public function test_adding_a_partner_notifies_its_author(): void
@@ -120,14 +122,14 @@ class PartnerStatusNotificationTest extends TestCase
         $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])
             ->postJson('/api/v1/partners', ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();
 
-        Notification::assertSentTo($member, PartnerSubmittedNotification::class, function (PartnerSubmittedNotification $notification) use ($member): bool {
+        Notification::assertSentTo($member, PartnerPending::class, function (PartnerPending $notification) use ($member): bool {
             $data = $notification->toArray($member);
 
             return $data['title'] === 'Partenaire ajouté'
                 && $data['own'] === true
                 && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe le vérifie avant de l'afficher.";
         });
-        Notification::assertNotSentTo($member, PartnerStatusNotification::class);
+        Notification::assertSentToTimes($member, PartnerPending::class, 1);
     }
 
     public function test_the_submission_listener_hears_the_event_and_calls_the_notifier(): void
@@ -160,5 +162,19 @@ class PartnerStatusNotificationTest extends TestCase
         $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('statusChanged')->once()->with($partner, 7));
 
         app(NotifyPartnerUsersOfStatus::class)->handle(new PartnerStatusChanged($partner, PartnerStatusEnum::PENDING, 7));
+    }
+
+    public function test_each_status_has_its_notification_class(): void
+    {
+        // Décision 2026-11-24-partenaire-notification-par-statut.
+        Notification::fake();
+        [$partner, $admin] = $this->partner(PartnerStatusEnum::PUBLISHED);
+
+        foreach ([PartnerStatusEnum::REJECTED, PartnerStatusEnum::ARCHIVED, PartnerStatusEnum::PUBLISHED] as $status) {
+            $partner->update(['status' => $status]);
+            Notification::assertSentTo($admin, $status->notification(), fn (PartnerNotification $notification): bool => $notification->toArray($admin)['partner_status'] === $status->value);
+        }
+        $this->assertSame(PartnerStatusEnum::REJECTED, PartnerStatusEnum::fromNotification(PartnerStatusEnum::REJECTED->notification()));
+        $this->assertNull(PartnerStatusEnum::fromNotification('Autre'));
     }
 }
