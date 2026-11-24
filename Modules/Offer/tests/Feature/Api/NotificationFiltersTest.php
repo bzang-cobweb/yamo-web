@@ -75,31 +75,26 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame('type', $filters['status']['depends_on']);
         $this->assertSame('booking', collect($filters['status']['options'])->firstWhere('value', 'accepted')['parent']);
         $this->assertSame('partner', collect($filters['status']['options'])->firstWhere('value', 'partner_published')['parent']);
-        // Chaque type sous son groupe.
-        $this->assertSame(['booking', 'booking', 'booking'], array_column($filters['type']['options'], 'group'));
-        // Le groupe des demandes, puis une option par action présente (décision 2026-11-22-filtre-type-par-action) ;
+        // « Réservation » seulement, toutes les actions (décision 2026-11-24-notifications-types-reservation-partenaire) ;
         // un type inconnu des modules n'est pas proposé.
-        $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande', 'booking_accepted' => 'Demande acceptée'], array_column($filters['type']['options'], 'label', 'value'));
+        $this->assertSame(['booking' => 'Réservation'], array_column($filters['type']['options'], 'label', 'value'));
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
         $this->assertNull($filters['type']['default']);
         $this->assertArrayNotHasKey('selected', $filters['type']);
-        // Logement et type de location : pour ce type seulement ; « Statut » : pour tout type, ses options selon le groupe.
+        // Logement et type de location : pour « Réservation » seulement ; « Statut » : dès qu'un type est choisi, ses
+        // options selon le type.
         foreach (['offer', 'rental_type'] as $name) {
-            $this->assertSame(['booking', 'booking_received', 'booking_accepted', 'booking_refused', 'booking_cancelled', 'booking_updated'], $filters[$name]['visible_when']['values']);
+            $this->assertSame(['booking'], $filters[$name]['visible_when']['values']);
         }
-        $this->assertContains('partner_published', $filters['status']['visible_when']['values']);
+        $this->assertSame(['booking', 'partner'], $filters['status']['visible_when']['values']);
         $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'completed', 'expired'], array_column(array_filter($filters['status']['options'], fn (array $option): bool => $option['parent'] === 'booking'), 'value'));
         $this->assertSame(['long_term' => 'Location', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
         $this->assertCount(3, $this->titles($user, '?filter[type]=booking'));
-        // Une action : ses seules notifications.
-        $this->assertEqualsCanonicalizing(['Demande studio', 'Demande appartement'], $this->titles($user, '?filter[type]=booking_received'));
-        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]=booking_accepted'));
-        $this->assertSame(['Acceptée appartement'], $this->titles($user, '?filter[type]=booking_accepted&filter[status]=accepted'));
         // Le statut réel de la demande, pas l'étape notifiée.
         $this->assertSame(['Demande studio'], $this->titles($user, '?filter[type]=booking&filter[status]=pending'));
         $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->titles($user, '?filter[type]=booking&filter[status]=accepted'));

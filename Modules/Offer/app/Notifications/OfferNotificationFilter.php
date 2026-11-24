@@ -9,7 +9,6 @@ use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
-use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
@@ -20,7 +19,7 @@ use Modules\Offer\Support\BookingCache;
 /**
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
- * - un type, « Demande de logement » : les notifications d'une demande, une par action (`BookingNotification`) ;
+ * - un type, « Réservation » : les notifications d'une demande, une classe par action (`BookingNotification`) ;
  * - pour ce type : le statut réel de la demande (filtre « Statut » commun), le logement, le type de location ;
  * - la recherche, dans le titre du logement.
  *
@@ -28,40 +27,16 @@ use Modules\Offer\Support\BookingCache;
  */
 class OfferNotificationFilter implements NotificationFilter
 {
-    /** La clé du groupe « Demande de logement » dans le filtre « Type » : toutes les actions. */
+    /** La clé du type « Réservation » dans le filtre « Type » : toutes les actions d'une demande. */
     public const BOOKING = 'booking';
 
     /**
-     * Le filtre « Type » (décision 2026-11-22-filtre-type-par-action) : le groupe « Demande de logement », toutes
-     * actions, puis une option par action, du nom de sa carte (« Nouvelle demande », « Demande modifiée », « Demande
-     * acceptée », « Demande refusée », « Demande annulée »), chacune sa classe de notification.
+     * Le filtre « Type » : « Réservation », toutes les actions d'une demande (décisions 2026-11-22-notification-par-action
+     * et 2026-11-24-notifications-types-reservation-partenaire) ; le statut se choisit ensuite dans « Statut ».
      */
     public function types(): array
     {
-        // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
-        $label = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
-        $types = [self::BOOKING => ['label' => $label, 'types' => BookingStepEnum::notifications(), 'group' => self::BOOKING]];
-        foreach ([BookingStepEnum::RECEIVED, BookingStepEnum::UPDATED, BookingStepEnum::ACCEPTED, BookingStepEnum::REFUSED, BookingStepEnum::CANCELLED] as $step) {
-            $types[self::action($step)] = ['label' => BookingNotification::title($step, false), 'types' => [$step->notification()], 'group' => self::BOOKING];
-        }
-
-        return $types;
-    }
-
-    /** La clé d'une action dans le filtre « Type » (`booking_accepted`). */
-    public static function action(BookingStepEnum $step): string
-    {
-        return self::BOOKING.'_'.$step->value;
-    }
-
-    /**
-     * Les valeurs du filtre « Type » qui montrent les filtres d'une demande : le groupe et chaque action.
-     *
-     * @return list<string>
-     */
-    private static function bookingTypes(): array
-    {
-        return [self::BOOKING, ...array_map(fn (BookingStepEnum $step): string => self::action($step), BookingStepEnum::cases())];
+        return [self::BOOKING => ['label' => __('offer::booking.notify.filter_type'), 'types' => BookingStepEnum::notifications()]];
     }
 
     /**
@@ -142,11 +117,11 @@ class OfferNotificationFilter implements NotificationFilter
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->offers($user))
                 ->searchable()
-                ->visibleWhen('type', self::bookingTypes()),
+                ->visibleWhen('type', self::BOOKING),
             Field::select('rental_type')
                 ->label(__('offer::booking.notify.filter_rental_type'))
                 ->options(RentalTypeEnum::options())
-                ->visibleWhen('type', self::bookingTypes()),
+                ->visibleWhen('type', self::BOOKING),
         ];
     }
 

@@ -42,12 +42,12 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications, chacun sous son groupe (« Demande acceptée » sous « Demande de
-            // logement »).
+            // Le type, parmi ceux de ses notifications (« Réservation », « Partenaire »).
             Field::select('type')
                 ->label(__('notification::notification.filter_type'))
                 ->options($this->typeOptions($user)),
-            // Le statut, ceux du groupe du type choisi (décision 2026-11-24-notifications-types-groupes-statut).
+            // Le statut, ceux du type choisi, seulement quand un type l'est (décisions
+            // 2026-11-24-notifications-types-groupes-statut et 2026-11-24-notifications-types-reservation-partenaire).
             Field::select('status')
                 ->label(__('notification::notification.filter_status'))
                 ->options(array_merge(...array_map(fn (string $filter): array => app($filter)->statuses(), $this->filters)))
@@ -122,9 +122,9 @@ class NotificationFilters
     }
 
     /**
-     * Les types inscrits par les modules (clé => libellé, classes de notification et groupe).
+     * Les types inscrits par les modules (clé => libellé et classes de notification).
      *
-     * @return array<string, array{label: string, types: list<class-string>, group: string}>
+     * @return array<string, array{label: string, types: list<class-string>}>
      */
     private function types(): array
     {
@@ -132,9 +132,9 @@ class NotificationFilters
     }
 
     /**
-     * Les types présents dans ses notifications (clé => libellé et groupe), dans l'ordre des modules.
+     * Les types présents dans ses notifications (clé => libellé), dans l'ordre des modules.
      *
-     * @return array<string, array{label: string, group: string}>
+     * @return array<string, string>
      */
     private function typeOptions(User $user): array
     {
@@ -142,7 +142,7 @@ class NotificationFilters
         $options = [];
         foreach ($this->types() as $key => $type) {
             if (array_intersect($type['types'], $present) !== []) {
-                $options[$key] = ['label' => $type['label'], 'group' => $type['group']];
+                $options[$key] = $type['label'];
             }
         }
 

@@ -16,18 +16,17 @@ use Modules\Form\Support\Field;
 interface NotificationFilter
 {
     /**
-     * Les types de notification du module, pour le filtre « Type » : clé => son libellé, ses classes de notification
-     * (les valeurs de la colonne `type`) et son groupe, la clé du type qui les réunit tous (« booking » =>
-     * « Demande de logement », groupe de « booking_accepted », décisions 2026-11-22-notification-par-action et
-     * 2026-11-24-notifications-types-groupes-statut).
+     * Les types de notification du module, pour le filtre « Type » : clé => son libellé et ses classes de notification,
+     * les valeurs de la colonne `type` (« booking » => « Réservation », une classe par action, décisions
+     * 2026-11-22-notification-par-action et 2026-11-24-notifications-types-reservation-partenaire).
      *
-     * @return array<string, array{label: string, types: list<class-string>, group: string}>
+     * @return array<string, array{label: string, types: list<class-string>}>
      */
     public function types(): array;
 
     /**
-     * Les statuts du module, pour le filtre « Statut » commun : valeur => son libellé et le groupe de types dont il
-     * dépend (« booking », « partner ») ; l'app ne propose que ceux du type choisi (décision
+     * Les statuts du module, pour le filtre « Statut » commun : valeur => son libellé et le type dont il dépend
+     * (« booking », « partner ») ; l'app ne propose que ceux du type choisi (décision
      * 2026-11-24-notifications-types-groupes-statut). Une valeur est unique entre les modules ; `apply()` lit
      * `filter[status]` et ignore une valeur qui n'est pas la sienne.
      *

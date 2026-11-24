@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-notifications-types-reservation-partenaire.md
+
 # Filtre « Type » des notifications : une option par action
 
 - **Date** : 2026-11-22

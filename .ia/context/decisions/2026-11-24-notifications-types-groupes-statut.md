@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-notifications-types-reservation-partenaire.md (le regroupement des types)
+
 # `2026-11-24` — « Notifications » : les types groupés, un seul filtre « Statut » selon le type
 
 Remplace : 2026-11-24-partenaire-notification-par-statut.md (seulement le filtre « Statut du partenaire »)

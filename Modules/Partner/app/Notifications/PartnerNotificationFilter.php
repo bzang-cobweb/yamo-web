@@ -14,9 +14,8 @@ use Modules\Partner\Models\Partner;
 /**
  * Les notifications des partenaires dans la liste « Notifications » (décisions
  * 2026-11-24-partenaires-notifications-filtre et 2026-11-24-partenaire-notification-par-statut) :
- * - le filtre « Type » : le groupe « Partenaire », tous statuts, puis une option par statut (« Partenaire en
- *   validation », « Partenaire accepté », « Partenaire refusé », « Partenaire archivé »), chacune sa classe de
- *   notification, comme les demandes de logement ;
+ * - le filtre « Type » : « Partenaire », toutes ses notifications, une classe par statut (décision
+ *   2026-11-24-notifications-types-reservation-partenaire) ;
  * - pour ces types, le filtre « Statut » commun : le statut que la notification annonce (sa classe) ;
  * - la pastille du statut notifié sur chaque carte, et son titre dans la langue du lecteur ;
  * - la recherche, dans le nom du partenaire.
@@ -28,15 +27,10 @@ class PartnerNotificationFilter implements NotificationFilter
 
     public function types(): array
     {
-        $types = [self::PARTNER => ['label' => __('partner::partner.notify.filter_type'), 'types' => PartnerStatusEnum::notifications(), 'group' => self::PARTNER]];
-        foreach (PartnerStatusEnum::cases() as $status) {
-            $types[self::status($status)] = ['label' => PartnerNotification::title($status), 'types' => [$status->notification()], 'group' => self::PARTNER];
-        }
-
-        return $types;
+        return [self::PARTNER => ['label' => __('partner::partner.notify.filter_type'), 'types' => PartnerStatusEnum::notifications()]];
     }
 
-    /** La clé d'un statut dans le filtre « Type » et dans le filtre « Statut » (`partner_published`). */
+    /** La clé d'un statut dans le filtre « Statut » (`partner_published`). */
     public static function status(PartnerStatusEnum $status): string
     {
         return self::PARTNER.'_'.$status->value;
