@@ -49,6 +49,14 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     /** Le logo, une seule image. */
     public const LOGO = 'logo';
 
+    /**
+     * Le nom et le slogan, saisis dans l'app comme au back-office : 50 caractères au plus (décision
+     * 2026-11-24-partenaire-nom-slogan-50) ; la base en garde davantage.
+     */
+    public const NAME_MAX_LENGTH = 50;
+
+    public const SLOGAN_MAX_LENGTH = 50;
+
     /** @var list<string> */
     public array $translatable = ['name', 'slogan', 'description', 'url', 'cta_label'];
 
@@ -162,6 +170,25 @@ class Partner extends Model implements HasMedia, NotifiableGroup
         }
 
         return $this->isInPaymentRange($paymentRequired);
+    }
+
+    /**
+     * Sa pastille pour ses comptes : son statut, et publié, s'il est affiché maintenant ou pas (campagne, paiement)
+     * (décisions 2026-11-24-partenaires-statuts et 2026-11-24-partenaire-page-statut) ; « Mes partenaires » et sa page.
+     * `$paymentRequired` : le réglage déjà lu (une liste le lit une fois pour toutes ses lignes).
+     *
+     * @return array{label: string, tone: string}
+     */
+    public function statusTag(bool $paymentRequired): array
+    {
+        if ($this->status !== PartnerStatusEnum::PUBLISHED) {
+            return ['label' => $this->status->label(), 'tone' => $this->status->tone()];
+        }
+        if ($this->isShown($paymentRequired)) {
+            return ['label' => __('partner::partner.member.status.shown'), 'tone' => 'success'];
+        }
+
+        return ['label' => __('partner::partner.member.status.hidden'), 'tone' => 'neutral'];
     }
 
     /**

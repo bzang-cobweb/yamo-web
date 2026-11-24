@@ -60,15 +60,16 @@ class PartnerForm extends Form
                 ->help(__('partner::partner.fields.logo_help', ['pixels' => PartnerLogoService::minUploadSize()]))
                 ->addLabel(__('partner::partner.member.add_logo'))
                 ->files(app(PartnerLogoService::class)->current($partner)),
+            // 50 caractères au plus (décision 2026-11-24-partenaire-nom-slogan-50).
             Field::text('name')
                 ->label(__('partner::partner.fields.name'))
                 ->required()
-                ->maxLength(255)
+                ->maxLength(Partner::NAME_MAX_LENGTH)
                 ->default($text('name')),
             // Facultatif, dans la langue de saisie (décision 2026-11-24-partenaire-slogan).
             Field::text('slogan')
                 ->label(__('partner::partner.fields.slogan'))
-                ->maxLength(120)
+                ->maxLength(Partner::SLOGAN_MAX_LENGTH)
                 ->default($text('slogan')),
             // Obligatoire ; le logo, lui, est facultatif (décision 2026-11-24-partenaire-description-obligatoire).
             Field::textarea('description')

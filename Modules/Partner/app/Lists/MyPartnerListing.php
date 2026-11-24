@@ -10,7 +10,6 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Form\Support\Submission;
-use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
@@ -97,11 +96,7 @@ class MyPartnerListing extends Listing
         /** @var Partner $record */
         $this->paymentRequired ??= Setting::partnerPaymentRequired();
         // Le statut (décision 2026-11-24-partenaires-statuts) ; publié, s'il est affiché maintenant ou pas (campagne).
-        [$status, $tone] = match (true) {
-            $record->status !== PartnerStatusEnum::PUBLISHED => [$record->status->label(), $record->status->tone()],
-            $record->isShown($this->paymentRequired) => [__('partner::partner.member.status.shown'), 'success'],
-            default => [__('partner::partner.member.status.hidden'), 'neutral'],
-        };
+        ['label' => $status, 'tone' => $tone] = $record->statusTag($this->paymentRequired);
         $locale = app()->getLocale();
 
         // Comme la page « Partenaires » : le logo à gauche, le statut au-dessus du nom, puis une ligne (slogan, sinon

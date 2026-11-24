@@ -151,6 +151,10 @@ class MyPartnerApiTest extends TestCase
         $this->asUser($user)->postJson('/api/v1/partners', ['url' => 'pas un lien'])->assertUnprocessable()
             ->assertJsonValidationErrors(['name', 'description', 'url'])->assertJsonMissingValidationErrors(['logo']);
         $this->asUser($user)->postJson('/api/v1/partners', ['name' => 'Sans logo', 'description' => 'Facultatif.'])->assertNoContent();
+        // Le nom et le slogan : 50 caractères au plus (décision 2026-11-24-partenaire-nom-slogan-50).
+        $this->asUser($user)->postJson('/api/v1/partners', ['name' => str_repeat('n', 51), 'slogan' => str_repeat('s', 51), 'description' => 'Texte.'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['name', 'slogan']);
+        $this->asUser($user)->postJson('/api/v1/partners', ['name' => str_repeat('n', 50), 'slogan' => str_repeat('s', 50), 'description' => 'Texte.'])->assertNoContent();
     }
 
     public function test_editing_prefills_saves_the_language_and_sends_it_back_for_review(): void

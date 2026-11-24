@@ -62,6 +62,11 @@ class PartnerResourceTest extends AuthFilamentTestCase
             ->fillForm(['name' => ['en' => 'Only English'], 'country_id' => $country->getKey()])
             ->call('create')
             ->assertHasFormErrors(['name.fr' => 'required', 'description.fr' => 'required']);
+        // Le nom et le slogan : 50 caractères au plus, comme dans l'app (décision 2026-11-24-partenaire-nom-slogan-50).
+        Livewire::test(CreatePartner::class)
+            ->fillForm(['name' => ['fr' => str_repeat('n', 51)], 'slogan' => ['fr' => str_repeat('s', 51)], 'description' => ['fr' => 'Texte.'], 'country_id' => $country->getKey()])
+            ->call('create')
+            ->assertHasFormErrors(['name.fr' => 'max', 'slogan.fr' => 'max']);
 
         // Les compteurs se lisent, ils ne s'écrivent pas.
         Livewire::test(EditPartner::class, ['record' => $existing->getKey()])

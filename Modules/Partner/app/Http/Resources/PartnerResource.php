@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Http\Resources;
 
+use App\Models\Setting;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -44,7 +45,7 @@ class PartnerResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, name: string, slogan: string|null, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null}
+     * @return array{id: string, name: string, slogan: string|null, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null, status?: array{label: string, tone: string}}
      */
     public function toArray(Request $request): array
     {
@@ -61,6 +62,25 @@ class PartnerResource extends JsonResource
             'cta_label' => $text('cta_label'),
             'logo' => MediaUrl::onRequestHost($partner->logoUrl($this->logoConversion)),
             ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $this->phone()] : []),
+            ...$this->status($request),
         ];
+    }
+
+    /**
+     * Sa pastille, sur sa page, pour ses comptes seulement (décision 2026-11-24-partenaire-page-statut) : un visiteur ne
+     * voit qu'un partenaire affiché, il n'en a pas besoin.
+     *
+     * @return array{status?: array{label: string, tone: string}}
+     */
+    private function status(Request $request): array
+    {
+        if (! $this->withContact) {
+            return [];
+        }
+        if (! $this->resource->isAdministeredBy($request->user('sanctum')?->getAuthIdentifier())) {
+            return [];
+        }
+
+        return ['status' => $this->resource->statusTag(Setting::partnerPaymentRequired())];
     }
 }

@@ -155,6 +155,30 @@ class PartnerApiTest extends TestCase
         $this->withHeaders($headers)->getJson('/api/v1/partners/999999')->assertNotFound();
     }
 
+    public function test_the_page_shows_the_status_to_the_partner_accounts_only(): void
+    {
+        // Décision 2026-11-24-partenaire-page-statut.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $member = User::factory()->create(['locale' => 'fr']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $pending = Partner::factory()->for($this->cameroon)->create(['status' => PartnerStatusEnum::PENDING]);
+        $shown = Partner::factory()->for($this->cameroon)->create();
+        foreach ([$pending, $shown] as $partner) {
+            $partner->users()->attach($member->getKey(), ['is_admin' => true]);
+        }
+
+        // Ses comptes : la pastille de « Mes partenaires ».
+        $token = $member->createToken('iPhone')->plainTextToken;
+        $this->withToken($token)->withHeaders($headers)->getJson("/api/v1/partners/{$pending->getKey()}")
+            ->assertOk()->assertJsonPath('data.status', ['label' => 'En validation', 'tone' => 'warning']);
+        $this->withToken($token)->withHeaders($headers)->getJson("/api/v1/partners/{$shown->getKey()}")
+            ->assertJsonPath('data.status', ['label' => 'Affiché', 'tone' => 'success']);
+
+        // Un visiteur : pas de pastille.
+        $this->app['auth']->forgetGuards();
+        $this->withoutToken()->withHeaders($headers)->getJson("/api/v1/partners/{$shown->getKey()}")->assertOk()->assertJsonMissingPath('data.status');
+    }
+
     public function test_the_list_is_searched_by_name_or_description_in_every_language(): void
     {
         // Décision 2026-11-23-partenaires-recherche : sans casse, accents compris.
