@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-partenaire-admins-email-sms.md (plus de confirmation à l'auteur)
+
 # `2026-11-24` — Chaque action est confirmée à son auteur par e-mail et SMS
 
 - **Type** : décision de conception

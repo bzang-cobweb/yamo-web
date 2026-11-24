@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-entete-etape-ouverte.md
+
 # Page d'une notification : l'en-tête de la première étape de la demande
 
 - **Date** : 2026-11-20

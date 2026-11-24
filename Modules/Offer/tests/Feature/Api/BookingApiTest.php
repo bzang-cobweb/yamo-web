@@ -146,9 +146,8 @@ class BookingApiTest extends TestCase
         Notification::assertSentTo($offer->user, BookingRequestReceived::class, fn (BookingRequestReceived $notification, array $channels): bool => $notification->step === BookingStepEnum::RECEIVED && $notification->booking->is($booking) && $channels === ['database', 'mail', SmsChannel::class]);
         // Une seule notification : le membre en est l'auteur et la retrouve dans son fil sans la recevoir (décision
         // 2026-11-24-notifications-fil-de-groupe).
-        // Sa confirmation par e-mail et SMS, sans notification dans l'onglet (décision 2026-11-24-confirmation-auteur).
-        Notification::assertSentTo($guest, BookingRequestReceived::class, fn (BookingRequestReceived $notification, array $channels): bool => $notification->isOwn($guest) && ! in_array('database', $channels, true));
-        Notification::assertCount(2);
+        Notification::assertNotSentTo($guest, BookingRequestReceived::class);
+        Notification::assertCount(1);
     }
 
     public function test_invalid_requests_are_refused(): void

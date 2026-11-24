@@ -159,9 +159,6 @@ return [
             'body' => ':guest hat eine :request für „:offer“ (:period) gesendet.',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'Sie haben eine :request für „:offer“ (:period) gesendet.',
-            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
-            'own_subject' => 'Anfrage gesendet: :offer',
-            'own_sms' => ':app: Sie haben eine :request für „:offer“ (:period) gesendet.',
             // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
             'summary' => 'Eine :request für „:offer“ (:period) wurde erfasst.',
             'summary_stay' => 'Eine :request für „:offer“ (:period, :people) wurde erfasst.',
@@ -172,9 +169,6 @@ return [
             'body' => 'Ihre :request für „:offer“ (:period) wurde angenommen.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'Sie haben die :request von :guest für „:offer“ (:period) angenommen.',
-            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
-            'own_subject' => 'Anfrage angenommen: :offer',
-            'own_sms' => ':app: Sie haben die :request von :guest für „:offer“ (:period) angenommen.',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
             'summary' => 'Ihre :request für „:offer“ (:period) wurde angenommen.',
             'summary_stay' => 'Ihre :request für „:offer“ (:period, :people) wurde angenommen.',
@@ -185,9 +179,6 @@ return [
             'body' => 'Ihre :request für „:offer“ (:period) wurde abgelehnt.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'Sie haben die :request von :guest für „:offer“ (:period) abgelehnt.',
-            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
-            'own_subject' => 'Anfrage abgelehnt: :offer',
-            'own_sms' => ':app: Sie haben die :request von :guest für „:offer“ (:period) abgelehnt.',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
             'summary' => 'Ihre :request für „:offer“ (:period) wurde abgelehnt.',
             'summary_stay' => 'Ihre :request für „:offer“ (:period, :people) wurde abgelehnt.',
@@ -197,9 +188,6 @@ return [
             'subject' => 'Anfrage storniert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) storniert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) storniert.',
-            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
-            'own_subject' => 'Anfrage storniert: :offer',
-            'own_sms' => ':app: Sie haben Ihre :request für „:offer“ (:period) storniert.',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'Die :request für „:offer“ (:period) wurde storniert.',
             'summary_stay' => 'Die :request für „:offer“ (:period, :people) wurde storniert.',
@@ -210,9 +198,6 @@ return [
             'subject' => 'Anfrage geändert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) geändert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) geändert.',
-            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
-            'own_subject' => 'Anfrage geändert: :offer',
-            'own_sms' => ':app: Sie haben Ihre :request für „:offer“ (:period) geändert.',
             'summary' => 'Die :request für „:offer“ wurde geändert (:period).',
             'summary_stay' => 'Die :request für „:offer“ wurde geändert (:period, :people).',
             'sms' => ':app: :guest hat die :request für „:offer“ (:period) geändert. Antworten Sie in der App.',

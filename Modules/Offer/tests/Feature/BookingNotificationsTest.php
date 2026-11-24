@@ -213,16 +213,13 @@ class BookingNotificationsTest extends TestCase
 
     public function test_the_owner_answer_is_one_notification_to_the_member(): void
     {
-        // Décision 2026-11-24-notifications-fil-de-groupe : une seule notification dans l'onglet, au membre ; le
-        // propriétaire en est l'auteur, la lit rédigée pour lui, et en reçoit la confirmation par SMS.
+        // Décision 2026-11-24-notifications-fil-de-groupe : une seule notification, au membre ; le propriétaire en est
+        // l'auteur, ni e-mail ni SMS pour lui, et la lit rédigée pour lui.
         $booking = $this->booking(owner: ['phone' => '+237690000009', 'phone_verified_at' => now()]);
 
         app(BookingService::class)->answer($booking, false);
 
-        // Sa confirmation par SMS (décision 2026-11-24-confirmation-auteur), sans notification dans l'onglet.
-        $own = array_values(array_filter($this->sms->messages, fn (array $sms): bool => $sms['to'] === '+237690000009'));
-        $this->assertCount(1, $own);
-        $this->assertStringContainsString('vous avez refusé la demande de séjour de', $own[0]['message']);
+        $this->assertSame([], array_filter($this->sms->messages, fn (array $sms): bool => $sms['to'] === '+237690000009'));
         $this->assertSame(0, $booking->offer->user->notifications()->count());
         $sent = $booking->user->notifications()->sole();
         $this->assertSame($booking->offer->user->getKey(), $sent->user_id);

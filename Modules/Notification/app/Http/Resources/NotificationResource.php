@@ -74,42 +74,37 @@ class NotificationResource extends JsonResource
         $reader = $request->user();
         $threads = app(NotificationThreads::class);
         $steps = $this->withThread ? $threads->steps($notification, $reader) : [];
-        // Sur sa page, un fil se présente par sa première étape : son titre, son texte, qui
-        // l'a faite (décision 2026-11-20-entete-premiere-etape).
-        $head = $steps[0] ?? $notification;
         // Qui a fait chaque étape, et qui a reçu chacune de ses propres actions (ses coches) : lus en une fois.
         $this->loadUsers(array_merge(
             array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps),
             array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('notifiable_id'), $steps),
         ));
-        // L'en-tête vient de la première étape du fil ; les liens et le message, de la notification ouverte, l'étape en
-        // cours. Hors de sa page, les deux sont la notification elle-même. Chacune rédigée pour le lecteur (décision
-        // 2026-11-24-notifications-fil-de-groupe).
-        $first = $this->dataFor($head, $reader);
-        $opened = $head === $notification ? $first : $this->dataFor($notification, $reader);
+        // Tout vient de la notification servie, l'étape de sa carte (décision 2026-11-24-entete-etape-ouverte), rédigée pour
+        // le lecteur (décision 2026-11-24-notifications-fil-de-groupe) ; le suivi montre les autres.
+        $data = $this->dataFor($notification, $reader);
 
         $item = [
             'id' => (string) $notification->getKey(),
-            'title' => (string) ($first['title'] ?? ''),
+            'title' => (string) ($data['title'] ?? ''),
             /** Le titre de sa carte dans la liste, donné par son module (« Demande acceptée » pour une demande) ; `null` : `title`. */
             'card_title' => app(NotificationFilters::class)->cardTitle($notification, $reader),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
-            'tag' => $this->tag($first),
-            'body' => (string) ($first['body'] ?? ''),
+            'tag' => $this->tag($data),
+            'body' => (string) ($data['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
-            'actor' => $this->actor($head, $reader),
+            'actor' => $this->actor($notification, $reader),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
-            'summary' => $this->summary($first),
+            'summary' => $this->summary($data),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
-            'message' => $this->message($opened),
+            'message' => $this->message($data),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
-            'link' => $this->link($opened),
+            'link' => $this->link($data),
             /** Liens en plus, sous le texte (« Voir l'annonce » → `/offers/12`). */
-            'links' => $this->links($opened),
+            'links' => $this->links($data),
             /** Passages du texte qui ouvrent un écran (« Paul Etoa » → `/members/37`). */
-            'text_links' => $this->textLinks($first),
+            'text_links' => $this->textLinks($data),
             /** Libellé du bouton qui ouvre `link` (« Réservations reçues »), ou `null`. */
-            'link_label' => $this->linkLabel($opened),
+            'link_label' => $this->linkLabel($data),
             /** Lue : pour la carte d'une demande, toutes ses étapes le sont. */
             'read' => $this->read ?? $this->isRead($notification, $reader),
             /** Date ISO 8601. */
@@ -236,15 +231,15 @@ class NotificationResource extends JsonResource
         return $this->users[$id] ?? null;
     }
 
-    private function actor(DatabaseNotification $head, User $reader): ?array
+    private function actor(DatabaseNotification $notification, User $reader): ?array
     {
         // Sa propre action : la carte ne montre pas son lecteur (décision 2026-11-24-notifications-fil-de-groupe).
-        if (app(NotificationThreads::class)->isOwn($head, $reader)) {
+        if (app(NotificationThreads::class)->isOwn($notification, $reader)) {
             return null;
         }
 
-        $id = $head->getAttribute('user_id');
-        $actor = $this->actorLoaded && $head === $this->resource ? $this->actor : ($id === null ? null : $this->user((int) $id));
+        $id = $notification->getAttribute('user_id');
+        $actor = $this->actorLoaded ? $this->actor : ($id === null ? null : $this->user((int) $id));
 
         if ($actor === null) {
             return null;

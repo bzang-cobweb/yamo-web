@@ -248,13 +248,10 @@ abstract class BookingNotification extends Notification implements HasNotificati
         $replace = $this->replacements();
         $note = $this->note();
 
-        // Sa propre action : sa confirmation (décision 2026-11-24-confirmation-auteur).
-        $own = $this->isOwn($notifiable);
-
         return (new MailMessage)
-            ->subject(__("offer::booking.notify.{$this->key()}.".($own ? 'own_subject' : 'subject'), $replace))
+            ->subject(__("offer::booking.notify.{$this->key()}.subject", $replace))
             ->greeting(__('offer::booking.notify.greeting', ['name' => $notifiable instanceof User ? $notifiable->first_name : '']))
-            ->line(__("offer::booking.notify.{$this->key()}.".($own ? 'own' : 'body'), $replace))
+            ->line(__("offer::booking.notify.{$this->key()}.body", $replace))
             ->lineIf($note !== null, __('offer::booking.notify.message', ['message' => (string) $note]))
             ->line(__('offer::booking.notify.open_app', ['section' => __('offer::booking.list.'.$this->section($notifiable))]))
             ->salutation(__('offer::booking.notify.salutation', ['app' => (string) config('app.name')]));
@@ -262,7 +259,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
 
     public function toSms(object $notifiable): string
     {
-        return __("offer::booking.notify.{$this->key()}.".($this->isOwn($notifiable) ? 'own_sms' : 'sms'), $this->replacements());
+        return __("offer::booking.notify.{$this->key()}.sms", $this->replacements());
     }
 
     /**

@@ -98,9 +98,10 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $page = $this->api($reader, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data');
             $this->assertSame($labels, array_column($page['history'], 'label'));
         }
-        // L'en-tête de l'auteur : sa propre demande, dans ses mots.
+        // L'en-tête de l'auteur : l'étape de sa carte, sa dernière modification, dans ses mots (décision
+        // 2026-11-24-entete-etape-ouverte).
         $cards = $this->api($author, 'GET', '/notifications')->json('data.items');
-        $this->assertSame("Votre partenaire « Déménageurs du Wouri » est en validation : l'équipe le vérifie avant de l'afficher.", $this->api($author, 'GET', '/notifications/'.$cards[0]['id'])->json('data.body'));
+        $this->assertSame("Votre partenaire « Déménageurs du Wouri » est en validation : l'équipe vérifie vos modifications avant de l'afficher.", $this->api($author, 'GET', '/notifications/'.$cards[0]['id'])->json('data.body'));
         // Rien de reçu : rien de non lu ; l'autre compte a reçu la réponse.
         $this->assertTrue($cards[0]['read']);
         $this->assertSame(1, $this->api($helper, 'GET', '/notifications/unread-count')->json('data.unread'));
@@ -157,7 +158,9 @@ class PartnerThreadTest extends AuthFilamentTestCase
                 && $notification->notificationThread($helper) === $partner->groupThread()
                 && $notification->notificationUserId($helper) === null;
         });
-        Notification::assertNotSentTo([$admin, $team], PartnerPublished::class);
+        // Ses administrateurs : e-mail et SMS seulement ; l'utilisateur du back-office, administrateur lui aussi, rien.
+        Notification::assertSentTo($admin, PartnerPublished::class, fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
+        Notification::assertNotSentTo($team, PartnerPublished::class);
 
         // Un changement de statut à l'enregistrement : la seule notification de statut, pas « modifié » en plus.
         Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
@@ -166,6 +169,7 @@ class PartnerThreadTest extends AuthFilamentTestCase
             ->assertHasNoFormErrors();
         Notification::assertSentToTimes($helper, PartnerPublished::class, 1);
         Notification::assertSentTo($helper, PartnerStatusEnum::ARCHIVED->notification(), fn ($notification): bool => $notification->toArray($helper)['title'] === 'Partenaire archivé');
-        Notification::assertNotSentTo([$admin, $team], PartnerStatusEnum::ARCHIVED->notification());
+        Notification::assertSentTo($admin, PartnerStatusEnum::ARCHIVED->notification(), fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
+        Notification::assertNotSentTo($team, PartnerStatusEnum::ARCHIVED->notification());
     }
 }

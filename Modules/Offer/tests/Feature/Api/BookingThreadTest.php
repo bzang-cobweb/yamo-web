@@ -251,14 +251,14 @@ class BookingThreadTest extends TestCase
             // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
             $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            // L'en-tête, la première étape du fil chez le lecteur (décision 2026-11-24-notification-copie-auteur) : chez le
-            // propriétaire, la demande reçue, du membre ; chez le membre, sa propre demande, sans qui agit ni résumé.
+            // L'en-tête, l'étape de la carte ouverte, le refus (décision 2026-11-24-entete-etape-ouverte) : chez le membre,
+            // reçu du propriétaire ; chez le propriétaire, sa propre réponse, sans qui agit ni résumé.
             if ($reader->is($this->guest)) {
+                $this->assertSame('Votre demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été refusée.', $page['summary']);
+                $this->assertSame((string) $this->owner->getKey(), $page['actor']['id']);
+            } else {
                 $this->assertNull($page['summary']);
                 $this->assertNull($page['actor']);
-            } else {
-                $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
-                $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
             }
             // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
             $this->assertArrayNotHasKey('total', $page);

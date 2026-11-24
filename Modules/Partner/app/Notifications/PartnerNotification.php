@@ -67,7 +67,8 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         public readonly ?string $action = null,
         public readonly int|string|null $actorId = null,
         public readonly string $actorName = '',
-        // Faux : sa confirmation par e-mail et SMS, sans notification dans l'onglet (décision 2026-11-24-confirmation-auteur).
+        // Faux : par e-mail et SMS seulement, sans notification dans l'onglet (ses administrateurs, décision
+        // 2026-11-24-partenaire-admins-email-sms).
         public readonly bool $inTab = true,
     ) {
         $this->afterCommit();
