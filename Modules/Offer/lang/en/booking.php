@@ -159,6 +159,9 @@ return [
             'body' => ':guest sent a :request for “:offer” (:period).',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'You sent a :request for “:offer” (:period).',
+            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
+            'own_subject' => 'Request sent: :offer',
+            'own_sms' => ':app: you sent a :request for “:offer” (:period).',
             // Le texte de la carte (décision 2026-11-22-textes-visite-sejour) ; un séjour, avec les personnes.
             'summary' => 'A :request for “:offer” (:period) has been recorded.',
             'summary_stay' => 'A :request for “:offer” (:period, :people) has been recorded.',
@@ -169,6 +172,9 @@ return [
             'body' => 'Your :request for “:offer” (:period) has been accepted.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You accepted :guest’s :request for “:offer” (:period).',
+            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
+            'own_subject' => 'Request accepted: :offer',
+            'own_sms' => ':app: you accepted :guest’s :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
             'summary' => 'Your :request for “:offer” (:period) has been accepted.',
             'summary_stay' => 'Your :request for “:offer” (:period, :people) has been accepted.',
@@ -179,6 +185,9 @@ return [
             'body' => 'Your :request for “:offer” (:period) has been declined.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You declined :guest’s :request for “:offer” (:period).',
+            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
+            'own_subject' => 'Request declined: :offer',
+            'own_sms' => ':app: you declined :guest’s :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-reponse-visite-sejour).
             'summary' => 'Your :request for “:offer” (:period) has been declined.',
             'summary_stay' => 'Your :request for “:offer” (:period, :people) has been declined.',
@@ -188,6 +197,9 @@ return [
             'subject' => 'Request cancelled: :offer',
             'body' => ':guest cancelled their :request for “:offer” (:period).',
             'own' => 'You cancelled your :request for “:offer” (:period).',
+            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
+            'own_subject' => 'Request cancelled: :offer',
+            'own_sms' => ':app: you cancelled your :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
             'summary' => 'The :request for “:offer” (:period) has been cancelled.',
             'summary_stay' => 'The :request for “:offer” (:period, :people) has been cancelled.',
@@ -198,6 +210,9 @@ return [
             'subject' => 'Request changed: :offer',
             'body' => ':guest changed their :request for “:offer” (:period).',
             'own' => 'You changed your :request for “:offer” (:period).',
+            // La confirmation de sa propre action, par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
+            'own_subject' => 'Request changed: :offer',
+            'own_sms' => ':app: you changed your :request for “:offer” (:period).',
             'summary' => 'The :request for “:offer” has been changed (:period).',
             'summary_stay' => 'The :request for “:offer” has been changed (:period, :people).',
             'sms' => ':app: :guest changed their :request for “:offer” (:period). Reply in the app.',

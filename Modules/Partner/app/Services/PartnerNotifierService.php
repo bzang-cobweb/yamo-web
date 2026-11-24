@@ -16,7 +16,8 @@ use Modules\Partner\Notifications\PartnerNotification;
  *   (`Setting::partnerNotifyUser()`, décision 2026-11-24-partenaire-compte-prevenu), pas au membre qui agit ;
  * - une action au back-office (statut, ajout, modification) : à l'auteur de la dernière demande depuis l'app, pas à
  *   celui qui l'a faite.
- * Les autres comptes du partenaire la lisent dans son fil, sans la recevoir.
+ * Les autres comptes du partenaire la lisent dans son fil, sans la recevoir. Le membre qui agit depuis l'app en reçoit
+ * la confirmation par e-mail et SMS (décision 2026-11-24-confirmation-auteur).
  */
 class PartnerNotifierService
 {
@@ -44,11 +45,17 @@ class PartnerNotifierService
     }
 
     /**
-     * Il a été ajouté ou modifié depuis l'app par `$actorId` et attend la validation : le compte du back-office choisi
-     * sur la page Application est prévenu, sauf s'il est celui qui agit ; sans compte choisi, personne.
+     * Il a été ajouté ou modifié depuis l'app par `$actorId` et attend la validation : celui qui agit en reçoit la
+     * confirmation par e-mail et SMS ; le compte du back-office choisi sur la page Application est prévenu, sauf s'il
+     * est celui qui agit ; sans compte choisi, personne.
      */
     public function submitted(Partner $partner, int|string $actorId, bool $created): void
     {
+        $actor = User::query()->find($actorId);
+        $actorName = $actor === null ? '' : (string) $actor->full_name;
+        $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
+        $actor?->notify(PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actorName, inTab: false));
+
         $recipient = Setting::partnerNotifyUser();
         if ($recipient === null) {
             return;
@@ -57,9 +64,7 @@ class PartnerNotifierService
             return;
         }
 
-        $actor = User::query()->find($actorId);
-        $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
-        $recipient->notify(PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actor === null ? '' : (string) $actor->full_name));
+        $recipient->notify(PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actorName));
     }
 
     /**

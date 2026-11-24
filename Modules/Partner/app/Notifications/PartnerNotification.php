@@ -42,11 +42,11 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     abstract public static function status(): PartnerStatusEnum;
 
     /** La notification du statut `$status`, de sa classe. */
-    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = ''): self
+    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = '', bool $inTab = true): self
     {
         $class = $status->notification();
 
-        return new $class($partner, $action, $actorId, $actorName);
+        return new $class($partner, $action, $actorId, $actorName, $inTab);
     }
 
     /**
@@ -67,6 +67,8 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         public readonly ?string $action = null,
         public readonly int|string|null $actorId = null,
         public readonly string $actorName = '',
+        // Faux : sa confirmation par e-mail et SMS, sans notification dans l'onglet (décision 2026-11-24-confirmation-auteur).
+        public readonly bool $inTab = true,
     ) {
         $this->afterCommit();
     }
@@ -76,7 +78,13 @@ abstract class PartnerNotification extends Notification implements HasNotificati
      */
     public function via(object $notifiable): array
     {
-        return $notifiable instanceof User ? ['database', ...$notifiable->notificationChannels()] : [];
+        if (! $notifiable instanceof User) {
+            return [];
+        }
+
+        $channels = $notifiable->notificationChannels();
+
+        return $this->inTab ? ['database', ...$channels] : $channels;
     }
 
     /**

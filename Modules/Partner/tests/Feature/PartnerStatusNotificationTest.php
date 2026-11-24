@@ -126,7 +126,10 @@ class PartnerStatusNotificationTest extends TestCase
         });
         // Ni ses comptes ni son auteur ; pas de « statut changé » en plus pour le passage en validation.
         Notification::assertSentToTimes($team, PartnerPending::class, 1);
-        Notification::assertNotSentTo([$admin, $helper], PartnerPending::class);
+        Notification::assertNotSentTo($admin, PartnerPending::class);
+        // Celui qui agit : sa confirmation par e-mail et SMS, sans notification dans l'onglet (décision
+        // 2026-11-24-confirmation-auteur).
+        Notification::assertSentTo($helper, PartnerPending::class, fn (PartnerPending $notification, array $channels): bool => ! in_array('database', $channels, true));
         Notification::assertNotSentTo([$admin, $helper, $team], PartnerPublished::class);
     }
 
@@ -141,7 +144,8 @@ class PartnerStatusNotificationTest extends TestCase
 
         Notification::assertSentTo($team, PartnerPending::class, fn (PartnerPending $notification): bool => $notification->toArray($team)['title'] === 'Partenaire ajouté'
             && $notification->notificationUserId($team) === $member->getKey());
-        Notification::assertNotSentTo($member, PartnerPending::class);
+        Notification::assertSentTo($member, PartnerPending::class, fn (PartnerPending $notification, array $channels): bool => ! in_array('database', $channels, true)
+            && $notification->toArray($member)['body'] === 'Votre partenaire « '.$notification->partner->getTranslation('name', 'fr')." » est en validation : l'équipe le vérifie avant de l'afficher.");
 
         // Sans compte configuré : personne.
         Setting::current()->update(['partner_notify_user_id' => null]);
