@@ -15,15 +15,14 @@ use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Models\PartnerRequest;
 use Modules\Partner\Notifications\PartnerPublished;
 use Modules\Partner\Services\PartnerService;
 
 /**
- * Les demandes d'un partenaire et le fil de leurs notifications ; au back-office, seuls ses administrateurs sont
- * prévenus, jamais celui qui agit (décision 2026-11-24-partenaire-demandes).
+ * Le fil des notifications d'un partenaire, un par destinataire (décision 2026-11-24-partenaire-fil) ; au back-office,
+ * seuls ses administrateurs sont prévenus, jamais celui qui agit (décision 2026-11-24-partenaire-demandes).
  */
-class PartnerRequestTest extends AuthFilamentTestCase
+class PartnerThreadTest extends AuthFilamentTestCase
 {
     private Country $cameroon;
 
@@ -55,7 +54,7 @@ class PartnerRequestTest extends AuthFilamentTestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->json($method, '/api/v1'.$uri, $data);
     }
 
-    public function test_a_request_gathers_its_steps_in_one_thread_per_recipient(): void
+    public function test_a_partner_gathers_its_notifications_in_one_thread_per_recipient(): void
     {
         $author = $this->member();
         $this->api($author, 'POST', '/partners', ['name' => 'Déménageurs du Wouri', 'description' => 'Texte.'])->assertNoContent();
@@ -63,41 +62,30 @@ class PartnerRequestTest extends AuthFilamentTestCase
         $helper = $this->member();
         $partner->users()->attach($helper->getKey(), ['is_admin' => false]);
 
-        // Une demande d'ajout, en validation ; une modification tant qu'elle l'est la prolonge. Une minute entre les
-        // étapes : elles se suivent dans l'ordre.
+        // Ajouté, modifié, accepté, puis modifié de nouveau. Une minute entre les étapes : elles se suivent dans l'ordre.
         $this->travel(1)->minutes();
         $this->api($helper, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'description' => 'Autre texte.'])->assertNoContent();
-        $request = PartnerRequest::query()->sole();
-        $this->assertSame([PartnerRequest::CREATED, PartnerStatusEnum::PENDING, $author->getKey()], [$request->action, $request->status, $request->user_id]);
-
-        // L'équipe valide au back-office (l'action « Valider » appelle `accept()`, testée dans PartnerResourceTest) : la
-        // demande reçoit sa réponse.
+        // L'équipe valide au back-office (l'action « Valider » appelle `accept()`, testée dans PartnerResourceTest).
         $this->travel(1)->minutes();
         Filament::setServingStatus();
-        $team = $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
         app(PartnerService::class)->accept($partner->fresh());
-        $request->refresh();
-        $this->assertSame([PartnerStatusEnum::PUBLISHED, $team->getKey()], [$request->status, $request->answered_by]);
-        $this->assertNotNull($request->answered_at);
+        $this->travel(1)->minutes();
+        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'description' => 'Encore.'])->assertNoContent();
 
-        // Chez l'auteur, administrateur : une seule carte, son suivi sans doublon.
+        // Chez l'auteur, administrateur : une seule carte pour le partenaire, son suivi sans doublon.
         $cards = $this->api($author, 'GET', '/notifications')->assertOk()->json('data.items');
         $this->assertCount(1, $cards);
-        $this->assertSame('Partenaire accepté', $cards[0]['title']);
+        $this->assertSame('Partenaire modifié', $cards[0]['title']);
         $history = $this->api($author, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data.history');
-        $this->assertSame(['Partenaire ajouté', 'Partenaire modifié', 'Partenaire accepté'], array_column($history, 'label'));
+        $this->assertSame(['Partenaire ajouté', 'Partenaire modifié', 'Partenaire accepté', 'Partenaire modifié'], array_column($history, 'label'));
+        $this->assertSame($partner->thread($author->getKey()), $author->notifications()->value('thread'));
 
-        // L'autre compte, rattaché après l'ajout et non administrateur : la modification, pas la réponse de l'équipe.
+        // L'autre compte, rattaché après l'ajout et non administrateur : les deux modifications, pas la réponse de l'équipe.
         $cards = $this->api($helper, 'GET', '/notifications')->assertOk()->json('data.items');
         $this->assertCount(1, $cards);
         $history = $this->api($helper, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data.history');
-        $this->assertSame(['Partenaire modifié'], array_column($history, 'label'));
-
-        // Une modification après la réponse ouvre une nouvelle demande, un nouveau fil.
-        $this->travel(1)->minutes();
-        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'description' => 'Encore.'])->assertNoContent();
-        $this->assertSame([PartnerRequest::CREATED, PartnerRequest::UPDATED], PartnerRequest::query()->orderBy('id')->pluck('action')->all());
-        $this->assertCount(2, $this->api($author, 'GET', '/notifications')->json('data.items'));
+        $this->assertSame(['Partenaire modifié', 'Partenaire modifié'], array_column($history, 'label'));
     }
 
     public function test_back_office_edits_notify_the_admins_but_not_the_back_office_user(): void
@@ -115,12 +103,12 @@ class PartnerRequestTest extends AuthFilamentTestCase
             ->call('save')
             ->assertHasNoFormErrors();
 
-        Notification::assertSentTo($admin, PartnerPublished::class, function (PartnerPublished $notification) use ($admin): bool {
+        Notification::assertSentTo($admin, PartnerPublished::class, function (PartnerPublished $notification) use ($admin, $partner): bool {
             $data = $notification->toArray($admin);
 
             return $data['title'] === 'Partenaire modifié'
                 && $data['body'] === "Votre partenaire « Meubles Akwa Plus » a été modifié par l'équipe."
-                && $notification->notificationThread($admin) === null
+                && $notification->notificationThread($admin) === $partner->thread($admin->getKey())
                 && $notification->notificationUserId($admin) === null;
         });
         Notification::assertNotSentTo([$helper, $team], PartnerPublished::class);

@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
@@ -111,6 +110,19 @@ class Partner extends Model implements HasMedia
         return $this->belongsToMany(User::class)->withPivot('is_admin')->withTimestamps();
     }
 
+    /** Le préfixe du fil de ses notifications (décision 2026-11-24-partenaire-fil). */
+    public const THREAD_PREFIX = 'partner:';
+
+    /**
+     * Le fil de ses notifications chez le compte `$userId` : une carte par partenaire, qui réunit ajouts, modifications
+     * et réponses de l'équipe ; un fil par destinataire, pour que ses étapes ne se répètent pas (décision
+     * 2026-11-24-partenaire-fil).
+     */
+    public function thread(int|string $userId): string
+    {
+        return self::THREAD_PREFIX.$this->getKey().':'.$userId;
+    }
+
     /**
      * Ses administrateurs (`is_admin`) : ceux que le back-office prévient (décision 2026-11-24-partenaire-demandes).
      *
@@ -119,16 +131,6 @@ class Partner extends Model implements HasMedia
     public function admins(): BelongsToMany
     {
         return $this->users()->wherePivot('is_admin', true);
-    }
-
-    /**
-     * Ses demandes, ajouts et modifications depuis l'app (décision 2026-11-24-partenaire-demandes).
-     *
-     * @return HasMany<PartnerRequest, $this>
-     */
-    public function requests(): HasMany
-    {
-        return $this->hasMany(PartnerRequest::class);
     }
 
     /**

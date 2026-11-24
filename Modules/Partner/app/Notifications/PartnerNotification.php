@@ -12,11 +12,10 @@ use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Models\PartnerRequest;
 
 /**
  * Un partenaire notifié à ses comptes (décisions 2026-11-24-partenaires-notifications,
- * 2026-11-24-partenaire-notification-par-statut et 2026-11-24-partenaire-demandes). Une classe par statut :
+ * 2026-11-24-partenaire-notification-par-statut, 2026-11-24-partenaire-demandes et 2026-11-24-partenaire-fil). Une classe par statut :
  * `PartnerPending`, `PartnerPublished`, `PartnerRejected`, `PartnerArchived` ; le statut est aussi dans
  * `data.partner_status`. Dans l'onglet « Notifications », et par e-mail et SMS selon les canaux du destinataire, dans
  * sa langue ; elle ouvre « Mes partenaires ».
@@ -24,22 +23,29 @@ use Modules\Partner\Models\PartnerRequest;
  * - `$action` : `created` (ajouté) ou `updated` (modifié) ; `null` : un changement de statut.
  * - `$actorId` : le compte qui a agi depuis l'app ; l'auteur lit son texte (« Votre partenaire … est en validation »),
  *   les autres le leur (« … modifié par … ») et voient son nom sur la carte. `null` : l'équipe, au back-office.
- * - `$request` : la demande à laquelle elle appartient ; ses notifications font un fil chez chaque destinataire, et
- *   sa page montre le suivi de la demande.
+ *
+ * Toutes les notifications d'un partenaire font un fil chez chaque destinataire (`Partner::thread()`) : une carte,
+ * dont la page montre le suivi (ajouté, modifié, accepté…).
  */
 abstract class PartnerNotification extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
+    /** Une action : ajouté. */
+    public const CREATED = 'created';
+
+    /** Une action : modifié. */
+    public const UPDATED = 'updated';
+
     /** Le statut notifié par la classe. */
     abstract public static function status(): PartnerStatusEnum;
 
     /** La notification du statut `$status`, de sa classe. */
-    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = '', ?PartnerRequest $request = null): self
+    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = ''): self
     {
         $class = $status->notification();
 
-        return new $class($partner, $action, $actorId, $actorName, $request?->getKey());
+        return new $class($partner, $action, $actorId, $actorName);
     }
 
     /**
@@ -48,7 +54,7 @@ abstract class PartnerNotification extends Notification implements HasNotificati
      */
     public static function title(PartnerStatusEnum $status, ?string $action = null): string
     {
-        if ($action === PartnerRequest::CREATED || $action === PartnerRequest::UPDATED) {
+        if ($action === self::CREATED || $action === self::UPDATED) {
             return __('partner::partner.notify.submitted.title.'.$action);
         }
 
@@ -60,7 +66,6 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         public readonly ?string $action = null,
         public readonly int|string|null $actorId = null,
         public readonly string $actorName = '',
-        public readonly ?int $requestId = null,
     ) {
         $this->afterCommit();
     }
@@ -74,7 +79,7 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     }
 
     /**
-     * @return array{title: string, body: string, author: bool, action: string|null, partner_id: int, partner_request_id: int|null, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, body: string, author: bool, action: string|null, partner_id: int, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -85,7 +90,6 @@ abstract class PartnerNotification extends Notification implements HasNotificati
             'author' => $this->isAuthor($notifiable),
             'action' => $this->action,
             'partner_id' => (int) $this->partner->getKey(),
-            'partner_request_id' => $this->requestId,
             'partner_status' => static::status()->value,
             'link' => '/profile/lists/'.MyPartnerListing::name(),
             'link_label' => __('partner::partner.member.mine'),
@@ -94,14 +98,14 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         ];
     }
 
-    /** Le fil de la demande chez ce destinataire ; une notification sans demande reste seule. */
+    /** Le fil du partenaire chez ce destinataire (décision 2026-11-24-partenaire-fil). */
     public function notificationThread(object $notifiable): ?string
     {
-        if ($this->requestId === null || ! $notifiable instanceof User) {
+        if (! $notifiable instanceof User) {
             return null;
         }
 
-        return PartnerRequest::thread($this->requestId, $notifiable->getKey());
+        return $this->partner->thread($notifiable->getKey());
     }
 
     /** Qui agit, pour les autres comptes : son nom et sa photo sur la carte, le filtre « Membre » ; rien pour l'auteur ni l'équipe. */

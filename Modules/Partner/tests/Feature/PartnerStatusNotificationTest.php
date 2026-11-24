@@ -16,12 +16,10 @@ use Modules\Partner\Events\PartnerSubmitted;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfStatus;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfSubmission;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Models\PartnerRequest;
 use Modules\Partner\Notifications\PartnerNotification;
 use Modules\Partner\Notifications\PartnerPending;
 use Modules\Partner\Notifications\PartnerPublished;
 use Modules\Partner\Services\PartnerNotifierService;
-use Modules\Partner\Services\PartnerRequestService;
 use Tests\TestCase;
 
 /**
@@ -142,7 +140,7 @@ class PartnerStatusNotificationTest extends TestCase
         Event::assertListening(PartnerSubmitted::class, NotifyPartnerUsersOfSubmission::class);
 
         $partner = new Partner;
-        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true, null));
+        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true));
 
         app(NotifyPartnerUsersOfSubmission::class)->handle(new PartnerSubmitted($partner, 7, true));
     }
@@ -163,9 +161,7 @@ class PartnerStatusNotificationTest extends TestCase
         Event::assertListening(PartnerStatusChanged::class, NotifyPartnerUsersOfStatus::class);
 
         $partner = new Partner(['status' => PartnerStatusEnum::PUBLISHED]);
-        $request = new PartnerRequest;
-        $this->mock(PartnerRequestService::class, fn (MockInterface $requests) => $requests->shouldReceive('answer')->once()->with($partner, PartnerStatusEnum::PUBLISHED, 7)->andReturn($request));
-        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('statusChanged')->once()->with($partner, 7, $request));
+        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('statusChanged')->once()->with($partner, 7));
 
         app(NotifyPartnerUsersOfStatus::class)->handle(new PartnerStatusChanged($partner, PartnerStatusEnum::PENDING, 7));
     }

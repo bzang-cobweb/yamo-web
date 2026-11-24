@@ -52,18 +52,23 @@ class PartnerNotificationFilterTest extends TestCase
             $partner->users()->attach([$member->getKey() => ['is_admin' => true], $other->getKey() => ['is_admin' => false]]);
         }
         $notifier = app(PartnerNotifierService::class);
-        // Wouri ajouté par l'autre compte, puis accepté ; Akwa modifié par le membre.
+        // Wouri ajouté par l'autre compte, puis accepté ; Akwa modifié par le membre. Une minute entre les étapes : elles se
+        // suivent dans l'ordre.
         $notifier->submitted($wouri, $other->getKey(), true);
+        $this->travel(1)->minutes();
         $wouri->update(['status' => PartnerStatusEnum::PUBLISHED]);
+        $this->travel(1)->minutes();
         $notifier->submitted($akwa, $member->getKey(), false);
         $member->notifications()->create(['id' => (string) str()->uuid(), 'type' => 'Test', 'data' => ['title' => 'Autre', 'body' => 'Texte']]);
 
-        // Le type « Partenaire » : les trois, sans l'autre notification.
-        $this->assertEqualsCanonicalizing(['Partenaire ajouté', 'Partenaire accepté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner'), 'title'));
+        // Le type « Partenaire » : une carte par partenaire, sa dernière étape (décision 2026-11-24-partenaire-fil), sans
+        // l'autre notification.
+        $this->assertEqualsCanonicalizing(['Partenaire accepté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner'), 'title'));
 
-        // Par statut, avec sa pastille.
+        // Par statut, celui de la dernière étape de la carte, avec sa pastille : Wouri, accepté depuis, n'est plus en
+        // validation.
         $pending = $this->items($member, '?filter[type]=partner&filter[status]=partner_pending');
-        $this->assertEqualsCanonicalizing(['Partenaire ajouté', 'Partenaire modifié'], array_column($pending, 'title'));
+        $this->assertSame(['Partenaire modifié'], array_column($pending, 'title'));
         $this->assertSame(['En validation'], array_values(array_unique(array_column(array_column($pending, 'tag'), 'label'))));
         $published = $this->items($member, '?filter[type]=partner&filter[status]=partner_published');
         $this->assertSame(['Partenaire accepté'], array_column($published, 'title'));
@@ -71,7 +76,7 @@ class PartnerNotificationFilterTest extends TestCase
 
         // Le filtre « Statut » commun, avec le groupe.
         $this->assertSame(['Partenaire accepté'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_published'), 'title'));
-        $this->assertEqualsCanonicalizing(['Partenaire ajouté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_pending'), 'title'));
+        $this->assertSame(['Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_pending'), 'title'));
 
         // Par le nom du partenaire.
         $this->assertEqualsCanonicalizing(['Partenaire modifié'], array_column($this->items($member, '?search=Akwa'), 'title'));

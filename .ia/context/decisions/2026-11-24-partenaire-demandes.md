@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-partenaire-fil.md (la table partner_requests et le fil par demande)
+
 # `2026-11-24` — Les demandes d'un partenaire, et le back-office ne prévient que ses administrateurs
 
 - **Type** : décision de conception

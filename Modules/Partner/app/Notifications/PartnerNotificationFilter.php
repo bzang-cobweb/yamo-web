@@ -10,7 +10,6 @@ use Modules\Auth\Models\User;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
-use Modules\Partner\Models\PartnerRequest;
 
 /**
  * Les notifications des partenaires dans la liste « Notifications » (décisions
@@ -64,9 +63,9 @@ class PartnerNotificationFilter implements NotificationFilter
 
         $data = (array) $notification->data;
         $action = $data['action'] ?? null;
-        // Une notification d'avant les demandes : `created` (vrai : ajouté, faux : modifié).
+        // Une ancienne notification : `created` (vrai : ajouté, faux : modifié).
         if (! is_string($action) && is_bool($data['created'] ?? null)) {
-            $action = $data['created'] ? PartnerRequest::CREATED : PartnerRequest::UPDATED;
+            $action = $data['created'] ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
         }
 
         return PartnerNotification::title($status, is_string($action) ? $action : null);
