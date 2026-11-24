@@ -15,9 +15,9 @@ return [
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
         'pending' => 'Under review',
+        'awaiting_payment' => 'Awaiting payment',
         'published' => 'Published',
         'rejected' => 'Rejected',
-        'archived' => 'Archived',
     ],
     'fields' => [
         'slogan' => 'Slogan',
@@ -62,7 +62,17 @@ return [
         'save' => 'Save and resend',
         'submitted' => 'Partner sent: the team reviews it before publishing.',
         'saved' => 'Partner saved: the team reviews it again before publishing.',
-        'review_notice' => 'The team reviews every partner, and every change, before showing it in the app.',
+        // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).
+        'review_notice' => 'We will review the details before showing it.',
+        'review_notice_paid' => 'We will review the details and confirm the payment before showing it.',
+        // La note du formulaire à la modification, selon le statut (décision 2026-11-24-partenaire-attente-paiement).
+        'edit_notice' => [
+            'pending' => 'This partner is still being reviewed and is not shown in the app.',
+            'rejected' => 'This partner was declined and is not shown in the app.',
+            'awaiting_payment' => 'This partner is awaiting payment and is not shown in the app.',
+            'shown' => 'This partner is shown in the app.',
+            'shown_until' => 'This partner is shown in the app until :date.',
+        ],
         'cta_help' => 'The text of the button leading to your link. Empty: « Visit the website ».',
         'empty' => 'No partner yet.',
         'remove' => 'Remove',
@@ -90,15 +100,15 @@ return [
         'salutation' => 'The :app team',
         'title' => [
             'pending' => 'Partner under review',
+            'awaiting_payment' => 'Partner awaiting payment',
             'published' => 'Partner accepted',
             'rejected' => 'Partner rejected',
-            'archived' => 'Partner archived',
         ],
         'body' => [
             'pending' => 'Your partner « :name » is under review by the team.',
+            'awaiting_payment' => 'Your partner “:name” is awaiting payment.',
             'published' => 'Your partner « :name » was accepted by the team.',
             'rejected' => 'Your partner « :name » was rejected by the team.',
-            'archived' => 'Your partner « :name » is archived.',
         ],
         // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
         'team' => [
@@ -109,11 +119,11 @@ return [
             'title' => ['created' => 'Partner added', 'updated' => 'Partner updated'],
             'own' => [
                 'created' => 'Your partner « :name » is under review: the team checks it before showing it.',
-                'updated' => 'Your partner « :name » is under review: the team checks your changes before showing it.',
+                'updated' => 'Your partner “:name” was updated.',
             ],
             'others' => [
                 'created' => '« :name » was added by :actor; it is under review.',
-                'updated' => '« :name » was updated by :actor; it is under review.',
+                'updated' => '“:name” was updated by :actor.',
             ],
         ],
     ],
@@ -124,5 +134,10 @@ return [
         'help' => 'In which language are you editing this partner? A language to translate is prefilled with an existing text.',
         'translated' => 'translated',
         'to_translate' => 'to translate',
+    ],
+    // La commande partner:await-payment (décision 2026-11-24-partenaire-attente-paiement-commande).
+    'await_payment' => [
+        'disabled' => 'Partner payment is not applied: nothing to do.',
+        'count' => '{0} No partner moved to awaiting payment.|{1} :count partner moved to awaiting payment.|[2,*] :count partners moved to awaiting payment.',
     ],
 ];

@@ -55,7 +55,9 @@ class PartnerNotifierService
         $actorName = $actor === null ? '' : (string) $actor->full_name;
         $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
 
-        $this->send($partner, Setting::partnerNotifyUser(), $actorId, fn (bool $inTab): PartnerNotification => PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actorName, $inTab));
+        // La notification de son statut : en validation pour un ajout, l'actuel pour une modification (décision
+        // 2026-11-24-partenaire-modification-sans-validation).
+        $this->send($partner, Setting::partnerNotifyUser(), $actorId, fn (bool $inTab): PartnerNotification => PartnerNotification::for($partner, $partner->status, $action, $actorId, $actorName, $inTab));
     }
 
     /**
@@ -91,14 +93,13 @@ class PartnerNotifierService
     }
 
     /**
-     * L'auteur de la dernière demande depuis l'app (`user_id` de la dernière notification « en validation » de son
-     * fil) ; `null` sans demande depuis l'app.
+     * L'auteur de la dernière action depuis l'app, ajout ou modification (`user_id` de la dernière notification de son
+     * fil qui en a un : les actions de l'équipe n'en ont pas) ; `null` sans action depuis l'app.
      */
     private function author(Partner $partner): ?User
     {
         $authorId = DatabaseNotification::query()
             ->where('thread', $partner->groupThread())
-            ->where('type', PartnerStatusEnum::PENDING->notification())
             ->whereNotNull('user_id')
             ->latest()
             ->value('user_id');

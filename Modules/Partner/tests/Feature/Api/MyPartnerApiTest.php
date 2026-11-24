@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Tests\Feature\Api;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -157,7 +158,36 @@ class MyPartnerApiTest extends TestCase
         $this->asUser($user)->postJson('/api/v1/partners', ['name' => str_repeat('n', 50), 'slogan' => str_repeat('s', 50), 'description' => 'Texte.'])->assertNoContent();
     }
 
-    public function test_editing_prefills_saves_the_language_and_sends_it_back_for_review(): void
+    public function test_the_note_tells_the_review_when_adding_and_the_state_when_editing(): void
+    {
+        // Décision 2026-11-24-partenaire-note-creation.
+        $user = $this->member();
+        $partner = Partner::factory()->for($this->cameroon)->create();
+        $partner->users()->attach($user->getKey(), ['is_admin' => true]);
+        $notice = fn (string $query = ''): ?string => $this->asUser($user)->getJson('/api/v1/forms/partner.partner'.$query)->assertOk()->json('data.notice');
+
+        $this->assertSame("Nous allons valider les données avant de l'afficher.", $notice());
+        // Modifier : son état selon son statut (décision 2026-11-24-partenaire-attente-paiement).
+        $record = "?record={$partner->getKey()}";
+        $this->assertSame("Ce partenaire est affiché sur l'application.", $notice($record));
+        $partner->update(['status' => PartnerStatusEnum::PENDING]);
+        $this->assertSame("Ce partenaire est encore en cours de validation et n'est pas affiché sur l'application.", $notice($record));
+        $partner->update(['status' => PartnerStatusEnum::REJECTED]);
+        $this->assertSame("Ce partenaire a été refusé et n'est pas affiché sur l'application.", $notice($record));
+        $partner->update(['status' => PartnerStatusEnum::AWAITING_PAYMENT]);
+        $this->assertSame("Ce partenaire est en attente de paiement et n'est pas affiché sur l'application.", $notice($record));
+        // Publié mais pas affiché (campagne pas commencée) : aucune note.
+        $partner->update(['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => now()->addWeek()]);
+        $this->assertNull($notice($record));
+        // Le paiement des partenaires appliqué : la note le dit.
+        Setting::current()->update(['partner_payment_required' => true]);
+        $this->assertSame("Nous allons valider les données et confirmer le paiement avant de l'afficher.", $notice());
+        // Affiché, le paiement appliqué : jusqu'à sa date de fin.
+        $partner->update(['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => null, 'expires_at' => '2027-03-15']);
+        $this->assertSame("Ce partenaire est affiché sur l'application jusqu'au 15 mars 2027.", $notice("?record={$partner->getKey()}"));
+    }
+
+    public function test_editing_prefills_and_saves_the_language_without_changing_the_status(): void
     {
         $user = $this->member();
         $partner = Partner::factory()->for($this->cameroon)->create(['name' => ['fr' => 'Avant', 'en' => 'Before'], 'status' => PartnerStatusEnum::PUBLISHED]);
@@ -179,8 +209,8 @@ class MyPartnerApiTest extends TestCase
 
         $this->asUser($user)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Après', 'description' => 'Texte.', 'logo' => []])->assertNoContent();
         $partner->refresh();
-        // Seule la langue du compte change ; il repasse en validation.
-        $this->assertSame(['Après', 'After', PartnerStatusEnum::PENDING], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
+        // Seule la langue du compte change ; son statut ne change pas (décision 2026-11-24-partenaire-modification-sans-validation).
+        $this->assertSame(['Après', 'After', PartnerStatusEnum::PUBLISHED], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
     }
 
     public function test_attached_accounts_edit_only_admins_remove_and_others_do_not_see_it(): void
@@ -214,7 +244,7 @@ class MyPartnerApiTest extends TestCase
         $user = $this->member();
         $partners = [
             'Refusé' => ['status' => PartnerStatusEnum::REJECTED],
-            'Archivé' => ['status' => PartnerStatusEnum::ARCHIVED],
+            'Paiement' => ['status' => PartnerStatusEnum::AWAITING_PAYMENT],
             'Affiché' => ['status' => PartnerStatusEnum::PUBLISHED],
             'Pas affiché' => ['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => now()->addMonth()],
         ];
@@ -226,7 +256,7 @@ class MyPartnerApiTest extends TestCase
             ->mapWithKeys(fn (array $item): array => [$item['title'] => [$item['tag']['label'], $item['tag']['tone']]])->all();
 
         $this->assertSame(['Refusé', 'danger'], $tags['Refusé']);
-        $this->assertSame(['Archivé', 'neutral'], $tags['Archivé']);
+        $this->assertSame(['En attente de paiement', 'warning'], $tags['Paiement']);
         $this->assertSame(['Affiché', 'success'], $tags['Affiché']);
         $this->assertSame(['Pas affiché', 'neutral'], $tags['Pas affiché']);
     }

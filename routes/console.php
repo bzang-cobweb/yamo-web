@@ -7,6 +7,7 @@ use Modules\Form\Models\FormUpload;
 use Modules\Offer\Console\CompleteBookingsCommand;
 use Modules\Offer\Console\ExpireBookingsCommand;
 use Modules\Offer\Console\InviteReviewsCommand;
+use Modules\Partner\Console\AwaitPartnerPaymentsCommand;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -27,3 +28,7 @@ Schedule::command(ExpireBookingsCommand::class)->dailyAt('00:05');
 // Chaque matin, l'invitation à donner son avis après un séjour ou une visite terminé
 // (décision 2026-11-22-invitation-avis).
 Schedule::command(InviteReviewsCommand::class)->dailyAt('10:00');
+
+// Chaque nuit, le paiement des partenaires appliqué, les partenaires publiés dont la période payée est finie ou absente
+// passent « En attente de paiement » (décision 2026-11-24-partenaire-attente-paiement-commande).
+Schedule::command(AwaitPartnerPaymentsCommand::class)->dailyAt('00:10');

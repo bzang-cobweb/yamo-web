@@ -116,22 +116,23 @@ class PartnerStatusNotificationTest extends TestCase
         $this->withToken($helper->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr')
             ->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();
 
-        $this->assertSame(PartnerStatusEnum::PENDING, $partner->fresh()->status);
-        Notification::assertSentTo($team, PartnerPending::class, function (PartnerPending $notification) use ($team, $helper): bool {
+        // Le statut ne change pas : affiché, il reste en ligne (décision 2026-11-24-partenaire-modification-sans-validation).
+        $this->assertSame(PartnerStatusEnum::PUBLISHED, $partner->fresh()->status);
+        Notification::assertSentTo($team, PartnerPublished::class, function (PartnerPublished $notification) use ($team, $helper): bool {
             $data = $notification->toArray($team);
 
             return $data['title'] === 'Partenaire modifié'
-                && $data['body'] === '« Wouri Express » a été modifié par '.$helper->full_name.' ; il est en validation.'
+                && $data['body'] === '« Wouri Express » a été modifié par '.$helper->full_name.'.'
                 && $notification->notificationUserId($team) === $helper->getKey()
-                && $data['partner_status'] === 'pending';
+                && $data['partner_status'] === 'published';
         });
-        // Ni ses comptes ni son auteur ; pas de « statut changé » en plus pour le passage en validation.
-        Notification::assertSentToTimes($team, PartnerPending::class, 1);
+        // Ni ses comptes ni son auteur ; une seule notification, pas de « statut changé ».
+        Notification::assertSentToTimes($team, PartnerPublished::class, 1);
         // Ses administrateurs : e-mail et SMS, sans notification dans l'onglet ; celui qui agit, rien (décision
         // 2026-11-24-partenaire-admins-email-sms).
-        Notification::assertSentTo($admin, PartnerPending::class, fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
-        Notification::assertNotSentTo($helper, PartnerPending::class);
-        Notification::assertNotSentTo([$admin, $helper, $team], PartnerPublished::class);
+        Notification::assertSentTo($admin, PartnerPublished::class, fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
+        Notification::assertNotSentTo($helper, PartnerPublished::class);
+        Notification::assertNotSentTo([$admin, $helper, $team], PartnerPending::class);
     }
 
     public function test_adding_a_partner_notifies_the_back_office_account_not_its_author(): void
@@ -194,7 +195,7 @@ class PartnerStatusNotificationTest extends TestCase
         $this->submittedBy($partner, $admin);
         Notification::fake();
 
-        foreach ([PartnerStatusEnum::REJECTED, PartnerStatusEnum::ARCHIVED, PartnerStatusEnum::PUBLISHED] as $status) {
+        foreach ([PartnerStatusEnum::REJECTED, PartnerStatusEnum::AWAITING_PAYMENT, PartnerStatusEnum::PUBLISHED] as $status) {
             $partner->update(['status' => $status]);
             Notification::assertSentTo($admin, $status->notification(), fn (PartnerNotification $notification): bool => $notification->toArray($admin)['partner_status'] === $status->value);
         }

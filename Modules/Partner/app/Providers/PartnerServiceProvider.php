@@ -10,6 +10,7 @@ use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
 use Modules\Notification\Support\NotificationThreads;
+use Modules\Partner\Console\AwaitPartnerPaymentsCommand;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Lists\PartnerListing;
@@ -62,7 +63,8 @@ class PartnerServiceProvider extends ModuleServiceProvider
      *
      * @var string[]
      */
-    // protected array $commands = [];
+    /** @var list<class-string> */
+    protected array $commands = [AwaitPartnerPaymentsCommand::class];
 
     /**
      * Provider classes to register.

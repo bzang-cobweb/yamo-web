@@ -90,7 +90,7 @@ class PartnerNotificationFilterTest extends TestCase
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
         $this->assertSame(['partner' => 'Partenaire'], array_column($filters['type']['options'], 'label', 'value'));
         $statuses = collect($filters['status']['options'])->where('parent', 'partner');
-        $this->assertSame(['En validation', 'Publié', 'Refusé', 'Archivé'], $statuses->pluck('label')->all());
+        $this->assertSame(['En validation', 'En attente de paiement', 'Publié', 'Refusé'], $statuses->pluck('label')->all());
         $this->assertArrayNotHasKey('partner_status', $filters->all());
     }
 }

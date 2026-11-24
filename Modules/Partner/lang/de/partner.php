@@ -15,9 +15,9 @@ return [
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
         'pending' => 'In Prüfung',
+        'awaiting_payment' => 'Zahlung ausstehend',
         'published' => 'Veröffentlicht',
         'rejected' => 'Abgelehnt',
-        'archived' => 'Archiviert',
     ],
     'fields' => [
         'slogan' => 'Slogan',
@@ -62,7 +62,17 @@ return [
         'save' => 'Speichern und erneut senden',
         'submitted' => 'Partner gesendet: Das Team prüft ihn vor der Veröffentlichung.',
         'saved' => 'Partner gespeichert: Das Team prüft ihn vor der Veröffentlichung erneut.',
-        'review_notice' => 'Das Team prüft jeden Partner und jede Änderung, bevor er in der App erscheint.',
+        // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).
+        'review_notice' => 'Wir prüfen die Angaben, bevor wir ihn anzeigen.',
+        'review_notice_paid' => 'Wir prüfen die Angaben und bestätigen die Zahlung, bevor wir ihn anzeigen.',
+        // La note du formulaire à la modification, selon le statut (décision 2026-11-24-partenaire-attente-paiement).
+        'edit_notice' => [
+            'pending' => 'Dieser Partner wird noch geprüft und wird in der App nicht angezeigt.',
+            'rejected' => 'Dieser Partner wurde abgelehnt und wird in der App nicht angezeigt.',
+            'awaiting_payment' => 'Für diesen Partner steht die Zahlung noch aus; er wird in der App nicht angezeigt.',
+            'shown' => 'Dieser Partner wird in der App angezeigt.',
+            'shown_until' => 'Dieser Partner wird bis zum :date in der App angezeigt.',
+        ],
         'cta_help' => 'Der Text der Schaltfläche zu Ihrem Link. Leer: « Website besuchen ».',
         'empty' => 'Noch kein Partner.',
         'remove' => 'Entfernen',
@@ -90,15 +100,15 @@ return [
         'salutation' => 'Das Team von :app',
         'title' => [
             'pending' => 'Partner in Prüfung',
+            'awaiting_payment' => 'Partner: Zahlung ausstehend',
             'published' => 'Partner angenommen',
             'rejected' => 'Partner abgelehnt',
-            'archived' => 'Partner archiviert',
         ],
         'body' => [
             'pending' => 'Ihr Partner « :name » ist beim Team in Prüfung.',
+            'awaiting_payment' => 'Für Ihren Partner „:name“ steht die Zahlung noch aus.',
             'published' => 'Ihr Partner « :name » wurde vom Team angenommen.',
             'rejected' => 'Ihr Partner « :name » wurde vom Team abgelehnt.',
-            'archived' => 'Ihr Partner « :name » ist archiviert.',
         ],
         // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
         'team' => [
@@ -109,11 +119,11 @@ return [
             'title' => ['created' => 'Partner hinzugefügt', 'updated' => 'Partner geändert'],
             'own' => [
                 'created' => 'Ihr Partner « :name » ist in Prüfung: Das Team prüft ihn, bevor er angezeigt wird.',
-                'updated' => 'Ihr Partner « :name » ist in Prüfung: Das Team prüft Ihre Änderungen, bevor er angezeigt wird.',
+                'updated' => 'Ihr Partner „:name“ wurde geändert.',
             ],
             'others' => [
                 'created' => '« :name » wurde von :actor hinzugefügt; er ist in Prüfung.',
-                'updated' => '« :name » wurde von :actor geändert; er ist in Prüfung.',
+                'updated' => '„:name“ wurde von :actor geändert.',
             ],
         ],
     ],
@@ -124,5 +134,10 @@ return [
         'help' => 'In welcher Sprache bearbeiten Sie diesen Partner? Eine zu übersetzende Sprache wird mit einem vorhandenen Text vorausgefüllt.',
         'translated' => 'übersetzt',
         'to_translate' => 'zu übersetzen',
+    ],
+    // La commande partner:await-payment (décision 2026-11-24-partenaire-attente-paiement-commande).
+    'await_payment' => [
+        'disabled' => 'Die Zahlung für Partner ist nicht aktiviert: nichts zu tun.',
+        'count' => '{0} Kein Partner auf „Zahlung ausstehend“ gesetzt.|{1} :count Partner auf „Zahlung ausstehend“ gesetzt.|[2,*] :count Partner auf „Zahlung ausstehend“ gesetzt.',
     ],
 ];

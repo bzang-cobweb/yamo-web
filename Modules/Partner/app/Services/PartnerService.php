@@ -91,8 +91,9 @@ class PartnerService
      */
     public function change(Partner $partner, array $data, string $locale, User $actor): void
     {
+        // Le statut ne change pas : affiché, il reste en ligne avec ses nouvelles données (décision
+        // 2026-11-24-partenaire-modification-sans-validation).
         $this->fill($partner, $data, $locale);
-        $partner->status = PartnerStatusEnum::PENDING;
         $partner->save();
         PartnerSubmitted::dispatch($partner, $actor->getKey(), false);
     }

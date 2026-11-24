@@ -2,7 +2,7 @@
 
 namespace Modules\Partner\Enums;
 
-use Modules\Partner\Notifications\PartnerArchived;
+use Modules\Partner\Notifications\PartnerAwaitingPayment;
 use Modules\Partner\Notifications\PartnerNotification;
 use Modules\Partner\Notifications\PartnerPending;
 use Modules\Partner\Notifications\PartnerPublished;
@@ -10,14 +10,16 @@ use Modules\Partner\Notifications\PartnerRejected;
 
 /**
  * La publication d'un partenaire (décision 2026-11-24-partenaires-statuts) : en validation (proposé ou
- * modifié depuis l'app), publié (affiché, selon sa campagne), refusé par l'équipe, archivé.
+ * modifié depuis l'app), en attente de paiement (décision 2026-11-24-partenaire-attente-paiement), publié (affiché,
+ * selon sa campagne), refusé par l'équipe ; plus d'« archivé » (décision 2026-11-24-partenaire-sans-archive). Seul un
+ * partenaire publié peut être affiché.
  */
 enum PartnerStatusEnum: string
 {
     case PENDING = 'pending';
+    case AWAITING_PAYMENT = 'awaiting_payment';
     case PUBLISHED = 'published';
     case REJECTED = 'rejected';
-    case ARCHIVED = 'archived';
 
     public function label(): string
     {
@@ -25,26 +27,25 @@ enum PartnerStatusEnum: string
     }
 
     /**
-     * Ton de la pastille dans « Mes partenaires » : en attente orange, publié vert, refusé rouge, archivé gris.
+     * Ton de la pastille dans « Mes partenaires » : en attente (validation, paiement) orange, publié vert, refusé rouge.
      */
     public function tone(): string
     {
         return match ($this) {
-            self::PENDING => 'warning',
+            self::PENDING, self::AWAITING_PAYMENT => 'warning',
             self::PUBLISHED => 'success',
             self::REJECTED => 'danger',
-            self::ARCHIVED => 'neutral',
         };
     }
 
-    /** Couleur du badge au back-office. */
+    /** Couleur du badge au back-office : l'attente de paiement en bleu, pour la distinguer de la validation. */
     public function color(): string
     {
         return match ($this) {
             self::PENDING => 'warning',
+            self::AWAITING_PAYMENT => 'info',
             self::PUBLISHED => 'success',
             self::REJECTED => 'danger',
-            self::ARCHIVED => 'gray',
         };
     }
 
@@ -65,9 +66,9 @@ enum PartnerStatusEnum: string
     {
         return match ($this) {
             self::PENDING => PartnerPending::class,
+            self::AWAITING_PAYMENT => PartnerAwaitingPayment::class,
             self::PUBLISHED => PartnerPublished::class,
             self::REJECTED => PartnerRejected::class,
-            self::ARCHIVED => PartnerArchived::class,
         };
     }
 

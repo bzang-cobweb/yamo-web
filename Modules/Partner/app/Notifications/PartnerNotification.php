@@ -16,7 +16,7 @@ use Modules\Partner\Models\Partner;
 /**
  * Un partenaire notifié à ses comptes (décisions 2026-11-24-partenaires-notifications,
  * 2026-11-24-partenaire-notification-par-statut, 2026-11-24-partenaire-demandes et 2026-11-24-partenaire-fil). Une classe par statut :
- * `PartnerPending`, `PartnerPublished`, `PartnerRejected`, `PartnerArchived` ; le statut est aussi dans
+ * `PartnerPending`, `PartnerAwaitingPayment`, `PartnerPublished`, `PartnerRejected` ; le statut est aussi dans
  * `data.partner_status`. Dans l'onglet « Notifications », et par e-mail et SMS selon les canaux du destinataire, dans
  * sa langue ; elle ouvre « Mes partenaires ».
  *

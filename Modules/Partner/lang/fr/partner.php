@@ -15,9 +15,9 @@ return [
     // Décision 2026-11-24-partenaires-statuts.
     'statuses' => [
         'pending' => 'En validation',
+        'awaiting_payment' => 'En attente de paiement',
         'published' => 'Publié',
         'rejected' => 'Refusé',
-        'archived' => 'Archivé',
     ],
     'fields' => [
         'slogan' => 'Slogan',
@@ -62,7 +62,17 @@ return [
         'save' => 'Enregistrer et renvoyer',
         'submitted' => "Partenaire envoyé : l'équipe le valide avant de le publier.",
         'saved' => "Partenaire enregistré : l'équipe le valide de nouveau avant de le publier.",
-        'review_notice' => "L'équipe valide chaque partenaire, et chaque modification, avant de l'afficher dans l'app.",
+        // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).
+        'review_notice' => "Nous allons valider les données avant de l'afficher.",
+        'review_notice_paid' => "Nous allons valider les données et confirmer le paiement avant de l'afficher.",
+        // La note du formulaire à la modification, selon le statut (décision 2026-11-24-partenaire-attente-paiement).
+        'edit_notice' => [
+            'pending' => "Ce partenaire est encore en cours de validation et n'est pas affiché sur l'application.",
+            'rejected' => "Ce partenaire a été refusé et n'est pas affiché sur l'application.",
+            'awaiting_payment' => "Ce partenaire est en attente de paiement et n'est pas affiché sur l'application.",
+            'shown' => "Ce partenaire est affiché sur l'application.",
+            'shown_until' => "Ce partenaire est affiché sur l'application jusqu'au :date.",
+        ],
         'cta_help' => 'Le texte du bouton qui mène à votre lien. Vide : « Visiter le site ».',
         'empty' => "Aucun partenaire pour l'instant.",
         'remove' => 'Retirer',
@@ -90,15 +100,15 @@ return [
         'salutation' => "L'équipe :app",
         'title' => [
             'pending' => 'Partenaire en validation',
+            'awaiting_payment' => 'Partenaire en attente de paiement',
             'published' => 'Partenaire accepté',
             'rejected' => 'Partenaire refusé',
-            'archived' => 'Partenaire archivé',
         ],
         'body' => [
             'pending' => "Votre partenaire « :name » est en validation par l'équipe.",
+            'awaiting_payment' => 'Votre partenaire « :name » est en attente de paiement.',
             'published' => "Votre partenaire « :name » a été accepté par l'équipe.",
             'rejected' => "Votre partenaire « :name » a été refusé par l'équipe.",
-            'archived' => 'Votre partenaire « :name » est archivé.',
         ],
         // Ajouté ou modifié depuis l'app, en validation (décision 2026-11-24-partenaires-validation-notifications).
         // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
@@ -110,11 +120,11 @@ return [
             'title' => ['created' => 'Partenaire ajouté', 'updated' => 'Partenaire modifié'],
             'own' => [
                 'created' => "Votre partenaire « :name » est en validation : l'équipe le vérifie avant de l'afficher.",
-                'updated' => "Votre partenaire « :name » est en validation : l'équipe vérifie vos modifications avant de l'afficher.",
+                'updated' => 'Votre partenaire « :name » a été modifié.',
             ],
             'others' => [
                 'created' => '« :name » a été ajouté par :actor ; il est en validation.',
-                'updated' => '« :name » a été modifié par :actor ; il est en validation.',
+                'updated' => '« :name » a été modifié par :actor.',
             ],
         ],
     ],
@@ -125,5 +135,10 @@ return [
         'help' => 'Dans quelle langue modifiez-vous ce partenaire ? Une langue à traduire est pré-remplie avec un texte existant.',
         'translated' => 'traduite',
         'to_translate' => 'à traduire',
+    ],
+    // La commande partner:await-payment (décision 2026-11-24-partenaire-attente-paiement-commande).
+    'await_payment' => [
+        'disabled' => "Le paiement des partenaires n'est pas appliqué : rien à faire.",
+        'count' => '{0} Aucun partenaire passé en attente de paiement.|{1} :count partenaire passé en attente de paiement.|[2,*] :count partenaires passés en attente de paiement.',
     ],
 ];

@@ -101,7 +101,7 @@ class PartnerThreadTest extends AuthFilamentTestCase
         // L'en-tête de l'auteur : l'étape de sa carte, sa dernière modification, dans ses mots (décision
         // 2026-11-24-entete-etape-ouverte).
         $cards = $this->api($author, 'GET', '/notifications')->json('data.items');
-        $this->assertSame("Votre partenaire « Déménageurs du Wouri » est en validation : l'équipe vérifie vos modifications avant de l'afficher.", $this->api($author, 'GET', '/notifications/'.$cards[0]['id'])->json('data.body'));
+        $this->assertSame('Votre partenaire « Déménageurs du Wouri » a été modifié.', $this->api($author, 'GET', '/notifications/'.$cards[0]['id'])->json('data.body'));
         // Rien de reçu : rien de non lu ; l'autre compte a reçu la réponse.
         $this->assertTrue($cards[0]['read']);
         $this->assertSame(1, $this->api($helper, 'GET', '/notifications/unread-count')->json('data.unread'));
@@ -169,12 +169,12 @@ class PartnerThreadTest extends AuthFilamentTestCase
 
         // Un changement de statut à l'enregistrement : la seule notification de statut, pas « modifié » en plus.
         Livewire::test(EditPartner::class, ['record' => $partner->getKey()])
-            ->fillForm(['status' => PartnerStatusEnum::ARCHIVED->value])
+            ->fillForm(['status' => PartnerStatusEnum::REJECTED->value])
             ->call('save')
             ->assertHasNoFormErrors();
         Notification::assertSentToTimes($helper, PartnerPublished::class, 1);
-        Notification::assertSentTo($helper, PartnerStatusEnum::ARCHIVED->notification(), fn ($notification): bool => $notification->toArray($helper)['title'] === 'Partenaire archivé');
-        Notification::assertSentTo($admin, PartnerStatusEnum::ARCHIVED->notification(), fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
-        Notification::assertNotSentTo($team, PartnerStatusEnum::ARCHIVED->notification());
+        Notification::assertSentTo($helper, PartnerStatusEnum::REJECTED->notification(), fn ($notification): bool => $notification->toArray($helper)['title'] === 'Partenaire refusé');
+        Notification::assertSentTo($admin, PartnerStatusEnum::REJECTED->notification(), fn ($notification, array $channels): bool => ! in_array('database', $channels, true));
+        Notification::assertNotSentTo($team, PartnerStatusEnum::REJECTED->notification());
     }
 }

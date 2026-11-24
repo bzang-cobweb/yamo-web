@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Forms;
 
+use App\Models\Setting;
 use App\Support\Locales;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
@@ -12,6 +13,7 @@ use Modules\Form\Support\Form;
 use Modules\Form\Support\Step;
 use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
+use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerLogoService;
 
@@ -180,10 +182,36 @@ class PartnerForm extends Form
         return 'center';
     }
 
-    /** L'équipe valide avant toute publication. */
+    /**
+     * À la création : l'équipe valide les données, et confirme le paiement s'il est appliqué aux partenaires, avant de
+     * l'afficher (décision 2026-11-24-partenaire-note-creation). À la modification, son état, selon son statut
+     * (décision 2026-11-24-partenaire-attente-paiement) ; publié mais pas affiché : pas de note.
+     */
     public function notice(): ?string
     {
-        return __('partner::partner.member.review_notice');
+        if ($this->partner === null) {
+            return __(Setting::partnerPaymentRequired() ? 'partner::partner.member.review_notice_paid' : 'partner::partner.member.review_notice');
+        }
+
+        $paymentRequired = Setting::partnerPaymentRequired();
+        $state = match (true) {
+            $this->partner->status === PartnerStatusEnum::PENDING => 'pending',
+            $this->partner->status === PartnerStatusEnum::REJECTED => 'rejected',
+            $this->partner->status === PartnerStatusEnum::AWAITING_PAYMENT => 'awaiting_payment',
+            $this->partner->status === PartnerStatusEnum::PUBLISHED && $this->partner->isShown($paymentRequired) => 'shown',
+            default => null,
+        };
+        if ($state === null) {
+            return null;
+        }
+
+        // Affiché, le paiement appliqué : jusqu'à quand ; il a forcément une date de fin, sinon il ne serait pas affiché
+        // (décision 2026-11-24-partenaire-attente-paiement).
+        if ($state === 'shown' && $paymentRequired) {
+            return __('partner::partner.member.edit_notice.shown_until', ['date' => $this->partner->expires_at?->copy()->locale(app()->getLocale())->isoFormat('LL')]);
+        }
+
+        return __('partner::partner.member.edit_notice.'.$state);
     }
 
     public function submitLabel(): string
