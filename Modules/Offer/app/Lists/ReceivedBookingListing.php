@@ -161,14 +161,7 @@ class ReceivedBookingListing extends Listing
         return Booking::query()
             ->with(['offer', 'user'])
             // Sa dernière notification du fil de la demande : la carte ouvre sa page.
-            ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
-                ->select('id')
-                ->where('notifiable_type', (new User)->getMorphClass())
-                ->where('notifiable_id', $this->user?->getAuthIdentifier())
-                ->whereColumn('data->booking_id', 'bookings.id')
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->limit(1)])
+            ->addSelect(['bookings.*', 'thread_notification_id' => Booking::latestVisibleNotification($this->user?->getAuthIdentifier())])
             // La date de sa dernière notification, pour la carte (décision 2026-11-22-demandes-date-derniere-notification).
             ->addSelect(['last_notification_at' => DatabaseNotification::query()
                 ->select('created_at')

@@ -361,7 +361,16 @@ class BookingApiTest extends TestCase
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['subtitle_link']);
         $this->assertSame((string) $pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['subtitle']);
         $this->assertArrayNotHasKey('title_link', $items[(string) $pending->getKey()]);
-        // Avec : la page de sa dernière notification du fil (décision 2026-11-21-reservation-comme-notification).
+        // Sa demande, reçue par le propriétaire et pas encore répondue : la page de la demande, par cette notification
+        // dont il est l'auteur (décision 2026-11-24-reservations-lien-demande-envoyee).
+        $sent = $pending->offer->user->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(), 'user_id' => $guest->getKey(),
+            'data' => ['title' => 'Nouvelle demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
+        $this->assertSame('/notifications/'.$sent->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);
+        // Pas lue par le propriétaire, elle ne compte pas parmi les siennes non lues.
+        $this->assertSame([], collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['counters']);
+        $this->travel(1)->minutes();
+        // Avec une notification reçue, plus récente : la page de sa dernière notification du fil (décision
+        // 2026-11-21-reservation-comme-notification).
         $copy = $guest->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(), 'read_at' => now(),
             'data' => ['title' => 'Demande', 'body' => 'Texte', 'offer_id' => $pending->offer_id, 'booking_id' => $pending->getKey()]]);
         $this->assertSame('/notifications/'.$copy->getKey(), collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['link']);

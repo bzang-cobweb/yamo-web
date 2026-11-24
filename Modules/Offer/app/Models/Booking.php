@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Number;
 use Modules\Auth\Models\User;
@@ -64,6 +65,26 @@ class Booking extends Model
     public function thread(): string
     {
         return self::THREAD_PREFIX.$this->getKey();
+    }
+
+    /**
+     * La dernière notification d'une demande que voit le compte `$userId`, celle qu'il a reçue ou celle de sa propre
+     * action (décisions 2026-11-24-notifications-fil-de-groupe et 2026-11-24-reservations-lien-demande-envoyee), en
+     * sous-requête sur `bookings.id` : une carte de « Mes réservations » ou des demandes reçues ouvre sa page.
+     *
+     * @return Builder<DatabaseNotification>
+     */
+    public static function latestVisibleNotification(int|string|null $userId): Builder
+    {
+        return DatabaseNotification::query()
+            ->select('id')
+            ->where(fn (Builder $visible) => $visible
+                ->where(fn (Builder $received) => $received->where('notifiable_type', (new User)->getMorphClass())->where('notifiable_id', $userId))
+                ->orWhere('user_id', $userId))
+            ->whereColumn('data->booking_id', 'bookings.id')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(1);
     }
 
     /**

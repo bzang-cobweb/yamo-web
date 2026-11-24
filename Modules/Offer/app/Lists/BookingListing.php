@@ -94,16 +94,10 @@ class BookingListing extends Listing
             // La note et le nombre d'avis du logement, comme à l'accueil (décision 2026-11-21-reservations-note).
             // Et s'il est en favori, pour le cœur de la carte (décision 2026-11-22-reservations-coeur).
             ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary()->withFavoriteOf($this->user?->getAuthIdentifier())])
-            // Sa dernière notification du fil de la demande : la carte ouvre sa page (décision
-            // 2026-11-21-reservation-comme-notification).
-            ->addSelect(['bookings.*', 'thread_notification_id' => DatabaseNotification::query()
-                ->select('id')
-                ->where('notifiable_type', (new User)->getMorphClass())
-                ->where('notifiable_id', $this->user?->getAuthIdentifier())
-                ->whereColumn('data->booking_id', 'bookings.id')
-                ->orderByDesc('created_at')
-                ->orderByDesc('id')
-                ->limit(1)])
+            // Sa dernière notification du fil de la demande, reçue ou de lui : la carte ouvre sa page, même tant que le
+            // propriétaire n'a pas répondu (décisions 2026-11-21-reservation-comme-notification et
+            // 2026-11-24-reservations-lien-demande-envoyee).
+            ->addSelect(['bookings.*', 'thread_notification_id' => Booking::latestVisibleNotification($this->user?->getAuthIdentifier())])
             // Ses notifications non lues, pour le compteur de la carte (décision 2026-11-22-reservations-non-lues).
             ->addSelect(['unread_notifications_count' => DatabaseNotification::query()
                 ->selectRaw('count(*)')
