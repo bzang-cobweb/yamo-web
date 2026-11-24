@@ -18,8 +18,8 @@ use Modules\Notification\Support\NotificationThreads;
  * 2026-11-19-contrat-centre-notifications) : la liste, la plus récente en tête, une
  * carte par fil (les étapes d'une demande, décision 2026-11-20-suivi-demande),
  * par pages, avec sa recherche et ses filtres ; le nombre de non lues (la pastille de l'onglet) ; marquer une
- * notification, ou toutes, comme lues. Une notification d'un autre compte
- * répond 404.
+ * notification, ou toutes, comme lues. Il voit celles qu'il a reçues, celles de ses actions et celles du fil de ses
+ * groupes (`NotificationThreads::visibleTo()`, décision 2026-11-24-notifications-fil-de-groupe) ; une autre répond 404.
  */
 class NotificationController
 {
@@ -33,13 +33,13 @@ class NotificationController
     {
         $user = $this->user($request);
         $chosen = $request->query('filter');
-        $query = $user->notifications()->reorder()->orderByDesc('created_at')->orderByDesc('id');
+        $query = $threads->visibleTo($user)->orderByDesc('created_at')->orderByDesc('id');
         // Une carte par fil : sa notification la plus récente.
-        $threads->latestOnly($query->getQuery());
-        $filters->apply($query->getQuery(), is_array($chosen) ? $chosen : [], $user);
+        $threads->latestOnly($query, $user);
+        $filters->apply($query, is_array($chosen) ? $chosen : [], $user);
         $search = $request->query('search');
         if (is_string($search)) {
-            $filters->search($query->getQuery(), $search);
+            $filters->search($query, $search);
         }
 
         // Le nombre de cartes, recherche et filtres compris, pour « 12 notifications » (décision 2026-11-22-notifications-nombre).
@@ -74,7 +74,7 @@ class NotificationController
     public function show(Request $request, string $notification, NotificationThreads $threads): NotificationResource
     {
         $user = $this->user($request);
-        $found = $user->notifications()->whereKey($notification)->firstOrFail();
+        $found = $threads->visibleTo($user)->whereKey($notification)->firstOrFail();
         $resource = (new NotificationResource($found))->withThread();
         // Non lue tant qu'une notification de son fil, adressée au lecteur, l'est : l'app la marque alors lue, et tout
         // le fil avec (décision 2026-11-22-detail-marque-tout-le-fil).
@@ -83,7 +83,7 @@ class NotificationController
             $resource->withRead($threads->unreadThreads($user, [$thread]) === []);
         }
 
-        // Et son fil : le suivi, des deux côtés, et ce qu'y ajoute son module (décisions
+        // Et son fil : le suivi chez le lecteur, et ce qu'y ajoute son module (décisions
         // 2026-11-20-suivi-demande et 2026-11-20-notification-generique).
         return $resource;
     }
@@ -94,7 +94,7 @@ class NotificationController
     public function read(Request $request, string $notification, NotificationThreads $threads): Response
     {
         $user = $this->user($request);
-        $threads->markRead($user, $user->notifications()->whereKey($notification)->firstOrFail());
+        $threads->markRead($user, $threads->visibleTo($user)->whereKey($notification)->firstOrFail());
 
         return response()->noContent();
     }

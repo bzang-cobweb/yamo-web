@@ -2,6 +2,7 @@
 
 namespace Modules\Partner\Tests\Feature;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
@@ -46,6 +47,9 @@ class PartnerNotificationFilterTest extends TestCase
         $cameroon = Country::factory()->create(['code' => 'CM']);
         $member = $this->member();
         $other = $this->member();
+        // Les demandes vont au compte du back-office ; le membre les lit dans le fil de ses partenaires (décision
+        // 2026-11-24-notifications-fil-de-groupe).
+        Setting::current()->update(['partner_notify_user_id' => User::factory()->create()->getKey()]);
         $wouri = Partner::factory()->for($cameroon)->create(['name' => ['fr' => 'Déménageurs du Wouri'], 'status' => PartnerStatusEnum::PENDING]);
         $akwa = Partner::factory()->for($cameroon)->create(['name' => ['fr' => 'Meubles Akwa'], 'status' => PartnerStatusEnum::PENDING]);
         foreach ([$wouri, $akwa] as $partner) {
@@ -61,7 +65,7 @@ class PartnerNotificationFilterTest extends TestCase
         $notifier->submitted($akwa, $member->getKey(), false);
         $member->notifications()->create(['id' => (string) str()->uuid(), 'type' => 'Test', 'data' => ['title' => 'Autre', 'body' => 'Texte']]);
 
-        // Le type « Partenaire » : une carte par partenaire, sa dernière étape (décision 2026-11-24-partenaire-fil), sans
+        // Le type « Partenaire » : une carte par partenaire, sa dernière étape (décision 2026-11-24-notifications-fil-de-groupe), sans
         // l'autre notification.
         $this->assertEqualsCanonicalizing(['Partenaire accepté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner'), 'title'));
 

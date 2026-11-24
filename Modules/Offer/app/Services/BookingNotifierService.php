@@ -7,9 +7,9 @@ use Modules\Offer\Models\Booking;
 use Modules\Offer\Notifications\BookingNotification;
 
 /**
- * Les notifications d'une demande, à chacune de ses étapes (décision 2026-11-19-notifications-reservations) :
- * l'autre partie est prévenue, et qui agit retrouve son étape dans son propre fil, déjà lue (décisions
- * 2026-11-20-reponse-dans-son-fil et 2026-11-21-reservation-comme-notification).
+ * Les notifications d'une demande, à chacune de ses étapes (décision 2026-11-19-notifications-reservations) : une
+ * seule par action, à l'autre partie. Celle qui agit la retrouve dans son fil sans la recevoir : elle en est l'auteur
+ * (`user_id`, décision 2026-11-24-notifications-fil-de-groupe).
  */
 class BookingNotifierService
 {
@@ -19,10 +19,13 @@ class BookingNotifierService
         $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::RECEIVED));
     }
 
-    /** Une demande modifiée : le propriétaire est prévenu (décision 2026-11-21-demande-modifiee-notification). */
-    public function ownerOfUpdate(Booking $booking, bool $edited): void
+    /**
+     * Une demande modifiée : le propriétaire est prévenu (décision 2026-11-21-demande-modifiee-notification). Si l'étape
+     * précédente a été réécrite sur place (`$rewritten`), l'onglet l'a déjà : seulement l'e-mail et le SMS.
+     */
+    public function ownerOfUpdate(Booking $booking, bool $edited, bool $rewritten = false): void
     {
-        $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::UPDATED, edited: $edited));
+        $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::UPDATED, edited: $edited, inTab: ! $rewritten));
     }
 
     /** Une annulation : le propriétaire est prévenu. */
@@ -31,27 +34,9 @@ class BookingNotifierService
         $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::CANCELLED));
     }
 
-    /** Une réponse : le propriétaire la retrouve dans son propre fil. */
-    public function ownerOfOwnAnswer(Booking $booking): void
-    {
-        $booking->offer->user?->notify(BookingNotification::for($booking, BookingStepEnum::answer($booking->status), own: true));
-    }
-
     /** Une réponse : le membre est prévenu, acceptée ou refusée. */
     public function guestOfAnswer(Booking $booking): void
     {
         $booking->user?->notify(BookingNotification::for($booking, BookingStepEnum::answer($booking->status)));
-    }
-
-    /** Sa demande : le membre la retrouve dans son propre fil. */
-    public function guestOfOwnRequest(Booking $booking): void
-    {
-        $booking->user?->notify(BookingNotification::for($booking, BookingStepEnum::RECEIVED, own: true));
-    }
-
-    /** Son annulation : le membre la retrouve dans son propre fil. */
-    public function guestOfOwnCancellation(Booking $booking): void
-    {
-        $booking->user?->notify(BookingNotification::for($booking, BookingStepEnum::CANCELLED, own: true));
     }
 }

@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Models\Setting;
+use Filament\Forms\Components\Select;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
 
 /**
@@ -129,6 +131,26 @@ class ApplicationTest extends AuthFilamentTestCase
         $this->assertTrue(Setting::partnerPaymentRequired());
         // Pas servi à l'app.
         $this->getJson('/api/v1/app')->assertJsonMissingPath('data.payment_required')->assertJsonMissingPath('data.partner_payment_required');
+    }
+
+    public function test_settings_page_chooses_the_account_notified_of_partner_requests(): void
+    {
+        // Décision 2026-11-24-partenaire-compte-prevenu : un compte du back-office, pas un membre.
+        $team = $this->actingAsUserWith(PermissionEnum::UPDATE_SETTINGS);
+        $member = User::factory()->create();
+        $this->assertNull(Setting::partnerNotifyUser());
+
+        Livewire::test(EditSettings::class)
+            ->assertSee('Compte prévenu des demandes de partenaire')
+            ->assertFormFieldExists('partner_notify_user_id', fn (Select $field): bool => array_key_exists($team->getKey(), $field->getOptions())
+                && ! array_key_exists($member->getKey(), $field->getOptions()))
+            ->fillForm(['partner_notify_user_id' => $team->getKey()])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($team->is(Setting::partnerNotifyUser()));
+        // Pas servi à l'app.
+        $this->getJson('/api/v1/app')->assertJsonMissingPath('data.partner_notify_user_id');
     }
 
     public function test_settings_page_sets_the_home_counts(): void

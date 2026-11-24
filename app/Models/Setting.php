@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Auth\Models\User;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -12,11 +13,12 @@ use Spatie\Translatable\HasTranslations;
  * (`payment_required`, décision 2026-11-19-contrat-paiement-visibilite-avis) et pour les partenaires
  * (`partner_payment_required`, décision 2026-11-23-paiement-partenaires), non servis ;
  * âge minimum (`minimum_age`, décision 2026-11-19-age-minimum) ; nombres d'offres par ville et de partenaires
- * sur l'accueil (décision 2026-11-23-accueil-nombres-reglables). Une seule ligne, obtenue
+ * sur l'accueil (décision 2026-11-23-accueil-nombres-reglables) ; le compte du back-office prévenu des demandes de
+ * partenaire (`partner_notify_user_id`, décision 2026-11-24-partenaire-compte-prevenu), non servi. Une seule ligne, obtenue
  * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
  * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
-#[Fillable(['description', 'payment_required', 'partner_payment_required', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
+#[Fillable(['description', 'payment_required', 'partner_payment_required', 'partner_notify_user_id', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
 class Setting extends Model
 {
     use HasTranslations;
@@ -54,6 +56,17 @@ class Setting extends Model
     public static function partnerPaymentRequired(): bool
     {
         return (bool) self::query()->oldest('id')->value('partner_payment_required');
+    }
+
+    /**
+     * Le compte du back-office prévenu d'un ajout ou d'une modification de partenaire depuis l'app, ou `null`
+     * (décision 2026-11-24-partenaire-compte-prevenu).
+     */
+    public static function partnerNotifyUser(): ?User
+    {
+        $id = self::query()->oldest('id')->value('partner_notify_user_id');
+
+        return $id === null ? null : User::query()->find($id);
     }
 
     /**

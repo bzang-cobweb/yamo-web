@@ -96,11 +96,11 @@ class NotificationFilters
      * Le libellé d'une étape d'un fil, donné par le module qui l'inscrit ; à défaut, le
      * titre de la notification.
      */
-    /** Le titre de la carte, donné par le module qui l'inscrit ; à défaut, `null` (son titre). */
-    public function cardTitle(DatabaseNotification $notification): ?string
+    /** Le titre de la carte pour `$reader`, donné par le module qui l'inscrit ; à défaut, `null` (son titre). */
+    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
     {
         foreach ($this->filters as $filter) {
-            $title = app($filter)->cardTitle($notification);
+            $title = app($filter)->cardTitle($notification, $reader);
             if ($title !== null) {
                 return $title;
             }
@@ -109,10 +109,28 @@ class NotificationFilters
         return null;
     }
 
-    public function step(DatabaseNotification $notification): string
+    /**
+     * Les données de la notification pour `$reader`, qui ne l'a pas reçue, rédigées par le module qui l'inscrit ;
+     * `null` : ses données telles quelles.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function forReader(DatabaseNotification $notification, User $reader): ?array
     {
         foreach ($this->filters as $filter) {
-            $step = app($filter)->step($notification);
+            $data = app($filter)->forReader($notification, $reader);
+            if ($data !== null) {
+                return $data;
+            }
+        }
+
+        return null;
+    }
+
+    public function step(DatabaseNotification $notification, User $reader): string
+    {
+        foreach ($this->filters as $filter) {
+            $step = app($filter)->step($notification, $reader);
             if ($step !== null) {
                 return $step;
             }
@@ -138,7 +156,7 @@ class NotificationFilters
      */
     private function typeOptions(User $user): array
     {
-        $present = $user->notifications()->getQuery()->distinct()->pluck('type')->all();
+        $present = app(NotificationThreads::class)->visibleTo($user)->distinct()->pluck('type')->all();
         $options = [];
         foreach ($this->types() as $key => $type) {
             if (array_intersect($type['types'], $present) !== []) {
@@ -157,7 +175,8 @@ class NotificationFilters
     private function members(User $user): array
     {
         return User::query()
-            ->whereIn('id', $user->notifications()->getQuery()->whereNotNull('user_id')->select('user_id'))
+            // Sans lui-même : ses propres actions (décision 2026-11-24-notification-copie-auteur).
+            ->whereIn('id', app(NotificationThreads::class)->visibleTo($user)->whereNotNull('user_id')->where('user_id', '!=', $user->getKey())->select('user_id'))
             ->get()
             ->sortBy(fn (User $member): string => (string) $member->full_name)
             ->mapWithKeys(fn (User $member): array => [(string) $member->getKey() => (string) $member->full_name])

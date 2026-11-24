@@ -70,11 +70,10 @@ class BookingNotificationsTest extends TestCase
             $owner = $booking->offer->user;
             $guest = (string) $booking->user->full_name;
             $sent = BookingNotification::for($booking, BookingStepEnum::CANCELLED);
-            $own = BookingNotification::for($booking, BookingStepEnum::CANCELLED, own: true);
 
             $this->assertStringStartsWith("La demande de {$kind} pour « ", $sent->toArray($owner)['summary']);
             $this->assertStringEndsWith(') a été annulée.', $sent->toArray($owner)['summary']);
-            $this->assertStringStartsWith("Vous avez annulé votre demande de {$kind} pour « ", $own->toArray($booking->user)['body']);
+            $this->assertStringStartsWith("Vous avez annulé votre demande de {$kind} pour « ", $sent->toArray($booking->user)['body']);
             $this->assertStringContainsString("{$guest} a annulé sa demande de {$kind} pour « ", $sent->toSms($owner));
         }
     }
@@ -92,12 +91,11 @@ class BookingNotificationsTest extends TestCase
                 $owner = $booking->offer->user;
                 $guest = (string) $booking->user->full_name;
                 $sent = BookingNotification::for($booking, BookingStepEnum::from($step));
-                $own = BookingNotification::for($booking, BookingStepEnum::from($step), own: true);
                 $verb = mb_substr($done, 0, -1);
 
                 $this->assertStringStartsWith("Votre demande de {$kind} pour « ", $sent->toArray($booking->user)['summary']);
                 $this->assertStringEndsWith(($kind === 'séjour' ? ' personnes)' : ')')." a été {$done}.", $sent->toArray($booking->user)['summary']);
-                $this->assertStringStartsWith("Vous avez {$verb} la demande de {$kind} de {$guest} pour « ", $own->toArray($owner)['body']);
+                $this->assertStringStartsWith("Vous avez {$verb} la demande de {$kind} de {$guest} pour « ", $sent->toArray($owner)['body']);
                 $this->assertStringContainsString("votre demande de {$kind} pour « ", $sent->toSms($booking->user));
             }
         }
@@ -213,21 +211,19 @@ class BookingNotificationsTest extends TestCase
         $this->assertStringContainsString('a été acceptée', $this->sms->messages[0]['message']);
     }
 
-    public function test_the_owner_own_answer_stays_in_the_tab(): void
+    public function test_the_owner_answer_is_one_notification_to_the_member(): void
     {
-        // Décision 2026-11-20-reponse-dans-son-fil : ni e-mail ni SMS pour sa propre réponse.
+        // Décision 2026-11-24-notifications-fil-de-groupe : une seule notification, au membre ; le propriétaire en est
+        // l'auteur, ni e-mail ni SMS pour lui, et la lit rédigée pour lui.
         $booking = $this->booking(owner: ['phone' => '+237690000009', 'phone_verified_at' => now()]);
-        $notification = BookingNotification::for($booking, BookingStepEnum::REFUSED, own: true);
-
-        $this->assertSame(['database'], $notification->via($booking->offer->user));
-        $this->assertTrue($notification->sentAsRead($booking->offer->user));
-        $this->assertNull($notification->notificationUserId($booking->offer->user));
 
         app(BookingService::class)->answer($booking, false);
 
-        // Seul le membre reçoit un SMS ; pas le propriétaire.
         $this->assertSame([], array_filter($this->sms->messages, fn (array $sms): bool => $sms['to'] === '+237690000009'));
-        $this->assertStringContainsString('Vous avez refusé la demande de séjour de Marie Curie', $booking->offer->user->notifications()->sole()->data['body']);
+        $this->assertSame(0, $booking->offer->user->notifications()->count());
+        $sent = $booking->user->notifications()->sole();
+        $this->assertSame($booking->offer->user->getKey(), $sent->user_id);
+        $this->assertStringStartsWith('Vous avez refusé la demande de séjour de '.$booking->user->full_name, BookingNotification::for($booking, BookingStepEnum::REFUSED)->toArray($booking->offer->user)['body']);
     }
 
     public function test_a_request_lands_in_the_owner_notifications_tab_in_their_language(): void

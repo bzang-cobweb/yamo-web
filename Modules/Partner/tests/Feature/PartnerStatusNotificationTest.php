@@ -2,9 +2,12 @@
 
 namespace Modules\Partner\Tests\Feature;
 
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Mockery\MockInterface;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
@@ -61,35 +64,51 @@ class PartnerStatusNotificationTest extends TestCase
         return [$partner, $admin, $helper];
     }
 
-    public function test_a_status_change_by_the_team_notifies_the_admins_only(): void
+    /** Le compte du back-office de la configuration, prévenu des demandes depuis l'app. */
+    private function team(): User
     {
-        Notification::fake();
+        $team = User::factory()->create(['locale' => 'fr']);
+        Setting::current()->update(['partner_notify_user_id' => $team->getKey()]);
+
+        return $team;
+    }
+
+    /** `$author` a fait une demande depuis l'app : sa notification est dans le fil du partenaire. */
+    private function submittedBy(Partner $partner, User $author): void
+    {
+        DatabaseNotification::query()->create([
+            'id' => (string) Str::uuid(), 'type' => PartnerPending::class, 'notifiable_type' => $author->getMorphClass(), 'notifiable_id' => $this->member()->getKey(),
+            'user_id' => $author->getKey(), 'thread' => $partner->groupThread(), 'data' => ['title' => 'Partenaire modifié', 'body' => 'Texte'],
+        ]);
+    }
+
+    public function test_a_status_change_by_the_team_notifies_the_author_of_the_request(): void
+    {
+        // Décision 2026-11-24-notifications-fil-de-groupe : l'auteur de la dernière demande depuis l'app, lui seul.
         [$partner, $admin, $helper] = $this->partner(PartnerStatusEnum::PENDING);
-        $stranger = $this->member();
+        $this->submittedBy($partner, $helper);
+        Notification::fake();
 
         $partner->update(['status' => PartnerStatusEnum::PUBLISHED]);
 
-        // Ses administrateurs seulement (décision 2026-11-24-partenaire-demandes).
-        Notification::assertNotSentTo($helper, PartnerPublished::class);
-        foreach ([$admin] as $user) {
-            Notification::assertSentTo($user, PartnerPublished::class, function (PartnerPublished $notification) use ($user, $partner): bool {
-                $data = $notification->toArray($user);
+        Notification::assertSentTo($helper, PartnerPublished::class, function (PartnerPublished $notification) use ($helper, $partner): bool {
+            $data = $notification->toArray($helper);
 
-                // « Accepté » (décision 2026-11-24-partenaires-validation-notifications).
-                return $data['title'] === 'Partenaire accepté'
-                    && $data['body'] === "Votre partenaire « Déménageurs du Wouri » a été accepté par l'équipe."
-                    && $data['link'] === '/profile/lists/partner.mine'
-                    && $data['link_label'] === 'Mes partenaires'
-                    && $data['partner_id'] === $partner->getKey()
-                    && in_array('database', $notification->via($user), true);
-            });
-        }
-        Notification::assertNotSentTo($stranger, PartnerPublished::class);
+            // « Accepté » (décision 2026-11-24-partenaires-validation-notifications), dans le fil du partenaire.
+            return $data['title'] === 'Partenaire accepté'
+                && $data['body'] === "Votre partenaire « Déménageurs du Wouri » a été accepté par l'équipe."
+                && $data['link'] === '/profile/lists/partner.mine'
+                && $data['partner_id'] === $partner->getKey()
+                && $notification->notificationThread($helper) === 'partner:group:'.$partner->getKey()
+                && $notification->notificationUserId($helper) === null;
+        });
+        Notification::assertNotSentTo($admin, PartnerPublished::class);
     }
 
-    public function test_a_member_editing_notifies_the_others_and_himself_each_with_his_text(): void
+    public function test_a_member_editing_notifies_the_back_office_account_only(): void
     {
-        // Décision 2026-11-24-partenaires-validation-notifications.
+        // Décision 2026-11-24-notifications-fil-de-groupe.
+        $team = $this->team();
         Notification::fake();
         [$partner, $admin, $helper] = $this->partner(PartnerStatusEnum::PUBLISHED);
 
@@ -97,41 +116,38 @@ class PartnerStatusNotificationTest extends TestCase
             ->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();
 
         $this->assertSame(PartnerStatusEnum::PENDING, $partner->fresh()->status);
-        Notification::assertSentTo($admin, PartnerPending::class, function (PartnerPending $notification) use ($admin, $helper): bool {
-            $data = $notification->toArray($admin);
+        Notification::assertSentTo($team, PartnerPending::class, function (PartnerPending $notification) use ($team, $helper): bool {
+            $data = $notification->toArray($team);
 
             return $data['title'] === 'Partenaire modifié'
                 && $data['body'] === '« Wouri Express » a été modifié par '.$helper->full_name.' ; il est en validation.'
-                && $data['author'] === false
+                && $notification->notificationUserId($team) === $helper->getKey()
                 && $data['partner_status'] === 'pending';
         });
-        Notification::assertSentTo($helper, PartnerPending::class, function (PartnerPending $notification) use ($helper): bool {
-            $data = $notification->toArray($helper);
-
-            return $data['author'] === true
-                && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe vérifie vos modifications avant de l'afficher.";
-        });
-        // Pas de « statut changé » en plus pour le passage en validation.
-        Notification::assertSentToTimes($admin, PartnerPending::class, 1);
-        Notification::assertNotSentTo([$admin, $helper], PartnerPublished::class);
+        // Ni ses comptes ni son auteur ; pas de « statut changé » en plus pour le passage en validation.
+        Notification::assertSentToTimes($team, PartnerPending::class, 1);
+        Notification::assertNotSentTo([$admin, $helper], PartnerPending::class);
+        Notification::assertNotSentTo([$admin, $helper, $team], PartnerPublished::class);
     }
 
-    public function test_adding_a_partner_notifies_its_author(): void
+    public function test_adding_a_partner_notifies_the_back_office_account_not_its_author(): void
     {
+        $team = $this->team();
         Notification::fake();
         $member = $this->member();
 
         $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])
             ->postJson('/api/v1/partners', ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();
 
-        Notification::assertSentTo($member, PartnerPending::class, function (PartnerPending $notification) use ($member): bool {
-            $data = $notification->toArray($member);
+        Notification::assertSentTo($team, PartnerPending::class, fn (PartnerPending $notification): bool => $notification->toArray($team)['title'] === 'Partenaire ajouté'
+            && $notification->notificationUserId($team) === $member->getKey());
+        Notification::assertNotSentTo($member, PartnerPending::class);
 
-            return $data['title'] === 'Partenaire ajouté'
-                && $data['author'] === true
-                && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe le vérifie avant de l'afficher.";
-        });
-        Notification::assertSentToTimes($member, PartnerPending::class, 1);
+        // Sans compte configuré : personne.
+        Setting::current()->update(['partner_notify_user_id' => null]);
+        $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])
+            ->postJson('/api/v1/partners', ['name' => 'Autre', 'description' => 'Texte.'])->assertNoContent();
+        Notification::assertSentToTimes($team, PartnerPending::class, 1);
     }
 
     public function test_the_submission_listener_hears_the_event_and_calls_the_notifier(): void
@@ -169,8 +185,9 @@ class PartnerStatusNotificationTest extends TestCase
     public function test_each_status_has_its_notification_class(): void
     {
         // Décision 2026-11-24-partenaire-notification-par-statut.
-        Notification::fake();
         [$partner, $admin] = $this->partner(PartnerStatusEnum::PUBLISHED);
+        $this->submittedBy($partner, $admin);
+        Notification::fake();
 
         foreach ([PartnerStatusEnum::REJECTED, PartnerStatusEnum::ARCHIVED, PartnerStatusEnum::PUBLISHED] as $status) {
             $partner->update(['status' => $status]);

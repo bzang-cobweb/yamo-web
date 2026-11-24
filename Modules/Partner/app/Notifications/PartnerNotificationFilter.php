@@ -48,13 +48,13 @@ class PartnerNotificationFilter implements NotificationFilter
     }
 
     /** L'étape d'une demande dans son suivi (« Partenaire modifié », « Partenaire accepté »), dans la langue du lecteur. */
-    public function step(DatabaseNotification $notification): ?string
+    public function step(DatabaseNotification $notification, User $reader): ?string
     {
-        return $this->cardTitle($notification);
+        return $this->cardTitle($notification, $reader);
     }
 
     /** « Partenaire accepté », « Partenaire modifié »…, dans la langue du lecteur ; `null` pour une autre notification. */
-    public function cardTitle(DatabaseNotification $notification): ?string
+    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
     {
         $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
         if ($status === null) {
@@ -69,6 +69,31 @@ class PartnerNotificationFilter implements NotificationFilter
         }
 
         return PartnerNotification::title($status, is_string($action) ? $action : null);
+    }
+
+    /**
+     * Une notification du fil d'un partenaire que le lecteur n'a pas reçue (sa propre action, ou celle d'un autre de
+     * ses comptes) : rédigée pour lui, dans sa langue, à partir du partenaire (décision
+     * 2026-11-24-notifications-fil-de-groupe) ; `null` si le partenaire n'existe plus.
+     */
+    public function forReader(DatabaseNotification $notification, User $reader): ?array
+    {
+        $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
+        if ($status === null) {
+            return null;
+        }
+
+        $data = (array) $notification->data;
+        $partner = Partner::query()->find($data['partner_id'] ?? null);
+        if ($partner === null) {
+            return null;
+        }
+
+        $actorId = $notification->getAttribute('user_id');
+        $actor = $actorId === null ? null : User::query()->find($actorId);
+        $action = $data['action'] ?? null;
+
+        return PartnerNotification::for($partner, $status, is_string($action) ? $action : null, $actor?->getKey(), (string) $actor?->full_name)->toArray($reader);
     }
 
     public function prepare(array $notifications): void {}

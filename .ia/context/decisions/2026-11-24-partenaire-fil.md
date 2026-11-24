@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-notifications-fil-de-groupe.md (le fil partner:group, partagé par tous les comptes)
+
 # `2026-11-24` — Un fil par partenaire, sans table de demandes
 
 Remplace : 2026-11-24-partenaire-demandes.md (la table `partner_requests` et le fil par demande ; la règle « le back-office ne prévient que les administrateurs » reste)

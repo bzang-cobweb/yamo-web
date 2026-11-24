@@ -7,6 +7,7 @@ use App\Filament\NavigationGroup;
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -14,6 +15,9 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Modules\Auth\Enums\PermissionEnum;
+use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 
 /**
@@ -60,6 +64,15 @@ class SettingResource extends AbstractResource
                                     ->label(__('settings.partner_payment_required'))
                                     ->helperText(__('settings.help.partner_payment_required')),
                             ]),
+                        // Décision 2026-11-24-partenaire-compte-prevenu.
+                        Tab::make(__('settings.sections.partners'))
+                            ->schema([
+                                Select::make('partner_notify_user_id')
+                                    ->label(__('settings.partner_notify_user'))
+                                    ->helperText(__('settings.help.partner_notify_user'))
+                                    ->options(fn (): array => self::backOfficeUsers())
+                                    ->searchable(),
+                            ]),
                         // Décision 2026-11-19-age-minimum.
                         Tab::make(__('settings.sections.users'))
                             ->schema([
@@ -92,6 +105,21 @@ class SettingResource extends AbstractResource
                             ]),
                     ]),
             ]);
+    }
+
+    /**
+     * Les comptes du back-office (super-administrateurs, accès au back-office) : « Prénom Nom (e-mail) », par nom.
+     *
+     * @return array<int, string>
+     */
+    private static function backOfficeUsers(): array
+    {
+        return User::role(RoleEnum::SUPER_ADMIN->value)->get()
+            ->merge(User::permission(PermissionEnum::ACCESS_ADMIN->value)->get())
+            ->unique(fn (User $user): int => (int) $user->getKey())
+            ->sortBy(fn (User $user): string => (string) $user->full_name)
+            ->mapWithKeys(fn (User $user): array => [(int) $user->getKey() => $user->full_name.' ('.$user->email.')'])
+            ->all();
     }
 
     public static function getPages(): array

@@ -9,6 +9,7 @@ use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
+use Modules\Notification\Support\NotificationThreads;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Lists\PartnerListing;
@@ -28,6 +29,8 @@ class PartnerServiceProvider extends ModuleServiceProvider
         // Ses notifications dans « Notifications » : le type « Partenaire », par statut (décision
         // 2026-11-24-partenaires-notifications-filtre).
         $this->app->make(NotificationFilters::class)->register(PartnerNotificationFilter::class);
+        // Son fil, lu par tous ses comptes (décision 2026-11-24-notifications-fil-de-groupe).
+        $this->app->make(NotificationThreads::class)->registerGroup(Partner::class);
 
         // Les partenaires d'un compte, déclarés ici pour que le module Auth ignore les partenaires (décision
         // 2026-11-24-partenaires-par-les-membres) ; le back-office s'en sert pour rattacher des comptes.

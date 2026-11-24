@@ -15,6 +15,8 @@ use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Location\Support\CurrentCountry;
+use Modules\Notification\Concerns\HasNotifiableGroup;
+use Modules\Notification\Contracts\NotifiableGroup;
 use Modules\Partner\Database\Factories\PartnerFactory;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Events\PartnerStatusChanged;
@@ -45,10 +47,10 @@ use Spatie\Translatable\HasTranslations;
  */
 #[Fillable(['country_id', 'name', 'slogan', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
 #[UseFactory(PartnerFactory::class)]
-class Partner extends Model implements HasMedia
+class Partner extends Model implements HasMedia, NotifiableGroup
 {
     /** @use HasFactory<PartnerFactory> */
-    use HasFactory, HasTranslations, InteractsWithMedia;
+    use HasFactory, HasNotifiableGroup, HasTranslations, InteractsWithMedia;
 
     /** Le logo, une seule image. */
     public const LOGO = 'logo';
@@ -110,27 +112,20 @@ class Partner extends Model implements HasMedia
         return $this->belongsToMany(User::class)->withPivot('is_admin')->withTimestamps();
     }
 
-    /** Le préfixe du fil de ses notifications (décision 2026-11-24-partenaire-fil). */
-    public const THREAD_PREFIX = 'partner:';
-
-    /**
-     * Le fil de ses notifications chez le compte `$userId` : une carte par partenaire, qui réunit ajouts, modifications
-     * et réponses de l'équipe ; un fil par destinataire, pour que ses étapes ne se répètent pas (décision
-     * 2026-11-24-partenaire-fil).
-     */
-    public function thread(int|string $userId): string
+    /** Le préfixe du fil de ses notifications, partagé par tous ses comptes (décision 2026-11-24-notifications-fil-de-groupe). */
+    public static function groupThreadPrefix(): string
     {
-        return self::THREAD_PREFIX.$this->getKey().':'.$userId;
+        return 'partner:group:';
     }
 
     /**
-     * Ses administrateurs (`is_admin`) : ceux que le back-office prévient (décision 2026-11-24-partenaire-demandes).
+     * Les partenaires auxquels le compte est rattaché : il lit tout leur fil de notifications.
      *
-     * @return BelongsToMany<User, $this>
+     * @return list<int|string>
      */
-    public function admins(): BelongsToMany
+    protected static function groupKeysOf(User $user): array
     {
-        return $this->users()->wherePivot('is_admin', true);
+        return array_values(self::query()->whereHas('users', fn (Builder $users) => $users->whereKey($user->getKey()))->pluck('id')->all());
     }
 
     /**

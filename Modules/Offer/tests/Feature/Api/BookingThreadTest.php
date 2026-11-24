@@ -153,10 +153,11 @@ class BookingThreadTest extends TestCase
         $this->assertNull($cards[0]['summary']);
         $this->assertSame(['label' => 'Acceptée', 'tone' => 'success'], $cards[0]['tag']);
         $this->assertSame('/offers/'.$this->offer->getKey().'/calendar?month='.$first->check_in->format('Y-m'), $cards[0]['link']);
-        // Déjà lue : les non lues restent les deux demandes reçues.
-        $this->assertNotNull($this->owner->notifications()->where('data->own', true)->sole()->read_at);
+        // Une seule notification par action, au membre (décision 2026-11-24-notifications-fil-de-groupe) : le
+        // propriétaire n'en reçoit pas pour sa réponse, qui ne compte pas comme non lue ; restent les deux demandes reçues.
+        $this->assertSame(0, $this->owner->notifications()->where('user_id', $this->owner->getKey())->count());
         $this->assertSame(2, $this->api($this->owner, 'GET', '/unread-count')->json('data.unread'));
-        // Le suivi ne la répète pas : l'étape vient du membre.
+        // Le suivi : la demande reçue, puis sa réponse, de lui.
         $history = $this->api($this->owner, 'GET', '/'.$cards[0]['id'])->assertOk()->json('data.history');
         $this->assertSame(['Demande envoyée', 'Demande acceptée'], array_column($history, 'label'));
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
@@ -250,8 +251,15 @@ class BookingThreadTest extends TestCase
             // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
             $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
-            $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
-            $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
+            // L'en-tête, la première étape du fil chez le lecteur (décision 2026-11-24-notification-copie-auteur) : chez le
+            // propriétaire, la demande reçue, du membre ; chez le membre, sa propre demande, sans qui agit ni résumé.
+            if ($reader->is($this->guest)) {
+                $this->assertNull($page['summary']);
+                $this->assertNull($page['actor']);
+            } else {
+                $this->assertSame('Une demande de séjour pour « '.$this->offer->getTranslation('title', 'fr').' » ('.$booking->period('fr').', 1 personne) a été enregistrée.', $page['summary']);
+                $this->assertSame((string) $this->guest->getKey(), $page['actor']['id']);
+            }
             // La demande, ajoutée par le module Offer (décision 2026-11-20-notification-generique).
             $this->assertArrayNotHasKey('total', $page);
             $this->assertSame([
@@ -305,6 +313,21 @@ class BookingThreadTest extends TestCase
         // Le membre l'a lue.
         $this->guest->notifications()->update(['read_at' => now()]);
         $this->assertSame([null, 'read'], $delivery());
+    }
+
+    public function test_the_reader_is_not_among_the_members_of_their_own_actions(): void
+    {
+        // Décision 2026-11-24-notifications-fil-de-groupe : sa réponse, reçue par le membre, porte son nom (`user_id`) ;
+        // le filtre « Membre » ne le propose pas ; son fil montre ce qu'il a reçu et ce qu'il a fait.
+        $booking = $this->request(3);
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($booking, true);
+
+        $members = collect($this->api($this->owner, 'GET', '')->json('data.filters'))->keyBy('name')['user']['options'];
+        $this->assertSame([(string) $this->guest->getKey()], array_column($members, 'value'));
+        $this->assertSame(1, $this->owner->notifications()->where('thread', $booking->thread())->count());
+        $history = $this->api($this->owner, 'GET', '/'.$this->cards($this->owner)[0]['id'])->json('data.history');
+        $this->assertCount(2, $history);
     }
 
     public function test_each_request_is_read_once_per_api_call(): void
@@ -458,11 +481,11 @@ class BookingThreadTest extends TestCase
         $booking = $this->request(3);
         $this->travel(5)->minutes();
         app(BookingService::class)->answer($booking, true);
-        $own = $this->guest->notifications()->where('thread', $booking->thread())->whereNotNull('read_at')->get()->first(fn ($notification): bool => (bool) ($notification->data['own'] ?? false));
-        $this->assertNotNull($own);
+        // Sa propre demande, reçue par le propriétaire (décision 2026-11-24-notifications-fil-de-groupe).
+        $own = DatabaseNotification::query()->where('thread', $booking->thread())->where('user_id', $this->guest->getKey())->sole();
         $this->assertSame(1, $this->guest->unreadNotifications()->where('thread', $booking->thread())->count());
 
-        // Sa propre copie, déjà lue, ouverte : la page dit non lue, puisqu'une étape du fil l'est encore.
+        // Sa propre demande ouverte : la page dit non lue, puisqu'une étape du fil qu'il a reçue l'est encore.
         $this->assertFalse($this->api($this->guest, 'GET', '/'.$own->getKey())->assertOk()->json('data.read'));
         // L'app la marque lue : tout le fil l'est.
         $this->api($this->guest, 'POST', '/'.$own->getKey().'/read')->assertNoContent();
@@ -534,6 +557,8 @@ class BookingThreadTest extends TestCase
         $this->api($this->owner, 'POST', '/'.$this->cards($this->owner)[0]['id'].'/read')->assertNoContent();
         $this->travel(5)->minutes();
 
+        $opened = $this->cards($this->guest)[0]['id'];
+
         app(BookingService::class)->update($booking, [
             'check_in' => today()->addDays(5)->toDateString(), 'check_out' => today()->addDays(9)->toDateString(), 'guests' => 2, 'message' => 'Message modifié',
         ]);
@@ -549,10 +574,12 @@ class BookingThreadTest extends TestCase
         // « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date).
         $this->assertSame([true], array_column($history, 'edited'));
         $this->assertSame(['Message modifié'], array_column($history, 'message'));
-        // Le membre : sa copie réécrite sur place (la page ouverte reste la même), déjà lue.
-        $copy = $this->guest->notifications()->sole();
+        // Le membre : aucune notification reçue ; sa demande, réécrite sur place chez le propriétaire, garde son
+        // identifiant (la page qu'il a ouverte reste valable), rédigée pour lui, lue (décision
+        // 2026-11-24-notifications-fil-de-groupe).
+        $this->assertSame(0, $this->guest->notifications()->count());
         $mine = $this->cards($this->guest)[0];
-        $this->assertSame($copy->getKey(), $mine['id']);
+        $this->assertSame($opened, $mine['id']);
         $this->assertStringContainsString('Vous avez modifié votre demande', $mine['body']);
         $this->assertTrue($mine['read']);
         $this->assertSame(['Message modifié'], array_column($this->api($this->guest, 'GET', '/'.$mine['id'])->json('data.history'), 'message'));
@@ -591,7 +618,7 @@ class BookingThreadTest extends TestCase
         // Déjà modifiée, elle le reste.
         $edit('Bonsoir !', 7);
         $this->assertSame([true], array_column($history(), 'edited'));
-        $this->assertTrue($this->guest->notifications()->sole()->data['edited']);
+        $this->assertTrue($this->owner->notifications()->sole()->data['edited']);
     }
 
     public function test_a_stranger_gets_no_follow_up(): void

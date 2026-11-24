@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-notifications-fil-de-groupe.md (une notification par action, sans copie)
+
 # La réponse du propriétaire dans son propre fil
 
 - **Date** : 2026-11-20

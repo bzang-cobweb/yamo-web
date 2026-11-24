@@ -13,10 +13,8 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
 use Modules\Offer\Listeners\AddBookingToNotificationThread;
 use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
-use Modules\Offer\Listeners\NotifyGuestOfOwnRequest;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
-use Modules\Offer\Listeners\NotifyOwnerOfOwnAnswer;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Services\BookingNotifierService;
 use Modules\Offer\Services\BookingThreadDetailsService;
@@ -33,12 +31,9 @@ class BookingListenersTest extends TestCase
         Event::fake();
 
         Event::assertListening(BookingRequested::class, NotifyOwnerOfBookingRequest::class);
-        Event::assertListening(BookingRequested::class, NotifyGuestOfOwnRequest::class);
         Event::assertListening(BookingUpdated::class, NotifyOwnerOfBookingRequest::class);
         Event::assertListening(BookingAnswered::class, NotifyGuestOfBookingAnswer::class);
-        Event::assertListening(BookingAnswered::class, NotifyOwnerOfOwnAnswer::class);
         Event::assertListening(BookingCancelled::class, NotifyOwnerOfBookingCancellation::class);
-        Event::assertListening(BookingCancelled::class, NotifyGuestOfOwnRequest::class);
         Event::assertListening(NotificationThreadSerializing::class, AddBookingToNotificationThread::class);
     }
 
@@ -47,21 +42,15 @@ class BookingListenersTest extends TestCase
         $booking = new Booking;
         $this->mock(BookingNotifierService::class, function (MockInterface $bookingNotifierService) use ($booking): void {
             $bookingNotifierService->shouldReceive('ownerOfRequest')->once()->with($booking);
-            $bookingNotifierService->shouldReceive('ownerOfUpdate')->once()->with($booking, true);
+            $bookingNotifierService->shouldReceive('ownerOfUpdate')->once()->with($booking, true, true);
             $bookingNotifierService->shouldReceive('ownerOfCancellation')->once()->with($booking);
-            $bookingNotifierService->shouldReceive('ownerOfOwnAnswer')->once()->with($booking);
             $bookingNotifierService->shouldReceive('guestOfAnswer')->once()->with($booking);
-            $bookingNotifierService->shouldReceive('guestOfOwnRequest')->once()->with($booking);
-            $bookingNotifierService->shouldReceive('guestOfOwnCancellation')->once()->with($booking);
         });
 
         app(NotifyOwnerOfBookingRequest::class)->handle(new BookingRequested($booking));
-        app(NotifyOwnerOfBookingRequest::class)->handle(new BookingUpdated($booking, true));
+        app(NotifyOwnerOfBookingRequest::class)->handle(new BookingUpdated($booking, true, true));
         app(NotifyOwnerOfBookingCancellation::class)->handle(new BookingCancelled($booking));
-        app(NotifyOwnerOfOwnAnswer::class)->handle(new BookingAnswered($booking));
         app(NotifyGuestOfBookingAnswer::class)->handle(new BookingAnswered($booking));
-        app(NotifyGuestOfOwnRequest::class)->handle(new BookingRequested($booking));
-        app(NotifyGuestOfOwnRequest::class)->handle(new BookingCancelled($booking));
     }
 
     public function test_the_thread_listener_passes_the_booking_id_page_and_reader(): void

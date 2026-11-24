@@ -2,25 +2,27 @@
 
 namespace Modules\Partner\Services;
 
-use Illuminate\Support\Facades\Notification;
+use App\Models\Setting;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Notifications\PartnerNotification;
 
 /**
- * Les notifications d'un partenaire, une classe par statut (décisions 2026-11-24-partenaires-notifications,
- * 2026-11-24-partenaire-notification-par-statut, 2026-11-24-partenaire-demandes et 2026-11-24-partenaire-fil),
- * toutes dans le fil du partenaire chez chaque destinataire :
- * - une action depuis l'app prévient tous ses comptes, l'auteur compris ;
- * - une action au back-office (statut, ajout, modification) ne prévient que ses administrateurs (`is_admin`), jamais
+ * Les notifications d'un partenaire, une classe par statut, dans son fil partagé par tous ses comptes (décisions
+ * 2026-11-24-partenaire-notification-par-statut et 2026-11-24-notifications-fil-de-groupe). Une seule par action :
+ * - un ajout ou une modification depuis l'app : au compte du back-office choisi sur la page Application
+ *   (`Setting::partnerNotifyUser()`, décision 2026-11-24-partenaire-compte-prevenu), pas au membre qui agit ;
+ * - une action au back-office (statut, ajout, modification) : à l'auteur de la dernière demande depuis l'app, pas à
  *   celui qui l'a faite.
+ * Les autres comptes du partenaire la lisent dans son fil, sans la recevoir.
  */
 class PartnerNotifierService
 {
     /**
-     * Son statut a changé au back-office : ses administrateurs sont prévenus. Pas pour le passage en validation : il vient d'une action depuis l'app, que
-     * `submitted()` annonce déjà (décision 2026-11-24-partenaires-validation-notifications).
+     * Son statut a changé au back-office : l'auteur de la demande est prévenu. Pas pour le passage en validation : il
+     * vient d'une action depuis l'app, que `submitted()` annonce déjà.
      */
     public function statusChanged(Partner $partner, int|string|null $actorId): void
     {
@@ -28,43 +30,57 @@ class PartnerNotifierService
             return;
         }
 
-        $this->notifyAdmins($partner, $actorId, PartnerNotification::for($partner, $partner->status));
+        $this->notifyAuthor($partner, $actorId, PartnerNotification::for($partner, $partner->status));
     }
 
     /**
-     * Il a été ajouté (`$created`) ou modifié au back-office par `$actorId`, sans changement de statut : ses
-     * administrateurs sont prévenus (« … modifié par l'équipe »).
+     * Il a été ajouté (`$created`) ou modifié au back-office par `$actorId`, sans changement de statut : l'auteur de la
+     * demande est prévenu (« … modifié par l'équipe »).
      */
     public function edited(Partner $partner, int|string|null $actorId, bool $created): void
     {
         $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
-        $this->notifyAdmins($partner, $actorId, PartnerNotification::for($partner, $partner->status, $action));
+        $this->notifyAuthor($partner, $actorId, PartnerNotification::for($partner, $partner->status, $action));
     }
 
     /**
-     * Il a été ajouté ou modifié depuis l'app et attend la validation : tous ses comptes, l'auteur compris, sont
-     * prévenus, chacun son texte (décision 2026-11-24-partenaires-validation-notifications).
+     * Il a été ajouté ou modifié depuis l'app par `$actorId` et attend la validation : le compte du back-office choisi
+     * sur la page Application est prévenu, sauf s'il est celui qui agit ; sans compte choisi, personne.
      */
     public function submitted(Partner $partner, int|string $actorId, bool $created): void
     {
-        $recipients = $partner->users()->get();
-        if ($recipients->isEmpty()) {
+        $recipient = Setting::partnerNotifyUser();
+        if ($recipient === null) {
+            return;
+        }
+        if ((string) $recipient->getKey() === (string) $actorId) {
             return;
         }
 
         $actor = User::query()->find($actorId);
-        $actorName = $actor === null ? '' : (string) $actor->full_name;
         $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
-        Notification::send($recipients, PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actorName));
+        $recipient->notify(PartnerNotification::for($partner, PartnerStatusEnum::PENDING, $action, $actorId, $actor === null ? '' : (string) $actor->full_name));
     }
 
-    /** Ses administrateurs, sauf `$actorId`, reçoivent `$notification`. */
-    private function notifyAdmins(Partner $partner, int|string|null $actorId, PartnerNotification $notification): void
+    /**
+     * L'auteur de la dernière demande depuis l'app (`user_id` de la dernière notification « en validation » de son
+     * fil) reçoit `$notification`, sauf s'il est `$actorId` ; personne sans demande depuis l'app.
+     */
+    private function notifyAuthor(Partner $partner, int|string|null $actorId, PartnerNotification $notification): void
     {
-        $recipients = $partner->admins()->when($actorId !== null, fn ($admins) => $admins->whereKeyNot($actorId))->get();
-
-        if ($recipients->isNotEmpty()) {
-            Notification::send($recipients, $notification);
+        $authorId = DatabaseNotification::query()
+            ->where('thread', $partner->groupThread())
+            ->where('type', PartnerStatusEnum::PENDING->notification())
+            ->whereNotNull('user_id')
+            ->latest()
+            ->value('user_id');
+        if ($authorId === null) {
+            return;
         }
+        if ((string) $authorId === (string) $actorId) {
+            return;
+        }
+
+        User::query()->find($authorId)?->notify($notification);
     }
 }

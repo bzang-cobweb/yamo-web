@@ -1,0 +1,43 @@
+# `2026-11-24` — Une notification par action ; le fil d'un partenaire lu par tous ses comptes
+
+Remplace :
+- 2026-11-20-reponse-dans-son-fil.md (la copie `own` chez celui qui agit) ;
+- 2026-11-24-partenaire-fil.md (le fil par destinataire) ;
+- 2026-11-24-partenaire-demandes.md (les destinataires au back-office).
+
+- **Type** : décision de conception
+- **Questions posées** :
+  - « et si on envoyait une seule notification par action pour les Booking » ;
+  - « pour les partenaires, envoyer une notification uniquement à un utilisateur backend indiqué dans une config ; thread partner:group:5 ».
+- **Réponses** (choix de l'humain) :
+  - le compte du back-office est choisi sur la page Application (2026-11-24-partenaire-compte-prevenu) ;
+  - une action au back-office prévient l'auteur de la demande ;
+  - le fil d'un partenaire se lit par tous ses comptes ;
+  - la carte du membre remonte avec un texte rédigé pour lui.
+- **Ce qui est retenu** :
+  - **Ce qu'un compte voit** (`NotificationThreads::visibleTo()`) :
+    - les notifications qu'il a reçues ;
+    - celles de ses propres actions, reçues par un autre (`user_id` = lui) ;
+    - toutes celles du fil d'un groupe dont il est membre.
+    - Ce périmètre vaut pour la liste, une carte par fil (`latestOnly`), la page, le suivi, les filtres et le marquage « lu ».
+    - Seules les notifications qu'il a reçues comptent comme non lues.
+  - **Groupes** : contrat `NotifiableGroup`, avec son trait `HasNotifiableGroup`, dans le module Notification.
+    - `Partner` l'implémente : fil `partner:group:<id>`, lu par tous les comptes rattachés.
+    - Le module l'inscrit avec `NotificationThreads::registerGroup()`.
+  - **Textes selon le lecteur** : une notification que le lecteur n'a pas reçue est rédigée pour lui, dans sa langue, par son module (`NotificationFilter::forReader()`).
+    - Exemples : « Vous avez accepté la demande de … », « Votre partenaire … est en validation ».
+    - `cardTitle()` et `step()` reçoivent aussi le lecteur.
+  - **Réservations** : une seule notification par action, à l'autre partie ; plus de copie chez l'auteur.
+    - Les listeners `NotifyGuestOfOwnRequest` et `NotifyOwnerOfOwnAnswer` sont supprimés, ainsi que `SentAsRead` pour les demandes.
+    - Les coches de lecture d'une de ses actions se lisent sur la notification elle-même.
+    - Une modification réécrit sur place la notification du propriétaire (même identifiant, remontée, non lue) : la page ouverte par le membre reste valable. Le propriétaire est ensuite prévenu par e-mail et SMS seulement (`BookingUpdated::$rewritten`, `inTab`).
+  - **Partenaires** : une seule notification par action.
+    - Un ajout ou une modification depuis l'app va au compte du back-office choisi sur la page Application (`Setting::partnerNotifyUser()`), pas au membre qui agit. Sans compte choisi, personne n'est prévenu.
+    - Une action au back-office (statut, ajout, modification) va à l'auteur de la dernière demande depuis l'app, lu dans le fil. L'utilisateur du back-office ne la reçoit pas.
+    - `Partner::admins()` est retiré.
+  - **Migration** `2026_12_05_120000_drop_own_booking_notification_copies` : les anciennes copies (`data.own` vrai) sont effacées, et `own` est retiré des autres. Rien à défaire : l'auteur retrouve son action sans sa copie.
+- **Corollaires** :
+  - Les autres comptes d'un partenaire ne sont prévenus de rien (ni e-mail ni pastille). Ils voient le fil, à jour, dans leur liste.
+  - Le compte du back-office ne lit que ce qu'il a reçu, pas les réponses envoyées aux auteurs.
+  - Une notification encore en file sous l'ancien comportement reste valable : seules les copies disparaissent.
+- **Tranché par** : humain (une notification par action, compte du back-office choisi sur la page Application, auteur prévenu, fil lu par tous les comptes, texte rédigé pour le lecteur) ; session (réécriture sur place d'une modification, auteur lu dans le fil)

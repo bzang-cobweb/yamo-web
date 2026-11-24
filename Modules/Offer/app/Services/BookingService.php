@@ -108,7 +108,8 @@ class BookingService
                 'total' => $booking->unit_price === null || $days === null ? null : number_format((float) $booking->unit_price * $days, 2, '.', ''),
             ])->save();
 
-            BookingUpdated::dispatch($booking, $this->replaceRequestStep($booking));
+            [$edited, $rewritten] = $this->replaceRequestStep($booking);
+            BookingUpdated::dispatch($booking, $edited, $rewritten);
 
             return $booking;
         });
@@ -116,42 +117,43 @@ class BookingService
 
     /**
      * L'étape précédente (« Demande envoyée » ou « Demande modifiée ») devient « Demande modifiée »
-     * (décision 2026-11-21-demande-modifiee-notification) : celle du propriétaire est supprimée, la
-     * nouvelle lui est envoyée (`BookingUpdated`) ; la copie du membre est réécrite sur place,
-     * remontée et lue, pour que la page qu'il a ouverte reste la sienne.
+     * (décision 2026-11-21-demande-modifiee-notification) : la notification du propriétaire est réécrite sur place,
+     * remontée et non lue ; elle garde son identifiant, pour que la page que le membre a ouverte, la sienne aussi
+     * (décision 2026-11-24-notifications-fil-de-groupe), reste valable. Le propriétaire est ensuite prévenu par e-mail
+     * et SMS (`BookingUpdated`, `rewritten`). Sans étape précédente, une nouvelle lui est envoyée.
      *
      * « Modifié » (`edited`) : seulement si le message diffère de celui de l'étape remplacée ; une
      * étape déjà modifiée le reste (décision 2026-11-21-etape-modifiee-date).
      *
-     * @return bool La nouvelle étape est « modifiée ».
+     * @return array{0: bool, 1: bool} la nouvelle étape est « modifiée » ; l'étape précédente a été réécrite
      */
-    private function replaceRequestStep(Booking $booking): bool
+    private function replaceRequestStep(Booking $booking): array
     {
         $steps = DatabaseNotification::query()
             ->where('thread', $booking->thread())
             ->whereIn('data->step', [BookingStepEnum::RECEIVED->value, BookingStepEnum::UPDATED->value])
             ->with('notifiable')
+            ->latest()
             ->get();
 
         $previous = (array) ($steps->first()?->data ?? []);
         $edited = (bool) ($previous['edited'] ?? false) || ($previous !== [] && ($previous['message'] ?? null) !== $booking->message);
 
-        $steps->each(function (DatabaseNotification $notification) use ($booking, $edited): void {
-            $notifiable = $notification->notifiable;
-            if (! (bool) (((array) $notification->data)['own'] ?? false) || ! $notifiable instanceof User) {
-                $notification->delete();
+        // La plus récente, reçue par le propriétaire, est réécrite ; les autres (d'anciennes étapes) s'effacent.
+        $kept = $steps->first(fn (DatabaseNotification $notification): bool => $notification->notifiable instanceof User);
+        $steps->reject(fn (DatabaseNotification $notification): bool => $notification === $kept)->each->delete();
+        if ($kept === null) {
+            return [$edited, false];
+        }
 
-                return;
-            }
+        $owner = $kept->notifiable;
+        $data = $this->withLocale(
+            $owner->preferredLocale(),
+            fn (): array => BookingNotification::for($booking, BookingStepEnum::UPDATED, edited: $edited)->toArray($owner),
+        );
+        $kept->forceFill(['type' => BookingStepEnum::UPDATED->notification(), 'data' => $data, 'read_at' => null, 'created_at' => now()])->save();
 
-            $data = $this->withLocale(
-                $notifiable->preferredLocale(),
-                fn (): array => BookingNotification::for($booking, BookingStepEnum::UPDATED, own: true, edited: $edited)->toArray($notifiable),
-            );
-            $notification->forceFill(['type' => BookingStepEnum::UPDATED->notification(), 'data' => $data, 'read_at' => now(), 'created_at' => now()])->save();
-        });
-
-        return $edited;
+        return [$edited, true];
     }
 
     /**

@@ -24,8 +24,9 @@ use Modules\Partner\Models\Partner;
  * - `$actorId` : le compte qui a agi depuis l'app ; l'auteur lit son texte (« Votre partenaire … est en validation »),
  *   les autres le leur (« … modifié par … ») et voient son nom sur la carte. `null` : l'équipe, au back-office.
  *
- * Toutes les notifications d'un partenaire font un fil chez chaque destinataire (`Partner::thread()`) : une carte,
- * dont la page montre le suivi (ajouté, modifié, accepté…).
+ * Toutes les notifications d'un partenaire font un seul fil (`Partner::groupThread()`, `partner:group:5`), lu par
+ * tous ses comptes quel que soit le destinataire (décision 2026-11-24-notifications-fil-de-groupe) : une carte, dont
+ * la page montre le suivi (ajouté, modifié, accepté…). Chacun la lit rédigée pour lui (`toArray()` pour le lecteur).
  */
 abstract class PartnerNotification extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
@@ -79,15 +80,13 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     }
 
     /**
-     * @return array{title: string, body: string, author: bool, action: string|null, partner_id: int, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, body: string, action: string|null, partner_id: int, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
         return [
             'title' => static::title(static::status(), $this->action),
             'body' => $this->body($notifiable),
-            // L'auteur de l'action : son texte. Pas `own`, qui retirerait l'étape de son propre fil.
-            'author' => $this->isAuthor($notifiable),
             'action' => $this->action,
             'partner_id' => (int) $this->partner->getKey(),
             'partner_status' => static::status()->value,
@@ -98,20 +97,19 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         ];
     }
 
-    /** Le fil du partenaire chez ce destinataire (décision 2026-11-24-partenaire-fil). */
+    /** Le fil du partenaire, partagé par tous ses comptes (décision 2026-11-24-notifications-fil-de-groupe). */
     public function notificationThread(object $notifiable): ?string
     {
-        if (! $notifiable instanceof User) {
-            return null;
-        }
-
-        return $this->partner->thread($notifiable->getKey());
+        return $this->partner->groupThread();
     }
 
-    /** Qui agit, pour les autres comptes : son nom et sa photo sur la carte, le filtre « Membre » ; rien pour l'auteur ni l'équipe. */
+    /**
+     * Qui agit depuis l'app : son nom et sa photo sur la carte, le filtre « Membre » ; il retrouve ainsi son action
+     * (décision 2026-11-24-notifications-fil-de-groupe). Rien pour l'équipe.
+     */
     public function notificationUserId(object $notifiable): ?int
     {
-        if ($this->actorId === null || $this->isAuthor($notifiable)) {
+        if ($this->actorId === null) {
             return null;
         }
 

@@ -36,8 +36,8 @@ class NotificationResource extends JsonResource
     private ?bool $read = null;
 
     /**
-     * Ajoute son fil : le suivi, de la plus ancienne étape à la plus récente, des deux
-     * côtés (décision 2026-11-20-suivi-demande), et ce qu'y ajoute le module du fil par
+     * Ajoute son fil : le suivi chez le lecteur, de la plus ancienne étape à la plus récente
+     * (décisions 2026-11-20-suivi-demande et 2026-11-24-notification-copie-auteur), et ce qu'y ajoute le module du fil par
      * l'événement `NotificationThreadSerializing` (une demande : `booking`, décision
      * 2026-11-20-notification-generique).
      */
@@ -70,42 +70,48 @@ class NotificationResource extends JsonResource
     public function toArray(Request $request): array
     {
         $notification = $this->resource;
-        $steps = $this->withThread ? app(NotificationThreads::class)->steps($notification) : [];
+        /** @var User $reader */
+        $reader = $request->user();
+        $threads = app(NotificationThreads::class);
+        $steps = $this->withThread ? $threads->steps($notification, $reader) : [];
         // Sur sa page, un fil se présente par sa première étape : son titre, son texte, qui
         // l'a faite (décision 2026-11-20-entete-premiere-etape).
         $head = $steps[0] ?? $notification;
-        // Qui a fait chaque étape, et à qui elle a été envoyée : lus en une fois.
+        // Qui a fait chaque étape, et qui a reçu chacune de ses propres actions (ses coches) : lus en une fois.
         $this->loadUsers(array_merge(
             array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('user_id'), $steps),
             array_map(fn (DatabaseNotification $step): int => (int) $step->getAttribute('notifiable_id'), $steps),
         ));
-        $data = (array) $head->data;
-        $own = (array) $notification->data;
+        // L'en-tête vient de la première étape du fil ; les liens et le message, de la notification ouverte, l'étape en
+        // cours. Hors de sa page, les deux sont la notification elle-même. Chacune rédigée pour le lecteur (décision
+        // 2026-11-24-notifications-fil-de-groupe).
+        $first = $this->dataFor($head, $reader);
+        $opened = $head === $notification ? $first : $this->dataFor($notification, $reader);
 
         $item = [
             'id' => (string) $notification->getKey(),
-            'title' => (string) ($data['title'] ?? ''),
+            'title' => (string) ($first['title'] ?? ''),
             /** Le titre de sa carte dans la liste, donné par son module (« Demande acceptée » pour une demande) ; `null` : `title`. */
-            'card_title' => app(NotificationFilters::class)->cardTitle($notification),
+            'card_title' => app(NotificationFilters::class)->cardTitle($notification, $reader),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
-            'tag' => $this->tag($data),
-            'body' => (string) ($data['body'] ?? ''),
+            'tag' => $this->tag($first),
+            'body' => (string) ($first['body'] ?? ''),
             /** Qui agit, lu à l'affichage (photo, nom, en ligne), ou `null`. */
-            'actor' => $this->actor($head),
+            'actor' => $this->actor($head, $reader),
             /** Le texte sans le nom de qui agit, pour la carte ; `null` : `body`. */
-            'summary' => $this->summary($data),
+            'summary' => $this->summary($first),
             /** Message joint, saisi par un utilisateur (celui du membre, le motif d'un refus), ou `null`. */
-            'message' => $this->message($own),
+            'message' => $this->message($opened),
             /** Écran de l'app à ouvrir (`/profile/lists/offer.bookings`), ou `null`. */
-            'link' => $this->link($own),
+            'link' => $this->link($opened),
             /** Liens en plus, sous le texte (« Voir l'annonce » → `/offers/12`). */
-            'links' => $this->links($own),
+            'links' => $this->links($opened),
             /** Passages du texte qui ouvrent un écran (« Paul Etoa » → `/members/37`). */
-            'text_links' => $this->textLinks($data),
+            'text_links' => $this->textLinks($first),
             /** Libellé du bouton qui ouvre `link` (« Réservations reçues »), ou `null`. */
-            'link_label' => $this->linkLabel($own),
+            'link_label' => $this->linkLabel($opened),
             /** Lue : pour la carte d'une demande, toutes ses étapes le sont. */
-            'read' => $this->read ?? $notification->read_at !== null,
+            'read' => $this->read ?? $this->isRead($notification, $reader),
             /** Date ISO 8601. */
             'created_at' => $this->date($notification),
         ];
@@ -114,8 +120,8 @@ class NotificationResource extends JsonResource
             return $item;
         }
 
-        /** Le suivi de son fil, de la plus ancienne étape à la plus récente, des deux côtés ; vide sans fil. */
-        $item['history'] = $this->history($steps);
+        /** Le suivi de son fil chez le lecteur, de la plus ancienne étape à la plus récente ; vide sans fil. */
+        $item['history'] = $this->history($steps, $reader);
 
         // Le module du fil complète la réponse (une demande : `booking`).
         $thread = $notification->getAttribute('thread');
@@ -128,6 +134,31 @@ class NotificationResource extends JsonResource
         return $item;
     }
 
+    /** Lue : reçue par le lecteur et marquée lue, ou pas reçue par lui (sa propre action, celle d'un groupe). */
+    private function isRead(DatabaseNotification $notification, User $reader): bool
+    {
+        if (! app(NotificationThreads::class)->isReceivedBy($notification, $reader)) {
+            return true;
+        }
+
+        return $notification->read_at !== null;
+    }
+
+    /**
+     * Les données d'une notification pour le lecteur : telles quelles s'il l'a reçue ; sinon rédigées pour lui par son
+     * module (sa propre action, le fil d'un de ses groupes), à défaut telles quelles.
+     *
+     * @return array<mixed>
+     */
+    private function dataFor(DatabaseNotification $notification, User $reader): array
+    {
+        if (app(NotificationThreads::class)->isReceivedBy($notification, $reader)) {
+            return (array) $notification->data;
+        }
+
+        return app(NotificationFilters::class)->forReader($notification, $reader) ?? (array) $notification->data;
+    }
+
     /**
      * Les étapes de son fil : leur libellé (« Demande acceptée »), qui agit, le message
      * joint, la date (décision 2026-11-20-suivi-demande). Pour une étape du lecteur, ce
@@ -138,25 +169,26 @@ class NotificationResource extends JsonResource
      * @param  list<DatabaseNotification>  $steps
      * @return list<array{id: string, label: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, message: string|null, created_at: string|null, edited: bool, delivery: string|null}>
      */
-    private function history(array $steps): array
+    private function history(array $steps, User $reader): array
     {
         $filters = app(NotificationFilters::class);
-        $reader = (int) $this->resource->getAttribute('notifiable_id');
+        $threads = app(NotificationThreads::class);
 
-        return array_map(function (DatabaseNotification $step) use ($filters, $reader): array {
+        return array_map(function (DatabaseNotification $step) use ($filters, $threads, $reader): array {
             $actor = $this->user((int) $step->getAttribute('user_id'));
+            // Sa propre action, reçue par un autre : ses coches se lisent sur elle (décision
+            // 2026-11-24-notifications-fil-de-groupe).
+            $mine = $threads->isOwn($step, $reader) && ! $threads->isReceivedBy($step, $reader);
 
             return [
                 'id' => (string) $step->getKey(),
-                'label' => $filters->step($step),
+                'label' => $filters->step($step, $reader),
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
                 /** Une étape modifiée (`data.edited`) : « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date). */
                 'edited' => (bool) (((array) $step->data)['edited'] ?? false),
-                'delivery' => (int) $step->getAttribute('user_id') === $reader
-                    ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id')))
-                    : null,
+                'delivery' => $mine ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id'))) : null,
             ];
         }, $steps);
     }
@@ -204,8 +236,13 @@ class NotificationResource extends JsonResource
         return $this->users[$id] ?? null;
     }
 
-    private function actor(DatabaseNotification $head): ?array
+    private function actor(DatabaseNotification $head, User $reader): ?array
     {
+        // Sa propre action : la carte ne montre pas son lecteur (décision 2026-11-24-notifications-fil-de-groupe).
+        if (app(NotificationThreads::class)->isOwn($head, $reader)) {
+            return null;
+        }
+
         $id = $head->getAttribute('user_id');
         $actor = $this->actorLoaded && $head === $this->resource ? $this->actor : ($id === null ? null : $this->user((int) $id));
 

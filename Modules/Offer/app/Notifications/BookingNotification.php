@@ -9,7 +9,6 @@ use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
 use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
-use Modules\Notification\Contracts\SentAsRead;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Lists\BookingListing;
@@ -29,12 +28,12 @@ use Modules\Offer\Support\BookingText;
  * dans sa langue (`HasLocalePreference`).
  * Les textes sont dans `offer::booking.notify.<clé>` (fr, en, de).
  *
- * `$own` : la réponse du propriétaire, tracée dans son propre fil (décision
- * 2026-11-20-reponse-dans-son-fil) — dans l'onglet seulement, déjà lue, sans qui agit,
- * son texte « Vous avez accepté la demande de … ». Le suivi ne la montre pas : la
- * notification du membre porte déjà l'étape.
+ * Une seule notification par action, à l'autre partie (décision 2026-11-24-notifications-fil-de-groupe) ; celle qui
+ * agit en est l'auteur (`user_id`) et la retrouve dans son fil, rédigée pour elle à l'affichage (`toArray()` pour
+ * elle : `isOwn()`, son texte « Vous avez accepté la demande de … »). Qui agit se lit dans l'étape : le membre pour
+ * une demande, une modification ou une annulation, le propriétaire pour une réponse.
  */
-abstract class BookingNotification extends Notification implements HasNotificationThread, HasNotificationUser, SentAsRead, ShouldQueue
+abstract class BookingNotification extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
@@ -48,11 +47,11 @@ abstract class BookingNotification extends Notification implements HasNotificati
     abstract public static function step(): BookingStepEnum;
 
     /** La notification de l'étape `$step`, de sa classe. */
-    public static function for(Booking $booking, BookingStepEnum $step, bool $own = false, bool $edited = false): self
+    public static function for(Booking $booking, BookingStepEnum $step, bool $edited = false, bool $inTab = true): self
     {
         $class = $step->notification();
 
-        return new $class($booking, $own, $edited);
+        return new $class($booking, $edited, $inTab);
     }
 
     /**
@@ -64,8 +63,11 @@ abstract class BookingNotification extends Notification implements HasNotificati
         return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''));
     }
 
-    /** `$edited` : une demande modifiée dont le message diffère du précédent (décision 2026-11-21-etape-modifiee-date). */
-    final public function __construct(public readonly Booking $booking, public readonly bool $own = false, public readonly bool $edited = false)
+    /**
+     * `$edited` : une demande modifiée dont le message diffère du précédent (décision 2026-11-21-etape-modifiee-date) ;
+     * `$inTab` faux : l'onglet a déjà l'étape (réécrite sur place), seulement l'e-mail et le SMS.
+     */
+    final public function __construct(public readonly Booking $booking, public readonly bool $edited = false, public readonly bool $inTab = true)
     {
         $this->step = static::step();
         $this->status = $booking->status;
@@ -80,24 +82,30 @@ abstract class BookingNotification extends Notification implements HasNotificati
         return $this->step->textKey();
     }
 
+    /** Le lecteur est-il celui qui agit ? Sa propre action, rédigée pour lui (décision 2026-11-24-notifications-fil-de-groupe). */
+    public function isOwn(object $notifiable): bool
+    {
+        return $notifiable instanceof User && (string) $notifiable->getKey() === (string) $this->actor()->getKey();
+    }
+
     /**
      * La liste où retrouver la demande : `mine` (le membre) ou `received` (le propriétaire, aussi pour sa
      * propre réponse). La copie de sa demande ou de son annulation, gardée par le membre : `mine`
      * (décision 2026-11-21-reservation-comme-notification).
      */
-    private function section(): string
+    private function section(object $notifiable): string
     {
-        if ($this->own) {
-            return in_array($this->step, [BookingStepEnum::RECEIVED, BookingStepEnum::CANCELLED, BookingStepEnum::UPDATED], true) ? 'mine' : 'received';
+        if ($this->isOwn($notifiable)) {
+            return $this->step->section() === 'received' ? 'mine' : 'received';
         }
 
         return $this->step->section();
     }
 
-    /** Le texte : celui de la notification, ou celui de sa propre réponse (`<clé>.own`). */
-    private function body(): string
+    /** Le texte : celui de la notification, ou celui de sa propre action (`<clé>.own`). */
+    private function body(object $notifiable): string
     {
-        return __("offer::booking.notify.{$this->key()}.".($this->own ? 'own' : 'body'), $this->replacements());
+        return __("offer::booking.notify.{$this->key()}.".($this->isOwn($notifiable) ? 'own' : 'body'), $this->replacements());
     }
 
     /** Le message à joindre : celui du membre pour une demande, le motif d'un refus ou d'une annulation. */
@@ -135,8 +143,9 @@ abstract class BookingNotification extends Notification implements HasNotificati
             return [];
         }
 
-        // Sa propre réponse : dans l'onglet seulement.
-        return $this->own ? ['database'] : ['database', ...$notifiable->notificationChannels()];
+        $channels = $notifiable->notificationChannels();
+
+        return $this->inTab ? ['database', ...$channels] : $channels;
     }
 
     /**
@@ -146,25 +155,26 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
-     * @return array{title: string, step: string, own: bool, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, step: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
-        $list = $this->section() === 'received' ? ReceivedBookingListing::name() : BookingListing::name();
+        $own = $this->isOwn($notifiable);
+        $section = $this->section($notifiable);
+        $list = $section === 'received' ? ReceivedBookingListing::name() : BookingListing::name();
 
         return [
             // Le type de l'action (« Nouvelle demande », « Demande acceptée »), décision 2026-11-22-notification-par-action.
-            'title' => self::title($this->step, $this->own),
+            'title' => self::title($this->step, $own),
             // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`, `updated`.
             'step' => $this->step->value,
             // La demande et son statut à l'envoi.
             'booking_id' => (int) $this->booking->getKey(),
             'booking_status' => $this->status->value,
-            'body' => $this->body(),
+            'body' => $this->body($notifiable),
             // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom ;
-            // sa propre réponse n'a pas de qui agit : la carte montre `body`.
-            'summary' => $this->own ? null : BookingText::summary($this->booking, $this->key()),
-            'own' => $this->own,
+            // sa propre action ne montre pas qui agit : la carte montre `body`.
+            'summary' => $own ? null : BookingText::summary($this->booking, $this->key()),
             // Le total figé de la demande (« 255 000 FCFA »), en gras sur la page de la notification ; `null` pour une visite.
             'total' => $this->booking->formattedTotal(app()->getLocale()),
             'message' => $this->note(),
@@ -173,45 +183,45 @@ abstract class BookingNotification extends Notification implements HasNotificati
             'edited' => $this->edited,
             // Le propriétaire traite la demande dans le calendrier de l'offre, au mois de la demande
             // (décision 2026-11-19-contrat-calendrier-offre) ; le membre retrouve ses réservations.
-            'link' => $this->section() === 'received'
+            'link' => $section === 'received'
                 ? '/offers/'.$this->booking->offer_id.'/calendar?month='.$this->booking->check_in->format('Y-m')
                 : '/profile/lists/'.$list,
             // Le bouton de la page de la notification : la liste où retrouver la demande.
             // Le propriétaire traite la demande ; le membre retrouve ses réservations.
-            'link_label' => $this->section() === 'received' ? __('offer::booking.notify.handle') : __('offer::booking.list.mine'),
+            'link_label' => $section === 'received' ? __('offer::booking.notify.handle') : __('offer::booking.list.mine'),
             'offer_id' => $this->booking->offer_id,
             // Le nom du membre, dans le texte, ouvre sa page (décision 2026-11-19-page-membre).
-            'text_links' => $this->textLinks(),
+            'text_links' => $this->textLinks($notifiable),
             // Plus de lien à part : le nom de l'offre, dans le texte, mène à l'annonce.
             'links' => [],
         ];
     }
 
-    /** Qui agit, enregistré dans la colonne `user_id` de la notification (décision 2026-11-20-notification-user-id). */
+    /**
+     * Qui agit, enregistré dans la colonne `user_id` de la notification (décision 2026-11-20-notification-user-id) : il
+     * retrouve ainsi son action dans son fil (décision 2026-11-24-notifications-fil-de-groupe).
+     */
     public function notificationUserId(object $notifiable): ?int
     {
-        return $this->own ? null : (int) $this->actor()->getKey();
+        return (int) $this->actor()->getKey();
     }
 
-    /** Sa propre réponse est enregistrée lue : elle fait remonter la carte sans compter comme non lue. */
-    public function sentAsRead(object $notifiable): bool
-    {
-        return $this->own;
-    }
-
-    /** Le fil de la demande : toutes ses étapes, des deux côtés (décision 2026-11-20-suivi-demande). */
+    /**
+     * Le fil de la demande, le même chez les deux parties (décision 2026-11-20-suivi-demande) : chacune y lit ce qu'elle a
+     * reçu et ce qu'elle a fait (décision 2026-11-24-notifications-fil-de-groupe).
+     */
     public function notificationThread(object $notifiable): ?string
     {
         return $this->booking->thread();
     }
 
     /**
-     * Qui agit : le membre pour le propriétaire (une demande, une annulation), le
-     * propriétaire pour le membre (une réponse).
+     * Qui agit, selon l'étape : le membre pour une demande, une modification ou une annulation, le propriétaire pour une
+     * réponse.
      */
     private function actor(): User
     {
-        return $this->section() === 'received' ? $this->booking->user : $this->booking->offer->user;
+        return $this->step->section() === 'received' ? $this->booking->user : $this->booking->offer->user;
     }
 
     /**
@@ -221,10 +231,10 @@ abstract class BookingNotification extends Notification implements HasNotificati
      *
      * @return list<array{text: string, link: string}>
      */
-    private function textLinks(): array
+    private function textLinks(object $notifiable): array
     {
         $replace = $this->replacements();
-        $body = $this->body();
+        $body = $this->body($notifiable);
         $candidates = [
             ['text' => $replace['guest'], 'link' => '/members/'.$this->booking->user_id],
             ['text' => $replace['offer'], 'link' => '/offers/'.$this->booking->offer_id],
@@ -243,7 +253,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
             ->greeting(__('offer::booking.notify.greeting', ['name' => $notifiable instanceof User ? $notifiable->first_name : '']))
             ->line(__("offer::booking.notify.{$this->key()}.body", $replace))
             ->lineIf($note !== null, __('offer::booking.notify.message', ['message' => (string) $note]))
-            ->line(__('offer::booking.notify.open_app', ['section' => __('offer::booking.list.'.$this->section())]))
+            ->line(__('offer::booking.notify.open_app', ['section' => __('offer::booking.list.'.$this->section($notifiable))]))
             ->salutation(__('offer::booking.notify.salutation', ['app' => (string) config('app.name')]));
     }
 

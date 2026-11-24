@@ -3,8 +3,10 @@
 namespace Modules\Partner\Tests\Feature\Filament;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Models\User;
@@ -17,6 +19,7 @@ use Modules\Partner\Filament\Resources\PartnerResource\Pages\EditPartner;
 use Modules\Partner\Filament\Resources\PartnerResource\Pages\ListPartners;
 use Modules\Partner\Filament\Resources\PartnerResource\RelationManagers\UsersRelationManager;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerPending;
 use Modules\Partner\Notifications\PartnerPublished;
 
 /**
@@ -189,15 +192,20 @@ class PartnerResourceTest extends AuthFilamentTestCase
         $this->assertNull($partner->fresh()->getFirstMedia(Partner::LOGO));
     }
 
-    public function test_the_team_validates_a_pending_partner_and_its_accounts_are_notified(): void
+    public function test_the_team_validates_a_pending_partner_and_the_author_is_notified(): void
     {
-        // Décision 2026-11-24-partenaires-validation-back-office.
-        Notification::fake();
-        $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
+        // Décisions 2026-11-24-partenaires-validation-back-office et 2026-11-24-notifications-fil-de-groupe.
+        $team = $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
         $pending = Partner::factory()->for(Country::factory()->create())->create(['status' => PartnerStatusEnum::PENDING]);
         $published = Partner::factory()->for($pending->country)->create(['status' => PartnerStatusEnum::PUBLISHED]);
         $member = User::factory()->create(['locale' => 'fr']);
         $pending->users()->attach($member->getKey(), ['is_admin' => true]);
+        // Sa demande depuis l'app, dans le fil du partenaire.
+        DatabaseNotification::query()->create([
+            'id' => (string) Str::uuid(), 'type' => PartnerPending::class, 'notifiable_type' => $team->getMorphClass(), 'notifiable_id' => $team->getKey(),
+            'user_id' => $member->getKey(), 'thread' => $pending->groupThread(), 'data' => ['title' => 'Partenaire ajouté', 'body' => 'Texte'],
+        ]);
+        Notification::fake();
 
         Livewire::test(ListPartners::class)
             ->assertTableActionVisible('validate', $pending)

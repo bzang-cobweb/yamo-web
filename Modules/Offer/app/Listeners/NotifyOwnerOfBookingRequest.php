@@ -20,7 +20,7 @@ final class NotifyOwnerOfBookingRequest
     public function handle(BookingRequested|BookingUpdated $event): void
     {
         if ($event instanceof BookingUpdated) {
-            $this->bookingNotifierService->ownerOfUpdate($event->booking, $event->edited);
+            $this->bookingNotifierService->ownerOfUpdate($event->booking, $event->edited, $event->rewritten);
 
             return;
         }

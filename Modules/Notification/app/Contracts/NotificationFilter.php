@@ -44,16 +44,27 @@ interface NotificationFilter
 
     /**
      * Le libellé d'une étape du fil d'une notification du module (« Demande acceptée »),
-     * dans la langue courante ; `null` pour une notification qui n'est pas la sienne
+     * dans la langue courante, pour le lecteur `$reader` ; `null` pour une notification qui n'est pas la sienne
      * (décision 2026-11-20-suivi-demande).
      */
-    public function step(DatabaseNotification $notification): ?string;
+    public function step(DatabaseNotification $notification, User $reader): ?string;
 
     /**
-     * Le titre de la carte d'une notification du module dans la liste, dans la langue du lecteur
-     * (« Demande acceptée » pour une demande, décision 2026-11-22-notification-par-action) ; `null` : son titre.
+     * Le titre de la carte d'une notification du module dans la liste, dans la langue du lecteur `$reader`
+     * (« Demande acceptée » pour une demande, « Demande envoyée » pour sa propre demande, décision
+     * 2026-11-22-notification-par-action) ; `null` : son titre.
      */
-    public function cardTitle(DatabaseNotification $notification): ?string;
+    public function cardTitle(DatabaseNotification $notification, User $reader): ?string;
+
+    /**
+     * Les données d'une notification du module rédigées pour `$reader`, qui ne l'a pas reçue : sa propre action
+     * (« Vous avez accepté… »), ou une notification du fil d'un de ses groupes ; dans la langue courante (décision
+     * 2026-11-24-notifications-fil-de-groupe). `null` : ses données telles quelles (une notification qui n'est pas la
+     * sienne, ou dont le sujet n'existe plus).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function forReader(DatabaseNotification $notification, User $reader): ?array;
 
     /**
      * Charge en une fois ce que ces notifications demanderont (une page de la liste) ;

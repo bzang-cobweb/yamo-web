@@ -9,6 +9,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
+use Modules\Notification\Support\NotificationThreads;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
@@ -62,11 +63,37 @@ class OfferNotificationFilter implements NotificationFilter
      * Le type de l'action, sur la carte (« Nouvelle demande », « Demande acceptée »), dans la langue du lecteur
      * (décision 2026-11-22-notification-par-action) ; `null` pour une autre notification.
      */
-    public function cardTitle(DatabaseNotification $notification): ?string
+    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
     {
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
+        if ($step === null) {
+            return null;
+        }
 
-        return $step === null ? null : BookingNotification::title($step, (bool) (((array) $notification->data)['own'] ?? false));
+        // Sa propre action : le lecteur en est l'auteur (décision 2026-11-24-notifications-fil-de-groupe).
+        return BookingNotification::title($step, app(NotificationThreads::class)->isOwn($notification, $reader));
+    }
+
+    /**
+     * Une notification de demande que le lecteur n'a pas reçue : sa propre action, rédigée pour lui à partir de la
+     * demande, dans sa langue (« Vous avez accepté la demande de … », décision 2026-11-24-notifications-fil-de-groupe) ;
+     * `null` si la demande n'existe plus.
+     */
+    public function forReader(DatabaseNotification $notification, User $reader): ?array
+    {
+        $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
+        if ($step === null) {
+            return null;
+        }
+
+        $data = (array) $notification->data;
+        $id = $data['booking_id'] ?? null;
+        $booking = is_int($id) ? app(BookingCache::class)->find($id) : null;
+        if ($booking === null) {
+            return null;
+        }
+
+        return BookingNotification::for($booking, $step, edited: (bool) ($data['edited'] ?? false))->toArray($reader);
     }
 
     public function tag(DatabaseNotification $notification): ?array
@@ -84,7 +111,7 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
-    public function step(DatabaseNotification $notification): ?string
+    public function step(DatabaseNotification $notification, User $reader): ?string
     {
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
 
@@ -169,7 +196,7 @@ class OfferNotificationFilter implements NotificationFilter
      */
     private function bookingIds(User $user): array
     {
-        return $user->notifications()->get()
+        return app(NotificationThreads::class)->visibleTo($user)->get()
             ->map(fn ($notification): int => (int) (((array) $notification->data)['booking_id'] ?? 0))
             ->filter()
             ->unique()
@@ -184,7 +211,7 @@ class OfferNotificationFilter implements NotificationFilter
      */
     private function offerIds(User $user): array
     {
-        return $user->notifications()->get()
+        return app(NotificationThreads::class)->visibleTo($user)->get()
             ->map(fn ($notification): int => (int) (((array) $notification->data)['offer_id'] ?? 0))
             ->filter()
             ->unique()

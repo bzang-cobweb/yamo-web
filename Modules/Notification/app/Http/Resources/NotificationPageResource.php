@@ -64,25 +64,17 @@ class NotificationPageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $items = [];
+        /** @var list<DatabaseNotification> $notifications */
+        $notifications = array_values($this->resource->items());
 
         // Qui agit, chargé une fois pour toute la page.
-        $ids = [];
-        foreach ($this->resource->items() as $notification) {
-            /** @var DatabaseNotification $notification */
-            $ids[] = (int) $notification->getAttribute('user_id');
-        }
-        $actors = User::query()->whereKey(array_unique($ids))->get()->keyBy(fn (User $user): int => (int) $user->getKey());
+        $ids = array_unique(array_map(fn (DatabaseNotification $notification): int => (int) $notification->getAttribute('user_id'), $notifications));
+        $actors = User::query()->whereKey($ids)->get()->keyBy(fn (User $user): int => (int) $user->getKey());
         // Ce que les modules liront pour chaque carte (une demande : son statut), en une fois.
-        $notifications = [];
-        foreach ($this->resource->items() as $notification) {
-            /** @var DatabaseNotification $notification */
-            $notifications[] = $notification;
-        }
         app(NotificationFilters::class)->prepare($notifications);
 
-        foreach ($this->resource->items() as $notification) {
-            /** @var DatabaseNotification $notification */
+        $items = [];
+        foreach ($notifications as $notification) {
             $id = $notification->getAttribute('user_id');
             $thread = $notification->getAttribute('thread');
             $resource = (new NotificationResource($notification))->withActor($id === null ? null : $actors->get((int) $id));

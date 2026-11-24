@@ -7,6 +7,7 @@ use Illuminate\Notifications\Channels\DatabaseChannel as BaseDatabaseChannel;
 use Modules\Notification\Channels\DatabaseChannel;
 use Modules\Notification\Console\PruneNotificationsCommand;
 use Modules\Notification\Support\NotificationFilters;
+use Modules\Notification\Support\NotificationThreads;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class NotificationServiceProvider extends ModuleServiceProvider
@@ -48,6 +49,8 @@ class NotificationServiceProvider extends ModuleServiceProvider
         $this->app->bind(BaseDatabaseChannel::class, DatabaseChannel::class);
         // Les filtres de la liste, inscrits par les modules (décision 2026-11-20-filtres-notifications).
         $this->app->singleton(NotificationFilters::class);
+        // Les groupes inscrits par les modules (décision 2026-11-24-notifications-fil-de-groupe).
+        $this->app->singleton(NotificationThreads::class);
     }
 
     /**

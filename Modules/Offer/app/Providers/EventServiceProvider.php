@@ -10,10 +10,8 @@ use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
 use Modules\Offer\Listeners\AddBookingToNotificationThread;
 use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
-use Modules\Offer\Listeners\NotifyGuestOfOwnRequest;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
-use Modules\Offer\Listeners\NotifyOwnerOfOwnAnswer;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -25,9 +23,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         // Réservations : chaque étape prévient l'autre partie (décision 2026-11-19-notifications-reservations).
         // Le membre garde sa demande et son annulation dans son fil (décision 2026-11-21-reservation-comme-notification).
-        BookingRequested::class => [NotifyOwnerOfBookingRequest::class, NotifyGuestOfOwnRequest::class],
-        BookingAnswered::class => [NotifyGuestOfBookingAnswer::class, NotifyOwnerOfOwnAnswer::class],
-        BookingCancelled::class => [NotifyOwnerOfBookingCancellation::class, NotifyGuestOfOwnRequest::class],
+        BookingRequested::class => [NotifyOwnerOfBookingRequest::class],
+        BookingAnswered::class => [NotifyGuestOfBookingAnswer::class],
+        BookingCancelled::class => [NotifyOwnerOfBookingCancellation::class],
         BookingUpdated::class => [NotifyOwnerOfBookingRequest::class],
         // La page d'une notification du fil d'une demande : la demande (décision 2026-11-20-notification-generique).
         NotificationThreadSerializing::class => [AddBookingToNotificationThread::class],
