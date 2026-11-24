@@ -2,6 +2,8 @@
 
 namespace Modules\Offer\Models;
 
+use App\Models\Concerns\HasCountry;
+use App\Models\Concerns\HasPaymentRange;
 use App\Models\Setting;
 use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,8 +21,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
-use Modules\Location\Models\Country;
-use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Services\OfferPhotoService;
@@ -37,7 +37,6 @@ use Spatie\Translatable\HasTranslations;
  * attribut traduisible y est rangé par langue (`{"note": {"fr": …, "en": …}}`).
  *
  * @property int $user_id
- * @property int|null $country_id
  * @property string|null $locale langue d'origine (décision 2026-11-19-contrat-langue-saisie-allemand)
  * @property int|null $category_id
  * @property string $title
@@ -51,11 +50,8 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $email e-mail de contact (décision 2026-11-21-contact-offre)
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
- * @property Carbon|null $starts_at début de la période payée, effectif si le paiement est appliqué (décision 2026-11-23-offre-paye-a-partir-du)
- * @property Carbon|null $expires_at date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis)
  * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
- * @property-read Country|null $country
  * @property-read OfferCategory|null $category
  * @property-read OfferAddress|null $offerAddress l'adresse et son indication (décision 2026-11-19-contrat-adresse-offre-table)
  * @property-read Address|null $address l'adresse partagée, à travers `offerAddress`
@@ -71,7 +67,7 @@ class Offer extends Model implements HasMedia
     protected $attributes = ['show_address' => true];
 
     /** @use HasFactory<OfferFactory> */
-    use HasFactory, InteractsWithMedia, SoftDeletes;
+    use HasCountry, HasFactory, HasPaymentRange, InteractsWithMedia, SoftDeletes;
 
     use HasTranslations { normalizeLocale as translatableLocale; }
 
@@ -119,8 +115,6 @@ class Offer extends Model implements HasMedia
             'show_address' => 'boolean',
             'published_at' => 'datetime',
             'featured_until' => 'datetime',
-            'starts_at' => 'datetime',
-            'expires_at' => 'datetime',
         ];
     }
 
@@ -156,16 +150,6 @@ class Offer extends Model implements HasMedia
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Son pays, l'espace où elle se trouve (décision 2026-11-18-espace-pays).
-     *
-     * @return BelongsTo<Country, $this>
-     */
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class);
     }
 
     /**
@@ -329,20 +313,22 @@ class Offer extends Model implements HasMedia
     /**
      * Les offres que voient les autres que leur auteur (décision
      * 2026-11-19-contrat-paiement-visibilite-avis) : publiées, du pays courant et,
-     * si le paiement est appliqué, pas expirées (sans date : non visibles). La fiche,
-     * l'accueil, les favoris et les avis suivent cette règle ; voir `isVisibleToOthers()`.
+     * si le paiement est appliqué, dans leur période payée (`starts_at`, `expires_at`, décision
+     * 2026-11-23-offre-paye-a-partir-du ; sans date de fin : non visibles). La fiche, l'accueil, les favoris et les avis suivent cette règle ; voir `isVisibleToOthers()`.
      *
      * @param  Builder<Offer>  $query
      */
     public function scopeVisibleToOthers(Builder $query): void
     {
         $query->where($query->qualifyColumn('status'), OfferStatusEnum::PUBLISHED)
-            ->where($query->qualifyColumn('country_id'), CurrentCountry::require()->getKey())
-            // Le paiement appliqué : entre le début (facultatif) et la fin de la période payée (décision
-            // 2026-11-23-offre-paye-a-partir-du).
-            ->when(Setting::paymentRequired(), fn (Builder $query) => $query
-                ->where($query->qualifyColumn('expires_at'), '>', now())
-                ->where(fn (Builder $start) => $start->whereNull($query->qualifyColumn('starts_at'))->orWhere($query->qualifyColumn('starts_at'), '<=', now())));
+            ->visibleCountry()
+            ->visiblePaymentRange();
+    }
+
+    /** Le paiement des propriétaires est-il appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis) ? */
+    public static function paymentRequired(): bool
+    {
+        return Setting::paymentRequired();
     }
 
     /**
@@ -364,9 +350,14 @@ class Offer extends Model implements HasMedia
      */
     public function isVisibleToOthers(): bool
     {
-        return $this->status === OfferStatusEnum::PUBLISHED
-            && (int) $this->country_id === (int) CurrentCountry::require()->getKey()
-            && (! Setting::paymentRequired() || ($this->expires_at !== null && $this->expires_at->isFuture() && ($this->starts_at === null || ! $this->starts_at->isFuture())));
+        if ($this->status !== OfferStatusEnum::PUBLISHED) {
+            return false;
+        }
+        if (! $this->isInCountry()) {
+            return false;
+        }
+
+        return $this->isInPaymentRange();
     }
 
     /**

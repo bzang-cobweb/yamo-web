@@ -2,6 +2,8 @@
 
 namespace Modules\Partner\Models;
 
+use App\Models\Concerns\HasCountry;
+use App\Models\Concerns\HasPaymentRange;
 use App\Models\Setting;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -9,12 +11,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
-use Modules\Location\Models\Country;
-use Modules\Location\Support\CurrentCountry;
 use Modules\Notification\Concerns\HasNotifiableGroup;
 use Modules\Notification\Contracts\NotifiableGroup;
 use Modules\Partner\Database\Factories\PartnerFactory;
@@ -32,17 +30,13 @@ use Spatie\Translatable\HasTranslations;
  * espace dans l'app, dans un pays, le temps de sa campagne.
  *
  * @property int $id
- * @property int $country_id
  * @property string $name
  * @property PartnerStatusEnum $status
- * @property Carbon|null $starts_at
- * @property Carbon|null $expires_at
  * @property int $position
  * @property string|null $contact_email
  * @property string|null $contact_phone
  * @property int $views_count
  * @property int $clicks_count
- * @property-read Country $country
  * @property-read Collection<int, User> $users les comptes qui l'administrent
  */
 #[Fillable(['country_id', 'name', 'slogan', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
@@ -50,7 +44,7 @@ use Spatie\Translatable\HasTranslations;
 class Partner extends Model implements HasMedia, NotifiableGroup
 {
     /** @use HasFactory<PartnerFactory> */
-    use HasFactory, HasNotifiableGroup, HasTranslations, InteractsWithMedia;
+    use HasCountry, HasFactory, HasNotifiableGroup, HasPaymentRange, HasTranslations, InteractsWithMedia;
 
     /** Le logo, une seule image. */
     public const LOGO = 'logo';
@@ -81,8 +75,6 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     {
         return [
             'status' => PartnerStatusEnum::class,
-            'starts_at' => 'datetime',
-            'expires_at' => 'datetime',
             'position' => 'integer',
             'views_count' => 'integer',
             'clicks_count' => 'integer',
@@ -92,12 +84,6 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection(self::LOGO)->singleFile()->useDisk('public');
-    }
-
-    /** @return BelongsTo<Country, $this> */
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class);
     }
 
     /**
@@ -135,8 +121,7 @@ class Partner extends Model implements HasMedia, NotifiableGroup
      */
     public function scopeAdministeredBy(Builder $query, int|string|null $userId): void
     {
-        $query->where('country_id', CurrentCountry::require()->getKey())
-            ->whereHas('users', fn (Builder $users) => $users->whereKey($userId));
+        $query->visibleCountry()->whereHas('users', fn (Builder $users) => $users->whereKey($userId));
     }
 
     /**
@@ -172,14 +157,11 @@ class Partner extends Model implements HasMedia, NotifiableGroup
         if ($this->status !== PartnerStatusEnum::PUBLISHED) {
             return false;
         }
-        if ($this->starts_at?->isFuture()) {
+        if (! $this->isPaymentStarted()) {
             return false;
         }
-        if (! $paymentRequired) {
-            return true;
-        }
 
-        return (bool) $this->expires_at?->isFuture();
+        return $this->isInPaymentRange($paymentRequired);
     }
 
     /**
@@ -187,11 +169,17 @@ class Partner extends Model implements HasMedia, NotifiableGroup
      */
     public function isVisible(): bool
     {
-        if ((int) $this->country_id !== (int) CurrentCountry::require()->getKey()) {
+        if (! $this->isInCountry()) {
             return false;
         }
 
-        return $this->isShown(Setting::partnerPaymentRequired());
+        return $this->isShown(static::paymentRequired());
+    }
+
+    /** Le paiement des partenaires est-il appliqué (décision 2026-11-23-paiement-partenaires) ? */
+    public static function paymentRequired(): bool
+    {
+        return Setting::partnerPaymentRequired();
     }
 
     /**
@@ -203,9 +191,9 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     public function scopeVisible(Builder $query): void
     {
         $query->where('status', PartnerStatusEnum::PUBLISHED)
-            ->where('country_id', CurrentCountry::require()->getKey())
-            ->where(fn (Builder $start) => $start->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->when(Setting::partnerPaymentRequired(), fn (Builder $paid) => $paid->where('expires_at', '>', now()));
+            ->visibleCountry()
+            ->paymentStarted()
+            ->visiblePaymentRange();
     }
 
     /**
