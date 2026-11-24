@@ -84,7 +84,8 @@ return [
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'notify' => [
-        // La liste « Notifications » : le type « Partenaire », puis un type par statut (décision 2026-11-24-partenaire-notification-par-statut).
+        // La liste « Notifications » : le type « Partenaire », puis un type par statut, et le filtre par statut (décision 2026-11-24-partenaire-notification-par-statut).
+        'filter_status' => 'Partnerstatus',
         'filter_type' => 'Partner',
         'greeting' => 'Hallo :name,',
         'salutation' => 'Das Team von :app',

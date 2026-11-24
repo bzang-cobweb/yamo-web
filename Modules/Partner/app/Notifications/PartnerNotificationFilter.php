@@ -7,6 +7,7 @@ use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
+use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
@@ -17,6 +18,7 @@ use Modules\Partner\Models\Partner;
  * - le filtre « Type » : le groupe « Partenaire », tous statuts, puis une option par statut (« Partenaire en
  *   validation », « Partenaire accepté », « Partenaire refusé », « Partenaire archivé »), chacune sa classe de
  *   notification, comme les demandes de logement ;
+ * - pour ces types, le filtre « Statut du partenaire » : le statut que la notification annonce (sa classe) ;
  * - la pastille du statut notifié sur chaque carte, et son titre dans la langue du lecteur ;
  * - la recherche, dans le nom du partenaire.
  */
@@ -39,6 +41,16 @@ class PartnerNotificationFilter implements NotificationFilter
     public static function status(PartnerStatusEnum $status): string
     {
         return self::PARTNER.'_'.$status->value;
+    }
+
+    /**
+     * Les valeurs du filtre « Type » qui montrent le filtre « Statut du partenaire » : le groupe et chaque statut.
+     *
+     * @return list<string>
+     */
+    private static function partnerTypes(): array
+    {
+        return [self::PARTNER, ...array_map(fn (PartnerStatusEnum $status): string => self::status($status), PartnerStatusEnum::cases())];
     }
 
     /** La pastille du statut notifié (« En validation », « Publié »…). */
@@ -74,10 +86,24 @@ class PartnerNotificationFilter implements NotificationFilter
 
     public function fields(User $user): array
     {
-        return [];
+        return [
+            Field::select('partner_status')
+                ->label(__('partner::partner.notify.filter_status'))
+                ->options(PartnerStatusEnum::options())
+                ->visibleWhen('type', self::partnerTypes()),
+        ];
     }
 
-    public function apply(Builder $query, array $filters, User $user): void {}
+    /** « Statut du partenaire » : les notifications de ce statut, sa classe. */
+    public function apply(Builder $query, array $filters, User $user): void
+    {
+        $status = PartnerStatusEnum::tryFrom((string) ($filters['partner_status'] ?? ''));
+        if ($status === null) {
+            return;
+        }
+
+        $query->where('type', $status->notification());
+    }
 
     public function orSearch(Builder $query, string $term): void
     {
