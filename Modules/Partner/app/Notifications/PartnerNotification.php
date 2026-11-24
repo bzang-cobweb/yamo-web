@@ -7,23 +7,27 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Models\PartnerRequest;
 
 /**
- * Un partenaire a changé de statut, notifié à ses comptes (décisions 2026-11-24-partenaires-notifications et
- * 2026-11-24-partenaire-notification-par-statut). Une classe par statut, comme les demandes de logement :
- * `PartnerPending` (ajouté ou modifié depuis l'app, en validation), `PartnerPublished`, `PartnerRejected`,
- * `PartnerArchived` ; le statut est aussi enregistré dans `data.partner_status`. Le filtre « Type » les regroupe
- * (`PartnerNotificationFilter`). Dans l'onglet « Notifications », et par e-mail et SMS selon les canaux du
- * destinataire, dans sa langue ; elle ouvre « Mes partenaires ».
+ * Un partenaire notifié à ses comptes (décisions 2026-11-24-partenaires-notifications,
+ * 2026-11-24-partenaire-notification-par-statut et 2026-11-24-partenaire-demandes). Une classe par statut :
+ * `PartnerPending`, `PartnerPublished`, `PartnerRejected`, `PartnerArchived` ; le statut est aussi dans
+ * `data.partner_status`. Dans l'onglet « Notifications », et par e-mail et SMS selon les canaux du destinataire, dans
+ * sa langue ; elle ouvre « Mes partenaires ».
  *
- * `$actorId` : qui a agi, depuis l'app ; l'auteur lit son propre texte (« Votre partenaire … est en validation »), les
- * autres comptes le sien (« … modifié par … ») et voient son nom sur la carte.
+ * - `$action` : `created` (ajouté) ou `updated` (modifié) ; `null` : un changement de statut.
+ * - `$actorId` : le compte qui a agi depuis l'app ; l'auteur lit son texte (« Votre partenaire … est en validation »),
+ *   les autres le leur (« … modifié par … ») et voient son nom sur la carte. `null` : l'équipe, au back-office.
+ * - `$request` : la demande à laquelle elle appartient ; ses notifications font un fil chez chaque destinataire, et
+ *   sa page montre le suivi de la demande.
  */
-abstract class PartnerNotification extends Notification implements HasNotificationUser, ShouldQueue
+abstract class PartnerNotification extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
@@ -31,21 +35,21 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     abstract public static function status(): PartnerStatusEnum;
 
     /** La notification du statut `$status`, de sa classe. */
-    public static function for(Partner $partner, PartnerStatusEnum $status, int|string|null $actorId = null, string $actorName = '', bool $created = false): self
+    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = '', ?PartnerRequest $request = null): self
     {
         $class = $status->notification();
 
-        return new $class($partner, $actorId, $actorName, $created);
+        return new $class($partner, $action, $actorId, $actorName, $request?->getKey());
     }
 
     /**
-     * Le type d'une notification, sur sa carte, dans la langue courante : « Partenaire accepté » ; en validation,
-     * l'action : « Partenaire ajouté » ou « Partenaire modifié » (`$created`, `null` : « Partenaire en validation »).
+     * Le type d'une notification, sur sa carte et dans le suivi, dans la langue courante : « Partenaire ajouté » ou
+     * « Partenaire modifié » pour une action (`$action`) ; sinon le statut : « Partenaire accepté ».
      */
-    public static function title(PartnerStatusEnum $status, ?bool $created = null): string
+    public static function title(PartnerStatusEnum $status, ?string $action = null): string
     {
-        if ($status === PartnerStatusEnum::PENDING && $created !== null) {
-            return __('partner::partner.notify.submitted.title.'.($created ? 'created' : 'updated'));
+        if ($action === PartnerRequest::CREATED || $action === PartnerRequest::UPDATED) {
+            return __('partner::partner.notify.submitted.title.'.$action);
         }
 
         return __('partner::partner.notify.title.'.$status->value);
@@ -53,9 +57,10 @@ abstract class PartnerNotification extends Notification implements HasNotificati
 
     final public function __construct(
         public readonly Partner $partner,
+        public readonly ?string $action = null,
         public readonly int|string|null $actorId = null,
         public readonly string $actorName = '',
-        public readonly bool $created = false,
+        public readonly ?int $requestId = null,
     ) {
         $this->afterCommit();
     }
@@ -69,16 +74,18 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     }
 
     /**
-     * @return array{title: string, body: string, own: bool, created: bool|null, partner_id: int, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, body: string, author: bool, action: string|null, partner_id: int, partner_request_id: int|null, partner_status: string, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => static::title(static::status(), $this->created()),
+            'title' => static::title(static::status(), $this->action),
             'body' => $this->body($notifiable),
-            'own' => $this->isOwn($notifiable),
-            'created' => $this->created(),
+            // L'auteur de l'action : son texte. Pas `own`, qui retirerait l'étape de son propre fil.
+            'author' => $this->isAuthor($notifiable),
+            'action' => $this->action,
             'partner_id' => (int) $this->partner->getKey(),
+            'partner_request_id' => $this->requestId,
             'partner_status' => static::status()->value,
             'link' => '/profile/lists/'.MyPartnerListing::name(),
             'link_label' => __('partner::partner.member.mine'),
@@ -87,10 +94,20 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         ];
     }
 
-    /** Qui agit, pour les autres comptes : son nom et sa photo sur la carte, le filtre « Membre » ; rien pour l'auteur. */
+    /** Le fil de la demande chez ce destinataire ; une notification sans demande reste seule. */
+    public function notificationThread(object $notifiable): ?string
+    {
+        if ($this->requestId === null || ! $notifiable instanceof User) {
+            return null;
+        }
+
+        return PartnerRequest::thread($this->requestId, $notifiable->getKey());
+    }
+
+    /** Qui agit, pour les autres comptes : son nom et sa photo sur la carte, le filtre « Membre » ; rien pour l'auteur ni l'équipe. */
     public function notificationUserId(object $notifiable): ?int
     {
-        if ($this->actorId === null || $this->isOwn($notifiable)) {
+        if ($this->actorId === null || $this->isAuthor($notifiable)) {
             return null;
         }
 
@@ -100,7 +117,7 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(static::title(static::status(), $this->created()))
+            ->subject(static::title(static::status(), $this->action))
             ->greeting(__('partner::partner.notify.greeting', ['name' => $notifiable instanceof User ? $notifiable->first_name : '']))
             ->line($this->body($notifiable))
             ->salutation(__('partner::partner.notify.salutation', ['app' => (string) config('app.name')]));
@@ -111,37 +128,29 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         return $this->body($notifiable);
     }
 
-    /** Ajouté (`true`) ou modifié (`false`) depuis l'app ; `null` quand personne n'a agi depuis l'app. */
-    private function created(): ?bool
-    {
-        if ($this->actorId === null) {
-            return null;
-        }
-
-        return $this->created;
-    }
-
     /**
-     * Depuis l'app : à l'auteur « Votre partenaire « … » est en validation… », aux autres « « … » a été modifié par … » ;
-     * sinon « Votre partenaire « … » a été accepté par l'équipe. »
+     * - une action depuis l'app : à l'auteur « Votre partenaire « … » est en validation… », aux autres « « … » a été
+     *   modifié par … » ;
+     * - une action de l'équipe : « Votre partenaire « … » a été modifié par l'équipe. » ;
+     * - un changement de statut : « Votre partenaire « … » a été accepté par l'équipe. »
      */
     private function body(object $notifiable): string
     {
         $name = (string) $this->partner->getTranslation('name', app()->getLocale());
-        $created = $this->created();
-        if ($created === null) {
+        if ($this->action === null) {
             return __('partner::partner.notify.body.'.static::status()->value, ['name' => $name]);
         }
-
-        $action = $created ? 'created' : 'updated';
-        if ($this->isOwn($notifiable)) {
-            return __('partner::partner.notify.submitted.own.'.$action, ['name' => $name]);
+        if ($this->actorId === null) {
+            return __('partner::partner.notify.team.'.$this->action, ['name' => $name]);
+        }
+        if ($this->isAuthor($notifiable)) {
+            return __('partner::partner.notify.submitted.own.'.$this->action, ['name' => $name]);
         }
 
-        return __('partner::partner.notify.submitted.others.'.$action, ['name' => $name, 'actor' => $this->actorName]);
+        return __('partner::partner.notify.submitted.others.'.$this->action, ['name' => $name, 'actor' => $this->actorName]);
     }
 
-    private function isOwn(object $notifiable): bool
+    private function isAuthor(object $notifiable): bool
     {
         if ($this->actorId === null || ! $notifiable instanceof User) {
             return false;

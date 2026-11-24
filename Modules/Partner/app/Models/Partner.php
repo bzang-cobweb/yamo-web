@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
@@ -108,6 +109,26 @@ class Partner extends Model implements HasMedia
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withPivot('is_admin')->withTimestamps();
+    }
+
+    /**
+     * Ses administrateurs (`is_admin`) : ceux que le back-office prévient (décision 2026-11-24-partenaire-demandes).
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function admins(): BelongsToMany
+    {
+        return $this->users()->wherePivot('is_admin', true);
+    }
+
+    /**
+     * Ses demandes, ajouts et modifications depuis l'app (décision 2026-11-24-partenaire-demandes).
+     *
+     * @return HasMany<PartnerRequest, $this>
+     */
+    public function requests(): HasMany
+    {
+        return $this->hasMany(PartnerRequest::class);
     }
 
     /**

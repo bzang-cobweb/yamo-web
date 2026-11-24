@@ -100,6 +100,11 @@ return [
             'rejected' => 'Ihr Partner « :name » wurde vom Team abgelehnt.',
             'archived' => 'Ihr Partner « :name » ist archiviert.',
         ],
+        // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
+        'team' => [
+            'created' => 'Ihr Partner „:name“ wurde vom Team hinzugefügt.',
+            'updated' => 'Ihr Partner „:name“ wurde vom Team geändert.',
+        ],
         'submitted' => [
             'title' => ['created' => 'Partner hinzugefügt', 'updated' => 'Partner geändert'],
             'own' => [

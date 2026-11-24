@@ -100,6 +100,11 @@ return [
             'rejected' => 'Your partner « :name » was rejected by the team.',
             'archived' => 'Your partner « :name » is archived.',
         ],
+        // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
+        'team' => [
+            'created' => 'Your partner “:name” was added by the team.',
+            'updated' => 'Your partner “:name” was updated by the team.',
+        ],
         'submitted' => [
             'title' => ['created' => 'Partner added', 'updated' => 'Partner updated'],
             'own' => [

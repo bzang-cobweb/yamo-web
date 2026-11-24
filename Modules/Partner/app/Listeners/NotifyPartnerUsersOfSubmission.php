@@ -17,6 +17,6 @@ final class NotifyPartnerUsersOfSubmission
 
     public function handle(PartnerSubmitted $event): void
     {
-        $this->partnerNotifierService->submitted($event->partner, $event->actorId, $event->created);
+        $this->partnerNotifierService->submitted($event->partner, $event->actorId, $event->created, $event->request);
     }
 }

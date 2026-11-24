@@ -101,6 +101,11 @@ return [
             'archived' => 'Votre partenaire « :name » est archivé.',
         ],
         // Ajouté ou modifié depuis l'app, en validation (décision 2026-11-24-partenaires-validation-notifications).
+        // Ajouté ou modifié au back-office, aux administrateurs du partenaire (décision 2026-11-24-partenaire-demandes).
+        'team' => [
+            'created' => "Votre partenaire « :name » a été ajouté par l'équipe.",
+            'updated' => "Votre partenaire « :name » a été modifié par l'équipe.",
+        ],
         'submitted' => [
             'title' => ['created' => 'Partenaire ajouté', 'updated' => 'Partenaire modifié'],
             'own' => [

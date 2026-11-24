@@ -20,6 +20,10 @@ use Modules\Partner\Models\Partner;
  */
 class PartnerService
 {
+    public function __construct(
+        private readonly PartnerRequestService $partnerRequestService,
+    ) {}
+
     /**
      * Des partenaires visibles tirés au hasard, autant que réglé dans « Application » (décision
      * 2026-11-23-accueil-nombres-reglables), puis rangés dans l'ordre du back-office (décision
@@ -76,8 +80,10 @@ class PartnerService
         $this->fill($partner, $data, $locale);
         $partner->save();
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
-        // L'auteur est prévenu qu'il est en validation (décision 2026-11-24-partenaires-validation-notifications).
-        PartnerSubmitted::dispatch($partner, $user->getKey(), true);
+        // Une demande en validation ; l'auteur est prévenu (décisions 2026-11-24-partenaires-validation-notifications
+        // et 2026-11-24-partenaire-demandes).
+        $request = $this->partnerRequestService->submit($partner, $user->getKey(), true);
+        PartnerSubmitted::dispatch($partner, $user->getKey(), true, $request);
 
         return $partner;
     }
@@ -94,7 +100,9 @@ class PartnerService
         $this->fill($partner, $data, $locale);
         $partner->status = PartnerStatusEnum::PENDING;
         $partner->save();
-        PartnerSubmitted::dispatch($partner, $actor->getKey(), false);
+        // Sa demande en validation, prolongée, ou une nouvelle (décision 2026-11-24-partenaire-demandes).
+        $request = $this->partnerRequestService->submit($partner, $actor->getKey(), false);
+        PartnerSubmitted::dispatch($partner, $actor->getKey(), false, $request);
     }
 
     /**

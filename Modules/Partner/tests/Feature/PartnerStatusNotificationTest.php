@@ -16,10 +16,12 @@ use Modules\Partner\Events\PartnerSubmitted;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfStatus;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfSubmission;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Models\PartnerRequest;
 use Modules\Partner\Notifications\PartnerNotification;
 use Modules\Partner\Notifications\PartnerPending;
 use Modules\Partner\Notifications\PartnerPublished;
 use Modules\Partner\Services\PartnerNotifierService;
+use Modules\Partner\Services\PartnerRequestService;
 use Tests\TestCase;
 
 /**
@@ -61,7 +63,7 @@ class PartnerStatusNotificationTest extends TestCase
         return [$partner, $admin, $helper];
     }
 
-    public function test_a_status_change_by_the_team_notifies_every_attached_account(): void
+    public function test_a_status_change_by_the_team_notifies_the_admins_only(): void
     {
         Notification::fake();
         [$partner, $admin, $helper] = $this->partner(PartnerStatusEnum::PENDING);
@@ -69,7 +71,9 @@ class PartnerStatusNotificationTest extends TestCase
 
         $partner->update(['status' => PartnerStatusEnum::PUBLISHED]);
 
-        foreach ([$admin, $helper] as $user) {
+        // Ses administrateurs seulement (décision 2026-11-24-partenaire-demandes).
+        Notification::assertNotSentTo($helper, PartnerPublished::class);
+        foreach ([$admin] as $user) {
             Notification::assertSentTo($user, PartnerPublished::class, function (PartnerPublished $notification) use ($user, $partner): bool {
                 $data = $notification->toArray($user);
 
@@ -100,13 +104,13 @@ class PartnerStatusNotificationTest extends TestCase
 
             return $data['title'] === 'Partenaire modifié'
                 && $data['body'] === '« Wouri Express » a été modifié par '.$helper->full_name.' ; il est en validation.'
-                && $data['own'] === false
+                && $data['author'] === false
                 && $data['partner_status'] === 'pending';
         });
         Notification::assertSentTo($helper, PartnerPending::class, function (PartnerPending $notification) use ($helper): bool {
             $data = $notification->toArray($helper);
 
-            return $data['own'] === true
+            return $data['author'] === true
                 && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe vérifie vos modifications avant de l'afficher.";
         });
         // Pas de « statut changé » en plus pour le passage en validation.
@@ -126,7 +130,7 @@ class PartnerStatusNotificationTest extends TestCase
             $data = $notification->toArray($member);
 
             return $data['title'] === 'Partenaire ajouté'
-                && $data['own'] === true
+                && $data['author'] === true
                 && $data['body'] === "Votre partenaire « Wouri Express » est en validation : l'équipe le vérifie avant de l'afficher.";
         });
         Notification::assertSentToTimes($member, PartnerPending::class, 1);
@@ -138,7 +142,7 @@ class PartnerStatusNotificationTest extends TestCase
         Event::assertListening(PartnerSubmitted::class, NotifyPartnerUsersOfSubmission::class);
 
         $partner = new Partner;
-        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true));
+        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true, null));
 
         app(NotifyPartnerUsersOfSubmission::class)->handle(new PartnerSubmitted($partner, 7, true));
     }
@@ -158,8 +162,10 @@ class PartnerStatusNotificationTest extends TestCase
         Event::fake();
         Event::assertListening(PartnerStatusChanged::class, NotifyPartnerUsersOfStatus::class);
 
-        $partner = new Partner;
-        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('statusChanged')->once()->with($partner, 7));
+        $partner = new Partner(['status' => PartnerStatusEnum::PUBLISHED]);
+        $request = new PartnerRequest;
+        $this->mock(PartnerRequestService::class, fn (MockInterface $requests) => $requests->shouldReceive('answer')->once()->with($partner, PartnerStatusEnum::PUBLISHED, 7)->andReturn($request));
+        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('statusChanged')->once()->with($partner, 7, $request));
 
         app(NotifyPartnerUsersOfStatus::class)->handle(new PartnerStatusChanged($partner, PartnerStatusEnum::PENDING, 7));
     }

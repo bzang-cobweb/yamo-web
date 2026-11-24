@@ -1,0 +1,29 @@
+# `2026-11-24` — Les demandes d'un partenaire, et le back-office ne prévient que ses administrateurs
+
+- **Type** : décision de conception
+- **Question posée** : « ajouter une table pour le booking des partenaires. les changements (création, édition) en backend ne déclenchent pas une notification à l'utilisateur backend mais seulement aux admin du partenaire. »
+- **Réponses** (choix de l'humain) :
+  - la table s'appelle `partner_requests` ;
+  - au back-office, seuls les administrateurs du partenaire sont prévenus ;
+  - la création et l'édition au back-office prévient aussi, pas seulement un changement de statut.
+- **Ce qui est retenu** :
+  - Table `partner_requests` (`PartnerRequest`). Chaque ligne :
+    - porte le partenaire, le compte auteur, l'action (`created` ou `updated`), le statut (`pending`, puis le statut donné), qui a répondu et quand ;
+    - est créée par un ajout ou une modification depuis l'app ;
+    - est prolongée, et non doublée, par une modification faite pendant qu'elle est en validation ;
+    - reçoit sa réponse quand l'équipe change le statut au back-office (`PartnerRequestService::answer`).
+  - Les notifications d'une demande forment un fil propre à chaque destinataire (`partner_request:<id>:<compte>`) :
+    - toutes les notifications d'une demande, réponse comprise, ne font qu'une carte ;
+    - sa page montre le suivi : « Partenaire ajouté », « Partenaire modifié », « Partenaire accepté ».
+    - Pourquoi un fil par destinataire : une action prévient plusieurs comptes, et un fil partagé répéterait chaque étape.
+  - Depuis l'app : tous les comptes rattachés sont prévenus, l'auteur compris (comme avant).
+  - Au back-office : seuls les administrateurs (`is_admin`) sont prévenus, jamais l'utilisateur du back-office, même s'il est rattaché.
+    - Cela vaut pour un changement de statut, dont « Valider ».
+    - Cela vaut aussi pour une création ou une modification sans changement de statut (`PartnerEdited`) : « Votre partenaire … a été modifié par l'équipe. », hors de tout fil.
+    - Une modification qui change le statut n'envoie que la notification de statut.
+  - `data.own` devient `data.author` pour les partenaires : `own` retirerait l'étape de l'auteur de son propre fil. Nouveaux champs : `data.action` et `data.partner_request_id`.
+- **Corollaires** :
+  - Une création au back-office ne prévient personne tant qu'aucun compte n'est rattaché.
+  - Dans le suivi, une étape de l'auteur s'affiche à gauche, sans « Toi » ; une étape de l'équipe, sans nom.
+  - Les notifications d'avant les demandes restent hors fil.
+- **Tranché par** : humain (table, destinataires, création et édition) ; session (fil par destinataire, prolongation d'une demande en validation, `author`)
