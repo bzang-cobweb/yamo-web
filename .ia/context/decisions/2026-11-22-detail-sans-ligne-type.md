@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-detail-statut-centre.md (la place de la pastille)
+
 # Page d'une demande : plus de ligne du type, le statut à gauche
 
 - **Date** : 2026-11-22

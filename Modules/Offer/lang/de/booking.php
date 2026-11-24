@@ -116,7 +116,7 @@ return [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Keine Buchungen|{1} :count Buchung|[2,*] :count Buchungen',
         'mine' => 'Meine Buchungen',
-        'mine_empty' => 'Noch keine Anfragen. Buchen oder fragen Sie eine Besichtigung auf der Seite eines Angebots an.',
+        'mine_empty' => 'Noch keine Anfragen.',
         'received' => 'Erhaltene Buchungen',
         'received_empty' => 'Noch keine Anfragen erhalten.',
         'guests' => ':count Gast/Gäste',

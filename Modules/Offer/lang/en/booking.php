@@ -116,7 +116,7 @@ return [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} No bookings|{1} :count booking|[2,*] :count bookings',
         'mine' => 'My bookings',
-        'mine_empty' => 'No requests yet. Book or request a visit from an offer page.',
+        'mine_empty' => 'No requests yet.',
         'received' => 'Bookings received',
         'received_empty' => 'No requests received yet.',
         'guests' => ':count guest(s)',

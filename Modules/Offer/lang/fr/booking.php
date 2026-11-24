@@ -116,7 +116,7 @@ return [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Aucune réservation|{1} :count réservation|[2,*] :count réservations',
         'mine' => 'Mes réservations',
-        'mine_empty' => "Aucune demande pour l'instant. Réservez ou demandez une visite depuis la fiche d'une offre.",
+        'mine_empty' => "Aucune demande pour l'instant.",
         'received' => 'Réservations reçues',
         'received_empty' => 'Aucune demande reçue pour l\'instant.',
         'guests' => ':count voyageur(s)',
