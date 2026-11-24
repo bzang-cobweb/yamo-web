@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-adresse-masquee-sans-ville.md
+
 # Adresse masquée : la ville seule
 
 - **Date** : 2026-11-21

@@ -263,17 +263,17 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
     }
 
-    public function test_a_hidden_address_shows_only_the_city_except_to_its_owner(): void
+    public function test_a_hidden_address_is_not_shown_except_to_its_owner(): void
     {
         // Décision 2026-11-21-afficher-adresse.
         $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished']]);
         $offer->update(['show_address' => false]);
 
-        // La ville seule, sans indication (décision 2026-11-21-adresse-masquee-ville).
+        // Ni adresse, ni ville, ni indication : pas de bloc « Localisation » (décision 2026-11-24-adresse-masquee-sans-ville).
         $data = $this->show($offer)->json('data');
-        $this->assertSame($offer->address->city, $data['address']);
+        $this->assertNull($data['address']);
         $this->assertNull($data['indication']);
-        $this->assertSame($offer->address->city, collect($data['sections'])->firstWhere('key', 'location')['text']);
+        $this->assertNull(collect($data['sections'])->firstWhere('key', 'location'));
 
         app('auth')->forgetGuards();
         $mine = $this->withToken($offer->user->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson("/api/v1/offers/{$offer->getKey()}")->json('data');

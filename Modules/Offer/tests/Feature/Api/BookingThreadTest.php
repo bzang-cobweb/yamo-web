@@ -187,10 +187,10 @@ class BookingThreadTest extends TestCase
         $this->assertFalse($booking->show_address);
         $keys = fn (User $reader): array => array_column($this->api($reader, 'GET', '/'.$this->cards($reader)[0]['id'])->json('data.booking.lines'), 'key');
 
-        // Masquée : la ville seule pour le demandeur (décision 2026-11-21-adresse-masquee-ville) ; le
-        // propriétaire voit l'adresse entière, après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
-        $lines = collect($this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines'))->keyBy('key');
-        $this->assertSame('Douala', $lines['address']['value']);
+        // Masquée : pas de ligne « Adresse » pour le demandeur, pas même la ville (décision
+        // 2026-11-24-adresse-masquee-sans-ville) ; le propriétaire voit l'adresse entière, après le titre composé et les
+        // dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
+        $this->assertNotContains('address', $keys($this->guest));
         $this->assertSame(['arrival', 'departure', 'address'], array_slice($keys($this->owner), 0, 3));
 
         $this->app['auth']->forgetGuards();

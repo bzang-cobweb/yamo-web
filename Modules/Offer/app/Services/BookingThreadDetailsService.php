@@ -48,14 +48,13 @@ class BookingThreadDetailsService
             $data['title'] = $mine ? __('offer::booking.detail.mine') : ($owner ? __('offer::booking.detail.received') : __('offer::booking.detail_title.'.$booking->type->value));
         }
 
-        // L'adresse masquée par le propriétaire : la ville seule pour le demandeur ; sans ville, pas de ligne
-        // (décisions 2026-11-21-afficher-adresse et 2026-11-21-adresse-masquee-ville).
+        // L'adresse masquée par le propriétaire : pas de ligne « Adresse » pour le demandeur, pas même la ville
+        // (décisions 2026-11-21-afficher-adresse et 2026-11-24-adresse-masquee-sans-ville).
         if ($mine && ! $booking->show_address && is_array($data['booking'])) {
-            $city = $booking->offer?->address?->city;
-            $data['booking']['lines'] = array_values(array_filter(array_map(
-                fn (array $line): ?array => ($line['key'] ?? null) !== 'address' ? $line : ($city === null || $city === '' ? null : [...$line, 'value' => $city]),
+            $data['booking']['lines'] = array_values(array_filter(
                 $data['booking']['lines'],
-            )));
+                fn (array $line): bool => ($line['key'] ?? null) !== 'address',
+            ));
         }
 
         // L'autre partie, juste après l'adresse, toujours (décisions 2026-11-21-afficher-adresse,
