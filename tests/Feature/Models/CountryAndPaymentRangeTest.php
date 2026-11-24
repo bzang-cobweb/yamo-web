@@ -47,11 +47,16 @@ class CountryAndPaymentRangeTest extends TestCase
         Setting::current()->update(['partner_payment_required' => true]);
         $this->assertSame([$paid->getKey()], Partner::query()->visiblePaymentRange()->pluck('id')->all());
         $this->assertSame([true, false, false, false], [$paid->isInPaymentRange(), $expired->isInPaymentRange(), $later->isInPaymentRange(), $undated->isInPaymentRange()]);
+        // En jours (décision 2026-11-24-periode-payee-en-jours) : son dernier jour, aujourd'hui, encore payé ; commencée
+        // le jour de son début.
+        $today = Partner::factory()->for($country)->create(['starts_at' => today(), 'expires_at' => today()]);
+        $this->assertTrue($today->isInPaymentRange());
+        $this->assertContains($today->getKey(), Partner::query()->visiblePaymentRange()->pluck('id')->all());
         // Le réglage déjà lu, passé par une liste.
         $this->assertTrue($undated->isInPaymentRange(false));
 
         // Commencée : sans début, ou début passé, que le paiement soit appliqué ou non.
-        $this->assertEqualsCanonicalizing([$paid->getKey(), $expired->getKey(), $undated->getKey()], Partner::query()->paymentStarted()->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$paid->getKey(), $expired->getKey(), $undated->getKey(), $today->getKey()], Partner::query()->paymentStarted()->pluck('id')->all());
         $this->assertFalse($later->isPaymentStarted());
     }
 }

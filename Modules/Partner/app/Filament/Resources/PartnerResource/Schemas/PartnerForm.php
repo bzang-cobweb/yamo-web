@@ -4,7 +4,7 @@ namespace Modules\Partner\Filament\Resources\PartnerResource\Schemas;
 
 use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
-use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -83,9 +83,9 @@ abstract class PartnerForm
                                     ->default(PartnerStatusEnum::PENDING->value)
                                     ->required()
                                     ->columnSpanFull(),
-                                DateTimePicker::make('starts_at')
+                                DatePicker::make('starts_at')
                                     ->label(__('partner::partner.fields.starts_at')),
-                                DateTimePicker::make('expires_at')
+                                DatePicker::make('expires_at')
                                     ->label(__('partner::partner.fields.expires_at')),
                             ]),
                         Tab::make(__('partner::partner.sections.contact'))

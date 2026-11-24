@@ -116,7 +116,7 @@ class PartnerApiTest extends TestCase
     {
         // Décision 2026-11-23-paiement-partenaires, comme les offres.
         $paid = Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->addDay()]);
-        $expired = Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->subMinute()]);
+        $expired = Partner::factory()->for($this->cameroon)->create(['expires_at' => now()->subDay()]);
         $undated = Partner::factory()->for($this->cameroon)->create(['expires_at' => null]);
         $ids = fn (): array => array_column($this->partners()->json('data'), 'id');
 

@@ -5,6 +5,7 @@ namespace Modules\Offer\Filament\Resources\OfferResource\Schemas;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
 use Closure;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -217,17 +218,15 @@ abstract class OfferForm
                                     ->seconds(false),
                                 ...self::attributes($domain, 'access'),
                                 // Le début de la période payée (décision 2026-11-23-offre-paye-a-partir-du).
-                                DateTimePicker::make('starts_at')
+                                DatePicker::make('starts_at')
                                     ->label(__('offer::offer.starts_at'))
                                     ->helperText(__('offer::offer.starts_help'))
-                                    ->native(false)
-                                    ->seconds(false),
+                                    ->native(false),
                                 // La date d'expiration, effective si le paiement est appliqué (décision 2026-11-19-contrat-paiement-visibilite-avis).
-                                DateTimePicker::make('expires_at')
+                                DatePicker::make('expires_at')
                                     ->label(__('offer::offer.expires_at'))
                                     ->helperText(__('offer::offer.expires_help'))
-                                    ->native(false)
-                                    ->seconds(false),
+                                    ->native(false),
                             ]),
                         Tab::make(__('offer::offer.attributes'))
                             ->columns(2)

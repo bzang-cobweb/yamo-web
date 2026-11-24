@@ -9,7 +9,8 @@ use Illuminate\Support\Carbon;
  * Ce qui se paie pour une période (`starts_at`, `expires_at`), une offre ou un partenaire (décision
  * 2026-11-24-visibilite-pays-paiement) : le paiement appliqué (`paymentRequired()`, le réglage de la page Application
  * que le modèle déclare), seulement pendant sa période payée, commencée (début facultatif) et pas terminée ; sans date
- * de fin, jamais. Non appliqué, sans condition. En scopes pour les requêtes et en méthodes pour un modèle chargé. Le
+ * de fin, jamais. Non appliqué, sans condition. La période se compte en jours, bornes comprises : commencée le jour de
+ * son début, payée jusqu'à la fin du jour de sa fin (décision 2026-11-24-periode-payee-en-jours). En scopes pour les requêtes et en méthodes pour un modèle chargé. Le
  * modèle garde les deux colonnes dans ses attributs remplissables ; le trait les lit en dates.
  *
  * @property Carbon|null $starts_at
@@ -20,10 +21,10 @@ trait HasPaymentRange
     /** Le paiement est-il appliqué à ce modèle (le réglage de la page Application) ? */
     abstract public static function paymentRequired(): bool;
 
-    /** Les deux bornes, lues en dates. */
+    /** Les deux bornes, des dates sans heure. */
     public function initializeHasPaymentRange(): void
     {
-        $this->mergeCasts(['starts_at' => 'datetime', 'expires_at' => 'datetime']);
+        $this->mergeCasts(['starts_at' => 'date', 'expires_at' => 'date']);
     }
 
     /**
@@ -36,7 +37,7 @@ trait HasPaymentRange
     {
         $query->when(static::paymentRequired(), fn (Builder $paid) => $paid
             ->paymentStarted()
-            ->where($query->qualifyColumn('expires_at'), '>', now()));
+            ->whereDate($query->qualifyColumn('expires_at'), '>=', today()));
     }
 
     /**
@@ -46,7 +47,7 @@ trait HasPaymentRange
      */
     public function scopePaymentStarted(Builder $query): void
     {
-        $query->where(fn (Builder $start) => $start->whereNull($query->qualifyColumn('starts_at'))->orWhere($query->qualifyColumn('starts_at'), '<=', now()));
+        $query->where(fn (Builder $start) => $start->whereNull($query->qualifyColumn('starts_at'))->orWhereDate($query->qualifyColumn('starts_at'), '<=', today()));
     }
 
     /**
@@ -62,12 +63,22 @@ trait HasPaymentRange
             return false;
         }
 
-        return (bool) $this->getAttribute('expires_at')?->isFuture();
+        return $this->isPaymentRunning();
     }
 
     /** La période a-t-elle commencé ? La règle de `scopePaymentStarted()`, pour un modèle chargé. */
     public function isPaymentStarted(): bool
     {
-        return ! (bool) $this->getAttribute('starts_at')?->isFuture();
+        $start = $this->getAttribute('starts_at');
+
+        return $start === null || $start->lte(today());
+    }
+
+    /** La période payée court-elle encore aujourd'hui ? Sa fin est aujourd'hui ou plus tard ; sans fin, non. */
+    public function isPaymentRunning(): bool
+    {
+        $end = $this->getAttribute('expires_at');
+
+        return $end !== null && $end->gte(today());
     }
 }

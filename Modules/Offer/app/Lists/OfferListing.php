@@ -200,13 +200,15 @@ class OfferListing extends Listing
         // « Expire le 30 juin 2027 », « Expirée le 2 janvier 2026 » ; sans date, rien.
         // Le début de la période payée, tant qu'il est à venir (décision 2026-11-23-offre-paye-a-partir-du) :
         // « Payé à partir du 1 décembre 2026 ».
-        $start = $record->starts_at === null || ! $record->starts_at->isFuture() ? null : __(
+        // En jours (décision 2026-11-24-periode-payee-en-jours) : « à partir du » tant qu'elle n'a pas commencé, « expire
+        // le » jusqu'à la fin de son dernier jour.
+        $start = $record->isPaymentStarted() ? null : __(
             'offer::offer.list.starts',
             ['date' => $record->starts_at->copy()->locale($locale)->isoFormat('LL')],
             $locale,
         );
         $expiration = $record->expires_at === null ? null : __(
-            $record->expires_at->isFuture() ? 'offer::offer.list.expires' : 'offer::offer.list.expired',
+            $record->isPaymentRunning() ? 'offer::offer.list.expires' : 'offer::offer.list.expired',
             ['date' => $record->expires_at->copy()->locale($locale)->isoFormat('LL')],
             $locale,
         );

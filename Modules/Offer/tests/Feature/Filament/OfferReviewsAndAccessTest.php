@@ -86,14 +86,14 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
                 'status' => 'draft',
                 'featured_until' => '2027-01-31 12:00',
                 'details.available_from' => '2026-12-15',
-                'expires_at' => '2027-06-30 23:59',
+                'expires_at' => '2027-06-30',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
 
         $offer->refresh();
         $this->assertSame('draft', $offer->status->value);
-        $this->assertSame('2027-06-30 23:59', $offer->expires_at?->format('Y-m-d H:i'));
+        $this->assertSame('2027-06-30', $offer->expires_at?->format('Y-m-d'));
         $this->assertSame('2026-12-15', $offer->detail('available_from'));
     }
 

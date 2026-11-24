@@ -102,7 +102,7 @@ class OfferVisibilityApiTest extends TestCase
         $owner = $this->member();
         $visitor = $this->member();
         $paid = $this->home($owner, 'Douala', now()->addMonth());
-        $expired = $this->home($owner, 'Kribi', now()->subMinute());
+        $expired = $this->home($owner, 'Kribi', now()->subDay());
         $never = $this->home($owner, 'Limbé', null);
         OfferFavorite::query()->create(['user_id' => $visitor->getKey(), 'offer_id' => $paid->getKey()]);
         OfferFavorite::query()->create(['user_id' => $visitor->getKey(), 'offer_id' => $expired->getKey()]);

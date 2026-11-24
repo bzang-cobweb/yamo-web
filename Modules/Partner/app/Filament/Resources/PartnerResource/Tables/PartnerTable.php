@@ -47,12 +47,12 @@ abstract class PartnerTable
                     ->color(fn (PartnerStatusEnum $state): string => $state->color()),
                 TextColumn::make('starts_at')
                     ->label(__('partner::partner.fields.starts_at'))
-                    ->dateTime()
+                    ->date()
                     ->placeholder('—')
                     ->sortable(),
                 TextColumn::make('expires_at')
                     ->label(__('partner::partner.fields.expires_at'))
-                    ->dateTime()
+                    ->date()
                     ->placeholder('—')
                     ->sortable(),
                 TextColumn::make('views_count')
