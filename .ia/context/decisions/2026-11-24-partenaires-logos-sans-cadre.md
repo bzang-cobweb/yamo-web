@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-partenaire-logo-list-detail-inverses.md
+
 # `2026-11-24` — Page « Partenaires » et accueil : les logos sans bordure
 
 - **Type** : décision
