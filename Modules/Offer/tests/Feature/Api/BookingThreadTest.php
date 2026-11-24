@@ -330,6 +330,33 @@ class BookingThreadTest extends TestCase
         $this->assertCount(2, $history);
     }
 
+    public function test_the_unread_filter_follows_what_the_reader_received(): void
+    {
+        // Décision 2026-11-24-filtre-non-lues-lecteur : sa propre action, pas encore lue par l'autre partie, n'est pas
+        // une carte non lue pour lui ; ce qu'il a reçu et pas lu, si.
+        $this->travelTo(now()->setTime(9, 0));
+        $booking = $this->request(3);
+        $titles = fn (User $reader, string $unread): array => array_column($this->api($reader, 'GET', '?filter[unread]='.$unread)->json('data.items'), 'id');
+
+        // La demande : non lue chez le propriétaire, pas chez le membre qui l'a envoyée.
+        $this->assertCount(1, $titles($this->owner, 'yes'));
+        $this->assertSame([], $titles($this->guest, 'yes'));
+        $this->assertCount(1, $titles($this->guest, 'no'));
+
+        // La réponse : non lue chez le membre ; chez le propriétaire, sa carte est sa réponse, mais il n'a toujours pas
+        // lu la demande reçue : non lue.
+        $this->travel(5)->minutes();
+        app(BookingService::class)->answer($booking, true);
+        $this->assertCount(1, $titles($this->guest, 'yes'));
+        $this->assertCount(1, $titles($this->owner, 'yes'));
+
+        // Le propriétaire lit le fil : plus rien de non lu chez lui, quoi qu'en soit le membre.
+        $this->api($this->owner, 'POST', '/'.$this->cards($this->owner)[0]['id'].'/read')->assertNoContent();
+        $this->assertSame([], $titles($this->owner, 'yes'));
+        $this->assertCount(1, $titles($this->owner, 'no'));
+        $this->assertCount(1, $titles($this->guest, 'yes'));
+    }
+
     public function test_each_request_is_read_once_per_api_call(): void
     {
         // Décision 2026-11-20-cache-fil : une demande lue une fois, quel que soit le nombre de cartes ou d'usages.

@@ -4,9 +4,7 @@ namespace Modules\Notification\Support;
 
 use App\Support\ContainsSearch;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Support\Facades\DB;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
@@ -199,17 +197,11 @@ class NotificationFilters
             $query->where('user_id', (int) $member);
         }
 
-        // Non lue : une carte dont une notification au moins n'est pas lue, tout son fil compris
-        // (décision 2026-11-21-filtre-non-lues).
+        // Non lue : une carte dont le lecteur a, dans son fil, une notification reçue et pas lue (décisions
+        // 2026-11-21-filtre-non-lues et 2026-11-24-filtre-non-lues-lecteur).
         $unread = $filters['unread'] ?? null;
         if (in_array($unread, ['yes', 'no'], true)) {
-            $hasUnread = fn (Builder $card) => $card->whereNull('notifications.read_at')
-                ->orWhereExists(fn (QueryBuilder $same) => $same->select(DB::raw(1))
-                    ->from('notifications as unread')
-                    ->whereColumn('unread.notifiable_type', 'notifications.notifiable_type')
-                    ->whereColumn('unread.notifiable_id', 'notifications.notifiable_id')
-                    ->whereColumn('unread.thread', 'notifications.thread')
-                    ->whereNull('unread.read_at'));
+            $hasUnread = app(NotificationThreads::class)->unreadCard($user);
             $unread === 'yes' ? $query->where($hasUnread) : $query->whereNot($hasUnread);
         }
         foreach ($this->filters as $filter) {

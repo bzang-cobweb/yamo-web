@@ -105,6 +105,11 @@ class PartnerThreadTest extends AuthFilamentTestCase
         // Rien de reçu : rien de non lu ; l'autre compte a reçu la réponse.
         $this->assertTrue($cards[0]['read']);
         $this->assertSame(1, $this->api($helper, 'GET', '/notifications/unread-count')->json('data.unread'));
+        // Le filtre « Non lues » dit la même chose (décision 2026-11-24-filtre-non-lues-lecteur) : le fil n'est non lu
+        // que pour celui qui en a reçu une notification qu'il n'a pas lue.
+        $this->assertSame([], $this->api($author, 'GET', '/notifications?filter[unread]=yes')->json('data.items'));
+        $this->assertCount(1, $this->api($author, 'GET', '/notifications?filter[unread]=no')->json('data.items'));
+        $this->assertCount(1, $this->api($helper, 'GET', '/notifications?filter[unread]=yes')->json('data.items'));
 
         // Le compte du back-office ne lit que ce qu'il a reçu ; un étranger, rien.
         $cards = $this->api($team, 'GET', '/notifications')->json('data.items');

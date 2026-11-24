@@ -2,6 +2,7 @@
 
 namespace Modules\Notification\Support;
 
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
@@ -131,6 +132,30 @@ class NotificationThreads
         return (int) $user->unreadNotifications()->getQuery()->reorder()
             ->selectRaw('count(distinct thread) + sum(case when thread is null then 1 else 0 end) as unread')
             ->value('unread');
+    }
+
+    /**
+     * La carte est-elle non lue pour le compte ? Une notification qu'il a reçue et pas lue, dans son fil, ou elle-même
+     * sans fil. Celles qu'il n'a pas reçues (ses actions, le fil d'un groupe) n'y comptent pas, lues ou non par leur
+     * destinataire : la même règle que `unreadThreads()`, qui donne l'état d'une carte, en condition de requête
+     * (décision 2026-11-24-filtre-non-lues-lecteur).
+     *
+     * @return Closure(Builder<DatabaseNotification>): void
+     */
+    public function unreadCard(User $user): Closure
+    {
+        return function (Builder $card) use ($user): void {
+            $card->where(fn (Builder $alone) => $alone->whereNull('notifications.thread')
+                ->where('notifications.notifiable_type', $user->getMorphClass())
+                ->where('notifications.notifiable_id', $user->getKey())
+                ->whereNull('notifications.read_at'))
+                ->orWhereExists(fn (QueryBuilder $received) => $received->select(DB::raw(1))
+                    ->from('notifications as received')
+                    ->whereColumn('received.thread', 'notifications.thread')
+                    ->where('received.notifiable_type', $user->getMorphClass())
+                    ->where('received.notifiable_id', $user->getKey())
+                    ->whereNull('received.read_at'));
+        };
     }
 
     /**
