@@ -9,7 +9,7 @@ Remplace en partie : 2026-11-24-mes-partenaires-cartes.md, 2026-11-24-mes-parten
   - option générique des cartes de liste `ListItem::imageSide()` (`image_layout: side`, image en entier) : l'image en petit (72 points, coins arrondis), à gauche du texte, comme la page « Partenaires » ; « Mes partenaires » l'utilise à la place de l'image 16:9 au-dessus du texte ;
   - le statut n'est plus sur le logo : au-dessus du nom, avec plus d'air (8 points au lieu de 4, « augmenter l'espace entre le statut et le titre ») ;
   - sans logo, sa place reste réservée, vide (sans fond) : les textes restent alignés ;
-  - le menu « ⋮ » flotte en haut à droite, sans réserver de place au texte : un nom long passe dessous ;
+  - le menu « ⋮ » flotte en haut à droite, sans réserver de place au texte : un nom long passe dessous ; à la marge de la carte (8 points des bords au lieu de 16, « trop d'espace entre les 3 petits points et les bords ») ;
   - un menu ouvert se referme au toucher ailleurs que sur un bouton ou une carte (entre les cartes, l'intitulé, le vide) et quand la recherche prend la main (`ListSearch.onFocus`), pour toutes les listes du profil.
 - **Motif** : la demande de l'humain.
 - **Portée** : `ListItem` (module Form), `MyPartnerListing` ; `ListItemCard`, `List`, `ProfileListScreen` de l'app.
