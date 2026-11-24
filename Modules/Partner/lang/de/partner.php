@@ -45,6 +45,8 @@ return [
     ],
     // « Mes partenaires » dans l'app (décision 2026-11-24-partenaires-par-les-membres).
     'member' => [
+        // La barre fixe de « Partenaires » et « Mes partenaires » (décision 2026-11-24-devenir-partenaire).
+        'become' => 'Partner werden',
         // Le bouton du champ logo (décision 2026-11-24-champ-fichier-libelle-ajout).
         'add_logo' => 'Logo hinzufügen',
         // Les étapes du formulaire de l'app (décision 2026-11-24-etape-presentation).

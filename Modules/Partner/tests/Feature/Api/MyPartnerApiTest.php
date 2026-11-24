@@ -143,7 +143,8 @@ class MyPartnerApiTest extends TestCase
         // Sa page, pas encore publiée : pour ses comptes seulement.
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
-        $this->assertSame('partner.partner', $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer.form'));
+        // « Devenir partenaire » ouvre le formulaire d'ajout (décision 2026-11-24-devenir-partenaire).
+        $this->assertSame(['label' => 'Devenir partenaire', 'form' => 'partner.partner', 'link' => null], $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer'));
 
         // Invalides : un nom ou une description manquants, un lien qui n'en est pas un ; le logo est facultatif
         // (décision 2026-11-24-partenaire-description-obligatoire).

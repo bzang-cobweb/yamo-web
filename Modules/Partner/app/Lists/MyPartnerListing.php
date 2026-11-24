@@ -76,7 +76,10 @@ class MyPartnerListing extends Listing
         return __('partner::partner.member.empty');
     }
 
-    /** « Ajouter un partenaire », dans la barre fixe en bas, comme « Ajouter un logement ». */
+    /**
+     * « Devenir partenaire », dans la barre fixe en bas : le formulaire d'ajout (décision
+     * 2026-11-24-devenir-partenaire).
+     */
     public function footer(): ?array
     {
         if ($this->user === null) {
@@ -86,7 +89,7 @@ class MyPartnerListing extends Listing
             return null;
         }
 
-        return ['label' => __('partner::partner.member.add'), 'form' => PartnerForm::name(), 'link' => null];
+        return ['label' => __('partner::partner.member.become'), 'form' => PartnerForm::name(), 'link' => null];
     }
 
     public function item(Model $record): ListItem

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
+use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
 
@@ -28,6 +29,25 @@ class PartnerListing extends Listing
     public function canBeViewedBy(?Authenticatable $user): bool
     {
         return true;
+    }
+
+    /**
+     * « Devenir partenaire », dans la barre fixe en bas, pour tous : connecté, le formulaire d'ajout ; visiteur, la
+     * connexion (décision 2026-11-24-devenir-partenaire).
+     *
+     * @return array{label: string, form: string|null, link: string|null}|null
+     */
+    public function footer(): ?array
+    {
+        $label = __('partner::partner.member.become');
+        if ($this->user === null) {
+            return ['label' => $label, 'form' => null, 'link' => '/sign-in'];
+        }
+        if (! $this->user->can('create', Partner::class)) {
+            return null;
+        }
+
+        return ['label' => $label, 'form' => PartnerForm::name(), 'link' => null];
     }
 
     public function title(): string

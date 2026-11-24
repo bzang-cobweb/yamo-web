@@ -4,6 +4,9 @@ namespace Modules\Partner\Tests\Feature\Api;
 
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Auth\Enums\RoleEnum;
+use Modules\Auth\Models\Role;
+use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
@@ -185,6 +188,17 @@ class PartnerApiTest extends TestCase
         $this->assertSame($ids, array_values(array_unique($ids)));
         $this->assertCount(25, $ids);
         $this->assertNull($next['next_cursor']);
+    }
+
+    public function test_become_a_partner_opens_the_form_or_the_sign_in(): void
+    {
+        // Décision 2026-11-24-devenir-partenaire.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $this->assertSame(['label' => 'Devenir partenaire', 'form' => null, 'link' => '/sign-in'], $this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.footer'));
+
+        $member = User::factory()->create(['locale' => 'fr']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $this->assertSame(['label' => 'Devenir partenaire', 'form' => 'partner.partner', 'link' => null], $this->withHeaders($headers)->withToken($member->createToken('iPhone')->plainTextToken)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.footer'));
     }
 
     public function test_no_partner_an_empty_list(): void
