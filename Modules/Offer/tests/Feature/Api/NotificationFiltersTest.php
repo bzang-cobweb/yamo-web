@@ -69,7 +69,8 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'unread'], $filters->keys()->all());
+        // `partner_status` : le filtre du module Partner, visible pour son type seulement (décision 2026-11-24-partenaires-notifications-filtre).
+        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'partner_status', 'unread'], $filters->keys()->all());
         // Le groupe des demandes, puis une option par action présente (décision 2026-11-22-filtre-type-par-action) ;
         // un type inconnu des modules n'est pas proposé.
         $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande', 'booking_accepted' => 'Demande acceptée'], array_column($filters['type']['options'], 'label', 'value'));

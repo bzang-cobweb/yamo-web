@@ -9,6 +9,7 @@ Branche : nuit/2026-11-24 (web depuis main@16b147a, mobile depuis main@0bacba0)
 - **1. Notifications de mise en validation** (web `bbf0f18`) : ajout ou modification depuis l'app → `PartnerSubmitted` → tous les comptes rattachés, auteur compris, chacun son texte ; plus de notification « statut changé » en double ; la publication s'annonce « accepté ». Tests du module Partner : 32 passent.
 - **2. Validation au back-office** : action « Valider » (liste et page), visible si en validation et droit de modifier ; publie, notifie les comptes (« Partenaire accepté »). Tests du module Partner : 34 passent.
 - **3. « Devenir partenaire »** : barre fixe sur « Mes partenaires » (formulaire) et sur la page publique « Partenaires » (connecté : formulaire ; visiteur : connexion), décrite par l'API ; `openListFooter()` commun dans l'app. Tests : 35 web (Partner), 72 app (partner, listes du profil).
+- **4. Notifications des partenaires** : type « Partenaire » et filtre « Statut du partenaire » dans « Notifications », pastille du statut, recherche par nom, qui agit sur la carte. Suite complète : 691 tests web, 369 tests app.
 
 ## Reste à faire
 1. Ajout ou modification d'un partenaire : en validation, notifications aux autres administrateurs et à l'auteur.

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Modules\Auth\Models\User;
+use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Models\Partner;
@@ -17,7 +18,7 @@ use Modules\Partner\Models\Partner;
  * autre compte rattaché (« … modifié par … ») le lisent dans l'onglet « Notifications », et par e-mail et SMS selon
  * leurs canaux ; elle ouvre « Mes partenaires ». Textes dans la langue du destinataire.
  */
-final class PartnerSubmittedNotification extends Notification implements ShouldQueue
+final class PartnerSubmittedNotification extends Notification implements HasNotificationUser, ShouldQueue
 {
     use Queueable;
 
@@ -56,6 +57,15 @@ final class PartnerSubmittedNotification extends Notification implements ShouldQ
             'text_links' => [],
             'links' => [],
         ];
+    }
+
+    /**
+     * Qui agit, pour les autres comptes : son nom et sa photo en tête de la carte, le filtre « Membre » ; rien pour
+     * l'auteur, comme sa propre demande de logement (décision 2026-11-24-partenaires-notifications-filtre).
+     */
+    public function notificationUserId(object $notifiable): ?int
+    {
+        return $this->isOwn($notifiable) ? null : (int) $this->actorId;
     }
 
     public function toMail(object $notifiable): MailMessage

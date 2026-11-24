@@ -8,10 +8,12 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
 use Modules\Form\Support\FormRegistry;
 use Modules\Form\Support\ListingRegistry;
+use Modules\Notification\Support\NotificationFilters;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Lists\PartnerListing;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerNotificationFilter;
 use Modules\Partner\Policies\PartnerPolicy;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
@@ -22,6 +24,10 @@ class PartnerServiceProvider extends ModuleServiceProvider
         parent::boot();
 
         Gate::policy(Partner::class, PartnerPolicy::class);
+
+        // Ses notifications dans « Notifications » : le type « Partenaire », par statut (décision
+        // 2026-11-24-partenaires-notifications-filtre).
+        $this->app->make(NotificationFilters::class)->register(PartnerNotificationFilter::class);
 
         // Les partenaires d'un compte, déclarés ici pour que le module Auth ignore les partenaires (décision
         // 2026-11-24-partenaires-par-les-membres) ; le back-office s'en sert pour rattacher des comptes.
