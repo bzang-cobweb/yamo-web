@@ -33,7 +33,7 @@ return [
         // L'aide du champ logo : la conversion `list` en minimum (décisions 2026-11-24-logo-taille-minimale et 2026-11-24-partenaire-logo-original).
         'logo_help' => 'Logo carré, au moins :pixels × :pixels px.',
         'description' => 'Description',
-        'url' => 'Lien',
+        'website' => 'Lien',
         'cta_label' => 'Libellé du bouton',
         'published' => 'Publié',
         'starts_at' => 'Début',
@@ -63,8 +63,8 @@ return [
         'submitted' => "Partenaire envoyé : l'équipe le valide avant de le publier.",
         'saved' => "Partenaire enregistré : l'équipe le valide de nouveau avant de le publier.",
         // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).
-        'review_notice' => "Nous allons valider les données avant de l'afficher.",
-        'review_notice_paid' => "Nous allons valider les données et confirmer le paiement avant de l'afficher.",
+        'review_notice' => "Nous allons d'abord valider vos données avant d'afficher ce partenaire sur l'application.",
+        'review_notice_paid' => "Nous allons d'abord valider vos données et confirmer le paiement avant d'afficher ce partenaire sur l'application.",
         // La note du formulaire à la modification, selon le statut (décision 2026-11-24-partenaire-attente-paiement).
         'edit_notice' => [
             'pending' => "Ce partenaire est encore en cours de validation et n'est pas affiché sur l'application.",

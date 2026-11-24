@@ -51,6 +51,8 @@ class OfferDetailResource extends JsonResource
         return [
             'id' => (string) $offer->getKey(),
             'title' => (string) $offer->getTranslation('title', $locale),
+            /** Le slug, tiré du titre (décision 2026-11-25-slug-url-offres-partenaires) ; `null` sans titre. */
+            'url' => $offer->getTranslation('url', $locale) ?: null,
             /** Le titre composé, la ligne du type (« Location meublée · Studio · Douala »), sous le titre (décision 2026-11-22-fiche-titres-centres) ; `null` : aucune. */
             'composed_title' => OfferCardTitle::of($offer, $locale)[1],
             /** Prix formaté avec son unité (« 60 000 FCFA / jour ») et son libellé (« Loyer ») ; `null` sans prix. */

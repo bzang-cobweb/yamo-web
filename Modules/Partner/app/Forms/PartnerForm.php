@@ -89,12 +89,12 @@ class PartnerForm extends Form
                 ->label(__('partner::partner.fields.contact_email'))
                 ->maxLength(255)
                 ->default($partner?->contact_email ?? $this->user?->email),
-            Field::text('url')
-                ->label(__('partner::partner.fields.url'))
+            Field::text('website')
+                ->label(__('partner::partner.fields.website'))
                 ->placeholder('https://')
                 ->maxLength(2048)
                 ->rules(['url:http,https'])
-                ->default($text('url')),
+                ->default($text('website')),
             Field::text('cta_label')
                 ->label(__('partner::partner.fields.cta_label'))
                 ->help(__('partner::partner.member.cta_help'))
@@ -115,7 +115,7 @@ class PartnerForm extends Form
             $this->hasContentLocale() ? Step::make(__('partner::partner.content_locale.step'), [self::CONTENT_LOCALE]) : null,
             // « Présentation » (décision 2026-11-24-etape-presentation).
             Step::make(__('partner::partner.member.steps.presentation'), [PartnerLogoService::FIELD, 'name', 'slogan', 'description']),
-            Step::make(__('partner::partner.sections.contact'), ['contact_phone', 'contact_email', 'url', 'cta_label']),
+            Step::make(__('partner::partner.sections.contact'), ['contact_phone', 'contact_email', 'website', 'cta_label']),
         ]));
     }
 

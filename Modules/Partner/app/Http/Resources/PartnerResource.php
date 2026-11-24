@@ -45,7 +45,7 @@ class PartnerResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, name: string, slogan: string|null, description: string|null, url: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null, status?: array{label: string, tone: string}}
+     * @return array{id: string, name: string, url: string|null, slogan: string|null, description: string|null, website: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null, status?: array{label: string, tone: string}}
      */
     public function toArray(Request $request): array
     {
@@ -55,10 +55,12 @@ class PartnerResource extends JsonResource
         return [
             'id' => (string) $partner->getKey(),
             'name' => (string) $partner->getTranslation('name', app()->getLocale()),
+            // Le slug, tiré du nom (décision 2026-11-25-slug-url-offres-partenaires).
+            'url' => $text('url'),
             // Facultatif (décision 2026-11-24-partenaire-slogan).
             'slogan' => $text('slogan'),
             'description' => $text('description'),
-            'url' => $text('url'),
+            'website' => $text('website'),
             'cta_label' => $text('cta_label'),
             'logo' => MediaUrl::onRequestHost($partner->logoUrl($this->logoConversion)),
             ...($this->withContact ? ['contact_email' => $partner->contact_email, 'contact_phone' => $this->phone()] : []),

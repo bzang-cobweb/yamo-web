@@ -80,9 +80,9 @@ class MyPartnerApiTest extends TestCase
     {
         $user = $this->member();
         $form = $this->asUser($user)->getJson('/api/v1/forms/partner.partner')->assertOk()->json('data');
-        $this->assertSame(['logo', 'name', 'slogan', 'description', 'contact_phone', 'contact_email', 'url', 'cta_label'], array_column($form['fields'], 'name'));
+        $this->assertSame(['logo', 'name', 'slogan', 'description', 'contact_phone', 'contact_email', 'website', 'cta_label'], array_column($form['fields'], 'name'));
         // En étapes, sans « Langue » à la création (décision 2026-11-24-mes-partenaires-cartes).
-        $this->assertSame([['Présentation', ['logo', 'name', 'slogan', 'description']], ['Contact', ['contact_phone', 'contact_email', 'url', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
+        $this->assertSame([['Présentation', ['logo', 'name', 'slogan', 'description']], ['Contact', ['contact_phone', 'contact_email', 'website', 'cta_label']]], array_map(fn (array $step): array => [$step['title'], $step['fields']], $form['steps']));
         $this->assertSame('Ajouter un partenaire', $form['title']);
         $this->assertSame('center', $form['title_align']);
         // Un seul logo, son propre bouton (décision 2026-11-24-champ-fichier-libelle-ajout).
@@ -93,7 +93,7 @@ class MyPartnerApiTest extends TestCase
             'slogan' => 'On porte, vous respirez.',
             'logo' => [$this->pendingUpload($user, 'logo', 'partner.partner')],
             'description' => 'Déménagement clés en main.',
-            'url' => 'https://wouri.test',
+            'website' => 'https://wouri.test',
             'cta_label' => 'Demander un devis',
             'contact_email' => 'commercial@wouri.test',
             'contact_phone' => '6 70 00 00 05',
@@ -102,7 +102,7 @@ class MyPartnerApiTest extends TestCase
 
         $partner = Partner::query()->sole();
         // Dans le pays courant, la langue du compte, pas publié ; le compte en est administrateur.
-        $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('url', 'fr'), $partner->status]);
+        $this->assertSame([$this->cameroon->getKey(), 'Déménageurs du Wouri', 'https://wouri.test', PartnerStatusEnum::PENDING], [$partner->country_id, $partner->getTranslation('name', 'fr'), $partner->getTranslation('website', 'fr'), $partner->status]);
         $this->assertNotNull($partner->logoUrl());
         // Le téléphone : l'indicatif du pays, seul proposé et verrouillé ; enregistré au format international, lu
         // lisible (décision 2026-11-24-partenaire-telephone-pays).
@@ -149,8 +149,8 @@ class MyPartnerApiTest extends TestCase
 
         // Invalides : un nom ou une description manquants, un lien qui n'en est pas un ; le logo est facultatif
         // (décision 2026-11-24-partenaire-description-obligatoire).
-        $this->asUser($user)->postJson('/api/v1/partners', ['url' => 'pas un lien'])->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'description', 'url'])->assertJsonMissingValidationErrors(['logo']);
+        $this->asUser($user)->postJson('/api/v1/partners', ['website' => 'pas un lien'])->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'description', 'website'])->assertJsonMissingValidationErrors(['logo']);
         $this->asUser($user)->postJson('/api/v1/partners', ['name' => 'Sans logo', 'description' => 'Facultatif.'])->assertNoContent();
         // Le nom et le slogan : 50 caractères au plus (décision 2026-11-24-partenaire-nom-slogan-50).
         $this->asUser($user)->postJson('/api/v1/partners', ['name' => str_repeat('n', 51), 'slogan' => str_repeat('s', 51), 'description' => 'Texte.'])
@@ -166,7 +166,7 @@ class MyPartnerApiTest extends TestCase
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
         $notice = fn (string $query = ''): ?string => $this->asUser($user)->getJson('/api/v1/forms/partner.partner'.$query)->assertOk()->json('data.notice');
 
-        $this->assertSame("Nous allons valider les données avant de l'afficher.", $notice());
+        $this->assertSame("Nous allons d'abord valider vos données avant d'afficher ce partenaire sur l'application.", $notice());
         // Modifier : son état selon son statut (décision 2026-11-24-partenaire-attente-paiement).
         $record = "?record={$partner->getKey()}";
         $this->assertSame("Ce partenaire est affiché sur l'application.", $notice($record));
@@ -181,7 +181,7 @@ class MyPartnerApiTest extends TestCase
         $this->assertNull($notice($record));
         // Le paiement des partenaires appliqué : la note le dit.
         Setting::current()->update(['partner_payment_required' => true]);
-        $this->assertSame("Nous allons valider les données et confirmer le paiement avant de l'afficher.", $notice());
+        $this->assertSame("Nous allons d'abord valider vos données et confirmer le paiement avant d'afficher ce partenaire sur l'application.", $notice());
         // Affiché, le paiement appliqué : jusqu'à sa date de fin.
         $partner->update(['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => null, 'expires_at' => '2027-03-15']);
         $this->assertSame("Ce partenaire est affiché sur l'application jusqu'au 15 mars 2027.", $notice("?record={$partner->getKey()}"));

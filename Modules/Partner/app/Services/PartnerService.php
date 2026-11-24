@@ -68,7 +68,7 @@ class PartnerService
      * Un partenaire proposé par un membre (décision 2026-11-24-partenaires-par-les-membres) : dans le pays courant,
      * ses textes dans la langue `$locale`, en validation ; le membre y est rattaché en administrateur (`is_admin`).
      *
-     * @param  array{name: string, slogan?: string|null, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
+     * @param  array{name: string, slogan?: string|null, description?: string|null, website?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */
     public function propose(User $user, array $data, string $locale): Partner
     {
@@ -87,7 +87,7 @@ class PartnerService
      * validation (décision 2026-11-24-partenaires-par-les-membres) ; ses comptes, l'auteur `$actor` compris, sont
      * prévenus (décision 2026-11-24-partenaires-validation-notifications).
      *
-     * @param  array{name: string, slogan?: string|null, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
+     * @param  array{name: string, slogan?: string|null, description?: string|null, website?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */
     public function change(Partner $partner, array $data, string $locale, User $actor): void
     {
@@ -113,7 +113,7 @@ class PartnerService
      */
     private function fill(Partner $partner, array $data, string $locale): void
     {
-        foreach (['name', 'slogan', 'description', 'url', 'cta_label'] as $key) {
+        foreach (['name', 'slogan', 'description', 'website', 'cta_label'] as $key) {
             $value = trim((string) ($data[$key] ?? ''));
             if ($value === '') {
                 $partner->forgetTranslation($key, $locale);

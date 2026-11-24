@@ -40,7 +40,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
                 'name' => ['fr' => 'Assurances du Littoral', 'en' => 'Littoral Insurance'],
                 'country_id' => $country->getKey(),
                 'description' => ['fr' => 'Assurance habitation.', 'en' => 'Home insurance.'],
-                'url' => ['fr' => 'https://littoral.test/fr', 'en' => 'https://littoral.test/en'],
+                'website' => ['fr' => 'https://littoral.test/fr', 'en' => 'https://littoral.test/en'],
                 'cta_label' => ['fr' => 'Être rappelé', 'en' => 'Call me back'],
                 'status' => PartnerStatusEnum::PUBLISHED->value,
                 'expires_at' => now()->addMonth()->toDateTimeString(),
@@ -51,7 +51,7 @@ class PartnerResourceTest extends AuthFilamentTestCase
 
         $partner = Partner::query()->where('name->fr', 'Assurances du Littoral')->sole();
         $this->assertSame('Littoral Insurance', $partner->getTranslation('name', 'en'));
-        $this->assertSame('https://littoral.test/en', $partner->getTranslation('url', 'en'));
+        $this->assertSame('https://littoral.test/en', $partner->getTranslation('website', 'en'));
         $this->assertSame('Être rappelé', $partner->getTranslation('cta_label', 'fr'));
         $this->assertSame(PartnerStatusEnum::PUBLISHED, $partner->status);
         // Rangé à la fin (décision 2026-11-23-partenaires-triables).

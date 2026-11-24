@@ -117,8 +117,8 @@ abstract class PartnerForm
                                     ->maxLength(30),
                                 // Le lien et le libellé de son bouton, un onglet par langue (décision 2026-11-24-partenaire-lien-dans-contact).
                                 TranslatableTabs::make(fn (string $locale): array => [
-                                    TextInput::make("url.{$locale}")
-                                        ->label(__('partner::partner.fields.url'))
+                                    TextInput::make("website.{$locale}")
+                                        ->label(__('partner::partner.fields.website'))
                                         ->url()
                                         ->maxLength(2048),
                                     TextInput::make("cta_label.{$locale}")

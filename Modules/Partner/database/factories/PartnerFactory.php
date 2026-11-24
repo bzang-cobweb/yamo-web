@@ -25,7 +25,7 @@ class PartnerFactory extends Factory
             'country_id' => Country::factory(),
             'name' => ['fr' => $name, 'en' => $name],
             'description' => ['fr' => 'Déménagement clés en main.', 'en' => 'Turnkey moving.'],
-            'url' => ['fr' => 'https://example.test/fr', 'en' => 'https://example.test/en'],
+            'website' => ['fr' => 'https://example.test/fr', 'en' => 'https://example.test/en'],
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],
             'status' => PartnerStatusEnum::PUBLISHED,
         ];

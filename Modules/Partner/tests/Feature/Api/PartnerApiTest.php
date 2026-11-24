@@ -40,7 +40,7 @@ class PartnerApiTest extends TestCase
             'name' => ['fr' => 'Déménageurs du Wouri', 'en' => 'Wouri Movers'],
             'position' => 1,
             'description' => ['fr' => 'Déménagement clés en main.', 'en' => 'Turnkey moving.'],
-            'url' => ['fr' => 'https://wouri.test/fr', 'en' => 'https://wouri.test/en'],
+            'website' => ['fr' => 'https://wouri.test/fr', 'en' => 'https://wouri.test/en'],
             'cta_label' => ['fr' => 'Demander un devis', 'en' => 'Get a quote'],
             'contact_email' => 'commercial@wouri.test',
         ]);
@@ -59,9 +59,10 @@ class PartnerApiTest extends TestCase
         $this->assertSame([
             'id' => (string) $first->getKey(),
             'name' => 'Déménageurs du Wouri',
+            'url' => 'demenageurs-du-wouri',
             'slogan' => null,
             'description' => 'Déménagement clés en main.',
-            'url' => 'https://wouri.test/fr',
+            'website' => 'https://wouri.test/fr',
             'cta_label' => 'Demander un devis',
             'logo' => null,
         ], $data[(string) $first->getKey()]);
@@ -71,7 +72,7 @@ class PartnerApiTest extends TestCase
 
         // Un nom et un lien par langue.
         $english = collect($this->partners('en')->json('data'))->firstWhere('id', (string) $first->getKey());
-        $this->assertSame(['Wouri Movers', 'https://wouri.test/en'], [$english['name'], $english['url']]);
+        $this->assertSame(['Wouri Movers', 'https://wouri.test/en'], [$english['name'], $english['website']]);
     }
 
     public function test_each_listing_counts_a_view_and_each_touch_a_click(): void

@@ -23,6 +23,8 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Sluggable\HasTranslatableSlug;
+use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -39,12 +41,12 @@ use Spatie\Translatable\HasTranslations;
  * @property int $clicks_count
  * @property-read Collection<int, User> $users les comptes qui l'administrent
  */
-#[Fillable(['country_id', 'name', 'slogan', 'description', 'url', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
+#[Fillable(['country_id', 'name', 'slogan', 'description', 'website', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
 #[UseFactory(PartnerFactory::class)]
 class Partner extends Model implements HasMedia, NotifiableGroup
 {
     /** @use HasFactory<PartnerFactory> */
-    use HasCountry, HasFactory, HasNotifiableGroup, HasPaymentRange, HasTranslations, InteractsWithMedia;
+    use HasCountry, HasFactory, HasNotifiableGroup, HasPaymentRange, HasTranslatableSlug, HasTranslations, InteractsWithMedia;
 
     /** Le logo, une seule image. */
     public const LOGO = 'logo';
@@ -58,7 +60,13 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     public const SLOGAN_MAX_LENGTH = 50;
 
     /** @var list<string> */
-    public array $translatable = ['name', 'slogan', 'description', 'url', 'cta_label'];
+    public array $translatable = ['name', 'url', 'slogan', 'description', 'website', 'cta_label'];
+
+    /** Le slug `url`, tiré du nom dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires). */
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()->generateSlugsFrom('name')->saveSlugsTo('url');
+    }
 
     /** Un nouveau partenaire se range à la fin (décision 2026-11-23-partenaires-triables) ; un changement de statut est annoncé. */
     protected static function booted(): void

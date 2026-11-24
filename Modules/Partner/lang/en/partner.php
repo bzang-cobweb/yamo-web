@@ -33,7 +33,7 @@ return [
         // L'aide du champ logo : la conversion `list` en minimum (décisions 2026-11-24-logo-taille-minimale et 2026-11-24-partenaire-logo-original).
         'logo_help' => 'Square logo, at least :pixels × :pixels px.',
         'description' => 'Description',
-        'url' => 'Link',
+        'website' => 'Link',
         'cta_label' => 'Button label',
         'published' => 'Published',
         'starts_at' => 'Starts',
@@ -63,8 +63,8 @@ return [
         'submitted' => 'Partner sent: the team reviews it before publishing.',
         'saved' => 'Partner saved: the team reviews it again before publishing.',
         // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).
-        'review_notice' => 'We will review the details before showing it.',
-        'review_notice_paid' => 'We will review the details and confirm the payment before showing it.',
+        'review_notice' => 'We will first review your details before showing this partner in the app.',
+        'review_notice_paid' => 'We will first review your details and confirm the payment before showing this partner in the app.',
         // La note du formulaire à la modification, selon le statut (décision 2026-11-24-partenaire-attente-paiement).
         'edit_notice' => [
             'pending' => 'This partner is still being reviewed and is not shown in the app.',

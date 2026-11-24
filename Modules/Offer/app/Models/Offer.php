@@ -28,6 +28,8 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Sluggable\HasTranslatableSlug;
+use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -67,7 +69,7 @@ class Offer extends Model implements HasMedia
     protected $attributes = ['show_address' => true];
 
     /** @use HasFactory<OfferFactory> */
-    use HasCountry, HasFactory, HasPaymentRange, InteractsWithMedia, SoftDeletes;
+    use HasCountry, HasFactory, HasPaymentRange, HasTranslatableSlug, InteractsWithMedia, SoftDeletes;
 
     use HasTranslations { normalizeLocale as translatableLocale; }
 
@@ -77,7 +79,7 @@ class Offer extends Model implements HasMedia
      *
      * @var list<string>
      */
-    public array $translatable = ['title', 'description'];
+    public array $translatable = ['title', 'url', 'description'];
 
     public const PHOTOS = 'photos';
 
@@ -89,6 +91,12 @@ class Offer extends Model implements HasMedia
     {
         return OriginalLocale::pick($this->getTranslatedLocales($key), $locale, $useFallbackLocale ? $this->locale : null)
             ?? $this->translatableLocale($key, $locale, $useFallbackLocale);
+    }
+
+    /** Le slug `url`, tiré du titre dans chaque langue (décision 2026-11-25-slug-url-offres-partenaires). */
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()->generateSlugsFrom('title')->saveSlugsTo('url');
     }
 
     /**
