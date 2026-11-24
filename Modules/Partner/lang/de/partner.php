@@ -79,15 +79,26 @@ return [
         'salutation' => 'Das Team von :app',
         'title' => [
             'pending' => 'Partner in Prüfung',
-            'published' => 'Partner veröffentlicht',
+            'published' => 'Partner angenommen',
             'rejected' => 'Partner abgelehnt',
             'archived' => 'Partner archiviert',
         ],
         'body' => [
             'pending' => 'Ihr Partner « :name » ist beim Team in Prüfung.',
-            'published' => 'Ihr Partner « :name » ist veröffentlicht.',
+            'published' => 'Ihr Partner « :name » wurde vom Team angenommen.',
             'rejected' => 'Ihr Partner « :name » wurde vom Team abgelehnt.',
             'archived' => 'Ihr Partner « :name » ist archiviert.',
+        ],
+        'submitted' => [
+            'title' => ['created' => 'Partner hinzugefügt', 'updated' => 'Partner geändert'],
+            'own' => [
+                'created' => 'Ihr Partner « :name » ist in Prüfung: Das Team prüft ihn, bevor er angezeigt wird.',
+                'updated' => 'Ihr Partner « :name » ist in Prüfung: Das Team prüft Ihre Änderungen, bevor er angezeigt wird.',
+            ],
+            'others' => [
+                'created' => '« :name » wurde von :actor hinzugefügt; er ist in Prüfung.',
+                'updated' => '« :name » wurde von :actor geändert; er ist in Prüfung.',
+            ],
         ],
     ],
     // La langue de saisie à la modification (décision 2026-11-24-mes-partenaires-cartes).

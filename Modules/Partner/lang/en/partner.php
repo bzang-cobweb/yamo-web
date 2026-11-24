@@ -79,15 +79,26 @@ return [
         'salutation' => 'The :app team',
         'title' => [
             'pending' => 'Partner under review',
-            'published' => 'Partner published',
+            'published' => 'Partner accepted',
             'rejected' => 'Partner rejected',
             'archived' => 'Partner archived',
         ],
         'body' => [
             'pending' => 'Your partner « :name » is under review by the team.',
-            'published' => 'Your partner « :name » is published.',
+            'published' => 'Your partner « :name » was accepted by the team.',
             'rejected' => 'Your partner « :name » was rejected by the team.',
             'archived' => 'Your partner « :name » is archived.',
+        ],
+        'submitted' => [
+            'title' => ['created' => 'Partner added', 'updated' => 'Partner updated'],
+            'own' => [
+                'created' => 'Your partner « :name » is under review: the team checks it before showing it.',
+                'updated' => 'Your partner « :name » is under review: the team checks your changes before showing it.',
+            ],
+            'others' => [
+                'created' => '« :name » was added by :actor; it is under review.',
+                'updated' => '« :name » was updated by :actor; it is under review.',
+            ],
         ],
     ],
     // La langue de saisie à la modification (décision 2026-11-24-mes-partenaires-cartes).

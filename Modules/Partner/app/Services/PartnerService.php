@@ -11,6 +11,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Partner\Enums\PartnerStatusEnum;
+use Modules\Partner\Events\PartnerSubmitted;
 use Modules\Partner\Models\Partner;
 
 /**
@@ -75,21 +76,25 @@ class PartnerService
         $this->fill($partner, $data, $locale);
         $partner->save();
         $partner->users()->attach($user->getKey(), ['is_admin' => true]);
+        // L'auteur est prévenu qu'il est en validation (décision 2026-11-24-partenaires-validation-notifications).
+        PartnerSubmitted::dispatch($partner, $user->getKey(), true);
 
         return $partner;
     }
 
     /**
      * Un partenaire modifié par un de ses administrateurs : seuls les textes de `$locale` changent ; il repasse en
-     * validation (décision 2026-11-24-partenaires-par-les-membres).
+     * validation (décision 2026-11-24-partenaires-par-les-membres) ; ses comptes, l'auteur `$actor` compris, sont
+     * prévenus (décision 2026-11-24-partenaires-validation-notifications).
      *
      * @param  array{name: string, slogan?: string|null, description?: string|null, url?: string|null, cta_label?: string|null, contact_email?: string|null, contact_phone?: string|null}  $data
      */
-    public function change(Partner $partner, array $data, string $locale): void
+    public function change(Partner $partner, array $data, string $locale, User $actor): void
     {
         $this->fill($partner, $data, $locale);
         $partner->status = PartnerStatusEnum::PENDING;
         $partner->save();
+        PartnerSubmitted::dispatch($partner, $actor->getKey(), false);
     }
 
     /**

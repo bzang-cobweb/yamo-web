@@ -4,7 +4,9 @@ namespace Modules\Partner\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Modules\Partner\Events\PartnerStatusChanged;
+use Modules\Partner\Events\PartnerSubmitted;
 use Modules\Partner\Listeners\NotifyPartnerUsersOfStatus;
+use Modules\Partner\Listeners\NotifyPartnerUsersOfSubmission;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -16,6 +18,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         // Un changement de statut prévient les comptes du partenaire (décision 2026-11-24-partenaires-notifications).
         PartnerStatusChanged::class => [NotifyPartnerUsersOfStatus::class],
+        PartnerSubmitted::class => [NotifyPartnerUsersOfSubmission::class],
     ];
 
     /**

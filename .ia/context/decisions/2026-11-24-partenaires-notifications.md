@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-24-partenaires-validation-notifications.md
+
 # `2026-11-24` — Partenaires : une notification à chaque changement de statut
 
 - **Type** : décision

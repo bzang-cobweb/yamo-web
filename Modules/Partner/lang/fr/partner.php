@@ -79,15 +79,27 @@ return [
         'salutation' => "L'équipe :app",
         'title' => [
             'pending' => 'Partenaire en validation',
-            'published' => 'Partenaire publié',
+            'published' => 'Partenaire accepté',
             'rejected' => 'Partenaire refusé',
             'archived' => 'Partenaire archivé',
         ],
         'body' => [
             'pending' => "Votre partenaire « :name » est en validation par l'équipe.",
-            'published' => 'Votre partenaire « :name » est publié.',
+            'published' => "Votre partenaire « :name » a été accepté par l'équipe.",
             'rejected' => "Votre partenaire « :name » a été refusé par l'équipe.",
             'archived' => 'Votre partenaire « :name » est archivé.',
+        ],
+        // Ajouté ou modifié depuis l'app, en validation (décision 2026-11-24-partenaires-validation-notifications).
+        'submitted' => [
+            'title' => ['created' => 'Partenaire ajouté', 'updated' => 'Partenaire modifié'],
+            'own' => [
+                'created' => "Votre partenaire « :name » est en validation : l'équipe le vérifie avant de l'afficher.",
+                'updated' => "Votre partenaire « :name » est en validation : l'équipe vérifie vos modifications avant de l'afficher.",
+            ],
+            'others' => [
+                'created' => '« :name » a été ajouté par :actor ; il est en validation.',
+                'updated' => '« :name » a été modifié par :actor ; il est en validation.',
+            ],
         ],
     ],
     // La langue de saisie à la modification (décision 2026-11-24-mes-partenaires-cartes).
