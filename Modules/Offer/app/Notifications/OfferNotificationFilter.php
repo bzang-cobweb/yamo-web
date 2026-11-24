@@ -21,7 +21,7 @@ use Modules\Offer\Support\BookingCache;
  * Les filtres des notifications liées à une offre (décision
  * 2026-11-20-filtres-notifications) :
  * - un type, « Demande de logement » : les notifications d'une demande, une par action (`BookingNotification`) ;
- * - pour ce type : le statut réel de la demande, le logement, le type de location ;
+ * - pour ce type : le statut réel de la demande (filtre « Statut » commun), le logement, le type de location ;
  * - la recherche, dans le titre du logement.
  *
  * Une notification sans offre ne passe pas le filtre « Logement ».
@@ -40,9 +40,9 @@ class OfferNotificationFilter implements NotificationFilter
     {
         // Sans domaine choisi, « Demande » (le libellé par défaut d'un domaine).
         $label = app(DomainRegistry::class)->active()?->requestLabel() ?? __('offer::booking.notify.title');
-        $types = [self::BOOKING => ['label' => $label, 'types' => BookingStepEnum::notifications()]];
+        $types = [self::BOOKING => ['label' => $label, 'types' => BookingStepEnum::notifications(), 'group' => self::BOOKING]];
         foreach ([BookingStepEnum::RECEIVED, BookingStepEnum::UPDATED, BookingStepEnum::ACCEPTED, BookingStepEnum::REFUSED, BookingStepEnum::CANCELLED] as $step) {
-            $types[self::action($step)] = ['label' => BookingNotification::title($step, false), 'types' => [$step->notification()]];
+            $types[self::action($step)] = ['label' => BookingNotification::title($step, false), 'types' => [$step->notification()], 'group' => self::BOOKING];
         }
 
         return $types;
@@ -122,14 +122,22 @@ class OfferNotificationFilter implements NotificationFilter
         return ['label' => $status->label(), 'tone' => $status->tone()];
     }
 
+    /**
+     * Le statut réel d'une demande, dans le filtre « Statut » commun, pour les types d'une demande (décisions
+     * 2026-11-20-statut-reel et 2026-11-24-notifications-types-groupes-statut).
+     */
+    public function statuses(): array
+    {
+        return collect(BookingStatusEnum::options())
+            ->map(fn (string $label): array => ['label' => $label, 'parent' => self::BOOKING])
+            ->all();
+    }
+
     public function fields(User $user): array
     {
         return [
-            // Pour une demande de logement : son statut réel, le logement, son type de location.
-            Field::select('status')
-                ->label(__('offer::booking.profile.filter_status'))
-                ->options(BookingStatusEnum::options())
-                ->visibleWhen('type', self::bookingTypes()),
+            // Pour une demande de logement : le logement, son type de location ; son statut réel est dans le filtre
+            // « Statut » commun (`statuses()`).
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->offers($user))

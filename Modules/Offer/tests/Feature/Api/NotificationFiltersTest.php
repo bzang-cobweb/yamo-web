@@ -69,8 +69,14 @@ class NotificationFiltersTest extends TestCase
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
-        // `partner_status` : le filtre du module Partner, visible pour ses types seulement (décision 2026-11-24-partenaire-notification-par-statut).
-        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'partner_status', 'unread'], $filters->keys()->all());
+        // « Statut » : commun, juste après « Type », ses options selon le groupe du type (décision
+        // 2026-11-24-notifications-types-groupes-statut).
+        $this->assertSame(['user', 'type', 'status', 'offer', 'rental_type', 'unread'], $filters->keys()->all());
+        $this->assertSame('type', $filters['status']['depends_on']);
+        $this->assertSame('booking', collect($filters['status']['options'])->firstWhere('value', 'accepted')['parent']);
+        $this->assertSame('partner', collect($filters['status']['options'])->firstWhere('value', 'partner_published')['parent']);
+        // Chaque type sous son groupe.
+        $this->assertSame(['booking', 'booking', 'booking'], array_column($filters['type']['options'], 'group'));
         // Le groupe des demandes, puis une option par action présente (décision 2026-11-22-filtre-type-par-action) ;
         // un type inconnu des modules n'est pas proposé.
         $this->assertSame(['booking' => 'Demande de logement', 'booking_received' => 'Nouvelle demande', 'booking_accepted' => 'Demande acceptée'], array_column($filters['type']['options'], 'label', 'value'));
@@ -79,11 +85,12 @@ class NotificationFiltersTest extends TestCase
         $this->assertFalse($filters['type']['locked']);
         $this->assertNull($filters['type']['default']);
         $this->assertArrayNotHasKey('selected', $filters['type']);
-        // Statut, logement et type de location : pour ce type seulement.
-        foreach (['status', 'offer', 'rental_type'] as $name) {
+        // Logement et type de location : pour ce type seulement ; « Statut » : pour tout type, ses options selon le groupe.
+        foreach (['offer', 'rental_type'] as $name) {
             $this->assertSame(['booking', 'booking_received', 'booking_accepted', 'booking_refused', 'booking_cancelled', 'booking_updated'], $filters[$name]['visible_when']['values']);
         }
-        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'completed', 'expired'], array_column($filters['status']['options'], 'value'));
+        $this->assertContains('partner_published', $filters['status']['visible_when']['values']);
+        $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'completed', 'expired'], array_column(array_filter($filters['status']['options'], fn (array $option): bool => $option['parent'] === 'booking'), 'value'));
         $this->assertSame(['long_term' => 'Location', 'furnished' => 'Location meublée', 'shared' => 'Colocation'], array_column($filters['rental_type']['options'], 'label', 'value'));
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));

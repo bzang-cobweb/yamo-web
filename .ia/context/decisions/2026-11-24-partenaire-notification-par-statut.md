@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-24-notifications-types-groupes-statut.md (le filtre « Statut du partenaire »)
+
 # `2026-11-24` — Une notification de partenaire par statut
 
 Remplace : 2026-11-24-partenaires-notifications-filtre.md

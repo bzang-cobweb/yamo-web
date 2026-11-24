@@ -4,6 +4,7 @@
 
 return [
     // Filtre « qui agit » de la liste (décision 2026-11-20-filtres-notifications).
+    'filter_status' => 'Statut',
     'filter_type' => 'Type',
     'filter_user' => 'Membre',
     'filter_unread' => 'Non lues',

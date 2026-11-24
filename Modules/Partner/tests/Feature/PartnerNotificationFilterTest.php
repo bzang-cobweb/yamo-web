@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 /**
  * Les notifications des partenaires dans « Notifications » : le type « Partenaire », un type par statut, le filtre
- * « Statut du partenaire », la pastille,
+ * « Statut » commun, la pastille,
  * la recherche par nom (décisions 2026-11-24-partenaires-notifications-filtre et
  * 2026-11-24-partenaire-notification-par-statut).
  */
@@ -69,19 +69,22 @@ class PartnerNotificationFilterTest extends TestCase
         $this->assertSame(['Partenaire accepté'], array_column($published, 'title'));
         $this->assertSame('Publié', $published[0]['tag']['label']);
 
-        // Le filtre « Statut du partenaire », avec le groupe.
-        $this->assertSame(['Partenaire accepté'], array_column($this->items($member, '?filter[type]=partner&filter[partner_status]=published'), 'title'));
-        $this->assertEqualsCanonicalizing(['Partenaire ajouté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[partner_status]=pending'), 'title'));
+        // Le filtre « Statut » commun, avec le groupe.
+        $this->assertSame(['Partenaire accepté'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_published'), 'title'));
+        $this->assertEqualsCanonicalizing(['Partenaire ajouté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_pending'), 'title'));
 
         // Par le nom du partenaire.
         $this->assertEqualsCanonicalizing(['Partenaire modifié'], array_column($this->items($member, '?search=Akwa'), 'title'));
 
-        // Le groupe, puis un type par statut présent ; le filtre « Statut du partenaire », pour ces types.
+        // Le groupe, puis un type par statut présent, chacun sous son groupe ; les statuts du partenaire dans « Statut ».
         $filters = collect($this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
         $types = array_column($filters['type']['options'], 'label', 'value');
         $this->assertSame(['Partenaire', 'Partenaire en validation', 'Partenaire accepté'], [$types['partner'], $types['partner_pending'], $types['partner_published']]);
         $this->assertArrayNotHasKey('partner_rejected', $types);
-        $this->assertSame('Statut du partenaire', $filters['partner_status']['label']);
+        $this->assertSame(['partner'], array_values(array_unique(array_column($filters['type']['options'], 'group'))));
+        $statuses = collect($filters['status']['options'])->where('parent', 'partner');
+        $this->assertSame(['En validation', 'Publié', 'Refusé', 'Archivé'], $statuses->pluck('label')->all());
+        $this->assertArrayNotHasKey('partner_status', $filters->all());
     }
 }

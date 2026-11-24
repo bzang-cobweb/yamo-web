@@ -42,10 +42,17 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Demande de logement »).
+            // Le type, parmi ceux de ses notifications, chacun sous son groupe (« Demande acceptée » sous « Demande de
+            // logement »).
             Field::select('type')
                 ->label(__('notification::notification.filter_type'))
                 ->options($this->typeOptions($user)),
+            // Le statut, ceux du groupe du type choisi (décision 2026-11-24-notifications-types-groupes-statut).
+            Field::select('status')
+                ->label(__('notification::notification.filter_status'))
+                ->options(array_merge(...array_map(fn (string $filter): array => app($filter)->statuses(), $this->filters)))
+                ->dependsOn('type')
+                ->visibleWhen('type', array_keys($this->types())),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
             // En dernier, après ceux des modules, qui suivent « Type » ; non lues : Tous (par défaut), Oui, Non, en interrupteur à trois positions
             // (décision 2026-11-21-filtre-non-lues).
@@ -115,9 +122,9 @@ class NotificationFilters
     }
 
     /**
-     * Les types inscrits par les modules (clé => libellé et classe de notification).
+     * Les types inscrits par les modules (clé => libellé, classes de notification et groupe).
      *
-     * @return array<string, array{label: string, type: class-string}>
+     * @return array<string, array{label: string, types: list<class-string>, group: string}>
      */
     private function types(): array
     {
@@ -125,9 +132,9 @@ class NotificationFilters
     }
 
     /**
-     * Les types présents dans ses notifications (clé => libellé), dans l'ordre des modules.
+     * Les types présents dans ses notifications (clé => libellé et groupe), dans l'ordre des modules.
      *
-     * @return array<string, string>
+     * @return array<string, array{label: string, group: string}>
      */
     private function typeOptions(User $user): array
     {
@@ -135,7 +142,7 @@ class NotificationFilters
         $options = [];
         foreach ($this->types() as $key => $type) {
             if (array_intersect($type['types'], $present) !== []) {
-                $options[$key] = $type['label'];
+                $options[$key] = ['label' => $type['label'], 'group' => $type['group']];
             }
         }
 
