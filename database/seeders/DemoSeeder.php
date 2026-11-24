@@ -198,6 +198,20 @@ class DemoSeeder extends Seeder
             foreach (self::READ_BY_VISITORS as $key) {
                 self::readByVisitor($made[$key]);
             }
+
+            // Les demandes du membre lui-même, chez un autre propriétaire, une par type de location (décision
+            // 2026-11-24-demo-reservations-du-membre) : « Mes réservations » n'est pas vide.
+            foreach (self::MEMBER_BOOKINGS as [$offerIndex, $from, $to, $guests, $message, $answer]) {
+                $tick();
+                $offer = Offer::query()->where('user_id', '!=', $member->getKey())->where('title->fr', self::OTHER_OFFERS[$offerIndex][0]['fr'])->firstOrFail();
+                $booking = $service->request($member, $offer, [
+                    'check_in' => $today->copy()->addDays($from)->toDateString(), 'check_out' => $to === null ? null : $today->copy()->addDays($to)->toDateString(), 'guests' => $guests, 'message' => $message,
+                ]);
+                if ($answer !== null) {
+                    $tick();
+                    $service->answer($booking->refresh(), $answer === 'accept');
+                }
+            }
         } finally {
             Carbon::setTestNow();
             config(['queue.default' => $queue]);
@@ -208,7 +222,9 @@ class DemoSeeder extends Seeder
      * Demandes : visiteur (1 à 3), rang du logement publié, arrivée et départ (ou date
      * d'une visite, sa seule date : un départ donné est ignoré, décision 2026-11-22-visite-une-seule-date) en jours
      * depuis aujourd'hui, voyageurs, message.
-     * Rangs 1, 4, 9, 10, 14 : meublés (séjours) ; 0, 2, 3 : visites. Elles couvrent les
+     * Rangs 1, 4, 9, 10, 14 : meublés (séjours) ; 0, 2 (location), 3 et 12 (colocation) : visites. Chaque type de
+     * location a ses demandes qui se chevauchent : des séjours aux dates communes (meublé), des visites le même jour
+     * (location, colocation, décision 2026-11-24-demo-chevauchements-par-type). Elles couvrent les
      * cas du texte d'une demande (décision 2026-11-20-texte-demande-location) : une personne
      * et plusieurs. Rejouées par `booking:reset`.
      *
@@ -227,8 +243,31 @@ class DemoSeeder extends Seeder
         'short_cancelled' => [2, 10, 15, 17, 1, 'Court séjour pour un rendez-vous.'],
         'upscale_cancelled' => [3, 14, 30, 35, 4, 'Vacances en famille.'],
         'visit_pending' => [1, 0, 3, null, null, 'Je peux passer en fin de journée.'],
+        // Location : deux autres visites en attente le même jour, sur le même appartement (décision
+        // 2026-11-24-demo-chevauchements-par-type) : accepter l'une touche les autres.
+        'visit_overlap' => [2, 0, 3, null, null, 'Disponible plutôt le matin.'],
+        'visit_overlap_late' => [3, 0, 3, null, null, null],
         'visit_accepted' => [2, 3, 4, 6, null, 'Je cherche une colocation pour la rentrée.'],
         'visit_refused' => [3, 2, 8, null, null, null],
+        // Colocation : trois visites en attente le même jour, sur la même chambre (décision
+        // 2026-11-24-demo-chevauchements-par-type).
+        'shared_visit_pending' => [1, 12, 6, null, null, 'Je suis étudiante, la chambre est-elle encore libre ?'],
+        'shared_visit_overlap' => [2, 12, 6, null, null, 'Je peux venir avec un ami qui cherche aussi.'],
+        'shared_visit_overlap_late' => [3, 12, 6, null, null, null],
+    ];
+
+    /**
+     * Les demandes du membre, chez l'autre propriétaire (`OTHER_OFFERS`) : rang de son logement, arrivée et départ (ou
+     * date d'une visite) en jours depuis aujourd'hui, voyageurs, message, réponse du propriétaire (`accept`, `refuse`,
+     * `null` : en attente). Une par type de location : meublé (séjour accepté), location et colocation (visites en
+     * attente).
+     *
+     * @var list<array{int, int, int|null, int|null, string|null, string|null}>
+     */
+    private const MEMBER_BOOKINGS = [
+        [0, 8, 11, 2, 'Arrivée prévue en fin d’après-midi.', 'accept'],
+        [1, 5, null, null, 'Je souhaite visiter avant de signer le bail.', null],
+        [2, 7, null, null, null, null],
     ];
 
     /**
