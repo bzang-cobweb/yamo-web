@@ -54,3 +54,44 @@ Validation : non — exécuté en mode nuit le 2026-11-24
 - Dans « Notifications », le type « Partenaire » ne montre que les notifications des partenaires ; le filtre
   « Statut du partenaire » les restreint à un statut ; chaque carte montre sa pastille.
 - Tous les tests passent (web et app), le formatage aussi.
+
+## Ce que j'ai décidé seul
+
+- « Administrateurs (édition) » = comptes rattachés au partenaire (tous peuvent le modifier), pas seulement `is_admin`.
+- La notification « statut changé » ne part plus pour le passage en validation (un ajout ou une modification la
+  doublait).
+- Statut « accepté » = « Publié » ; les notifications disent « accepté », le libellé du statut reste « Publié ».
+- Action « Valider » sur la liste **et** sur la page d'un partenaire, avec confirmation.
+- « Devenir partenaire » aussi sur la page publique « Partenaires » (seul endroit où un visiteur peut le voir) ;
+  sur « Mes partenaires », il remplace « Ajouter un partenaire ».
+- « Trier par status » = filtrer par statut ; le statut est celui que la notification annonce.
+- La notification d'ajout ou de modification nomme qui agit (carte, filtre « Membre »).
+- Correction d'un défaut préexistant hors périmètre, qui bloquait le critère de formatage : guillemets dans
+  `Modules/Partner/lang/*/mobile.php`.
+
+## Ce qui a été fait
+
+| Partie | Web | App |
+|---|---|---|
+| 1. Notifications de mise en validation | `bbf0f18` | — |
+| 2. « Valider » au back-office | `71af5b1` | — |
+| 3. « Devenir partenaire » | `990be5c` | `c04f34c` |
+| 4. Notifications des partenaires, par statut | `35d70a6` | — |
+| Formatage | `93cb44a` | `aff436b` |
+
+Preuves : 691 tests web, 369 tests app, `pint --test` et `tsc --noEmit` propres ; vérification indépendante
+(`.ia/runs/nuit-2026-11-24/qa-check.md`) : critères 1 à 4 conformes, le blocage de formatage corrigé ensuite.
+
+## Ce que je n'ai pas vérifié
+
+- Le rendu dans le simulateur (barre « Devenir partenaire », filtre des notifications) et dans le back-office
+  (action « Valider ») : seulement par les tests.
+- L'envoi réel des e-mails et SMS, la file d'attente en production.
+- Les textes allemands et anglais (écrits par la session, non relus).
+
+## Ce qui reste en suspens
+
+- Refuser un partenaire reste un changement de statut dans le formulaire du back-office (non demandé), sans action
+  dédiée.
+- Après la connexion depuis « Devenir partenaire », le visiteur revient à l'écran d'où il venait ; le formulaire ne
+  s'ouvre pas tout seul.
