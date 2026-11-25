@@ -42,6 +42,10 @@ return [
     'bedrooms' => 'Chambres',
     'bathrooms' => 'Salles de bain',
     'cameras' => 'Caméras de surveillance',
+    'borehole' => 'Forage',
+    'generator' => 'Groupe électrogène',
+    // Les deux catégories racines des cases (décision 2026-11-25-cases-par-categories).
+    'flag_roots' => ['rules' => 'Règles', 'features' => 'Équipements'],
     'available_from' => 'Disponible dès le',
     'charges' => 'Charges mensuelles',
     'charges_help' => 'En plus du loyer.',

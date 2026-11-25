@@ -2,12 +2,15 @@
 
 namespace Modules\Offer\Domains;
 
+use App\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
+use Illuminate\Support\Str;
 use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferCategory;
 
 /**
  * Location de logements, meublés ou non (décision 2026-11-18-offres-et-domaines) :
@@ -119,23 +122,82 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Équipements proposés (décision 2026-11-19-contrat-multiselect-intervalle-equipements) ;
-     * leurs libellés sont dans `offer::rental.amenities`.
+     * Les anciens équipements (décision 2026-11-19-contrat-multiselect-intervalle-equipements), devenus des cases de la
+     * catégorie « Équipements » (décision 2026-11-25-equipements-en-categories) ; leurs libellés sont dans `offer::rental.amenities`.
      */
-    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'generator', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
+    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
+
+    /**
+     * Les cases de départ, sous deux catégories racines au même niveau, « Règles » et « Équipements » (décision
+     * 2026-11-25-cases-par-categories) : les clés de leurs libellés ; leurs slugs sont tirés des noms (décision
+     * 2026-11-25-categories-slug-traduit). Les anciens équipements en tête des « Équipements » (décision 2026-11-25-equipements-en-categories).
+     */
+    public const FLAG_TREE = [
+        'rules' => ['pets', 'smoking', 'parties'],
+        // Sans « Forage » : « Réserve d'eau / forage » le couvre (décision 2026-11-25-forage-en-double).
+        'features' => [...self::AMENITIES, 'cameras', 'generator'],
+    ];
+
+    /** La clé de traduction du nom d'une case de départ. */
+    public static function flagLabelKey(string $root, string $key): string
+    {
+        return match (true) {
+            $root === 'rules' => 'offer::rental.rules.'.$key,
+            in_array($key, self::AMENITIES, true) => 'offer::rental.amenities.'.$key,
+            default => 'offer::rental.'.$key,
+        };
+    }
+
+    /**
+     * Les ids des cases de départ `$keys` d'un groupe (`rule_flags`, `feature_flags`), retrouvées par leur nom dans la
+     * langue par défaut ; une case absente est ignorée. Pour les données de démonstration.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public function flagIds(string $field, array $keys): array
+    {
+        $root = $field === 'rule_flags' ? 'rules' : 'features';
+        $byName = array_flip(OfferCategory::childrenOf($this->flagGroups()[$field]));
+
+        return array_values(array_filter(array_map(fn (string $key): ?string => isset($byName[$name = (string) __(self::flagLabelKey($root, $key), [], Locales::default())]) ? (string) $byName[$name] : null, $keys)));
+    }
+
+    /** Les « Équipements » sur la fiche : une ligne, leurs noms à la suite, comme avant (décision 2026-11-25-equipements-en-categories). */
+    public function flagsAsList(): array
+    {
+        return ['feature_flags'];
+    }
 
     /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
-    /** Les règles qui se répondent par Oui / Non : saisies, affichées et filtrées pareil. */
-    public const YES_NO_RULES = ['pets', 'smoking', 'parties'];
+    /** Le nom d'un filtre de règle : `rule_` suivi de l'id de sa case. */
+    public const RULE_FILTER = 'rule_';
 
     public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
 
-    /**
-     * @return array<string, string>
-     */
-    private function amenityOptions(): array
+    public function flagGroups(): array
     {
-        return collect(self::AMENITIES)->mapWithKeys(fn (string $amenity): array => [$amenity => __('offer::rental.amenities.'.$amenity)])->all();
+        // Les racines par leur slug dans la langue par défaut (« regles », « equipements »).
+        return [
+            'rule_flags' => Str::slug(__('offer::rental.flag_roots.rules', [], Locales::default())),
+            'feature_flags' => Str::slug(__('offer::rental.flag_roots.features', [], Locales::default())),
+        ];
+    }
+
+    /**
+     * « Règles » et « Équipements », deux racines au même niveau, et leurs cases (décision 2026-11-25-cases-par-categories) ; le seeder les crée si
+     * elles manquent, le back-office les gère ensuite.
+     */
+    public function categories(): array
+    {
+        $names = fn (string $key): array => collect(Locales::values())->mapWithKeys(fn (string $locale): array => [$locale => (string) __($key, [], $locale)])->all();
+        $label = fn (string $root, string $key): string => self::flagLabelKey($root, $key);
+
+        // Les slugs sont tirés des noms, dans chaque langue ; le seeder retrouve une catégorie par son nom.
+        return collect(self::FLAG_TREE)->map(fn (array $children, string $root): array => [
+            'name' => $names('offer::rental.flag_roots.'.$root),
+            'children' => array_map(fn (string $key): array => ['name' => $names($label($root, $key))], $children),
+        ])->values()->all();
     }
 
     public function attributes(): array
@@ -168,18 +230,12 @@ class RentalDomain extends Domain
             Field::number('bathrooms')
                 ->label(__('offer::rental.bathrooms'))
                 ->rules(['integer', 'min:0', 'max:20']),
-            // Des caméras dans le logement : Oui / Non, facultatif, dans les caractéristiques (décision
-            // 2026-11-25-offre-categorie-cameras).
-            Field::select('cameras')
-                ->label(__('offer::rental.cameras'))
-                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]),
+            // Les cases de « Équipements » : wifi, parking… caméras, forage, groupe électrogène (décision 2026-11-25-equipements-en-categories).
+            $this->flagField('feature_flags'),
             // Pas pour un meublé, qui se réserve par dates (décision 2026-11-20-disponibilite-sans-meuble).
             Field::date('available_from')
                 ->label(__('offer::rental.available_from'))
                 ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues()),
-            Field::multiselect('amenities')
-                ->label(__('offer::rental.amenities_label'))
-                ->options($this->amenityOptions()),
             Field::number('charges')
                 ->label(__('offer::rental.charges'))
                 ->help(__('offer::rental.charges_help'))
@@ -219,12 +275,8 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.rules.check_out_until'))
                 ->options($this->hourOptions())
                 ->visibleWhen('rental_type', RentalTypeEnum::FURNISHED->value),
-            // Oui / Non, obligatoires (décision 2026-11-23-regles-oui-non-obligatoires) : un choix sans
-            // « Aucun » dans l'app, un interrupteur au back-office.
-            ...array_map(fn (string $rule): Field => Field::select($rule)
-                ->label(__('offer::rental.rules.'.$rule))
-                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')])
-                ->required(), self::YES_NO_RULES),
+            // Les cases de « Règles » : animaux, fumeurs, fêtes (décision 2026-11-25-cases-par-categories).
+            $this->flagField('rule_flags'),
             // Les documents en dernier (décision 2026-11-19-documents-en-dernier).
             Field::multiselect('documents')
                 ->label(__('offer::rental.rules.documents'))
@@ -237,7 +289,7 @@ class RentalDomain extends Domain
      */
     public function ruleAttributes(): array
     {
-        return ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'];
+        return ['check_in_from', 'check_out_until', 'rule_flags', 'documents'];
     }
 
     /**
@@ -331,7 +383,7 @@ class RentalDomain extends Domain
         return [
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
-            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'amenities']],
+            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'bathrooms', 'feature_flags']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],
@@ -369,15 +421,17 @@ class RentalDomain extends Domain
                 ->label(__('offer::rental.filters.available_from'))
                 ->help(__('offer::rental.filters.available_from_help'))
                 ->visibleWhen('rental_type', ['', ...RentalTypeEnum::unfurnishedValues()]),
-            Field::multiselect('amenities')
+            // Les « Équipements » cherchés, par id de case (décision 2026-11-25-equipements-en-categories).
+            Field::multiselect('feature_flags')
                 ->label(__('offer::rental.amenities_label'))
                 ->help(__('offer::rental.filters.amenities_help'))
-                ->options($this->amenityOptions()),
-            // Les règles Oui / Non, comme « Meublé » (décision 2026-11-19-filtres-regles).
-            ...array_map(fn (string $rule): Field => Field::segmented($rule)
-                ->label(__('offer::rental.rules.'.$rule))
+                ->optionsUsing(fn (): array => OfferCategory::childrenOf($this->flagGroups()['feature_flags'])),
+            // Une règle Oui / Non par case de « Règles », comme « Meublé » (décision 2026-11-19-filtres-regles ; décision 2026-11-25-categories-slug-traduit) :
+            // une case ajoutée au back-office a son filtre.
+            ...array_map(fn (string $id, string $name): Field => Field::segmented(self::RULE_FILTER.$id)
+                ->label($name)
                 ->options(['any' => __('offer::rental.filters.any'), 'yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')])
-                ->default('any'), self::YES_NO_RULES),
+                ->default('any'), array_keys($rules = OfferCategory::childrenOf($this->flagGroups()['rule_flags'])), $rules),
         ];
     }
 
@@ -416,15 +470,19 @@ class RentalDomain extends Domain
                 ->orWhereNull('details->available_from')
                 ->orWhere('details->available_from', '<=', (string) $filters['available_from']));
         }
-        // Tous les équipements choisis.
-        foreach ((array) ($filters['amenities'] ?? []) as $amenity) {
-            $query->whereJsonContains('details->amenities', (string) $amenity);
+        // Tous les équipements choisis, par id de case (décision 2026-11-25-equipements-en-categories).
+        foreach ((array) ($filters['feature_flags'] ?? []) as $id) {
+            $query->whereJsonContains('details->feature_flags', (string) $id);
         }
-        // Une règle Oui / Non : la réponse du propriétaire ; une règle non renseignée ne
-        // répond ni oui ni non (décision 2026-11-19-filtres-regles).
-        foreach (self::YES_NO_RULES as $rule) {
-            if (in_array($filters[$rule] ?? 'any', ['yes', 'no'], true)) {
-                $query->where('details->'.$rule, $filters[$rule]);
+        // Une règle : « Oui », sa case cochée ; « Non », pas cochée (décision 2026-11-25-cases-par-categories, remplace « non renseignée ne répond ni oui ni
+        // non » de la décision 2026-11-19-filtres-regles).
+        // Par l'id de la case dans `details.rule_flags` (décision 2026-11-25-categories-slug-traduit).
+        foreach (array_keys(OfferCategory::childrenOf($this->flagGroups()['rule_flags'])) as $id) {
+            $answer = $filters[self::RULE_FILTER.$id] ?? 'any';
+            if ($answer === 'yes') {
+                $query->whereJsonContains('details->rule_flags', (string) $id);
+            } elseif ($answer === 'no') {
+                $query->where(fn (Builder $unchecked) => $unchecked->whereNull('details->rule_flags')->orWhereJsonDoesntContain('details->rule_flags', (string) $id));
             }
         }
     }

@@ -3,6 +3,7 @@
 namespace Modules\Offer\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
 use Tests\TestCase;
@@ -17,15 +18,22 @@ class RentalTypeMigrationTest extends TestCase
 
     public function test_categories_and_furnished_move_to_the_rental_type_and_other_categories_stay(): void
     {
-        $category = fn (string $slug, string $name): OfferCategory => OfferCategory::query()->create(['slug' => $slug, 'name' => ['fr' => $name], 'position' => 0]);
+        // La migration rejouée date d'avant le slug traduit (décision 2026-11-25-categories-slug-traduit) : la base est
+        // remise à ce moment-là, puis remise à jour.
+        $slugs = require base_path('Modules/Offer/database/migrations/2026_12_07_230000_translate_offer_category_slugs.php');
+        $flags = require base_path('Modules/Offer/database/migrations/2026_12_07_240000_store_offer_flags_by_category_id.php');
+        $flags->down();
+        $slugs->down();
+
+        $category = fn (string $slug, string $name, ?int $parent = null): object => DB::table('offer_categories')->find(DB::table('offer_categories')->insertGetId(['slug' => $slug, 'name' => json_encode(['fr' => $name]), 'position' => 0, 'parent_id' => $parent]));
         $longTerm = $category('long-term', 'Location longue durée');
         $furnished = $category('furnished', 'Location meublée');
         $shared = $category('shared', 'Colocation');
         $other = $category('standing', 'Standing');
-        $child = OfferCategory::query()->create(['slug' => 'luxe', 'name' => ['fr' => 'Luxe'], 'parent_id' => $shared->getKey(), 'position' => 0]);
+        $child = $category('luxe', 'Luxe', $shared->id);
 
-        $offer = fn (?OfferCategory $in, ?bool $isFurnished): Offer => Offer::factory()->create([
-            'category_id' => $in?->getKey(),
+        $offer = fn (?object $in, ?bool $isFurnished): Offer => Offer::factory()->create([
+            'category_id' => $in?->id,
             'details' => array_filter(['property_type' => 'studio', 'furnished' => $isFurnished], fn ($value) => $value !== null),
         ]);
         $a = $offer($longTerm, false);
@@ -42,10 +50,14 @@ class RentalTypeMigrationTest extends TestCase
         $this->assertSame(['furnished', null, null], $type($b));
         $this->assertSame(['shared', null, null], $type($c));
         // Une autre catégorie reste ; sans catégorie de location, « Meublé » décide.
-        $this->assertSame(['furnished', null, $other->getKey()], $type($d));
+        $this->assertSame(['furnished', null, $other->id], $type($d));
         $this->assertSame(['long_term', null, null], $type($e));
 
-        $this->assertSame(['standing', 'luxe'], OfferCategory::query()->orderBy('id')->pluck('slug')->all());
-        $this->assertNull($child->fresh()->parent_id);
+        $this->assertSame(['standing', 'luxe'], DB::table('offer_categories')->orderBy('id')->pluck('slug')->all());
+        $this->assertNull(DB::table('offer_categories')->where('id', $child->id)->value('parent_id'));
+
+        $slugs->up();
+        $flags->up();
+        $this->assertSame(['fr' => 'standing'], array_intersect_key(OfferCategory::query()->findOrFail($other->id)->getTranslations('slug'), ['fr' => 1]));
     }
 }

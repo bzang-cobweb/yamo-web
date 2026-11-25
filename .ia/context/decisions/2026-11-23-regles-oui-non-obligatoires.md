@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-25-oui-non-trois-positions.md
+
 Remplace en partie : 2026-11-21-choix-facultatif-effacable.md (les règles Oui / Non du logement ne sont plus facultatives).
 
 # `2026-11-23` — Règles Oui / Non du logement obligatoires, en interrupteurs

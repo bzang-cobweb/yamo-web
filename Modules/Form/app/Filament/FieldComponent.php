@@ -61,6 +61,20 @@ final class FieldComponent
             ]);
     }
 
+    /** La hauteur au plus d'une liste de cases, comme dans l'app (décision 2026-11-25-cases-hauteur-fixe). */
+    public const CHECKBOX_LIST_MAX_HEIGHT = '16rem';
+
+    /**
+     * Une liste de cases à hauteur fixe : au-delà, elle défile dans son cadre, comme dans l'app (décision
+     * 2026-11-25-cases-hauteur-fixe).
+     */
+    public static function boundedCheckboxList(CheckboxList $list): CheckboxList
+    {
+        return $list->extraAttributes([
+            'style' => 'max-height: '.self::CHECKBOX_LIST_MAX_HEIGHT.'; overflow-y: auto; padding: 0.75rem; border: 1px solid rgb(127 127 127 / 0.25); border-radius: 0.5rem;',
+        ]);
+    }
+
     /**
      * @param  string|null  $statePath  chemin de l'état, si différent du nom (ex. `attributes.surface` dans une colonne JSON)
      */
@@ -94,7 +108,7 @@ final class FieldComponent
             FieldType::SELECT, FieldType::SEGMENTED => Select::make($name)->options($field->optionLabels()),
             FieldType::RADIO => Radio::make($name)->options($field->optionLabels()),
             FieldType::CHECKBOX, FieldType::SWITCH => Toggle::make($name),
-            FieldType::CHECKBOX_GROUP => CheckboxList::make($name)->options($field->optionLabels()),
+            FieldType::CHECKBOX_GROUP => self::boundedCheckboxList(CheckboxList::make($name)->options($field->optionLabels())),
             FieldType::MULTISELECT => Select::make($name)->multiple()->options($field->optionLabels()),
             FieldType::RATING => Select::make($name)->options(array_combine(range(1, 5), array_map(fn (int $stars): string => str_repeat('★', $stars), range(1, 5)))),
             FieldType::DATE => DatePicker::make($name)->native(false)->format('Y-m-d'),

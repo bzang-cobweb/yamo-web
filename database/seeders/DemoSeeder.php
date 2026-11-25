@@ -14,6 +14,8 @@ use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Services\UserAddressService;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
+use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Domains\RentalDomain;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
@@ -433,7 +435,7 @@ class DemoSeeder extends Seeder
                     'advance_months' => $furnished || $bare ? null : [3, 6, 12][$index % 3],
                     // La caution d'un meublé, un montant (décision 2026-11-20-caution-meuble).
                     'deposit' => $furnished && ! $bare ? [50000, 100000][$index % 2] : null,
-                    'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)],
+                    'feature_flags' => $this->equipment(self::AMENITY_SETS[$index % count(self::AMENITY_SETS)]),
                 ],
             ]);
             $offer->offerAddress()->create(['address_id' => $addresses[$index % count($addresses)]]);
@@ -473,7 +475,8 @@ class DemoSeeder extends Seeder
                 'status' => OfferStatusEnum::PUBLISHED,
                 'price' => $price,
                 'currency' => $cameroon->currency,
-                'details' => $details,
+                // Les codes d'équipement deviennent les ids de leurs cases (décision 2026-11-25-equipements-en-categories).
+                'details' => [...array_diff_key($details, ['amenities' => true]), 'feature_flags' => $this->equipment((array) ($details['amenities'] ?? []))],
             ]);
             $offer->offerAddress()->create(['address_id' => $addressId]);
         }
@@ -562,10 +565,23 @@ class DemoSeeder extends Seeder
     private function amenities(User $member): void
     {
         Offer::query()->where('user_id', $member->getKey())->orderBy('id')->get()->values()->each(function (Offer $offer, int $index): void {
-            if ($offer->detail('amenities') === null) {
-                $offer->update(['details' => [...($offer->details ?? []), 'amenities' => self::AMENITY_SETS[$index % count(self::AMENITY_SETS)]]]);
+            if ($offer->detail('feature_flags') === null) {
+                $offer->update(['details' => [...($offer->details ?? []), 'feature_flags' => $this->equipment(self::AMENITY_SETS[$index % count(self::AMENITY_SETS)])]]);
             }
         });
+    }
+
+    /**
+     * Les ids des cases « Équipements » de ces codes (décision 2026-11-25-equipements-en-categories).
+     *
+     * @param  list<string>  $codes
+     * @return list<string>
+     */
+    private function equipment(array $codes): array
+    {
+        $domain = app(DomainRegistry::class)->active();
+
+        return $domain instanceof RentalDomain ? $domain->flagIds('feature_flags', $codes) : [];
     }
 
     /**

@@ -14,11 +14,11 @@ class OfferCategoryFactory extends Factory
 
     public function definition(): array
     {
-        $slug = 'categorie-'.fake()->unique()->numberBetween(1, 1000000);
+        $name = 'Catégorie '.fake()->unique()->numberBetween(1, 1000000);
 
+        // Le slug, traduit, est tiré du nom (décision 2026-11-25-categories-slug-traduit).
         return [
-            'name' => ['fr' => ucfirst($slug), 'en' => ucfirst($slug)],
-            'slug' => $slug,
+            'name' => ['fr' => $name, 'en' => $name],
             'position' => 0,
         ];
     }

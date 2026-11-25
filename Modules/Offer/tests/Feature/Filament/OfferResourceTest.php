@@ -2,12 +2,13 @@
 
 namespace Modules\Offer\Tests\Feature\Filament;
 
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\CheckboxList;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
+use Modules\Form\Filament\FieldComponent;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
@@ -26,6 +27,12 @@ use Modules\Offer\Models\OfferCategory;
  */
 class OfferResourceTest extends AuthFilamentTestCase
 {
+    /** L'id (texte) d'une case de « Règles » ou « Caractéristiques », par son nom français. */
+    private function flag(string $name): string
+    {
+        return (string) OfferCategory::query()->whereNotNull('parent_id')->where('name->fr', $name)->value('id');
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -84,7 +91,7 @@ class OfferResourceTest extends AuthFilamentTestCase
                 'price' => '2400',
                 'offerAddress.address_id' => $address->getKey(),
                 'offerAddress.indication.fr' => 'Portail vert',
-                'category_id' => (string) OfferCategory::query()->where('slug', 'long-term')->value('id'),
+                'category_id' => (string) OfferCategory::query()->withSlug('long-term')->value('id'),
                 'details.property_type' => 'house',
                 'details.rental_type' => 'long_term',
                 'details.surface' => '120',
@@ -266,12 +273,16 @@ class OfferResourceTest extends AuthFilamentTestCase
         // L'onglet « Règles » (décision 2026-11-19-contrat-regles-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSee('Règles')
-            ->assertFormFieldExists('details.pets', fn ($field): bool => $field instanceof Toggle)
-            ->fillForm(['details.pets' => true, 'details.smoking' => false])
+            // Les cases de « Règles », enregistrées par id de catégorie (décision 2026-11-25-categories-slug-traduit).
+            ->assertFormFieldExists('details.rule_flags', fn ($field): bool => $field instanceof CheckboxList)
+            // À hauteur fixe, comme dans l'app (décision 2026-11-25-cases-hauteur-fixe).
+            ->assertSeeHtml('max-height: '.FieldComponent::CHECKBOX_LIST_MAX_HEIGHT.'; overflow-y: auto;')
+            ->fillForm(['details.rule_flags' => [$pets = $this->flag('Animaux acceptés'), $parties = $this->flag('Fêtes et événements autorisés')]])
             ->call('save')
             ->assertHasNoFormErrors();
-        $this->assertSame('yes', $offer->fresh()->detail('pets'));
-        $this->assertSame('no', $offer->fresh()->detail('smoking'));
+        $this->assertEqualsCanonicalizing([$pets, $parties], $offer->fresh()->detail('rule_flags'));
+        // Rouverte : les cases cochées d'après l'offre.
+        Livewire::test(EditOffer::class, ['record' => $offer->getKey()])->assertSchemaStateSet(['details.rule_flags' => [$pets, $parties]]);
 
         // Les blocs d'informations, par langue (décision 2026-11-19-contrat-offer-informations).
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
@@ -286,7 +297,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $this->assertSame('Arrival', $informations[0]->getTranslation('title', 'en'));
         // Le back-office numérote à partir de 1 ; seul l'ordre compte.
         $this->assertSame([1, 2], $informations->pluck('position')->all());
-        $this->assertSame('yes', $offer->fresh()->detail('pets'));
+        $this->assertEqualsCanonicalizing([$pets, $parties], $offer->fresh()->detail('rule_flags'));
         $this->assertSame('studio', $offer->fresh()->detail('property_type'));
     }
 
@@ -297,10 +308,13 @@ class OfferResourceTest extends AuthFilamentTestCase
 
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
         Livewire::test(CreateOfferCategory::class)
-            ->fillForm(['name.fr' => 'Saisonnier', 'name.en' => 'Seasonal', 'slug' => 'seasonal', 'position' => 4])
+            ->fillForm(['name.fr' => 'Saisonnier', 'name.en' => 'Seasonal', 'position' => 4])
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $this->assertSame('Saisonnier', OfferCategory::query()->where('slug', 'seasonal')->sole()->getTranslation('name', 'fr'));
+        // Le slug de chaque langue, tiré du nom (décision 2026-11-25-categories-slug-traduit).
+        $seasonal = OfferCategory::query()->withSlug('seasonal', 'en')->sole();
+        $this->assertSame('Saisonnier', $seasonal->getTranslation('name', 'fr'));
+        $this->assertSame('saisonnier', $seasonal->getTranslation('slug', 'fr'));
     }
 }

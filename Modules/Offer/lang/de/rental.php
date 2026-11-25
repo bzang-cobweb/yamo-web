@@ -42,6 +42,10 @@ return [
     'bedrooms' => 'Schlafzimmer',
     'bathrooms' => 'Badezimmer',
     'cameras' => 'Überwachungskameras',
+    'borehole' => 'Brunnen',
+    'generator' => 'Stromaggregat',
+    // Les deux catégories racines des cases (décision 2026-11-25-cases-par-categories).
+    'flag_roots' => ['rules' => 'Regeln', 'features' => 'Ausstattung'],
     'available_from' => 'Verfügbar ab',
     'charges' => 'Monatliche Nebenkosten',
     'charges_help' => 'Zusätzlich zur Miete.',

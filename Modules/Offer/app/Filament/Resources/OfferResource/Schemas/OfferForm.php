@@ -5,6 +5,7 @@ namespace Modules\Offer\Filament\Resources\OfferResource\Schemas;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
 use Closure;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -61,12 +62,20 @@ abstract class OfferForm
             default => $tab === 'features',
         }));
 
-        return array_map(fn (Field $field): Component => $field->isTranslatable()
+        return array_map(fn (Field $field): Component => array_key_exists($field->name, $domain->flagGroups())
+            // Les cases d'une catégorie : les ids des catégories cochées (décision 2026-11-25-categories-slug-traduit).
+            // À hauteur fixe, comme dans l'app (décision 2026-11-25-cases-hauteur-fixe).
+            ? FieldComponent::boundedCheckboxList(CheckboxList::make('details.'.$field->name)
+                ->label($field->getLabel())
+                ->options($field->optionLabels())
+                ->columns(2)
+                ->columnSpanFull())
+            : ($field->isTranslatable()
             ? TranslatableTabs::make(fn (string $locale): array => [
                 FieldComponent::make($field, "details.{$field->name}.{$locale}")
                     ->required($field->isRequired() && $locale === Locales::default()),
             ], "details-{$field->name}")->columnSpanFull()
-            : FieldComponent::component($field, 'details.'.$field->name), $fields);
+            : FieldComponent::component($field, 'details.'.$field->name)), $fields);
     }
 
     /**
@@ -118,7 +127,8 @@ abstract class OfferForm
                                 // 2026-11-25-offre-categorie-cameras).
                                 Select::make('category_id')
                                     ->label(__('offer::offer.category'))
-                                    ->options(fn (): array => OfferCategory::options()),
+                                    // Sans les racines des cases (décision 2026-11-25-cases-par-categories).
+                                    ->options(fn (): array => OfferCategory::options(withoutRoots: $domain->flagRoots())),
                                 ...self::attributes($domain, 'listing'),
                                 // Traduits : un onglet par langue ; un titre dans au moins une langue
                                 // (décision 2026-11-19-contrat-langue-saisie-allemand), l'erreur sous la langue par défaut.

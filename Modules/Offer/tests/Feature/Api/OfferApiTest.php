@@ -20,6 +20,7 @@ use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
+use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferInformation;
 use Tests\TestCase;
 
@@ -30,6 +31,12 @@ use Tests\TestCase;
 class OfferApiTest extends TestCase
 {
     use MakesFormUploads, RefreshDatabase;
+
+    /** L'id (texte) d'une case de « Règles » ou « Caractéristiques », par son nom français. */
+    private function flag(string $name): string
+    {
+        return (string) OfferCategory::query()->whereNotNull('parent_id')->where('name->fr', $name)->value('id');
+    }
 
     protected function setUp(): void
     {
@@ -77,10 +84,6 @@ class OfferApiTest extends TestCase
             'surface' => '64',
             'rooms' => '3.5',
             'bedrooms' => '2',
-            // Obligatoires (décision 2026-11-23-regles-oui-non-obligatoires).
-            'pets' => 'no',
-            'smoking' => 'no',
-            'parties' => 'no',
             'available_from' => '2026-12-01',
             'charges' => '180',
             // Au moins une photo (décision 2026-11-19-contrat-champ-upload-photos).
@@ -119,7 +122,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'feature_flags', 'available_from', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'rule_flags', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -144,16 +147,21 @@ class OfferApiTest extends TestCase
     {
         $user = $this->member();
 
-        // Décision 2026-11-19-contrat-multiselect-intervalle-equipements.
+        // Les anciens équipements sont des cases de « Équipements », en tête (décision 2026-11-25-equipements-en-categories).
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
-        $this->assertSame('multiselect', $fields['amenities']['type']);
-        $this->assertCount(13, $fields['amenities']['options']);
+        $this->assertArrayNotHasKey('amenities', $fields);
+        $labels = array_column($fields['feature_flags']['options'], 'label');
+        $this->assertCount(14, $labels);
+        $this->assertSame(['Wifi', 'Parking'], array_slice($labels, 0, 2));
+        $this->assertSame(['Caméras de surveillance', 'Groupe électrogène'], array_slice($labels, -2));
+        // Sans « Forage », en double avec « Réserve d'eau / forage » (décision 2026-11-25-forage-en-double).
+        $this->assertNotContains('Forage', $labels);
 
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['spa']]))
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['feature_flags' => ['999999']]))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('amenities.0');
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['wifi', 'parking']]))->assertNoContent();
-        $this->assertSame(['wifi', 'parking'], Offer::query()->sole()->detail('amenities'));
+            ->assertJsonValidationErrors('feature_flags.0');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['feature_flags' => [$this->flag('Wifi'), $this->flag('Parking')]]))->assertNoContent();
+        $this->assertSame([$this->flag('Wifi'), $this->flag('Parking')], Offer::query()->sole()->detail('feature_flags'));
     }
 
     public function test_the_owner_chooses_to_show_the_address_or_not(): void
@@ -170,13 +178,39 @@ class OfferApiTest extends TestCase
         $this->assertTrue($offer->fresh()->show_address);
     }
 
-    public function test_a_yes_no_rule_is_required(): void
+    public function test_rules_and_characteristics_are_ticked_boxes_from_their_categories_stored_as_before(): void
     {
-        // Décision 2026-11-23-regles-oui-non-obligatoires : plus de « Aucun », une valeur vide est refusée.
+        // décision 2026-11-25-cases-par-categories.
         $user = $this->member();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['smoking' => '']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['smoking']);
+        $fields = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->assertOk()->json('data.fields'))->keyBy('name');
+        $this->assertSame('checkbox_group', $fields['rule_flags']['type']);
+        $this->assertSame('Règles', $fields['rule_flags']['label']);
+        // Les cases : les catégories enfants, par leur id, sous leur nom (décision 2026-11-25-categories-slug-traduit).
+        $this->assertSame(['Animaux acceptés', 'Fumeurs acceptés', 'Fêtes et événements autorisés'], array_column($fields['rule_flags']['options'], 'label'));
+        $this->assertSame([$this->flag('Animaux acceptés'), $this->flag('Fumeurs acceptés'), $this->flag('Fêtes et événements autorisés')], array_column($fields['rule_flags']['options'], 'value'));
+        $this->assertSame('Équipements', $fields['feature_flags']['label']);
+        $this->assertSame(['Caméras de surveillance', 'Groupe électrogène'], array_slice(array_column($fields['feature_flags']['options'], 'label'), -2));
+        // La catégorie d'une offre ne propose ni l'une ni l'autre.
+        $this->assertArrayNotHasKey('category_id', $fields->all());
+
+        $pets = $this->flag('Animaux acceptés');
+        [$borehole, $generator] = [$this->flag("Réserve d'eau / forage"), $this->flag('Groupe électrogène')];
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rule_flags' => [$pets], 'feature_flags' => [$borehole, $generator]]))->assertNoContent();
+        $offer = Offer::query()->sole();
+        // Les ids des cases cochées, sous le nom du champ.
+        $this->assertSame([$pets], $offer->detail('rule_flags'));
+        $this->assertSame([$borehole, $generator], $offer->detail('feature_flags'));
+        $this->assertArrayNotHasKey('pets', $offer->details);
+
+        // Modifier : les cases cochées d'après ce qui est enregistré ; décocher efface.
+        $edit = collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer?record='.$offer->getKey())->json('data.fields'))->keyBy('name');
+        $this->assertSame([$pets], $edit['rule_flags']['default']);
+        $this->assertSame([$borehole, $generator], $edit['feature_flags']['default']);
+        $this->asUser($user)->patchJson("/api/v1/offers/{$offer->getKey()}", $this->input($user, ['rule_flags' => [], 'feature_flags' => [$generator]]))->assertNoContent();
+        $this->assertEmpty((array) $offer->fresh()->detail('rule_flags'));
+        $this->assertSame([$generator], $offer->fresh()->detail('feature_flags'));
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['rule_flags' => ['999999']]))->assertUnprocessable();
     }
 
     public function test_an_offer_has_its_own_contact_phone_and_email(): void
@@ -280,9 +314,9 @@ class OfferApiTest extends TestCase
         $this->assertSame([
             // Sans catégorie créée, pas de champ « Catégorie ».
             ['property_type', 'rental_type', 'title', 'description'],
-            ['surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'amenities'],
+            ['surface', 'rooms', 'bedrooms', 'bathrooms', 'feature_flags'],
             ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status'],
-            ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
+            ['check_in_from', 'check_out_until', 'rule_flags', 'documents'],
             ['informations'],
             ['street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email'],
             ['photos'],
@@ -328,18 +362,18 @@ class OfferApiTest extends TestCase
         }
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, [
-            'rental_type' => 'furnished', 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'], 'pets' => 'no',
+            'rental_type' => 'furnished', 'check_in_from' => '15:00', 'check_out_until' => '11:00', 'min_age' => '21', 'documents' => ['id_card', 'deposit'], 'rule_flags' => [$this->flag('Fumeurs acceptés')],
         ]))->assertNoContent();
         $offer = Offer::query()->sole();
         $this->assertSame(['15:00', '11:00'], [$offer->detail('check_in_from'), $offer->detail('check_out_until')]);
         // Plus d'âge minimum propre à l'offre (décision 2026-11-19-age-minimum-de-l-app).
         $this->assertNull($offer->detail('min_age'));
-        $this->assertSame('no', $offer->detail('pets'));
+        $this->assertSame([$this->flag('Fumeurs acceptés')], $offer->detail('rule_flags'));
 
         // Valeurs inconnues ou hors limites refusées ; tout le reste est facultatif.
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['documents' => ['visa'], 'pets' => 'maybe']))
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['documents' => ['visa'], 'rule_flags' => ['maybe']]))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['documents.0', 'pets']);
+            ->assertJsonValidationErrors(['documents.0', 'rule_flags.0']);
     }
 
     public function test_information_blocks_are_added_edited_and_removed_in_order(): void
@@ -683,7 +717,7 @@ class OfferApiTest extends TestCase
     public function test_editing_prefills_and_updates_my_offer(): void
     {
         $user = $this->member();
-        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['amenities' => ['wifi', 'parking']]))->assertNoContent();
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['feature_flags' => [$this->flag('Wifi'), $this->flag('Parking')]]))->assertNoContent();
         $offer = Offer::query()->sole();
 
         $fields = array_column($this->asUser($user)->getJson("/api/v1/forms/offer.offer?record={$offer->getKey()}")->assertOk()
@@ -692,7 +726,7 @@ class OfferApiTest extends TestCase
         $this->assertSame('Appartement lumineux', $fields['title']);
         $this->assertSame('apartment', $fields['property_type']);
         // Les équipements choisis, tous cochés (une liste n'est pas une traduction).
-        $this->assertSame(['wifi', 'parking'], $fields['amenities']);
+        $this->assertSame([$this->flag('Wifi'), $this->flag('Parking')], $fields['feature_flags']);
         // L'adresse de l'offre, préremplie.
         $this->assertSame(['Rue du Lac 4', '1200', 'Genève'], [$fields['street'], $fields['zip'], $fields['city']]);
 

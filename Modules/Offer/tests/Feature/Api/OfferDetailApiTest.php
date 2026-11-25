@@ -29,6 +29,12 @@ class OfferDetailApiTest extends TestCase
 
     private Country $cameroon;
 
+    /** L'id (texte) d'une case de « Règles » ou « Caractéristiques », par son nom français. */
+    private function flag(string $name): string
+    {
+        return (string) OfferCategory::query()->whereNotNull('parent_id')->where('name->fr', $name)->value('id');
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -54,7 +60,7 @@ class OfferDetailApiTest extends TestCase
             'price' => '250000',
             'currency' => 'XAF',
             // Une vraie catégorie reste possible, à côté du type de location (décision 2026-11-20-type-de-location-garder-categories).
-            'category_id' => OfferCategory::query()->firstOrCreate(['slug' => 'standing'], ['name' => ['fr' => 'Standing', 'en' => 'Upscale'], 'position' => 0])->getKey(),
+            'category_id' => (OfferCategory::query()->whereNull('parent_id')->withSlug('standing')->first() ?? OfferCategory::query()->create(['name' => ['fr' => 'Standing', 'en' => 'Upscale'], 'position' => 0]))->getKey(),
             'published_at' => '2026-11-18 10:00:00',
             'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'surface' => 85, 'rooms' => 3.5, 'bedrooms' => 2, 'bathrooms' => 1, 'available_from' => '2026-12-01', 'charges' => 15000],
             ...$overrides,
@@ -212,12 +218,13 @@ class OfferDetailApiTest extends TestCase
         // L'heure d'arrivée d'un meublé, parmi les règles (décision 2026-11-20-heures-arrivee-depart).
         // Un âge minimum propre à l'offre, enregistré avant son retrait, non plus
         // (décision 2026-11-19-age-minimum-de-l-app).
-        $furnished = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'check_in_from' => '15:00', 'min_age' => 30, 'documents' => ['id_card', 'deposit'], 'pets' => 'no']]);
+        $furnished = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'check_in_from' => '15:00', 'min_age' => 30, 'documents' => ['id_card', 'deposit'], 'rule_flags' => [$this->flag('Animaux acceptés')]]]);
 
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
             ['label' => 'Arrivée à partir de', 'value' => '15:00'],
-            ['label' => 'Animaux acceptés', 'value' => 'Non'],
+            // Les cases cochées seules, « Oui », par id de catégorie (décisions 2026-11-25-cases-par-categories et 2026-11-25-categories-slug-traduit).
+            ['label' => 'Animaux acceptés', 'value' => 'Oui'],
             ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
         ], $data['rules']);
         $this->assertNotContains('Animaux acceptés', array_column($data['facts'], 'label'));
@@ -238,7 +245,7 @@ class OfferDetailApiTest extends TestCase
     public function test_sections_come_from_the_configuration(): void
     {
         // Décision 2026-11-19-sections-fiche-laravel ; complètes (décision 2026-11-19-sections-construites-laravel).
-        $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'pets' => 'no']]);
+        $offer = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'rule_flags' => [$this->flag('Animaux acceptés')]]]);
         $offer->update(['description' => ['fr' => 'Calme et lumineux.']]);
         $sections = $this->show($offer)->json('data.sections');
         // Caractéristiques, localisation, description, puis le reste ; seule la première ouverte (décisions
@@ -256,7 +263,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame($this->show($offer)->json('data.facts'), $sections[1]['rows']);
         $this->assertSame($this->show($offer)->json('data.address'), $sections[2]['text']);
         $this->assertSame('Calme et lumineux.', $sections[3]['text']);
-        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[4]['rows']);
+        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Oui']], $sections[4]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
         config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);
@@ -264,17 +271,21 @@ class OfferDetailApiTest extends TestCase
 
         // Aucune ouverte parmi celles servies : la première l'est.
         config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
-        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'surface' => 30, 'pets' => 'no']]);
+        $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'surface' => 30, 'rule_flags' => [$this->flag('Animaux acceptés')]]]);
         $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
     }
 
-    public function test_cameras_are_a_characteristic(): void
+    public function test_a_ticked_characteristic_shows_yes_under_its_category_name(): void
     {
-        // Décision 2026-11-25-offre-categorie-cameras : Oui / Non, facultatif.
+        // décision 2026-11-25-cases-par-categories : la case « Caméras de surveillance » de « Caractéristiques », cochée, « Oui » ; sinon rien.
         $facts = fn (array $details): array => array_column($this->show($this->home(['details' => ['property_type' => 'studio', ...$details]]))->json('data.facts'), 'value', 'label');
 
-        $this->assertSame('Oui', $facts(['cameras' => 'yes'])['Caméras de surveillance']);
-        $this->assertSame('Non', $facts(['cameras' => 'no'])['Caméras de surveillance']);
+        // Les équipements : une ligne, leurs noms à la suite (décision 2026-11-25-equipements-en-categories).
+        $ticked = ['feature_flags' => [$this->flag('Wifi'), $this->flag('Caméras de surveillance'), $this->flag('Piscine')]];
+        $this->assertSame('Wifi, Piscine, Caméras de surveillance', $facts($ticked)['Équipements']);
+        $this->assertArrayNotHasKey('Équipements', $facts(['feature_flags' => []]));
+        // Une case qui n'existe plus n'est pas montrée.
+        $this->assertArrayNotHasKey('Équipements', $facts(['feature_flags' => ['999999']]));
         $this->assertArrayNotHasKey('Caméras de surveillance', $facts([]));
     }
 

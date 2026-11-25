@@ -148,6 +148,12 @@ final class Field
      */
     private array $options = [];
 
+    /** Les options, calculées à la première lecture (décision 2026-11-25-cases-par-categories) ; `null` : `$options`. */
+    private ?Closure $optionsResolver = null;
+
+    /** Le libellé, calculé à la première lecture ; `null` : `$label`. */
+    private ?Closure $labelResolver = null;
+
     /** @var list<mixed> */
     private array $rules = [];
 
@@ -634,7 +640,7 @@ final class Field
         return ! $this->filter
             && in_array($this->type, [FieldType::SELECT, FieldType::PHONE], true)
             && $this->dependsOn === null
-            && count($this->options) === 1;
+            && count($this->resolvedOptions()) === 1;
     }
 
     /**
@@ -647,7 +653,7 @@ final class Field
             return $this->default;
         }
 
-        $only = (string) array_key_first($this->options);
+        $only = (string) array_key_first($this->resolvedOptions());
 
         if ($this->type === FieldType::PHONE) {
             return ['country' => $only, 'number' => is_array($this->default) ? ($this->default['number'] ?? null) : null];
@@ -726,6 +732,41 @@ final class Field
     /**
      * @param  array<string, string|array{label: string, hint?: string|null, parent?: string|int|null}>  $options
      */
+    /**
+     * Des options calculées à la première lecture : une liste tirée de la base, sans requête au chargement du domaine.
+     *
+     * @param  Closure(): array<string, string>  $resolver
+     */
+    public function optionsUsing(Closure $resolver): self
+    {
+        $this->optionsResolver = $resolver;
+
+        return $this;
+    }
+
+    /** Un libellé calculé à la première lecture. */
+    public function labelUsing(Closure $resolver): self
+    {
+        $this->labelResolver = $resolver;
+
+        return $this;
+    }
+
+    /**
+     * Les options, celles du calcul différé une fois résolues.
+     *
+     * @return array<string, mixed>
+     */
+    private function resolvedOptions(): array
+    {
+        if ($this->optionsResolver !== null) {
+            $this->options = ($this->optionsResolver)();
+            $this->optionsResolver = null;
+        }
+
+        return $this->options;
+    }
+
     public function options(array $options): self
     {
         $this->options = $options;
@@ -790,7 +831,7 @@ final class Field
      */
     private function ownRules(): array
     {
-        $values = array_map('strval', array_keys($this->options));
+        $values = array_map('strval', array_keys($this->resolvedOptions()));
         $presence = $this->required ? ['required'] : ['nullable'];
 
         if ($this->type === FieldType::PHONE) {
@@ -802,7 +843,7 @@ final class Field
         }
 
         if ($this->dependsOn !== null) {
-            $parents = collect($this->options)
+            $parents = collect($this->resolvedOptions())
                 ->map(fn (string|array $option): ?string => is_array($option) && isset($option['parent']) ? (string) $option['parent'] : null)
                 ->all();
 
@@ -886,6 +927,11 @@ final class Field
 
     public function getLabel(): ?string
     {
+        if ($this->labelResolver !== null) {
+            $this->label = ($this->labelResolver)();
+            $this->labelResolver = null;
+        }
+
         return $this->label;
     }
 
@@ -1038,7 +1084,7 @@ final class Field
      */
     public function optionLabels(): array
     {
-        return collect($this->options)
+        return collect($this->resolvedOptions())
             ->mapWithKeys(fn (string|array $option, string|int $value): array => [(string) $value => is_array($option) ? $option['label'] : $option])
             ->all();
     }
@@ -1053,7 +1099,7 @@ final class Field
         return [
             'name' => $this->name,
             'type' => $this->type->value,
-            'label' => $this->label,
+            'label' => $this->getLabel(),
             /** Libellé à ne pas afficher (lu par l'accessibilité seulement). */
             'label_hidden' => $this->labelHidden,
             'placeholder' => $this->placeholder,
@@ -1102,7 +1148,7 @@ final class Field
                 'add_label' => $this->addLabel,
             ],
             'default' => $this->initialValue(),
-            'options' => collect($this->options)
+            'options' => collect($this->resolvedOptions())
                 ->map(fn (string|array $option, string|int $value): array => [
                     'value' => (string) $value,
                     'label' => is_array($option) ? $option['label'] : $option,

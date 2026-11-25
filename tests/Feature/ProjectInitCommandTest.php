@@ -80,8 +80,13 @@ class ProjectInitCommandTest extends TestCase
         $this->assertStringContainsString("APP_KEY=base64:secret-key-not-to-touch\nDB_PASSWORD=\"s3cret pass\"\n", $env);
 
         // Données de départ : catégories du domaine, seul CH actif, rôles.
-        // Le domaine « location » ne crée plus de catégories : son type de location les remplace (décision 2026-11-20-type-de-location-garder-categories).
-        $this->assertSame(0, OfferCategory::query()->count());
+        // Le domaine « location » ne crée que les cases « Règles » et « Caractéristiques » (décision 2026-11-25-cases-par-categories).
+        $slugs = OfferCategory::query()->get()->map(fn (OfferCategory $category): string => (string) $category->getTranslation('slug', 'fr'))->all();
+        foreach (['regles', 'animaux-acceptes', 'fumeurs-acceptes', 'fetes-et-evenements-autorises', 'equipements', 'wifi', 'parking', 'cameras-de-surveillance', 'reserve-deau-forage', 'groupe-electrogene'] as $slug) {
+            $this->assertContains($slug, $slugs);
+        }
+        // Deux racines, 3 règles et 14 équipements (décisions 2026-11-25-equipements-en-categories et 2026-11-25-forage-en-double).
+        $this->assertCount(19, $slugs);
         $this->assertSame(['CH'], Country::query()->where('active', true)->pluck('code')->all());
         $this->assertTrue(Role::query()->where('name', RoleEnum::MEMBER->value)->exists());
 
@@ -103,8 +108,8 @@ class ProjectInitCommandTest extends TestCase
         $this->init()->expectsOutputToContain('rien')->assertSuccessful();
 
         $this->assertSame($env, $this->env());
-        // Le domaine « location » ne crée plus de catégories : son type de location les remplace (décision 2026-11-20-type-de-location-garder-categories).
-        $this->assertSame(0, OfferCategory::query()->count());
+        // Rejoué : rien en double.
+        $this->assertSame(19, OfferCategory::query()->count());
     }
 
     public function test_an_invalid_setting_stops_everything_before_writing(): void

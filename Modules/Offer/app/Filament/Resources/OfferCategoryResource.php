@@ -62,19 +62,21 @@ class OfferCategoryResource extends AbstractOfferResource
     public static function fields(bool $withParent): array
     {
         return array_values(array_filter([
-            // Traduit : un onglet par langue, chaque traduction obligatoire.
+            // Traduit : un onglet par langue, chaque nom obligatoire ; dessous, à la modification, le slug de la langue.
             TranslatableTabs::make(fn (string $locale): array => [
                 TextInput::make("name.{$locale}")
                     ->label(__('offer::offer.category_resource.name'))
                     ->required()
                     ->maxLength(255),
+                // Le slug de la langue, tiré du nom à la création : montré à la modification seulement, en lecture seule
+                // (décision 2026-11-25-categories-slug-traduit).
+                TextInput::make("slug.{$locale}")
+                    ->label(__('offer::offer.category_resource.slug'))
+                    ->helperText(__('offer::offer.category_resource.slug_help'))
+                    ->hiddenOn('create')
+                    ->disabled()
+                    ->dehydrated(false),
             ], 'name'),
-            TextInput::make('slug')
-                ->label(__('offer::offer.category_resource.slug'))
-                ->required()
-                ->maxLength(255)
-                ->alphaDash()
-                ->unique(ignoreRecord: true),
             ! $withParent ? null : Select::make('parent_id')
                 ->label(__('offer::offer.category_resource.parent'))
                 ->placeholder(__('offer::offer.category_resource.parent_none'))
@@ -103,9 +105,10 @@ class OfferCategoryResource extends AbstractOfferResource
                 TextColumn::make('name')
                     ->label(__('offer::offer.category_resource.name'))
                     ->state(fn (OfferCategory $record): string => (string) $record->getTranslation('name', app()->getLocale())),
+                // Le slug de la langue courante.
                 TextColumn::make('slug')
                     ->label(__('offer::offer.category_resource.slug'))
-                    ->searchable(),
+                    ->state(fn (OfferCategory $record): string => (string) $record->getTranslation('slug', app()->getLocale())),
                 TextColumn::make('children_count')
                     ->label(__('offer::offer.category_resource.children'))
                     ->counts('children'),

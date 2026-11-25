@@ -252,6 +252,24 @@ class OfferDetailResource extends JsonResource
             if (! $keep($field->name) || ! $field->isVisibleFor($offer->details ?? [])) {
                 continue;
             }
+            // Les cases d'une catégorie : une ligne « Oui » par case cochée, sous son nom (décision 2026-11-25-cases-par-categories).
+            if (array_key_exists($field->name, $domain->flagGroups())) {
+                $names = $field->optionLabels();
+                // Les équipements : une ligne, leurs noms à la suite (décision 2026-11-25-equipements-en-categories).
+                if (in_array($field->name, $domain->flagsAsList(), true)) {
+                    $checked = array_map(fn (string $id): string => (string) ($names[$id] ?? $id), $domain->checkedFlags($offer, $field->name));
+                    if ($checked !== []) {
+                        $values[$field->name] = ['label' => (string) $field->getLabel(), 'value' => implode(', ', $checked)];
+                    }
+
+                    continue;
+                }
+                foreach ($domain->checkedFlags($offer, $field->name) as $id) {
+                    $values['flag-'.$id] = ['label' => (string) ($names[$id] ?? $id), 'value' => (string) __('offer::rental.rules.yes', [], $locale)];
+                }
+
+                continue;
+            }
             // Sans « / mois » : le libellé le dit (« Charges mensuelles », décision 2026-11-19-charges-sans-par-mois).
             $value = $field->inCurrency($symbol, withPer: false)->displayValue($offer->detail($field->name), $locale);
 

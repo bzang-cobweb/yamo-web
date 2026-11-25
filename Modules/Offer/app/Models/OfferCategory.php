@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Models;
 
+use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,17 +13,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use LogicException;
 use Modules\Offer\Database\Factories\OfferCategoryFactory;
+use Spatie\Sluggable\HasTranslatableSlug;
+use Spatie\Sluggable\SlugOptions;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * Catégorie d'offres, dans un arbre (décision
- * 2026-11-18-offres-multilingues-categories-arbre) : `name` traduit, `slug`
- * unique, `parent_id` (aucun pour une racine), `position` parmi ses sœurs.
+ * 2026-11-18-offres-multilingues-categories-arbre) : `name` traduit, `slug` traduit, tiré du nom dans chaque
+ * langue et unique parmi ses sœurs (décision 2026-11-25-categories-slug-traduit), `parent_id` (aucun pour une racine), `position` parmi ses sœurs.
  * Une catégorie qui a des enfants ne se supprime pas ; un parent ne peut pas
  * être la catégorie elle-même ni l'un de ses descendants.
  *
  * @property int|null $parent_id
- * @property string $slug
+ * @property array<string, string>|string $slug
  * @property int $position
  * @property-read OfferCategory|null $parent
  * @property-read Collection<int, OfferCategory> $children
@@ -32,16 +35,48 @@ use Spatie\Translatable\HasTranslations;
 class OfferCategory extends Model
 {
     /** @use HasFactory<OfferCategoryFactory> */
-    use HasFactory, HasTranslations;
+    use HasFactory, HasTranslatableSlug, HasTranslations;
 
     /** Séparateur des chemins : « Location › Meublée ». */
     public const PATH_SEPARATOR = ' › ';
 
     /** @var list<string> */
-    public array $translatable = ['name'];
+    public array $translatable = ['name', 'slug'];
+
+    /**
+     * Le slug de chaque langue, tiré de son nom à la création, unique parmi les catégories du même parent (décision
+     * 2026-11-25-categories-slug-traduit) ; il ne change plus ensuite, même si le nom change (lecture seule au back-office).
+     */
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug')
+            ->doNotGenerateSlugsOnUpdate()
+            ->extraScope(fn (Builder $query): Builder => $this->parent_id === null ? $query->whereNull('parent_id') : $query->where('parent_id', $this->parent_id));
+    }
+
+    /**
+     * Une catégorie par son slug dans une langue (par défaut, celle de l'application) et son parent.
+     *
+     * @param  Builder<OfferCategory>  $query
+     * @return Builder<OfferCategory>
+     */
+    public function scopeWithSlug(Builder $query, string $slug, ?string $locale = null): Builder
+    {
+        return $query->where('slug->'.($locale ?? Locales::default()), $slug);
+    }
 
     protected static function booted(): void
     {
+        // Le slug ne change plus après la création (décision 2026-11-25-categories-slug-traduit) : un formulaire qui
+        // l'envoie vide (lecture seule au back-office) ne l'efface pas.
+        static::updating(function (OfferCategory $category): void {
+            if ($category->isDirty('slug')) {
+                $category->setRawAttributes([...$category->getAttributes(), 'slug' => $category->getRawOriginal('slug')]);
+            }
+        });
+
         static::saving(function (OfferCategory $category): void {
             if ($category->parent_id !== null && $category->exists && in_array((int) $category->parent_id, [$category->getKey(), ...$category->descendantIds()], true)) {
                 throw new LogicException(__('offer::offer.category_resource.cycle'));
@@ -130,15 +165,21 @@ class OfferCategory extends Model
 
     /**
      * id => chemin, dans l'ordre de l'arbre (parent, puis ses enfants dans leur
-     * ordre). `$except` et ses descendants sont omis (choix d'un parent).
+     * ordre). `$except` et ses descendants sont omis (choix d'un parent), ainsi que les racines `$withoutRoots` et
+     * leurs enfants.
      *
+     * @param  list<string>  $withoutRoots
      * @return array<string, string>
      */
-    public static function options(?OfferCategory $except = null): array
+    public static function options(?OfferCategory $except = null, array $withoutRoots = []): array
     {
         $all = self::query()->orderBy('position')->orderBy('id')->get();
         $byParent = $all->groupBy(fn (self $category): string => (string) $category->parent_id);
         $skip = $except === null ? [] : [(int) $except->getKey(), ...$except->descendantIds()];
+        // Des racines écartées avec leurs enfants (les cases « Règles » et « Caractéristiques », décision 2026-11-25-cases-par-categories).
+        foreach ($all->whereNull('parent_id')->filter(fn (self $root): bool => in_array($root->getTranslation('slug', Locales::default()), $withoutRoots, true)) as $root) {
+            $skip = [...$skip, (int) $root->getKey(), ...$root->descendantIds()];
+        }
         $options = [];
 
         $walk = function (string $parent, array $names) use (&$walk, &$options, $byParent, $skip): void {
@@ -155,5 +196,30 @@ class OfferCategory extends Model
         $walk('', []);
 
         return $options;
+    }
+
+    /**
+     * Les enfants d'une racine (par son slug dans la langue par défaut), dans leur ordre : id => nom dans la langue
+     * courante (décisions 2026-11-25-cases-par-categories et décision 2026-11-25-categories-slug-traduit).
+     *
+     * @return array<string, string>
+     */
+    public static function childrenOf(string $rootSlug): array
+    {
+        return self::query()
+            ->where('parent_id', self::query()->whereNull('parent_id')->withSlug($rootSlug)->value('id'))
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get()
+            ->mapWithKeys(fn (self $category): array => [(string) $category->getKey() => (string) $category->getTranslation('name', app()->getLocale())])
+            ->all();
+    }
+
+    /** Le nom d'une racine dans la langue courante, ou `null` si elle n'existe pas. */
+    public static function rootName(string $rootSlug): ?string
+    {
+        $root = self::query()->whereNull('parent_id')->withSlug($rootSlug)->first();
+
+        return $root === null ? null : (string) $root->getTranslation('name', app()->getLocale());
     }
 }

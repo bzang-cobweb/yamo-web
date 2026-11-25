@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Number;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
+use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Filament\Resources\OfferResource;
 use Modules\Offer\Models\Offer;
@@ -96,7 +97,7 @@ abstract class OfferTable
                     ->options(fn (): array => Country::options()),
                 SelectFilter::make('category_id')
                     ->label(__('offer::offer.category'))
-                    ->options(fn (): array => OfferCategory::options()),
+                    ->options(fn (): array => OfferCategory::options(withoutRoots: app(DomainRegistry::class)->active()?->flagRoots() ?? [])),
                 SelectFilter::make('user_id')
                     ->label(__('offer::offer.owner'))
                     ->relationship('user', 'name')

@@ -29,9 +29,21 @@ class CategoryTreeTest extends AuthFilamentTestCase
         $this->seed(OfferDatabaseSeeder::class);
     }
 
+    /** Par son slug français, tiré du nom (décision 2026-11-25-categories-slug-traduit). */
     private function category(string $slug): OfferCategory
     {
-        return OfferCategory::query()->where('slug', $slug)->sole();
+        return OfferCategory::query()->withSlug($slug)->sole();
+    }
+
+    /**
+     * Les slugs français, dans l'ordre.
+     *
+     * @param  iterable<OfferCategory>  $categories
+     * @return list<string>
+     */
+    private function slugs(iterable $categories): array
+    {
+        return collect($categories)->map(fn (OfferCategory $category): string => (string) $category->getTranslation('slug', 'fr'))->values()->all();
     }
 
     public function test_the_domain_tree_is_seeded_in_order_and_replaying_changes_nothing(): void
@@ -58,14 +70,14 @@ class CategoryTreeTest extends AuthFilamentTestCase
             ->assertCanNotSeeTableRecords([$this->category('appartement')])
             ->call('reorderTable', [(string) $this->category('bureau')->getKey(), (string) $this->category('logement')->getKey()]);
 
-        $this->assertSame(['bureau', 'logement'], OfferCategory::query()->roots()->orderBy('position')->pluck('slug')->all());
+        $this->assertSame(['bureau', 'logement'], $this->slugs(OfferCategory::query()->roots()->orderBy('position')->get()));
 
         Livewire::test(ChildrenRelationManager::class, ['ownerRecord' => $this->category('logement'), 'pageClass' => EditOfferCategory::class])
             ->assertCanSeeTableRecords([$this->category('appartement'), $this->category('maison')])
             ->assertCanNotSeeTableRecords([$this->category('studio')])
             ->call('reorderTable', [(string) $this->category('maison')->getKey(), (string) $this->category('appartement')->getKey()]);
 
-        $this->assertSame(['maison', 'appartement'], $this->category('logement')->children()->pluck('slug')->all());
+        $this->assertSame(['maison', 'appartement'], $this->slugs($this->category('logement')->children()->get()));
     }
 
     public function test_a_child_is_created_at_the_end_of_its_siblings(): void
@@ -73,10 +85,12 @@ class CategoryTreeTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
 
         Livewire::test(ChildrenRelationManager::class, ['ownerRecord' => $this->category('logement'), 'pageClass' => EditOfferCategory::class])
-            ->callTableAction('create', data: ['name' => ['fr' => 'Chambre', 'en' => 'Room'], 'slug' => 'chambre'])
+            ->callTableAction('create', data: ['name' => ['fr' => 'Chambre', 'en' => 'Room']])
             ->assertHasNoTableActionErrors();
 
-        $this->assertSame(['appartement', 'maison', 'chambre'], $this->category('logement')->children()->pluck('slug')->all());
+        $this->assertSame(['appartement', 'maison', 'chambre'], $this->slugs($this->category('logement')->children()->get()));
+        // Le slug de chaque langue, tiré de son nom.
+        $this->assertSame(['fr' => 'chambre', 'en' => 'room'], array_intersect_key($this->category('chambre')->getTranslations('slug'), ['fr' => 1, 'en' => 1]));
     }
 
     public function test_moving_a_category_refuses_a_loop(): void
@@ -103,7 +117,7 @@ class CategoryTreeTest extends AuthFilamentTestCase
         Livewire::test(EditOfferCategory::class, ['record' => $this->category('appartement')->getKey()])
             ->callAction('delete')
             ->assertNotified(__('offer::offer.category_resource.has_children'));
-        $this->assertNotNull(OfferCategory::query()->where('slug', 'appartement')->first());
+        $this->assertNotNull(OfferCategory::query()->withSlug('appartement')->first());
 
         // Suppression groupée : refusée aussi dès qu'une catégorie cochée a des enfants.
         Livewire::test(ListOfferCategories::class)
@@ -112,7 +126,29 @@ class CategoryTreeTest extends AuthFilamentTestCase
         $this->assertSame(5, OfferCategory::query()->count());
 
         Livewire::test(EditOfferCategory::class, ['record' => $this->category('studio')->getKey()])->callAction('delete');
-        $this->assertNull(OfferCategory::query()->where('slug', 'studio')->first());
+        $this->assertNull(OfferCategory::query()->withSlug('studio')->first());
+    }
+
+    public function test_a_slug_is_unique_among_siblings_only(): void
+    {
+        // Décision 2026-11-25-categories-slug-traduit : « Studio » sous « Maison » aussi, son slug reste « studio » ;
+        // deux sœurs du même nom ont des slugs distincts.
+        $other = OfferCategory::query()->create(['name' => ['fr' => 'Studio', 'en' => 'Studio'], 'parent_id' => $this->category('maison')->getKey(), 'position' => 0]);
+        $this->assertSame('studio', $other->getTranslation('slug', 'fr'));
+        $twin = OfferCategory::query()->create(['name' => ['fr' => 'Studio', 'en' => 'Studio'], 'parent_id' => $this->category('maison')->getKey(), 'position' => 1]);
+        $this->assertNotSame('studio', $twin->getTranslation('slug', 'fr'));
+
+        // Au back-office : pas de slug à la création ; à la modification, en lecture seule, et il ne suit pas le nom.
+        $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
+        Livewire::test(CreateOfferCategory::class)->assertFormFieldDoesNotExist('slug.fr');
+        $maison = $this->category('maison');
+        Livewire::test(EditOfferCategory::class, ['record' => $maison->getKey()])
+            ->assertSee('Tiré du nom à la création')
+            ->assertSchemaStateSet(['slug.fr' => 'maison'])
+            ->fillForm(['name.fr' => 'Villa'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(['Villa', 'maison'], [$maison->fresh()->getTranslation('name', 'fr'), $maison->fresh()->getTranslation('slug', 'fr')]);
     }
 
     public function test_creating_a_category_under_a_parent(): void
@@ -120,7 +156,7 @@ class CategoryTreeTest extends AuthFilamentTestCase
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
 
         Livewire::test(CreateOfferCategory::class)
-            ->fillForm(['name.fr' => 'Loft', 'name.en' => 'Loft', 'slug' => 'loft', 'parent_id' => (string) $this->category('appartement')->getKey()])
+            ->fillForm(['name.fr' => 'Loft', 'name.en' => 'Loft', 'parent_id' => (string) $this->category('appartement')->getKey()])
             ->call('create')
             ->assertHasNoFormErrors();
 
@@ -161,13 +197,13 @@ class TreeDomain extends Domain
     public function categories(): array
     {
         return [
-            ['slug' => 'logement', 'name' => ['fr' => 'Logement', 'en' => 'Home'], 'children' => [
-                ['slug' => 'appartement', 'name' => ['fr' => 'Appartement', 'en' => 'Flat'], 'children' => [
-                    ['slug' => 'studio', 'name' => ['fr' => 'Studio', 'en' => 'Studio']],
+            ['name' => ['fr' => 'Logement', 'en' => 'Home'], 'children' => [
+                ['name' => ['fr' => 'Appartement', 'en' => 'Flat'], 'children' => [
+                    ['name' => ['fr' => 'Studio', 'en' => 'Studio']],
                 ]],
-                ['slug' => 'maison', 'name' => ['fr' => 'Maison', 'en' => 'House']],
+                ['name' => ['fr' => 'Maison', 'en' => 'House']],
             ]],
-            ['slug' => 'bureau', 'name' => ['fr' => 'Bureau', 'en' => 'Office']],
+            ['name' => ['fr' => 'Bureau', 'en' => 'Office']],
         ];
     }
 }

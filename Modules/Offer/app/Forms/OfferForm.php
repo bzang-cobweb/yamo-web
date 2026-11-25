@@ -64,7 +64,8 @@ class OfferForm extends Form
     {
         $domain = $this->domain();
         $offer = $this->offer;
-        $categories = OfferCategory::options();
+        // Sans « Règles » ni « Caractéristiques », des cases à part (décision 2026-11-25-cases-par-categories).
+        $categories = OfferCategory::options(withoutRoots: $domain->flagRoots());
 
         return array_values(array_filter([
             // La langue de saisie, à l'édition seulement et si l'app a plusieurs langues
@@ -160,7 +161,10 @@ class OfferForm extends Form
                         $fail(__('offer::offer.status_locked'));
                     }
                 }]),
-            ...array_map(fn (Field $field): Field => $field->default($offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
+            // Les cases d'une catégorie : les ids enregistrés qui existent encore (décision 2026-11-25-categories-slug-traduit).
+            ...array_map(fn (Field $field): Field => $field->default(array_key_exists($field->name, $domain->flagGroups())
+                ? $domain->checkedFlags($offer, $field->name)
+                : $offer?->detailIn($field->name, $this->locale())), $domain->inputAttributes(CurrentCountry::require()->currency)),
             // Les blocs d'informations, ajoutés et retirés par le propriétaire (décision 2026-11-19-contrat-offer-informations).
             Field::repeater('informations')
                 ->label(__('offer::offer.informations.label'))

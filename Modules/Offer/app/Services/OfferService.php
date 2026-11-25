@@ -84,6 +84,7 @@ class OfferService
      */
     public function typedDetails(Domain $domain, array $details): array
     {
+
         foreach ($domain->attributes() as $field) {
             if (array_key_exists($field->name, $details)) {
                 $details[$field->name] = $this->value($field, $details[$field->name]);

@@ -8,6 +8,7 @@ use Illuminate\Support\Number;
 use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferCategory;
 
 /**
  * Un domaine du projet (location, boutique, rencontre…) : ce qui distingue ses
@@ -73,9 +74,63 @@ abstract class Domain
     abstract public function attributes(): array;
 
     /**
+     * Des cases à cocher tirées d'une catégorie racine (décision 2026-11-25-cases-par-categories) : nom du champ =>
+     * slug de la racine dans la langue par défaut. Ses enfants sont les cases ; l'offre enregistre les ids des cases
+     * cochées sous le nom du champ (`"rule_flags": ["3", "5"]`, décision 2026-11-25-categories-slug-traduit).
+     *
+     * @return array<string, string>
+     */
+    public function flagGroups(): array
+    {
+        return [];
+    }
+
+    /** Le champ de cases d'un groupe : les enfants de sa racine (id => nom), son nom en libellé, lus à la demande. */
+    public function flagField(string $name): Field
+    {
+        $root = $this->flagGroups()[$name];
+
+        // Calculés à la première lecture : aucune requête au chargement du domaine.
+        return Field::checkboxGroup($name)
+            ->labelUsing(fn (): string => OfferCategory::rootName($root) ?? $name)
+            ->optionsUsing(fn (): array => OfferCategory::childrenOf($root));
+    }
+
+    /**
+     * Les ids des cases cochées d'une offre pour un groupe, parmi celles qui existent encore.
+     *
+     * @return list<string>
+     */
+    public function checkedFlags(?Offer $offer, string $name): array
+    {
+        $checked = array_map('strval', (array) ($offer?->detail($name) ?? []));
+
+        // Les clés numériques deviennent des entiers en PHP : remises en texte, comme les valeurs enregistrées.
+        $existing = array_map('strval', array_keys(OfferCategory::childrenOf($this->flagGroups()[$name])));
+
+        return array_values(array_intersect($existing, $checked));
+    }
+
+    /**
+     * Les groupes de cases montrés sur la fiche en une ligne (leurs noms à la suite) plutôt qu'une ligne « Oui » par case.
+     *
+     * @return list<string>
+     */
+    public function flagsAsList(): array
+    {
+        return [];
+    }
+
+    /** Les slugs des racines de cases, à écarter du choix de la catégorie d'une offre. */
+    public function flagRoots(): array
+    {
+        return array_values($this->flagGroups());
+    }
+
+    /**
      * Catégories de départ, en arbre (`children`), créées par le seeder si elles manquent.
      *
-     * @return list<array{slug: string, name: array<string, string>, children?: list<array<string, mixed>>}>
+     * @return list<array{name: array<string, string>, children?: list<array<string, mixed>>}>
      */
     public function categories(): array
     {

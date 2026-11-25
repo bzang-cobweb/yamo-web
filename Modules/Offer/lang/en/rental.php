@@ -42,6 +42,10 @@ return [
     'bedrooms' => 'Bedrooms',
     'bathrooms' => 'Bathrooms',
     'cameras' => 'Security cameras',
+    'borehole' => 'Borehole',
+    'generator' => 'Generator',
+    // Les deux catégories racines des cases (décision 2026-11-25-cases-par-categories).
+    'flag_roots' => ['rules' => 'Rules', 'features' => 'Amenities'],
     'available_from' => 'Available from',
     'charges' => 'Monthly charges',
     'charges_help' => 'On top of the rent.',
