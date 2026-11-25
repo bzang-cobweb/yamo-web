@@ -41,6 +41,12 @@ final class Field
     /** Liste déroulante : une recherche en tête des options, quel que soit leur nombre. */
     private bool $searchable = false;
 
+    /** Un filtre de liste sans l'option « Tous » (décision 2026-11-25-region-sans-tous). */
+    private bool $withoutAllOption = false;
+
+    /** Un filtre propre au pays (région, ville…), remis à zéro quand on change de pays (décision 2026-11-25-region-en-tete-recherche). */
+    private bool $countryScoped = false;
+
     /** Liste dépendante : nom du champ parent (ex. le pays d'une région). */
     private ?string $dependsOn = null;
 
@@ -517,14 +523,42 @@ final class Field
     }
 
     /**
+     * Un filtre de liste sans l'option « Tous » que l'app ajoute en tête d'une liste déroulante (décision
+     * 2026-11-25-region-sans-tous) : on choisit une valeur, « Effacer les filtres » la retire.
+     */
+    public function withoutAllOption(bool $without = true): self
+    {
+        $this->withoutAllOption = $without;
+
+        return $this;
+    }
+
+    /**
+     * Un filtre propre au pays courant (sa région, sa ville, un de ses logements) : l'app le remet à zéro quand on
+     * change de pays, les autres filtres restent (décision 2026-11-25-region-en-tete-recherche).
+     */
+    public function countryScoped(bool $scoped = true): self
+    {
+        $this->countryScoped = $scoped;
+
+        return $this;
+    }
+
+    /**
      * Liste dépendante : seules les options dont le parent vaut la valeur du champ
      * `$field` sont proposées et acceptées.
      */
-    public function dependsOn(string $field): self
+    public function dependsOn(?string $field): self
     {
         $this->dependsOn = $field;
 
         return $this;
+    }
+
+    /** Le champ parent d'une liste dépendante, ou `null`. */
+    public function parentField(): ?string
+    {
+        return $this->dependsOn;
     }
 
     /**
@@ -985,6 +1019,12 @@ final class Field
         return $this->help;
     }
 
+    /** Sa valeur par défaut ; `null` : aucune. */
+    public function defaultValue(): mixed
+    {
+        return $this->default;
+    }
+
     public function isRequired(): bool
     {
         return $this->required;
@@ -1023,6 +1063,10 @@ final class Field
             'readonly' => $this->readonly,
             /** Liste déroulante : une recherche en tête des options, quel que soit leur nombre. */
             'searchable' => $this->searchable,
+            /** Un filtre sans l'option « Tous » ; absent : avec (décision 2026-11-25-region-sans-tous). */
+            ...($this->withoutAllOption ? ['all_option' => false] : []),
+            /** Un filtre propre au pays, remis à zéro quand on en change ; absent : non. */
+            ...($this->countryScoped ? ['country_scoped' => true] : []),
             /** Option unique, choisie d'office : non modifiable, mais envoyée. */
             'locked' => $this->isLocked(),
             'depends_on' => $this->dependsOn,

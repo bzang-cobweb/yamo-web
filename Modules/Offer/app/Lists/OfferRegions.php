@@ -52,6 +52,20 @@ class OfferRegions
         $offers->whereHas('address', fn (Builder $address) => $address->where('region_id', (int) $region));
     }
 
+    /**
+     * Les villes de ces adresses, par ordre alphabétique, chacune avec sa région pour parent : le filtre « Ville » ne
+     * propose que celles de la région choisie (décision 2026-11-25-ville-selon-region).
+     *
+     * @param  Builder<Address>  $addresses
+     * @return array<string, array{label: string, parent: string}>
+     */
+    public static function cities(Builder $addresses): array
+    {
+        return $addresses->whereNotNull('city')->select(['city', 'region_id'])->distinct()->orderBy('city')->get()
+            ->mapWithKeys(fn (Address $address): array => [(string) $address->city => ['label' => (string) $address->city, 'parent' => (string) $address->region_id]])
+            ->all();
+    }
+
     /** Son nom dans la langue de l'app, sans espaces en trop. */
     public static function name(Region $region): string
     {

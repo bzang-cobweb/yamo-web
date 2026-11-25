@@ -23,10 +23,12 @@ trait FiltersOffers
      * La ville (parmi les offres de `$offers`), le prix, puis les filtres du domaine.
      *
      * @param  Builder<Offer>  $offers  les offres dont les villes sont proposées
+     * @param  bool  $regionRequired  la région obligatoire, la première par défaut (la recherche)
      * @return list<Field>
      */
-    protected function offerFilters(Builder $offers): array
+    protected function offerFilters(Builder $offers, bool $regionRequired = false): array
     {
+        $regions = OfferRegions::options($offers);
         $domain = app(DomainRegistry::class)->require();
         $currency = (string) Currency::symbol(CurrentCountry::require()->currency);
 
@@ -35,10 +37,21 @@ trait FiltersOffers
             ! $domain->hasAddress() ? null : Field::select('region')
                 // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
                 ->label(CurrentCountry::require()->regionLabel())
-                ->options(OfferRegions::options($offers)),
+                ->options($regions)
+                // Sans « Tous » (décision 2026-11-25-region-sans-tous).
+                ->withoutAllOption()
+                // Obligatoire dans la recherche : par défaut, la première région qui a des offres, dans l'ordre du
+                // back-office (décision 2026-11-25-region-obligatoire-recherche).
+                ->required($regionRequired)
+                // Une chaîne, comme les valeurs des options (PHP fait des clés numériques des entiers).
+                ->default($regionRequired && $regions !== [] ? (string) array_key_first($regions) : null)
+                ->countryScoped(),
             ! $domain->hasAddress() ? null : Field::select('city')
                 ->label(__('offer::offer.filters.city'))
-                ->options($this->offerCities($offers)),
+                // Les villes de la région choisie ; changer de région efface la ville (décision 2026-11-25-ville-selon-region).
+                ->dependsOn('region')
+                ->options($this->offerCities($offers))
+                ->countryScoped(),
             // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
             ! $domain->hasPrice() ? null : Field::range('price')
                 ->label($domain->priceLabel())
@@ -49,20 +62,15 @@ trait FiltersOffers
     }
 
     /**
-     * Les villes des offres de `$offers`, par ordre alphabétique.
+     * Les villes des offres de `$offers`, par ordre alphabétique, chacune avec sa région pour parent (décision
+     * 2026-11-25-ville-selon-region).
      *
      * @param  Builder<Offer>  $offers
-     * @return array<string, string>
+     * @return array<string, array{label: string, parent: string}>
      */
     private function offerCities(Builder $offers): array
     {
-        return Address::query()
-            ->whereIn('id', OfferAddress::query()->select('address_id')->whereIn('offer_id', $offers->select('offers.id')))
-            ->whereNotNull('city')
-            ->distinct()
-            ->orderBy('city')
-            ->pluck('city', 'city')
-            ->all();
+        return OfferRegions::cities(Address::query()->whereIn('id', OfferAddress::query()->select('address_id')->whereIn('offer_id', $offers->select('offers.id'))));
     }
 
     /**

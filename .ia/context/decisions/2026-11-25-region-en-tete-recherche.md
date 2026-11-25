@@ -1,0 +1,21 @@
+# `2026-11-25` — Le sélecteur de région en tête de la recherche
+
+- **Type** : décision
+- **Questions posées** :
+  - « bien sûr que les filtres sont remis à zéro si on change de pays » ; puis « en fin les filtres qui concernent le pays comme la ville uniquement sont remis à zéro » ;
+  - « il faut mettre un sélecteur de régions comme premier élément de la page de recherche » ;
+  - « le clic depuis le carousel sélectionne la région de ce filtre » ;
+  - « faire un sélecteur plus joli ».
+- **Ce qui est retenu** :
+  - **Sélecteur** : la page de recherche commence par le sélecteur de région, avant la barre de recherche. C'est une carte sur toute la largeur :
+    - une épingle ;
+    - le nom des régions du pays en petit (« Région », « Canton »…) ;
+    - la région choisie en gras, et une flèche.
+    - Un appui ouvre la liste des régions, avec recherche, sans « Tous ».
+  - **Écran des filtres** : la région n'y est plus, elle se choisit sur la page.
+  - **Accueil** : « Voir tout » d'un carrousel choisit sa région dans ce sélecteur.
+  - **Changer de pays** remet à zéro les seuls filtres propres au pays, dans toutes les listes : la région, la ville, le logement des réservations. Le prix, le type et les autres restent.
+    - Le serveur marque ces filtres (`Field::countryScoped()`, `country_scoped: true`).
+  - **Message « aucun résultat pour ces filtres »** : la région, toujours choisie, ne le déclenche pas.
+- **Remplace** : « Changer de pays ne touche pas aux filtres » de 2026-11-25-region-obligatoire-recherche.
+- **Tranché par** : humain (le sélecteur en tête, le carrousel, la remise à zéro des filtres du pays) ; session (la forme de la carte, la région retirée de l'écran des filtres)

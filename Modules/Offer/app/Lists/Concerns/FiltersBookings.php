@@ -47,14 +47,20 @@ trait FiltersBookings
             Field::select('region')
                 // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
                 ->label(CurrentCountry::require()->regionLabel())
-                ->options(OfferRegions::options($this->bookedOffers())),
+                ->options(OfferRegions::options($this->bookedOffers()))
+                ->countryScoped(),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
-                ->options($this->bookedCities()),
+                // Les villes de la région choisie (décision 2026-11-25-ville-selon-region).
+                ->dependsOn('region')
+                ->options($this->bookedCities())
+                ->countryScoped(),
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->bookedOfferOptions())
-                ->searchable(),
+                ->searchable()
+                // Les logements du pays courant (décision 2026-11-25-region-en-tete-recherche).
+                ->countryScoped(),
             ...app(DomainRegistry::class)->require()->offerTypeFilters(),
         ];
     }
@@ -107,18 +113,12 @@ trait FiltersBookings
     }
 
     /**
-     * Les villes des logements.
+     * Les villes des logements, chacune avec sa région pour parent (décision 2026-11-25-ville-selon-region).
      *
-     * @return array<string, string>
+     * @return array<string, array{label: string, parent: string}>
      */
     private function bookedCities(): array
     {
-        return Address::query()
-            ->whereIn('id', OfferAddress::query()->select('address_id')->whereIn('offer_id', $this->bookedOffers()->select('offers.id')))
-            ->whereNotNull('city')
-            ->distinct()
-            ->orderBy('city')
-            ->pluck('city', 'city')
-            ->all();
+        return OfferRegions::cities(Address::query()->whereIn('id', OfferAddress::query()->select('address_id')->whereIn('offer_id', $this->bookedOffers()->select('offers.id'))));
     }
 }

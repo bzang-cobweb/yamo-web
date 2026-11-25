@@ -135,7 +135,8 @@ class OfferBrowseListing extends Listing
      */
     public function filters(): array
     {
-        return $this->offerFilters(Offer::query()->visibleToOthers());
+        // La région obligatoire (décision 2026-11-25-region-obligatoire-recherche).
+        return $this->offerFilters(Offer::query()->visibleToOthers(), regionRequired: true);
     }
 
     protected function applyFilters(Builder $query, array $filters): void

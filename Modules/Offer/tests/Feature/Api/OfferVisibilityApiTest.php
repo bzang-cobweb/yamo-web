@@ -62,7 +62,8 @@ class OfferVisibilityApiTest extends TestCase
 
     private function home(User $owner, string $city, mixed $expiresAt): Offer
     {
-        return Offer::factory()->for($owner)->at(Address::factory()->for($this->cameroon)->create(['city' => $city]))
+        // Une seule région : la recherche en exige une (décision 2026-11-25-region-obligatoire-recherche).
+        return Offer::factory()->for($owner)->at(Address::factory()->create(['city' => $city, 'region_id' => $this->regionOf($this->cameroon)]))
             ->create(['status' => 'published', 'country_id' => $this->cameroon->getKey(), 'expires_at' => $expiresAt, 'details' => ['property_type' => 'studio']]);
     }
 

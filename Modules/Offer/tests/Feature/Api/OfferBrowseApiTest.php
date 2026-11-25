@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Tests\TestCase;
 
@@ -38,7 +39,8 @@ class OfferBrowseApiTest extends TestCase
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
         $older = Offer::factory()->at($douala)->create(['title' => ['fr' => 'Studio à Akwa', 'en' => 'Studio in Akwa'], 'status' => 'published', 'price' => '25000', 'currency' => 'XAF']);
-        $newer = Offer::factory()->create(['title' => ['fr' => 'Maison à Bastos'], 'status' => 'published']);
+        // La recherche exige une région (décision 2026-11-25-region-obligatoire-recherche) : une autre adresse de la même.
+        $newer = Offer::factory()->at(Address::factory()->create(['city' => 'Bonabéri', 'region_id' => $douala->region_id]))->create(['title' => ['fr' => 'Maison à Bastos'], 'status' => 'published']);
         Offer::factory()->create(['status' => 'draft']);
         Offer::factory()->create(['status' => 'archived']);
         $senegal = Country::factory()->create(['code' => 'SN']);
@@ -73,6 +75,9 @@ class OfferBrowseApiTest extends TestCase
         $house = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'house', 'rental_type' => 'furnished', 'bedrooms' => 3]]);
         $studio = Offer::factory()->at($douala)->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term']]);
         $room = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'room', 'rental_type' => 'furnished']]);
+        // Sans adresse, une offre n'a pas de région et la recherche, qui en exige une, ne la montre pas (décision
+        // 2026-11-25-region-obligatoire-recherche) : son titre se vérifie directement.
+        $this->assertSame('Location meublée · Chambre', OfferCardTitle::composedFirst($room, 'fr')[0]);
 
         // En titre, type de location, type de logement et ville ; dessous, le titre saisi
         // (décisions 2026-11-21-cartes-titre-saisi-ligne-type et 2026-11-21-cartes-titre-compose-en-tete).
@@ -80,8 +85,7 @@ class OfferBrowseApiTest extends TestCase
         $this->assertSame($house->getTranslation('title', 'fr'), $items[(string) $house->getKey()]['subtitle']);
         $this->assertSame('Location meublée · Maison · Douala', $items[(string) $house->getKey()]['title']);
         $this->assertSame('Location · Studio · Douala', $items[(string) $studio->getKey()]['title']);
-        // Sans adresse : sans ville.
-        $this->assertSame('Location meublée · Chambre', $items[(string) $room->getKey()]['title']);
+        $this->assertArrayNotHasKey((string) $room->getKey(), $items->all());
 
         // Le prix suit le type de location : meublé au jour, sinon au mois.
         $house->update(['price' => '45000', 'currency' => 'XAF']);

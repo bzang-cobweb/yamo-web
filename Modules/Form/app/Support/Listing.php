@@ -129,23 +129,37 @@ abstract class Listing
 
     /**
      * Les filtres reçus (`?filter[city]=Douala`) que la liste connaît, non vides et
-     * valides selon leur champ ; un filtre inconnu, vide ou invalide est ignoré.
+     * valides selon leur champ ; un filtre inconnu, vide ou invalide est ignoré. Un
+     * filtre obligatoire non envoyé prend sa valeur par défaut.
      *
      * @param  array<array-key, mixed>  $raw
      * @return array<string, mixed>
      */
     final public function validFilters(array $raw): array
     {
+        $fields = $this->filters();
+        // Un filtre obligatoire non envoyé vaut sa valeur par défaut : la région de la recherche (décision
+        // 2026-11-25-region-obligatoire-recherche).
+        $data = $raw;
+        foreach ($fields as $field) {
+            $value = $data[$field->name] ?? null;
+            if (($value === null || $value === '' || $value === []) && $field->isRequired()) {
+                $data[$field->name] = $field->defaultValue();
+            }
+        }
+
         $valid = [];
-
-        foreach ($this->filters() as $field) {
-            $value = $raw[$field->name] ?? null;
-
+        foreach ($fields as $field) {
+            $value = $data[$field->name] ?? null;
             if ($value === null || $value === '' || $value === []) {
                 continue;
             }
 
-            if (Validator::make([$field->name => $value], $field->validationRules())->passes()) {
+            // Une liste dépendante se vérifie avec son parent (la ville dans la région choisie, décision
+            // 2026-11-25-ville-selon-region) ; sans parent choisi, toute option de la liste vaut.
+            $parent = $field->parentField();
+            $check = $parent !== null && blank($data[$parent] ?? null) ? (clone $field)->dependsOn(null) : $field;
+            if (Validator::make([...$data, $field->name => $value], $check->validationRules())->passes()) {
                 $valid[$field->name] = $value;
             }
         }

@@ -1,0 +1,21 @@
+# `2026-11-25` — La région obligatoire dans la recherche
+
+- **Type** : décision
+- **Question posée** : « je veux rendre la région obligatoire dans la recherche ».
+- **Réponses** :
+  - la région par défaut : « un utilisateur n'est pas forcément du pays où il navigue », donc pas la région du compte ;
+  - « Effacer les filtres » : sans préférence.
+- **Ce qui est retenu** :
+  - **Filtre** : dans la recherche (`offer.browse`), le filtre « Région » est obligatoire.
+    - Sa valeur par défaut est la première région qui a des offres, dans l'ordre du back-office, pour tout le monde.
+    - Sans région envoyée, la recherche se limite à celle-là : le nombre en tête, les vedettes et les pages suivent.
+    - Une région invalide, par exemple d'un autre pays, est ignorée, et la région par défaut s'applique.
+  - **Règle générique** : `Listing::validFilters()` donne sa valeur par défaut à un filtre obligatoire non envoyé.
+  - **Offres sans région** : une offre sans adresse, donc sans région, n'apparaît plus dans la recherche. Le domaine de location exige l'adresse.
+  - **App** :
+    - l'écran des filtres part de la région par défaut ;
+    - « Effacer les filtres » garde la région choisie et retire les autres filtres ;
+    - le badge ne compte pas la région.
+  - **Changer de pays** ne touche pas aux filtres (« pas de réglage lié à la région »). Une région de l'ancien pays envoyée est invalide, donc ignorée, et la région par défaut du nouveau pays s'applique.
+  - **« Mes logements » et les favoris** gardent une région facultative. Ils partagent la définition des filtres, avec un paramètre.
+- **Tranché par** : humain (obligatoire dans la recherche, pas la région du compte, rien au changement de pays) ; session (la première région du back-office, effacer garde la région)

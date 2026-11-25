@@ -3,6 +3,7 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
@@ -33,7 +34,9 @@ class OfferFiltersApiTest extends TestCase
      */
     private function home(string $city, int $price, array $details, array $overrides = []): Offer
     {
-        return Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => $city]))->create([
+        // Une seule région : la recherche en exige une (décision 2026-11-25-region-obligatoire-recherche) ; ces tests portent
+        // sur les autres filtres.
+        return Offer::factory()->at(Address::factory()->create(['city' => $city, 'region_id' => $this->regionOf($this->cameroon)]))->create([
             'status' => 'published', 'price' => (string) $price, 'currency' => 'XAF',
             'details' => $details,
             ...$overrides,
@@ -50,17 +53,74 @@ class OfferFiltersApiTest extends TestCase
 
     public function test_the_region_filter_groups_the_cities_of_a_region(): void
     {
-        // Décision 2026-11-25-region-de-l-adresse : la région avant la ville, ses offres de toutes ses villes.
+        // Décision 2026-11-25-region-de-l-adresse : la région avant la ville, ses offres de toutes ses villes. Yaoundé
+        // d'abord, dans la première région du pays (`home()`).
+        $this->home('Yaoundé', 1000, []);
         $littoral = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Littoral', 'en' => 'Littoral']]);
         $douala = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Douala', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
         $edea = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Edéa', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
-        $this->home('Yaoundé', 1000, []);
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
         $this->assertSame('Région', $filters['region']['label']);
+        // Sans l'option « Tous » (décision 2026-11-25-region-sans-tous) ; la ville la garde.
+        $this->assertFalse($filters['region']['all_option']);
+        $this->assertArrayNotHasKey('all_option', $filters['city']);
         $this->assertContains('Littoral', array_column($filters['region']['options'], 'label'));
 
         $this->assertEqualsCanonicalizing([(string) $douala->getKey(), (string) $edea->getKey()], $this->ids('?filter[region]='.$littoral->getKey()));
+    }
+
+    public function test_the_search_always_has_a_region_the_first_with_offers_by_default(): void
+    {
+        // Décision 2026-11-25-region-obligatoire-recherche : la première région qui a des offres, dans l'ordre du
+        // back-office ; une région sans offre n'est pas proposée.
+        $empty = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'position' => 1]);
+        $centre = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Centre', 'en' => 'Centre'], 'position' => 2]);
+        $littoral = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Littoral', 'en' => 'Littoral'], 'position' => 3]);
+        $yaounde = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Yaoundé', 'region_id' => $centre->getKey()]))->create(['status' => 'published']);
+        $douala = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Douala', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+
+        $definition = $this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->assertOk()->json('data');
+        $region = collect($definition['filters'])->firstWhere('name', 'region');
+        $this->assertTrue($region['required']);
+        $this->assertSame((string) $centre->getKey(), $region['default']);
+        $this->assertNotContains((string) $empty->getKey(), array_column($region['options'], 'value'));
+
+        // Sans région envoyée : celle par défaut ; avec, la sienne.
+        $this->assertSame([(string) $yaounde->getKey()], $this->ids());
+        $this->assertSame('1 logement', $definition['heading']['title']);
+        $this->assertSame([(string) $douala->getKey()], $this->ids('?filter[region]='.$littoral->getKey()));
+    }
+
+    public function test_the_city_filter_offers_the_cities_of_the_chosen_region(): void
+    {
+        // Décision 2026-11-25-ville-selon-region : chaque ville a sa région pour parent ; une ville d'une autre région
+        // que celle choisie est ignorée.
+        $centre = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Centre', 'en' => 'Centre'], 'position' => 1]);
+        $littoral = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Littoral', 'en' => 'Littoral'], 'position' => 2]);
+        Offer::factory()->at(Address::factory()->create(['city' => 'Yaoundé', 'region_id' => $centre->getKey()]))->create(['status' => 'published']);
+        $douala = Offer::factory()->at(Address::factory()->create(['city' => 'Douala', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+        Offer::factory()->at(Address::factory()->create(['city' => 'Edéa', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+
+        $city = collect($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'))->firstWhere('name', 'city');
+        $this->assertSame('region', $city['depends_on']);
+        $this->assertSame((string) $littoral->getKey(), collect($city['options'])->firstWhere('value', 'Douala')['parent']);
+        $this->assertTrue($city['country_scoped']);
+
+        $this->assertSame([(string) $douala->getKey()], $this->ids('?filter[region]='.$littoral->getKey().'&filter[city]=Douala'));
+        // Douala n'est pas dans la région par défaut (Centre) : la ville est ignorée.
+        $this->assertCount(1, $this->ids('?filter[city]=Douala'));
+        $this->assertNotContains((string) $douala->getKey(), $this->ids('?filter[city]=Douala'));
+    }
+
+    public function test_my_homes_keep_an_optional_region(): void
+    {
+        $user = User::factory()->create();
+
+        $region = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
+            ->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'region');
+        $this->assertFalse($region['required']);
+        $this->assertNull($region['default']);
     }
 
     public function test_the_list_describes_its_filters(): void
@@ -165,7 +225,7 @@ class OfferFiltersApiTest extends TestCase
     {
         $featuredInYaounde = $this->home('Yaoundé', 1000, ['property_type' => 'studio'], ['featured_until' => now()->addDay()]);
         $featuredInDouala = $this->home('Douala', 1000, ['property_type' => 'studio'], ['featured_until' => now()->addDays(2)]);
-        Offer::factory()->count(22)->at(Address::factory()->for($this->cameroon)->state(['city' => 'Douala']))->create(['status' => 'published']);
+        Offer::factory()->count(22)->at(Address::factory()->state(['city' => 'Douala', 'region_id' => $this->regionOf($this->cameroon)]))->create(['status' => 'published']);
 
         $first = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala')->json('data');
         $second = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala&cursor='.urlencode($first['next_cursor']))->json('data');
