@@ -58,7 +58,8 @@ class AddressesRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('region.name')
-                    ->label(__('location::address.region'))
+                    // Le nom des régions du pays (décision 2026-11-25-region-label-partout).
+                    ->label(fn (): string => $this->getOwnerRecord() instanceof Country ? $this->getOwnerRecord()->regionLabel() : (string) __('location::address.region'))
                     ->state(fn (Address $record): string => trim((string) $record->region?->getTranslation('name', app()->getLocale()))),
                 TextColumn::make('latitude')
                     ->label(__('location::address.latitude'))

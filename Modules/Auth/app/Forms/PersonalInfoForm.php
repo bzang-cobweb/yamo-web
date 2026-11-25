@@ -14,6 +14,7 @@ use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
+use Modules\Location\Support\CurrentCountry;
 
 /**
  * Informations personnelles, depuis le profil de l'app mobile
@@ -81,7 +82,10 @@ class PersonalInfoForm extends Form
                 ->default($user?->country_id === null ? null : (string) $user->country_id),
             // Région : seulement celles du pays choisi (liste dépendante).
             Field::select('region_id')
-                ->label(__('auth::user.region'))
+                // Le nom des régions du pays du compte, sinon du pays courant (décision 2026-11-25-region-label-partout) :
+                // l'app ne change pas le libellé quand le pays choisi change.
+                // Sans charger la relation du compte : l'enregistrement qui suit la changerait.
+                ->label(Country::query()->find($user?->country_id)?->regionLabel() ?? CurrentCountry::get()?->regionLabel() ?? __('auth::user.region'))
                 ->dependsOn('country_id')
                 ->options(self::regionOptions())
                 ->default($user?->region_id === null ? null : (string) $user->region_id),

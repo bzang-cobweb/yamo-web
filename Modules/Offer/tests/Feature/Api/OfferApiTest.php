@@ -474,6 +474,11 @@ class OfferApiTest extends TestCase
         $this->assertTrue($fields['region']['searchable']);
         $this->assertTrue($fields['region']['required']);
         $this->assertSame('Vaud', collect($fields['region']['options'])->firstWhere('value', (string) $vaud->getKey())['label'] ?? null);
+        // Sans nom de régions pour le pays : « Région » ; avec, le sien (décision 2026-11-25-region-label-partout).
+        $this->assertSame('Région', $fields['region']['label']);
+        Country::query()->whereKey($swiss)->firstOrFail()->setTranslations('region_label', ['fr' => 'Canton', 'en' => 'Canton', 'de' => 'Kanton'])->save();
+        $this->assertSame('Canton', collect($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'))->firstWhere('name', 'region')['label']);
+        $this->assertSame('Canton', collect($this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'region')['label']);
         $this->assertCount(1, $fields['region']['options']);
 
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['region' => null]))->assertJsonValidationErrors('region');

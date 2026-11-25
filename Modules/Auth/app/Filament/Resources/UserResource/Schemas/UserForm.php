@@ -80,7 +80,8 @@ abstract class UserForm
                     ->afterStateUpdated(fn (Set $set) => $set('region_id', null))),
                 // Région : seulement celles du pays choisi, comme dans l'app.
                 Select::make('region_id')
-                    ->label(__('auth::user.region'))
+                    // Le nom des régions du pays choisi (décision 2026-11-25-region-label-partout).
+                    ->label(fn (Get $get): string => Country::query()->find($get('country_id'))?->regionLabel() ?? (string) __('auth::user.region'))
                     ->options(fn (Get $get): array => collect(PersonalInfoForm::regionOptions())
                         ->filter(fn (array $region): bool => $region['parent'] === (string) $get('country_id'))
                         ->map(fn (array $region): string => $region['label'])
