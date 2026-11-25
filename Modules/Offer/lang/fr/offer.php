@@ -57,6 +57,8 @@ return [
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Aucun logement|{1} :count logement|[2,*] :count logements',
+        // Au-delà de 1000, dans la recherche (décision 2026-11-25-recherche-plus-de-1000).
+        'count_over' => 'Plus de :count logements',
         // Le nombre des favoris (décision 2026-11-25-nombre-favoris).
         'favorites_count' => '{0} Aucun favori|{1} :count favori|[2,*] :count favoris',
         // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).

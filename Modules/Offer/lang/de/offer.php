@@ -57,6 +57,8 @@ return [
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Keine Unterkünfte|{1} :count Unterkunft|[2,*] :count Unterkünfte',
+        // Au-delà de 1000, dans la recherche (décision 2026-11-25-recherche-plus-de-1000).
+        'count_over' => 'Mehr als :count Unterkünfte',
         // Le nombre des favoris (décision 2026-11-25-nombre-favoris).
         'favorites_count' => '{0} Keine Favoriten|{1} :count Favorit|[2,*] :count Favoriten',
         // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).

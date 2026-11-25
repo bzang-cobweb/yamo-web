@@ -67,4 +67,6 @@ return [
             'form' => (int) env('OFFER_PHOTOS_FORM_SIZE', 320),
         ],
     ],
+    // Au-delà, la recherche annonce « Plus de 1000 logements » (décision 2026-11-25-recherche-plus-de-1000).
+    'browse_count_cap' => 1000,
 ];

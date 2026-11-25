@@ -240,6 +240,11 @@ class OfferBrowseListing extends Listing
     public function headingFor(array $filters, ?string $search = null): array
     {
         $count = $this->countFor($search, $filters);
+        // Au-delà de 1000 : « Plus de 1000 logements » (décision 2026-11-25-recherche-plus-de-1000).
+        $cap = (int) config('offer.browse_count_cap', 1000);
+        if ($count > $cap) {
+            return ['title' => __('offer::offer.list.count_over', ['count' => $cap]), 'subtitle' => null];
+        }
 
         return ['title' => trans_choice('offer::offer.list.count', $count, ['count' => $count]), 'subtitle' => null];
     }

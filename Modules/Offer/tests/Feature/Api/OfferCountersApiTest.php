@@ -79,6 +79,13 @@ class OfferCountersApiTest extends AuthFilamentTestCase
         $this->assertSame(['title' => '2 logements', 'subtitle' => null], $this->api(null, 'GET', '/api/v1/lists/offer.browse')->assertOk()->json('data.heading'));
         $this->assertSame('1 logement', $this->api(null, 'GET', '/api/v1/lists/offer.browse?search=Akwa')->json('data.heading.title'));
         $this->assertSame('Aucun logement', $this->api(null, 'GET', '/api/v1/lists/offer.browse?search=Kribi')->json('data.heading.title'));
+
+        // Au-delà du plafond : « Plus de 1000 logements » (décision 2026-11-25-recherche-plus-de-1000) ; à 1000 tout juste,
+        // le nombre exact. Ici, plafond à 1 et à 2.
+        config(['offer.browse_count_cap' => 1]);
+        $this->assertSame('Plus de 1 logements', $this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.heading.title'));
+        config(['offer.browse_count_cap' => 2]);
+        $this->assertSame('2 logements', $this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.heading.title'));
     }
 
     public function test_the_search_and_the_home_count_a_view_except_for_the_owner(): void
