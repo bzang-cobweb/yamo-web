@@ -69,6 +69,8 @@ class OfferDetailResource extends JsonResource
             'indication' => $indication,
             /** Toutes les photos, dans l'ordre, sur l'hôte de la requête. */
             'photos' => $this->photos($offer),
+            /** Les mêmes photos, dans le même ordre, en grand : la galerie plein écran (décision 2026-11-25-galerie-plein-ecran). */
+            'gallery' => $this->photos($offer, 'web'),
             'description' => $description,
             /** Caractéristiques lisibles : celles que le domaine place en tête (`leadingFacts`), puis la catégorie, la ville et les attributs renseignés du domaine. */
             'facts' => $facts,
@@ -172,10 +174,11 @@ class OfferDetailResource extends JsonResource
     /**
      * @return list<string>
      */
-    private function photos(Offer $offer): array
+    private function photos(Offer $offer, string $conversion = 'detail'): array
     {
-        // La fiche : ses photos à la taille du carrousel (décision 2026-11-24-avatar-photos-offre-conversions).
-        return array_map(fn (string $url): string => (string) MediaUrl::onRequestHost($url), $offer->photoUrls('detail'));
+        // La fiche : ses photos à la taille du carrousel (décision 2026-11-24-avatar-photos-offre-conversions) ; la
+        // galerie plein écran, à celle du web (décision 2026-11-25-galerie-plein-ecran).
+        return array_map(fn (string $url): string => (string) MediaUrl::onRequestHost($url), $offer->photoUrls($conversion));
     }
 
     /**

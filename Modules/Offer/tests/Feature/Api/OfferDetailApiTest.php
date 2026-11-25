@@ -81,6 +81,9 @@ class OfferDetailApiTest extends TestCase
         $this->assertCount(2, $data['photos']);
         // Les photos à la taille du carrousel (décision 2026-11-24-avatar-photos-offre-conversions).
         $this->assertStringEndsWith('salon-detail.webp', $data['photos'][0]);
+        // Les mêmes, en grand, pour la galerie plein écran (décision 2026-11-25-galerie-plein-ecran).
+        $this->assertCount(2, $data['gallery']);
+        $this->assertStringEndsWith('salon-web.webp', $data['gallery'][0]);
         $this->assertSame('Proche des commerces.', $data['description']);
         $this->assertNull($data['status']);
         // La catégorie en tête ; plus de ville (décisions 2026-11-19-fiche-offre-ordre et 2026-11-19-fiche-sans-ville) ; plus
