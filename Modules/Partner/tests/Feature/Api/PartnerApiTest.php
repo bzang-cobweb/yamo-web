@@ -9,6 +9,7 @@ use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
+use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Tests\TestCase;
 
@@ -90,6 +91,40 @@ class PartnerApiTest extends TestCase
         $this->assertSame([0, 0], [$hidden->fresh()->views_count, $hidden->fresh()->clicks_count]);
     }
 
+    public function test_the_partners_page_counts_a_view_and_partner_accounts_count_nothing(): void
+    {
+        // Décision 2026-11-25-compteurs-partenaires.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $mine = Partner::factory()->for($this->cameroon)->create();
+        $other = Partner::factory()->for($this->cameroon)->create();
+        $member = User::factory()->create(['locale' => 'fr']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $mine->users()->attach($member->getKey(), ['is_admin' => false]);
+        $token = $member->createToken('iPhone')->plainTextToken;
+
+        // La page « Partenaires » compte une vue, comme le carrousel de l'accueil.
+        $this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk();
+        $this->assertSame([1, 1], [$mine->fresh()->views_count, $other->fresh()->views_count]);
+
+        // Un compte du partenaire ne compte ni vue ni clic pour lui, mais compte pour les autres.
+        $this->withHeaders($headers)->withToken($token)->getJson('/api/v1/lists/partner.all')->assertOk();
+        $this->withHeaders($headers)->withToken($token)->getJson('/api/v1/partners')->assertOk();
+        $this->withHeaders($headers)->withToken($token)->postJson("/api/v1/partners/{$mine->getKey()}/click")->assertNoContent();
+        $this->withHeaders($headers)->withToken($token)->postJson("/api/v1/partners/{$other->getKey()}/click")->assertNoContent();
+
+        $this->assertSame([1, 0], [$mine->fresh()->views_count, $mine->fresh()->clicks_count]);
+        $this->assertSame([3, 1], [$other->fresh()->views_count, $other->fresh()->clicks_count]);
+    }
+
+    public function test_opening_the_detail_counts_nothing(): void
+    {
+        $partner = Partner::factory()->for($this->cameroon)->create();
+
+        $this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk();
+
+        $this->assertSame([0, 0], [$partner->fresh()->views_count, $partner->fresh()->clicks_count]);
+    }
+
     public function test_as_many_partners_as_set_in_the_application_drawn_at_random(): void
     {
         // Décision 2026-11-23-accueil-nombres-reglables : 10 sans réglage, sinon le nombre réglé.
@@ -140,10 +175,11 @@ class PartnerApiTest extends TestCase
         $hidden = Partner::factory()->for($this->cameroon)->create(['status' => PartnerStatusEnum::PENDING]);
         $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
 
-        // Tous, au-delà du nombre de l'accueil, dans l'ordre, sans compte ; sans compter de vue ; page après page
-        // comme toutes les listes.
+        // Tous, au-delà du nombre de l'accueil, dans l'ordre, sans compte ; page après page comme toutes les listes.
+        // Chacun compte une vue, l'invisible non (décision 2026-11-25-compteurs-partenaires).
         $this->assertSame(array_map('strval', [$a->getKey(), $b->getKey(), $c->getKey()]), array_column($this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.items'), 'id'));
-        $this->assertSame(0, (int) Partner::query()->sum('views_count'));
+        $this->assertSame(3, (int) Partner::query()->sum('views_count'));
+        $this->assertSame(0, $hidden->fresh()->views_count);
 
         // Le détail d'un visible ; 404 pour un invisible ou inconnu.
         $this->withHeaders($headers)->getJson("/api/v1/partners/{$a->getKey()}")->assertOk()->assertJsonPath('data.name', 'Assurances du Littoral');
@@ -154,6 +190,17 @@ class PartnerApiTest extends TestCase
             ->assertJsonPath('data.contact_phone', '+237 6 70 00 00 02');
         $this->withHeaders($headers)->getJson("/api/v1/partners/{$hidden->getKey()}")->assertNotFound();
         $this->withHeaders($headers)->getJson('/api/v1/partners/999999')->assertNotFound();
+    }
+
+    public function test_the_home_list_gives_the_become_partner_action(): void
+    {
+        // Décision 2026-11-25-accueil-carte-devenir-partenaire : la même action que le pied de la page « Partenaires ».
+        $this->partners()->assertOk()->assertJsonPath('meta.become', ['label' => 'Devenir partenaire', 'form' => null, 'link' => '/sign-in']);
+
+        $member = User::factory()->create(['locale' => 'fr']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/partners')
+            ->assertOk()->assertJsonPath('meta.become', ['label' => 'Devenir partenaire', 'form' => PartnerForm::name(), 'link' => null]);
     }
 
     public function test_the_page_shows_the_status_to_the_partner_accounts_only(): void
@@ -226,8 +273,9 @@ class PartnerApiTest extends TestCase
         $this->assertSame(['label' => 'Devenir partenaire', 'form' => 'partner.partner', 'link' => null], $this->withHeaders($headers)->withToken($member->createToken('iPhone')->plainTextToken)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.footer'));
     }
 
-    public function test_no_partner_an_empty_list(): void
+    public function test_no_partner_an_empty_list_but_still_the_become_partner_action(): void
     {
-        $this->partners()->assertOk()->assertExactJson(['data' => []]);
+        // La carte « Devenir partenaire » reste seule dans le carrousel (décision 2026-11-25-accueil-carte-devenir-partenaire).
+        $this->partners()->assertOk()->assertExactJson(['data' => [], 'meta' => ['become' => ['label' => 'Devenir partenaire', 'form' => null, 'link' => '/sign-in']]]);
     }
 }

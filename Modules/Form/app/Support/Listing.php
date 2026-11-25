@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\Cursor;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use TypeError;
@@ -88,11 +89,22 @@ abstract class Listing
         $name = 'listing_cursor';
 
         try {
-            return $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
+            $page = $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name, Cursor::fromEncoded($cursor));
         } catch (UnexpectedValueException|TypeError) {
-            return $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name);
+            $page = $this->filtered($search, $filters)->cursorPaginate($this->perPage(), ['*'], $name);
         }
+        $this->served($page->getCollection());
+
+        return $page;
     }
+
+    /**
+     * Les enregistrements d'une page servie à l'app : rien par défaut. Une liste y compte ce qu'elle affiche (les vues
+     * des partenaires, décision 2026-11-25-compteurs-partenaires).
+     *
+     * @param  Collection<int, Model>  $records
+     */
+    protected function served(Collection $records): void {}
 
     /**
      * Les filtres proposés par la liste, en champs (décision

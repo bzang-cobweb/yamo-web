@@ -5,8 +5,11 @@ namespace Modules\Partner\Services;
 use App\Models\Setting;
 use App\Support\ContainsSearch;
 use App\Support\Locales;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Support\CurrentCountry;
@@ -23,20 +26,52 @@ class PartnerService
     /**
      * Des partenaires visibles tirés au hasard, autant que réglé dans « Application » (décision
      * 2026-11-23-accueil-nombres-reglables), puis rangés dans l'ordre du back-office (décision
-     * 2026-11-23-partenaires-triables) ; chacun compte une vue.
+     * 2026-11-23-partenaires-triables) ; chacun compte une vue, sauf pour ses propres comptes (décision
+     * 2026-11-25-compteurs-partenaires).
      *
      * @return Collection<int, Partner>
      */
-    public function shown(): Collection
+    public function shown(?Authenticatable $viewer = null): Collection
     {
         $partners = Partner::query()->visible()->with('media')->inRandomOrder()->limit(Setting::homePartners())->get()
             ->sortBy([['position', 'asc'], ['id', 'asc']])->values();
-
-        if ($partners->isNotEmpty()) {
-            Partner::query()->whereKey($partners->modelKeys())->increment('views_count');
-        }
+        $this->countViews($partners, $viewer);
 
         return $partners;
+    }
+
+    /**
+     * Une vue de plus pour chaque partenaire affiché : dans le carrousel de l'accueil, dans la page « Partenaires »
+     * (décision 2026-11-25-compteurs-partenaires). Pas pour ceux auxquels `$viewer` est rattaché (`partner_user`).
+     *
+     * @param  iterable<Model>  $partners
+     */
+    public function countViews(iterable $partners, ?Authenticatable $viewer): void
+    {
+        $ids = [];
+        foreach ($partners as $partner) {
+            $ids[] = (int) $partner->getKey();
+        }
+        $ids = array_values(array_diff($ids, $this->attachedTo($viewer)));
+        if ($ids === []) {
+            return;
+        }
+
+        Partner::query()->whereKey($ids)->increment('views_count');
+    }
+
+    /**
+     * Les partenaires auxquels le compte est rattaché, qui ne comptent ni ses vues ni ses clics.
+     *
+     * @return list<int>
+     */
+    private function attachedTo(?Authenticatable $viewer): array
+    {
+        if ($viewer === null) {
+            return [];
+        }
+
+        return DB::table('partner_user')->where('user_id', $viewer->getAuthIdentifier())->pluck('partner_id')->map(fn (mixed $id): int => (int) $id)->all();
     }
 
     /**
@@ -51,12 +86,17 @@ class PartnerService
     }
 
     /**
-     * Un toucher sur un partenaire visible : un clic de plus. Faux s'il n'est pas visible.
+     * Un lien qui ouvre la fiche d'un partenaire visible, depuis le carrousel de l'accueil ou la page « Partenaires » :
+     * un clic de plus, sauf pour ses propres comptes (décision 2026-11-25-compteurs-partenaires). Faux s'il n'est pas
+     * visible.
      */
-    public function click(Partner $partner): bool
+    public function click(Partner $partner, ?Authenticatable $viewer = null): bool
     {
         if (! Partner::query()->visible()->whereKey($partner->getKey())->exists()) {
             return false;
+        }
+        if (in_array((int) $partner->getKey(), $this->attachedTo($viewer), true)) {
+            return true;
         }
 
         $partner->increment('clicks_count');

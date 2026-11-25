@@ -6,6 +6,7 @@ use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Partner\Forms\PartnerForm;
@@ -16,7 +17,8 @@ use Modules\Partner\Services\PartnerService;
  * La page « Partenaires » de l'app (décisions 2026-11-23-partenaires-liste-detail et
  * 2026-11-23-partenaires-recherche) : tous les partenaires visibles, dans l'ordre du back-office, page après page
  * comme toutes les listes ; cherchables par nom ou description. Pour chacun : son logo, son nom, son slogan (sinon sa description) ;
- * la carte ouvre sa page. Ne compte pas de vue : les vues sont celles de l'accueil.
+ * la carte ouvre sa page. Chaque partenaire d'une page servie compte une vue, sauf pour ses propres comptes (décision
+ * 2026-11-25-compteurs-partenaires).
  */
 class PartnerListing extends Listing
 {
@@ -72,6 +74,11 @@ class PartnerListing extends Listing
     protected function search(Builder $query, string $term): void
     {
         PartnerService::search($query, $term);
+    }
+
+    protected function served(Collection $records): void
+    {
+        app(PartnerService::class)->countViews($records, $this->user);
     }
 
     public function item(Model $record): ListItem

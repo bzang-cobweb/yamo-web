@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Modules\Partner\Http\Resources\PartnerResource;
+use Modules\Partner\Lists\PartnerListing;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
 
@@ -18,9 +19,14 @@ class PartnerController
     /**
      * Les partenaires visibles du pays courant, dans leur ordre ; chacun compte une vue.
      */
-    public function index(PartnerService $partnerService): AnonymousResourceCollection
+    /**
+     * Les partenaires de l'accueil, et l'action « Devenir partenaire » de la dernière carte du carrousel : la même que
+     * le pied de la page « Partenaires » (décision 2026-11-25-accueil-carte-devenir-partenaire).
+     */
+    public function index(Request $request, PartnerService $partnerService): AnonymousResourceCollection
     {
-        return PartnerResource::collection($partnerService->shown());
+        return PartnerResource::collection($partnerService->shown($request->user('sanctum')))
+            ->additional(['meta' => ['become' => (new PartnerListing($request->user('sanctum')))->footer()]]);
     }
 
     /**
@@ -37,13 +43,14 @@ class PartnerController
     }
 
     /**
-     * Un toucher sur un partenaire : un clic de plus. 404 s'il n'est pas visible.
+     * Un lien qui ouvre la fiche d'un partenaire : un clic de plus, sauf pour ses propres comptes (décision
+     * 2026-11-25-compteurs-partenaires). 404 s'il n'est pas visible.
      */
     public function click(Request $request, Partner $partner, PartnerService $partnerService): Response
     {
         Gate::forUser($request->user('sanctum'))->authorize('view', $partner);
         // Seul un partenaire affiché compte un clic.
-        abort_unless($partnerService->click($partner), 404);
+        abort_unless($partnerService->click($partner, $request->user('sanctum')), 404);
 
         return response()->noContent();
     }
