@@ -212,6 +212,17 @@ class DemoSeeder extends Seeder
                     $service->answer($booking->refresh(), $answer === 'accept');
                 }
             }
+
+            // D'autres visiteurs demandent les mêmes dates, ou le même jour, que les demandes en attente du membre
+            // (décision 2026-11-25-demo-chevauchements-du-membre) : chaque type de location a son chevauchement.
+            foreach (self::MEMBER_OVERLAPS as [$visitor, $offerIndex, $from, $to, $guests, $message]) {
+                $tick();
+                $service->request(
+                    User::query()->where('email', 'demo-visiteur-'.$visitor.'@example.test')->firstOrFail(),
+                    Offer::query()->where('user_id', '!=', $member->getKey())->where('title->fr', self::OTHER_OFFERS[$offerIndex][0]['fr'])->firstOrFail(),
+                    ['check_in' => $today->copy()->addDays($from)->toDateString(), 'check_out' => $to === null ? null : $today->copy()->addDays($to)->toDateString(), 'guests' => $guests, 'message' => $message],
+                );
+            }
         } finally {
             Carbon::setTestNow();
             config(['queue.default' => $queue]);
@@ -268,6 +279,26 @@ class DemoSeeder extends Seeder
         [0, 8, 11, 2, 'Arrivée prévue en fin d’après-midi.', 'accept'],
         [1, 5, null, null, 'Je souhaite visiter avant de signer le bail.', null],
         [2, 7, null, null, null, null],
+        // Meublé : un second séjour, en attente, que d'autres demandes chevauchent (`MEMBER_OVERLAPS`).
+        [0, 20, 24, 1, 'Un second séjour, pour un déplacement.', null],
+    ];
+
+    /**
+     * Les demandes d'autres visiteurs qui chevauchent celles du membre, en attente, chez l'autre propriétaire
+     * (décision 2026-11-25-demo-chevauchements-du-membre) : visiteur (1 à 3), rang du logement (`OTHER_OFFERS`),
+     * arrivée et départ (ou date d'une visite) en jours depuis aujourd'hui, voyageurs, message.
+     * Meublé : des nuits communes avec le second séjour (20 à 24) ; location : la visite du jour 5 ; colocation : celle
+     * du jour 7.
+     *
+     * @var list<array{int, int, int, int|null, int|null, string|null}>
+     */
+    private const MEMBER_OVERLAPS = [
+        [1, 0, 21, 23, 1, 'Séjour professionnel.'],
+        [2, 0, 22, 26, 2, null],
+        [1, 1, 5, null, null, 'Je peux passer en début d’après-midi.'],
+        [2, 1, 5, null, null, null],
+        [2, 2, 7, null, null, 'La chambre est-elle encore libre ?'],
+        [3, 2, 7, null, null, null],
     ];
 
     /**
