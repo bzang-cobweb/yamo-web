@@ -53,7 +53,9 @@ class OfferReviewListingApiTest extends TestCase
         $item = collect($data['items'])->firstWhere('title', 'Paul');
         $this->assertSame('Bon rapport qualité-prix.', $item['subtitle']);
         $this->assertEquals(['average' => 4, 'count' => 1], $item['rating']);
-        $this->assertNotNull($item['detail']);
+        // La date brute, formatée par l'app comme sur la fiche (décision 2026-11-25-avis-date-formatee-app).
+        $this->assertArrayNotHasKey('detail', $item);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $item['date']);
         $this->assertSame('review', $item['layout']);
     }
 

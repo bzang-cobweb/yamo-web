@@ -247,8 +247,8 @@ final class ListItem
 
     /**
      * La disposition d'un avis, comme sur la fiche d'une offre (décision 2026-11-25-liste-avis-generique) : le titre
-     * (le prénom), puis les étoiles de la note et la ligne à part (la date) séparées par un point, puis le sous-titre
-     * (le commentaire).
+     * (le prénom), puis les étoiles de la note et la date (`date`, formatée par l'app) séparées par un point, puis le
+     * sous-titre (le commentaire).
      */
     public function reviewLayout(): self
     {

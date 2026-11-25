@@ -115,10 +115,10 @@ class OfferReviewListing extends Listing
     public function item(Model $record): ListItem
     {
         /** @var OfferReview $record */
-        $date = $record->created_at;
-
+        // La date brute : l'app la formate comme sur la fiche, pour la même date partout (décision
+        // 2026-11-25-avis-date-formatee-app).
         return ListItem::make($record->getKey(), (string) ($record->user?->first_name ?: $record->user?->name ?? ''), $record->comment)
-            ->detail($date?->copy()->locale($this->locale())->isoFormat('ll'))
+            ->date($record->created_at?->toIso8601String())
             ->rating($record->rating, 1)
             // Comme sur la fiche : le prénom, « ★★★★★ · 18 nov. 2026 », le commentaire.
             ->reviewLayout();
