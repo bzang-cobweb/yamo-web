@@ -93,7 +93,7 @@ class BookingListing extends Listing
         return Booking::query()
             // La note et le nombre d'avis du logement, comme à l'accueil (décision 2026-11-21-reservations-note).
             // Et s'il est en favori, pour le cœur de la carte (décision 2026-11-22-reservations-coeur).
-            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address'])->withReviewSummary()->withFavoriteOf($this->user?->getAuthIdentifier())])
+            ->with(['offer' => fn ($offer) => $offer->with(['media', 'address', 'country'])->withReviewSummary()->withFavoriteOf($this->user?->getAuthIdentifier())])
             // Sa dernière notification du fil de la demande, reçue ou de lui : la carte ouvre sa page, même tant que le
             // propriétaire n'a pas répondu (décisions 2026-11-21-reservation-comme-notification et
             // 2026-11-24-reservations-lien-demande-envoyee).

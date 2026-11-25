@@ -44,7 +44,7 @@ class OfferFiltersApiTest extends TestCase
         // Une seule région : la recherche en exige une (décision 2026-11-25-region-obligatoire-recherche) ; ces tests portent
         // sur les autres filtres.
         return Offer::factory()->at(Address::factory()->create(['city' => $city, 'region_id' => $this->regionOf($this->cameroon)]))->create([
-            'status' => 'published', 'price' => (string) $price, 'currency' => 'XAF',
+            'status' => 'published', 'price' => (string) $price,
             'details' => $details,
             ...$overrides,
         ]);
@@ -153,7 +153,7 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame('multiselect', $filters['property_type']['type']);
         $this->assertSame('multiselect', $filters['feature_flags']['type']);
         $this->assertSame('Équipements', $filters['feature_flags']['label']);
-        $this->assertCount(14, $filters['feature_flags']['options']);
+        $this->assertCount(15, $filters['feature_flags']['options']);
         // Le type de location, en liste (« Tous » ajouté par l'app).
         $this->assertSame('select', $filters['rental_type']['type']);
         $this->assertSame(['long_term', 'furnished', 'shared'], array_column($filters['rental_type']['options'], 'value'));

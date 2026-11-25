@@ -50,7 +50,7 @@ class BookingThreadTest extends TestCase
         $this->owner = User::factory()->create(['locale' => 'fr']);
         $this->guest = User::factory()->create(['locale' => 'fr']);
         $this->offer = Offer::factory()->for($this->owner, 'user')->create([
-            'status' => 'published', 'price' => '45000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '45000',
             'details' => ['property_type' => 'studio', 'rental_type' => 'furnished'],
         ]);
     }
@@ -406,7 +406,7 @@ class BookingThreadTest extends TestCase
     {
         // Décisions 2026-11-20-charges-visite et 2026-11-20-caution-dans-le-total.
         $flat = Offer::factory()->for($this->owner, 'user')->create([
-            'status' => 'published', 'price' => '250000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '250000',
             'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2],
         ]);
         $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
@@ -439,7 +439,7 @@ class BookingThreadTest extends TestCase
         // Décision 2026-11-20-disponibilite-demande.
         app()->setLocale('fr');
         $flat = Offer::factory()->for($this->owner, 'user')->create([
-            'status' => 'published', 'price' => '250000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '250000',
             'details' => ['property_type' => 'apartment', 'rental_type' => 'long_term', 'bedrooms' => 2, 'available_from' => '2026-12-01'],
         ]);
         $visit = Booking::factory()->for($flat)->create(['type' => 'visit', 'check_in' => '2026-11-28', 'check_out' => null, 'guests' => null]);
@@ -456,7 +456,7 @@ class BookingThreadTest extends TestCase
 
         // Un séjour (meublé) : jamais, même avec une ancienne date (décision 2026-11-20-disponibilite-sans-meuble).
         $studio = Offer::factory()->for($this->owner, 'user')->create([
-            'status' => 'published', 'price' => '85000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '85000',
             'details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0, 'available_from' => '2026-12-01'],
         ]);
         $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2]);
@@ -468,7 +468,7 @@ class BookingThreadTest extends TestCase
         // Décision 2026-11-20-caution-dans-le-total.
         app()->setLocale('fr');
         $studio = Offer::factory()->for($this->owner, 'user')->create([
-            'status' => 'published', 'price' => '85000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '85000',
             'details' => ['property_type' => 'studio', 'rental_type' => 'furnished', 'bedrooms' => 0],
         ]);
         $stay = Booking::factory()->for($studio)->create(['type' => 'stay', 'check_in' => '2026-12-01', 'check_out' => '2026-12-04', 'guests' => 2, 'total' => '255000', 'currency' => 'XAF']);

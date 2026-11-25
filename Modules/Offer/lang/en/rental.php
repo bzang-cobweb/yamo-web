@@ -42,6 +42,7 @@ return [
     'bedrooms' => 'Bedrooms',
     'bathrooms' => 'Bathrooms',
     'cameras' => 'Security cameras',
+    'free_parking' => 'Free parking',
     'borehole' => 'Borehole',
     'generator' => 'Generator',
     // Les deux catégories racines des cases (décision 2026-11-25-cases-par-categories).

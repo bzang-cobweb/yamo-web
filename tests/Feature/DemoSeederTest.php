@@ -47,7 +47,8 @@ class DemoSeederTest extends TestCase
         $this->assertSame(['furnished', 'long_term', 'shared'], $others->map(fn (Offer $offer) => $offer->detail('rental_type'))->all());
         $this->assertCount(1, $others->map(fn (Offer $offer) => $offer->offerAddress?->address_id)->unique());
         $others->each(fn (Offer $offer) => $this->assertCount(2, $offer->getMedia(Offer::PHOTOS)));
-        $this->assertSame(['XAF'], Offer::query()->distinct()->pluck('currency')->all());
+        // La devise des offres : celle de leur pays (décision 2026-11-25-devise-du-pays).
+        $this->assertSame(['XAF'], Offer::query()->with('country')->get()->pluck('currency')->unique()->values()->all());
         // Le nombre de salles de bain, partout : 1, ou 2 à partir de trois chambres (décision 2026-11-21-salles-de-bain).
         Offer::query()->get()->each(fn (Offer $offer) => $this->assertSame((int) $offer->detail('bedrooms') >= 3 ? 2 : 1, $offer->detail('bathrooms')));
         // Le téléphone et l'e-mail de démonstration de leur propriétaire (décision 2026-11-21-contact-offre).

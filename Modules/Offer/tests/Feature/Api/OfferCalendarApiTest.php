@@ -59,7 +59,7 @@ class OfferCalendarApiTest extends TestCase
         $owner = $this->member(['phone' => '+23769000010'.(++$this->phones), 'phone_verified_at' => now()]);
 
         return Offer::factory()->for($owner, 'user')->create([
-            'status' => 'published', 'price' => '45000', 'currency' => 'XAF',
+            'status' => 'published', 'price' => '45000',
             'details' => ['property_type' => 'studio', 'rental_type' => ($furnished ? 'furnished' : 'long_term')],
         ]);
     }

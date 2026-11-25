@@ -58,7 +58,6 @@ class OfferDetailApiTest extends TestCase
             'description' => ['fr' => 'Proche des commerces.', 'en' => 'Close to shops.'],
             'status' => 'published',
             'price' => '250000',
-            'currency' => 'XAF',
             // Une vraie catégorie reste possible, à côté du type de location (décision 2026-11-20-type-de-location-garder-categories).
             'category_id' => (OfferCategory::query()->whereNull('parent_id')->withSlug('standing')->first() ?? OfferCategory::query()->create(['name' => ['fr' => 'Standing', 'en' => 'Upscale'], 'position' => 0]))->getKey(),
             'published_at' => '2026-11-18 10:00:00',

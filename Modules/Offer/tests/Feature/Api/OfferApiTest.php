@@ -151,8 +151,9 @@ class OfferApiTest extends TestCase
         $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
         $this->assertArrayNotHasKey('amenities', $fields);
         $labels = array_column($fields['feature_flags']['options'], 'label');
-        $this->assertCount(14, $labels);
-        $this->assertSame(['Wifi', 'Parking'], array_slice($labels, 0, 2));
+        $this->assertCount(15, $labels);
+        // « Parking gratuit » juste après « Parking » (décision 2026-11-26-parking-gratuit).
+        $this->assertSame(['Wifi', 'Parking', 'Parking gratuit'], array_slice($labels, 0, 3));
         $this->assertSame(['Caméras de surveillance', 'Groupe électrogène'], array_slice($labels, -2));
         // Sans « Forage », en double avec « Réserve d'eau / forage » (décision 2026-11-25-forage-en-double).
         $this->assertNotContains('Forage', $labels);
@@ -666,7 +667,7 @@ class OfferApiTest extends TestCase
     public function test_the_list_shows_my_offers_only_with_status_and_price(): void
     {
         $user = $this->member();
-        $mine = Offer::factory()->for($user)->create(['title' => 'Studio', 'status' => 'published', 'price' => '900', 'currency' => 'CHF']);
+        $mine = Offer::factory()->for($user)->create(['title' => 'Studio', 'status' => 'published', 'price' => '900']);
         Offer::factory()->create(['title' => 'Autre']);
 
         $data = $this->asUser($user)->getJson('/api/v1/lists/offer.mine')->assertOk()

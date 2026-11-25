@@ -244,7 +244,7 @@ class OfferDetailResource extends JsonResource
     private function displayed(Offer $offer, Domain $domain, string $locale, callable $keep): array
     {
         // Un montant prend le symbole de la devise de l'offre, sinon de son pays (« 5 000 FCFA / mois »).
-        $symbol = Currency::symbol($offer->currency ?? $offer->country?->currency, $locale);
+        $symbol = Currency::symbol($offer->currency, $locale);
         $values = [];
 
         foreach ($domain->attributes() as $field) {

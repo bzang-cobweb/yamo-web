@@ -159,7 +159,7 @@ class ReceivedBookingListing extends Listing
     public function query(): Builder
     {
         return Booking::query()
-            ->with(['offer', 'user'])
+            ->with(['offer.country', 'user'])
             // Sa dernière notification du fil de la demande : la carte ouvre sa page.
             ->addSelect(['bookings.*', 'thread_notification_id' => Booking::latestVisibleNotification($this->user?->getAuthIdentifier())])
             // La date de sa dernière notification, pour la carte (décision 2026-11-22-demandes-date-derniere-notification).

@@ -42,6 +42,7 @@ return [
     'bedrooms' => 'Schlafzimmer',
     'bathrooms' => 'Badezimmer',
     'cameras' => 'Überwachungskameras',
+    'free_parking' => 'Kostenloser Parkplatz',
     'borehole' => 'Brunnen',
     'generator' => 'Stromaggregat',
     // Les deux catégories racines des cases (décision 2026-11-25-cases-par-categories).

@@ -157,7 +157,8 @@ class OfferListing extends Listing
     {
         // Les siennes, dans le pays courant (décision 2026-11-18-espace-pays).
         return $this->mine()
-            ->with(['media', 'address'])
+            // Le pays : la devise du prix (décision 2026-11-25-devise-du-pays).
+            ->with(['media', 'address', 'country'])
             // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
             ->withReviewSummary()
             // Les demandes en attente, pour le compteur de la carte.

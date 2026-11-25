@@ -118,7 +118,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $admin->assignRole(RoleEnum::ADMIN);
         $this->actingAs($admin);
         $offer = Offer::factory()->at(Address::factory()->create())->create([
-            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
+            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000',
             'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 0],
         ]);
         $other = Offer::factory()->create(['status' => 'published']);
@@ -152,7 +152,7 @@ class OfferResourceTest extends AuthFilamentTestCase
         $admin->assignRole(RoleEnum::ADMIN);
         $this->actingAs($admin);
         $offer = Offer::factory()->at(Address::factory()->create())->create([
-            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000', 'currency' => 'CHF',
+            'status' => 'published', 'title' => ['fr' => 'Studio'], 'price' => '1000',
             'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'bedrooms' => 0],
         ]);
 
@@ -256,7 +256,7 @@ class OfferResourceTest extends AuthFilamentTestCase
     public function test_editing_keeps_the_attributes(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
-        $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'currency' => 'CHF', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'surface' => 30, 'rooms' => 1, 'bedrooms' => 0]]);
+        $offer = Offer::factory()->at(Address::factory()->create(), 'Portail bleu')->create(['price' => '1000', 'details' => ['property_type' => 'studio', 'rental_type' => 'long_term', 'surface' => 30, 'rooms' => 1, 'bedrooms' => 0]]);
 
         Livewire::test(EditOffer::class, ['record' => $offer->getKey()])
             ->assertSchemaStateSet(['details.property_type' => 'studio', 'title.fr' => $offer->getTranslation('title', 'fr'), 'offerAddress.indication.fr' => 'Portail bleu'])

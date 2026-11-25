@@ -38,7 +38,7 @@ class OfferBrowseApiTest extends TestCase
     public function test_a_visitor_sees_the_published_offers_of_the_country_newest_first(): void
     {
         $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
-        $older = Offer::factory()->at($douala)->create(['title' => ['fr' => 'Studio à Akwa', 'en' => 'Studio in Akwa'], 'status' => 'published', 'price' => '25000', 'currency' => 'XAF']);
+        $older = Offer::factory()->at($douala)->create(['title' => ['fr' => 'Studio à Akwa', 'en' => 'Studio in Akwa'], 'status' => 'published', 'price' => '25000']);
         // La recherche exige une région (décision 2026-11-25-region-obligatoire-recherche) : une autre adresse de la même.
         $newer = Offer::factory()->at(Address::factory()->create(['city' => 'Bonabéri', 'region_id' => $douala->region_id]))->create(['title' => ['fr' => 'Maison à Bastos'], 'status' => 'published']);
         Offer::factory()->create(['status' => 'draft']);
@@ -88,8 +88,8 @@ class OfferBrowseApiTest extends TestCase
         $this->assertArrayNotHasKey((string) $room->getKey(), $items->all());
 
         // Le prix suit le type de location : meublé au jour, sinon au mois.
-        $house->update(['price' => '45000', 'currency' => 'XAF']);
-        $studio->update(['price' => '80000', 'currency' => 'XAF']);
+        $house->update(['price' => '45000']);
+        $studio->update(['price' => '80000']);
         $items = $this->browse()->json('data.items');
         $highlights = array_map(fn (?string $text): ?string => $text === null ? null : preg_replace('/[\x{00A0}\x{202F}]/u', ' ', $text), array_column($items, 'highlight', 'id'));
         // Le prix seul : plus de nombre de chambres (décision 2026-11-19-ombre-coeur-onglets-offre).

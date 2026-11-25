@@ -9,6 +9,7 @@ use App\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -46,7 +47,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $description
  * @property OfferStatusEnum $status
  * @property string|null $price
- * @property string|null $currency
+ * @property-read string|null $currency la devise de son pays (décision 2026-11-25-devise-du-pays)
  * @property array<string, mixed>|null $details
  * @property bool $show_address afficher l'adresse sur la fiche (décision 2026-11-21-afficher-adresse)
  * @property string|null $phone téléphone de contact, E.164 (décision 2026-11-21-contact-offre)
@@ -64,7 +65,7 @@ use Spatie\Translatable\HasTranslations;
  * @property int $reviews_count nombre d'avis, enregistré et tenu à jour par ses avis (décision
  *                              2026-11-25-accueil-a-grande-echelle)
  */
-#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'boosted_until', 'starts_at', 'expires_at'])]
+#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'boosted_until', 'starts_at', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -127,6 +128,16 @@ class Offer extends Model implements HasMedia
     /**
      * @return array<string, string>
      */
+    /**
+     * La devise de l'offre : celle de son pays (décision 2026-11-25-devise-du-pays) ; plus de colonne à part.
+     *
+     * @return Attribute<string|null, never>
+     */
+    protected function currency(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->country?->currency);
+    }
+
     protected function casts(): array
     {
         return [

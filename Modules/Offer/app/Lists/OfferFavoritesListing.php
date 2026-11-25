@@ -110,7 +110,7 @@ class OfferFavoritesListing extends Listing
             ->where('user_id', $this->user?->getAuthIdentifier())
             // Visibles des autres (décision 2026-11-19-contrat-paiement-visibilite-avis).
             ->whereHas('offer', fn (Builder $offer) => $offer->visibleToOthers())
-            ->with(['offer' => fn ($offer) => $offer->with(['address', 'media'])->withReviewSummary()])
+            ->with(['offer' => fn ($offer) => $offer->with(['address', 'media', 'country'])->withReviewSummary()])
             ->orderByDesc('id');
     }
 

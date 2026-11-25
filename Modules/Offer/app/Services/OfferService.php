@@ -233,7 +233,6 @@ class OfferService
             'category_id' => $data['category_id'] ?? null,
             'status' => $data['status'],
             'price' => $price,
-            'currency' => $price === null ? null : $country?->currency,
             // Afficher l'adresse (décision 2026-11-21-afficher-adresse) : absent de l'envoi, gardé.
             // Le contact de l'offre (décision 2026-11-21-contact-offre) : absent de l'envoi, gardé ; vide, effacé.
             'phone' => array_key_exists('phone', $data)

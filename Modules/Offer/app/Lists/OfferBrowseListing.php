@@ -121,7 +121,8 @@ class OfferBrowseListing extends Listing
     private function base(): Builder
     {
         return Offer::query()
-            ->with(['address', 'media'])
+            // Le pays : la devise du prix (décision 2026-11-25-devise-du-pays).
+            ->with(['address', 'media', 'country'])
             // Moyenne, nombre et dernier avis (décision 2026-11-19-contrat-avis-offres).
             ->withReviewSummary()
             // Le cœur d'un membre connecté (décision 2026-11-19-contrat-vedette-favoris).

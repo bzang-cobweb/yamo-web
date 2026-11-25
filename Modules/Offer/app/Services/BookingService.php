@@ -66,7 +66,7 @@ class BookingService
                 'message' => $message === '' ? null : $message,
                 'unit_price' => $unitPrice,
                 'total' => $unitPrice === null || $days === null ? null : number_format((float) $unitPrice * $days, 2, '.', ''),
-                'currency' => $unitPrice === null ? null : ($offer->currency ?? $offer->country?->currency),
+                'currency' => $unitPrice === null ? null : $offer->currency,
                 'status' => BookingStatusEnum::PENDING,
                 // L'adresse visible du demandeur, d'après le choix fait sur l'offre ; le propriétaire peut
                 // la changer ensuite (décision 2026-11-21-afficher-adresse).

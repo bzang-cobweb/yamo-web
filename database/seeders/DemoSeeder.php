@@ -418,7 +418,6 @@ class DemoSeeder extends Seeder
                     default => OfferStatusEnum::PUBLISHED,
                 },
                 'price' => $price,
-                'currency' => $cameroon->currency,
                 'details' => [
                     'property_type' => $type,
                     'rental_type' => $rentalType,
@@ -474,7 +473,6 @@ class DemoSeeder extends Seeder
                 'description' => $description,
                 'status' => OfferStatusEnum::PUBLISHED,
                 'price' => $price,
-                'currency' => $cameroon->currency,
                 // Les codes d'équipement deviennent les ids de leurs cases (décision 2026-11-25-equipements-en-categories).
                 'details' => [...array_diff_key($details, ['amenities' => true]), 'feature_flags' => $this->equipment((array) ($details['amenities'] ?? []))],
             ]);

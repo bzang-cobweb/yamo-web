@@ -14,6 +14,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\GridDirection;
 use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
@@ -70,7 +71,9 @@ final class FieldComponent
      */
     public static function boundedCheckboxList(CheckboxList $list): CheckboxList
     {
-        return $list->extraAttributes([
+        // En grille par lignes : en colonnes CSS (par défaut), une liste plus haute que le cadre déborderait sur le côté
+        // et passerait sur la bordure au lieu de défiler.
+        return $list->gridDirection(GridDirection::Row)->extraAttributes([
             'style' => 'max-height: '.self::CHECKBOX_LIST_MAX_HEIGHT.'; overflow-y: auto; padding: 0.75rem; border: 1px solid rgb(127 127 127 / 0.25); border-radius: 0.5rem;',
         ]);
     }

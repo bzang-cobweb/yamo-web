@@ -135,7 +135,8 @@ class RentalDomain extends Domain
     public const FLAG_TREE = [
         'rules' => ['pets', 'smoking', 'parties'],
         // Sans « Forage » : « Réserve d'eau / forage » le couvre (décision 2026-11-25-forage-en-double).
-        'features' => [...self::AMENITIES, 'cameras', 'generator'],
+        // « Parking gratuit » juste après « Parking » (décision 2026-11-26-parking-gratuit).
+        'features' => ['wifi', 'parking', 'free_parking', 'air_conditioning', 'hot_water', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool', 'cameras', 'generator'],
     ];
 
     /** La clé de traduction du nom d'une case de départ. */
@@ -336,7 +337,7 @@ class RentalDomain extends Domain
             return $facts;
         }
 
-        $money = Number::currency((float) $offer->price, (string) ($offer->currency ?? $offer->country?->currency), $locale);
+        $money = Number::currency((float) $offer->price, (string) $offer->currency, $locale);
         $keys = array_keys($facts);
         // La place du premier de ces noms parmi les caractéristiques, `null` si aucun.
         $position = function (string ...$names) use ($keys): ?int {
@@ -358,7 +359,7 @@ class RentalDomain extends Domain
             return [
                 ...$facts,
                 'rent' => ['label' => (string) __('offer::booking.lines.price_per', ['unit' => (string) $this->priceUnit($offer)]), 'value' => $money],
-                'deposit' => ['label' => (string) __('offer::rental.deposit'), 'value' => Number::currency($deposit, (string) ($offer->currency ?? $offer->country?->currency), $locale)],
+                'deposit' => ['label' => (string) __('offer::rental.deposit'), 'value' => Number::currency($deposit, (string) $offer->currency, $locale)],
             ];
         }
 
