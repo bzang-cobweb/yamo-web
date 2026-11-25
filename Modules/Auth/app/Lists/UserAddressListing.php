@@ -61,7 +61,7 @@ class UserAddressListing extends Listing
 
         // Celles du pays courant (décision 2026-11-18-espace-pays).
         return $this->user->addresses()->with('address.country')
-            ->whereHas('address', fn (Builder $query) => $query->where('country_id', CurrentCountry::require()->getKey()));
+            ->whereHas('address', fn (Builder $query) => $query->inCountry(CurrentCountry::require()->getKey()));
     }
 
     public function searchPlaceholder(): string

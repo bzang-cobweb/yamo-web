@@ -154,12 +154,13 @@ class OfferBrowseListing extends Listing
     private string $photoConversion = 'list';
 
     /**
-     * L'accueil de l'app : par ville, `$perCity` offres visibles tirées au hasard, en cartes comme la liste
-     * (décision 2026-11-23-accueil-carrousels-par-ville). Les villes par ordre alphabétique.
+     * L'accueil de l'app : par région (décision 2026-11-25-region-de-l-adresse, à la place des villes de la décision
+     * 2026-11-23-accueil-carrousels-par-ville), `$perCity` offres visibles tirées au hasard, en cartes comme la liste.
+     * Les régions dans l'ordre du back-office ; chacune avec le filtre de la recherche qu'ouvre « Voir tout ».
      *
-     * @return list<array{city: string, items: list<array<string, mixed>>}>
+     * @return list<array{title: string, filter: array{region: string}, items: list<array<string, mixed>>}>
      */
-    public function cityCarousels(?int $perCity = null): array
+    public function regionCarousels(?int $perCity = null): array
     {
         // Les cartes de l'accueil, deux par ligne : leurs photos à cette taille (décision
         // 2026-11-24-avatar-photos-offre-conversions).
@@ -167,9 +168,9 @@ class OfferBrowseListing extends Listing
         // Le nombre réglé dans « Application » (décision 2026-11-23-accueil-nombres-reglables).
         $perCity ??= Setting::homeOffersPerCity();
         $carousels = [];
-        foreach ($this->offerCities(Offer::query()->visibleToOthers()) as $city) {
+        foreach (OfferRegions::of(Offer::query()->visibleToOthers()) as $region) {
             $items = $this->base()
-                ->whereHas('address', fn (Builder $address) => $address->where('city', $city))
+                ->whereHas('address', fn (Builder $address) => $address->where('region_id', $region->getKey()))
                 ->inRandomOrder()
                 ->limit($perCity)
                 ->get();
@@ -180,7 +181,7 @@ class OfferBrowseListing extends Listing
                 ->values()
                 ->all();
             if ($items !== []) {
-                $carousels[] = ['city' => (string) $city, 'items' => $items];
+                $carousels[] = ['title' => OfferRegions::name($region), 'filter' => ['region' => (string) $region->getKey()], 'items' => $items];
             }
         }
 

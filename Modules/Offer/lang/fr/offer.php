@@ -105,6 +105,7 @@ return [
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
+        'region' => 'Région',
         'city' => 'Ville',
     ],
     // Adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche).
@@ -112,6 +113,7 @@ return [
     'street_help' => 'Tapez au moins 3 caractères : les adresses connues sont proposées.',
     'zip' => 'Code postal',
     'city' => 'Ville',
+    'region' => 'Région',
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
     'show_address' => 'Afficher l\'adresse',
     'show_address_help' => 'Sinon, la fiche du logement ne montre pas sa localisation.',

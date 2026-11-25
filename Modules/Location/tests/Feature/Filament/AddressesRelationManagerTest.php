@@ -60,8 +60,9 @@ class AddressesRelationManagerTest extends AuthFilamentTestCase
         $switzerland = Country::factory()->create();
 
         $this->manager($switzerland)
+            // La région du pays, à la place du pays (décision 2026-11-25-adresse-sans-pays).
             ->callAction(TestAction::make('create')->table(), [
-                'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève', 'latitude' => '46.2', 'longitude' => '6.1',
+                'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève', 'region_id' => (string) $this->regionOf($switzerland), 'latitude' => '46.2', 'longitude' => '6.1',
             ])
             ->assertHasNoFormErrors();
 
@@ -74,10 +75,10 @@ class AddressesRelationManagerTest extends AuthFilamentTestCase
     {
         $this->actingAsAddressManager();
         $switzerland = Country::factory()->create();
-        Address::factory()->for($switzerland)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
+        $existing = Address::factory()->for($switzerland)->create(['street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
 
         $this->manager($switzerland)
-            ->callAction(TestAction::make('create')->table(), ['street' => 'rue du lac  4', 'zip' => '1200', 'city' => 'GENÈVE'])
+            ->callAction(TestAction::make('create')->table(), ['street' => 'rue du lac  4', 'zip' => '1200', 'city' => 'GENÈVE', 'region_id' => (string) $existing->region_id])
             ->assertHasFormErrors(['street']);
 
         $this->assertSame(1, Address::query()->count());

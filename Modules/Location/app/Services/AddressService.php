@@ -8,27 +8,27 @@ use Illuminate\Support\Str;
 use Modules\Location\Models\Address;
 
 /**
- * L'adresse partagée, unique par pays : la retrouver, la créer, la suggérer
+ * L'adresse partagée, unique par région (décision 2026-11-25-adresse-sans-pays) : la retrouver, la créer, la suggérer
  * (back-office). Les adresses d'un compte sont gérées par le module Auth, qui
  * s'appuie sur ce service (décision 2026-11-18-useraddress-dans-auth).
  */
 class AddressService
 {
     /** Champs de l'adresse partagée. */
-    public const ADDRESS_FIELDS = ['country_id', 'street', 'zip', 'city', 'latitude', 'longitude'];
+    public const ADDRESS_FIELDS = ['region_id', 'street', 'zip', 'city', 'latitude', 'longitude'];
 
     /** Longueur minimale de la rue avant de proposer des adresses existantes (back-office). */
     public const SUGGESTION_MIN_LENGTH = 3;
 
     /**
-     * L'adresse identique à la saisie (même pays, même empreinte), ou `null`.
+     * L'adresse identique à la saisie (même région, même empreinte), ou `null`.
      *
      * @param  array<string, mixed>  $data
      */
     public function find(array $data): ?Address
     {
         return Address::query()
-            ->where('country_id', $data['country_id'])
+            ->where('region_id', $data['region_id'])
             ->where('fingerprint', Address::fingerprint((string) $data['street'], (string) $data['zip'], (string) $data['city']))
             ->first();
     }
@@ -42,7 +42,7 @@ class AddressService
     public function findOrCreate(array $data): Address
     {
         return $this->find($data) ?? Address::query()->create([
-            'country_id' => $data['country_id'],
+            'region_id' => $data['region_id'],
             'street' => $data['street'],
             'zip' => $data['zip'],
             'city' => $data['city'],
@@ -64,7 +64,7 @@ class AddressService
 
         return Address::query()
             ->with('country')
-            ->when(filled($countryId), fn ($query) => $query->where('country_id', $countryId))
+            ->when(filled($countryId), fn ($query) => $query->inCountry($countryId))
             ->where(fn ($query) => ContainsSearch::orWhere($query, ['street'], $search))
             ->orderBy('street')
             ->orderBy('zip')

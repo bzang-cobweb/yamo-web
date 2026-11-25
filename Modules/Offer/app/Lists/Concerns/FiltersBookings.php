@@ -10,6 +10,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingFilters;
 use Modules\Offer\Lists\OfferCardTitle;
+use Modules\Offer\Lists\OfferRegions;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
@@ -41,6 +42,10 @@ trait FiltersBookings
                 ->label(__('offer::booking.profile.filter_status'))
                 ->options(BookingStatusEnum::options()),
             BookingFilters::period(),
+            // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
+            Field::select('region')
+                ->label(__('offer::booking.profile.filter_region'))
+                ->options(OfferRegions::options($this->bookedOffers())),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 ->options($this->bookedCities()),
@@ -66,6 +71,9 @@ trait FiltersBookings
             $query->where('status', $status);
         }
         BookingFilters::applyPeriod($query, $filters);
+        if (isset($filters['region'])) {
+            $query->whereHas('offer', fn (Builder $offer) => OfferRegions::apply($offer->withTrashed(), $filters['region']));
+        }
         if (isset($filters['city'])) {
             $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
         }

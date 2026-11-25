@@ -46,7 +46,7 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
     {
         return [
             'gender' => 'female', 'first_name' => 'Jeanne', 'last_name' => 'Dupont',
-            'country_id' => (string) $country->getKey(), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève',
+            'region_id' => (string) $this->regionOf($country), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève',
             ...$overrides,
         ];
     }
@@ -128,7 +128,7 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
             ->mountAction(TestAction::make('create')->table())
             ->fillForm(['street' => 'Rue du Lac 4 — 1200 Genève'])
             ->assertSchemaStateSet([
-                'country_id' => (string) $existing->country_id,
+                'region_id' => (string) $existing->region_id,
                 'street' => 'Rue du Lac 4',
                 'zip' => '1200',
                 'city' => 'Genève',

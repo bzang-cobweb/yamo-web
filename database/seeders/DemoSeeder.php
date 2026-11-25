@@ -13,6 +13,7 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Services\UserAddressService;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
@@ -459,7 +460,7 @@ class DemoSeeder extends Seeder
             if ($addressId === null) {
                 $address = app(UserAddressService::class)->attach($owner, [
                     'gender' => 'male', 'first_name' => $owner->first_name, 'last_name' => $owner->last_name,
-                    'country_id' => $cameroon->getKey(), 'street' => 'Rue Joss 8', 'zip' => '', 'city' => 'Douala',
+                    'region_id' => $this->region($cameroon, 'Douala'), 'street' => 'Rue Joss 8', 'zip' => '', 'city' => 'Douala',
                 ]);
                 $addressId = $address->address_id;
             }
@@ -519,12 +520,26 @@ class DemoSeeder extends Seeder
             $existing = $member->addresses()->whereHas('address', fn ($query) => $query->where('street', $street))->first();
             $entry = $existing ?? $service->attach($member, [
                 'gender' => 'female', 'first_name' => 'Awa', 'last_name' => 'Ngono',
-                'country_id' => $cameroon->getKey(), 'street' => $street, 'zip' => $zip, 'city' => $city,
+                // La région donne le pays (décision 2026-11-25-adresse-sans-pays).
+                'region_id' => $this->region($cameroon, $city), 'street' => $street, 'zip' => $zip, 'city' => $city,
             ]);
             $ids[] = (int) ($entry instanceof UserAddress ? $entry->address_id : 0);
         }
 
         return $ids;
+    }
+
+    /**
+     * La région d'une ville de démonstration : Douala dans le Littoral, Yaoundé dans le Centre (décision
+     * 2026-11-25-region-de-l-adresse), créée si elle manque.
+     */
+    private function region(Country $cameroon, string $city): int
+    {
+        $name = str_starts_with(strtolower($city), 'douala') ? 'Littoral' : 'Centre';
+        $region = Region::query()->where('country_id', $cameroon->getKey())->where('name->fr', $name)->first()
+            ?? Region::query()->create(['country_id' => $cameroon->getKey(), 'name' => ['fr' => $name, 'en' => $name], 'active' => true]);
+
+        return (int) $region->getKey();
     }
 
     /**

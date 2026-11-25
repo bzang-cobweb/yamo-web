@@ -105,6 +105,7 @@ return [
     ],
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
+        'region' => 'Region',
         'city' => 'Stadt',
     ],
     // Adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche).
@@ -112,6 +113,7 @@ return [
     'street_help' => 'Geben Sie mindestens 3 Zeichen ein: Bekannte Adressen werden vorgeschlagen.',
     'zip' => 'Postleitzahl',
     'city' => 'Stadt',
+    'region' => 'Region',
     // Indications sur l'adresse (décision 2026-11-19-description-adresse-offre).
     'show_address' => 'Adresse anzeigen',
     'show_address_help' => 'Sonst zeigt die Seite der Unterkunft ihren Standort nicht.',

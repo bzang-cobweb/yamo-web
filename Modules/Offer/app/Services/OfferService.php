@@ -8,6 +8,7 @@ use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Location\Services\AddressService;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -197,8 +198,15 @@ class OfferService
             return null;
         }
 
-        // La même règle que partout : une adresse unique par pays (`AddressService`).
-        return (int) app(AddressService::class)->findOrCreate(['country_id' => $country->getKey(), 'street' => $street, 'zip' => $zip, 'city' => $city])->getKey();
+        // La même règle que partout : une adresse unique par région (`AddressService`), qui donne son pays (décisions
+        // 2026-11-25-region-de-l-adresse et 2026-11-25-adresse-sans-pays) ; une région hors du pays de l'offre n'est pas
+        // reprise (le formulaire ne la propose pas).
+        $region = Region::query()->whereKey($data['region'] ?? null)->where('country_id', $country->getKey())->value('id');
+        if ($region === null) {
+            return $current?->address_id;
+        }
+
+        return (int) app(AddressService::class)->findOrCreate(['region_id' => (int) $region, 'street' => $street, 'zip' => $zip, 'city' => $city])->getKey();
     }
 
     /**

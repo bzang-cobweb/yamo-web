@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\App;
 use Modules\Location\Database\Factories\CountryFactory;
 use Spatie\Translatable\HasTranslations;
@@ -56,13 +57,14 @@ class Country extends Model
     }
 
     /**
-     * Ses adresses (décision 2026-11-18-adresses-liste-generique).
+     * Ses adresses (décision 2026-11-18-adresses-liste-generique) : celles de ses régions (décision
+     * 2026-11-25-adresse-sans-pays).
      *
-     * @return HasMany<Address, $this>
+     * @return HasManyThrough<Address, Region, $this>
      */
-    public function addresses(): HasMany
+    public function addresses(): HasManyThrough
     {
-        return $this->hasMany(Address::class);
+        return $this->hasManyThrough(Address::class, Region::class);
     }
 
     /**

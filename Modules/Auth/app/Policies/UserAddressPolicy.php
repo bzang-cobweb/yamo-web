@@ -80,7 +80,8 @@ class UserAddressPolicy
     private function owns(User $user, UserAddress $userAddress): Response
     {
         return (int) $userAddress->user_id === (int) $user->getKey()
-            && (int) $userAddress->address->country_id === (int) CurrentCountry::require()->getKey()
+            // Le pays de l'adresse : celui de sa région (décision 2026-11-25-adresse-sans-pays).
+            && (int) $userAddress->address->region?->country_id === (int) CurrentCountry::require()->getKey()
             ? Response::allow()
             : Response::denyAsNotFound();
     }

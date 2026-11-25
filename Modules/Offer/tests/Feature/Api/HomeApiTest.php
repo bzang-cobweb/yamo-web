@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;
 use Tests\TestCase;
@@ -49,8 +50,10 @@ class HomeApiTest extends TestCase
 
         $carousels = $this->home()->assertOk()->json('data.carousels');
 
-        // Les villes par ordre alphabétique.
-        $this->assertSame(['Douala', 'Yaoundé'], array_column($carousels, 'city'));
+        // Une par région, dans l'ordre du back-office (décision 2026-11-25-region-de-l-adresse) : ici, la fabrique
+        // range chaque ville dans une région de son nom, créée dans l'ordre ; « Voir tout » filtre sur la région.
+        $this->assertSame(['Douala', 'Yaoundé'], array_column($carousels, 'title'));
+        $this->assertSame(['region' => (string) $douala->region_id], $carousels[0]['filter']);
         // 10 au plus, toutes de la ville, chacune une fois ; en cartes comme la recherche.
         $ids = array_column($carousels[0]['items'], 'id');
         $this->assertCount(10, $ids);
@@ -59,6 +62,22 @@ class HomeApiTest extends TestCase
         $this->assertSame([(string) $yaoundeOffer->getKey()], array_column($carousels[1]['items'], 'id'));
         $this->assertSame('/offers/'.$yaoundeOffer->getKey(), $carousels[1]['items'][0]['link']);
         $this->assertArrayHasKey('image', $carousels[1]['items'][0]);
+    }
+
+    public function test_one_carousel_per_region_with_the_offers_of_all_its_cities(): void
+    {
+        // Décision 2026-11-25-region-de-l-adresse : dans l'ordre du back-office.
+        $littoral = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Littoral', 'en' => 'Littoral'], 'position' => 2]);
+        $centre = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Centre', 'en' => 'Centre'], 'position' => 1]);
+        Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Douala', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+        Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Edéa', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+        Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Yaoundé', 'region_id' => $centre->getKey()]))->create(['status' => 'published']);
+
+        $carousels = $this->home()->assertOk()->json('data.carousels');
+
+        $this->assertSame(['Centre', 'Littoral'], array_column($carousels, 'title'));
+        $this->assertCount(2, $carousels[1]['items']);
+        $this->assertSame(['region' => (string) $littoral->getKey()], $carousels[1]['filter']);
     }
 
     public function test_the_draw_changes_between_calls(): void

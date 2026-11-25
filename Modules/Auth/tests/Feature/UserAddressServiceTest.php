@@ -34,7 +34,7 @@ class UserAddressServiceTest extends TestCase
             'gender' => 'female',
             'first_name' => 'Jeanne',
             'last_name' => 'Dupont',
-            'country_id' => $country->getKey(),
+            'region_id' => $this->regionOf($country),
             'street' => 'Rue du Lac 4',
             'zip' => '1200',
             'city' => 'Genève',

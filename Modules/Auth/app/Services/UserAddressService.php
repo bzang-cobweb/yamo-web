@@ -34,7 +34,7 @@ class UserAddressService
     public function attach(User $user, array $data): UserAddress
     {
         return DB::transaction(function () use ($user, $data): UserAddress {
-            $address = $this->addressService->findOrCreate($data);
+            $address = $this->addressService->findOrCreate($this->address($data));
 
             return $user->addresses()->create([
                 'address_id' => $address->getKey(),
@@ -52,7 +52,7 @@ class UserAddressService
     {
         return DB::transaction(function () use ($userAddress, $data): UserAddress {
             $userAddress->fill([
-                'address_id' => $this->addressService->findOrCreate($data)->getKey(),
+                'address_id' => $this->addressService->findOrCreate($this->address($data))->getKey(),
                 ...$this->recipient($data),
             ])->save();
 
@@ -63,6 +63,18 @@ class UserAddressService
     /**
      * Retire l'adresse du compte ; l'adresse reste dans son pays.
      */
+    /**
+     * L'adresse saisie : la région du formulaire de l'app (`region`) ou du back-office (`region_id`), qui donne le pays
+     * (décision 2026-11-25-adresse-sans-pays).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function address(array $data): array
+    {
+        return [...$data, 'region_id' => $data['region_id'] ?? $data['region'] ?? null];
+    }
+
     public function detach(UserAddress $userAddress): void
     {
         $userAddress->delete();

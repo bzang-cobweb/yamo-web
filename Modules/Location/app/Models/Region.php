@@ -60,6 +60,33 @@ class Region extends Model
     }
 
     /**
+     * Les régions actives du pays, dans l'ordre du back-office : id => nom dans la langue de l'app (décision
+     * 2026-11-25-region-de-l-adresse).
+     *
+     * @return array<string, string>
+     */
+    public static function optionsIn(int|string $country): array
+    {
+        return static::query()->active()->where('country_id', $country)->orderBy('position')->orderBy('id')->get()
+            ->mapWithKeys(fn (self $region): array => [(string) $region->getKey() => trim((string) $region->getTranslation('name', app()->getLocale()))])
+            ->all();
+    }
+
+    /**
+     * Les régions actives des pays actifs, avec le nom du pays (« Littoral (Cameroun) ») : id => libellé, par pays puis
+     * dans l'ordre du back-office (décision 2026-11-25-adresse-sans-pays).
+     *
+     * @return array<string, string>
+     */
+    public static function optionsWithCountry(): array
+    {
+        return static::query()->active()->whereHas('country', fn (Builder $country) => $country->where('active', true))
+            ->with('country')->orderBy('country_id')->orderBy('position')->orderBy('id')->get()
+            ->mapWithKeys(fn (self $region): array => [(string) $region->getKey() => trim((string) $region->getTranslation('name', app()->getLocale())).' ('.$region->country?->label().')'])
+            ->all();
+    }
+
+    /**
      * @param  Builder<self>  $query
      */
     #[Scope]

@@ -151,9 +151,10 @@ abstract class OfferForm
                                     Select::make('address_id')
                                         ->label(__('offer::offer.address'))
                                         // Une adresse du pays de l'offre (décision 2026-11-18-espace-pays).
-                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->where('country_id', $get('../country_id'))))
+                                        ->relationship('address', 'street', fn ($query, Get $get) => $query->when(filled($get('../country_id')), fn ($query) => $query->inCountry($get('../country_id'))))
                                         ->rule(fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                                            if (filled($value) && filled($get('../country_id')) && (string) Address::query()->whereKey($value)->value('country_id') !== (string) $get('../country_id')) {
+                                            // Le pays d'une adresse : celui de sa région (décision 2026-11-25-adresse-sans-pays).
+                                            if (filled($value) && filled($get('../country_id')) && ! Address::query()->whereKey($value)->inCountry($get('../country_id'))->exists()) {
                                                 $fail(__('offer::offer.address_country'));
                                             }
                                         })

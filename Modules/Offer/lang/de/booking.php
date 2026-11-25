@@ -251,6 +251,7 @@ return [
         'filter_upcoming' => 'Bevorstehend',
         'filter_pending' => 'Ausstehend',
         'filter_past' => 'Vergangen',
+        'filter_region' => 'Region',
         'filter_city' => 'Stadt',
         'filter_offer' => 'Unterkunft',
         'search_home' => 'Unterkunft suchen',

@@ -31,7 +31,7 @@ use Modules\Location\Services\AddressService;
  * - ajouter reprend l'adresse identique, ou la crée d'abord ;
  * - modifier change le destinataire sur place et vise l'adresse saisie, reprise
  *   ou créée ; l'adresse précédente, peut-être partagée, n'est jamais modifiée ;
- * - retirer supprime l'entrée, l'adresse reste dans son pays.
+ * - retirer supprime l'entrée, l'adresse reste dans sa région.
  * La rue propose les adresses existantes.
  */
 class AddressesRelationManager extends RelationManager
@@ -46,7 +46,6 @@ class AddressesRelationManager extends RelationManager
             $schema,
             before: [
                 ...self::recipient($user),
-                AddressForm::country()->columnSpanFull(),
             ],
             suggestions: true,
             after: [
@@ -64,7 +63,7 @@ class AddressesRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('first_name')
-            ->modifyQueryUsing(fn ($query) => $query->with('address.country'))
+            ->modifyQueryUsing(fn ($query) => $query->with('address.region.country'))
             ->columns([
                 TextColumn::make('recipient')
                     ->label(__('auth::address.recipient'))
@@ -78,9 +77,10 @@ class AddressesRelationManager extends RelationManager
                 TextColumn::make('address.city')
                     ->label(__('location::address.city'))
                     ->searchable(),
-                TextColumn::make('address.country.name')
-                    ->label(__('location::address.country'))
-                    ->state(fn (UserAddress $record): string => (string) $record->address->country?->getTranslation('name', app()->getLocale())),
+                // La région et son pays (décision 2026-11-25-adresse-sans-pays).
+                TextColumn::make('address.region.name')
+                    ->label(__('location::address.region'))
+                    ->state(fn (UserAddress $record): string => trim((string) $record->address->region?->getTranslation('name', app()->getLocale())).' ('.$record->address->region?->country?->label().')'),
             ])
             ->headerActions([
                 CreateAction::make()
@@ -94,7 +94,7 @@ class AddressesRelationManager extends RelationManager
                         'last_name' => $record->last_name,
                         'indication' => $record->indication,
                         ...$record->address->only(AddressService::ADDRESS_FIELDS),
-                        'country_id' => (string) $record->address->country_id,
+                        'region_id' => (string) $record->address->region_id,
                     ])
                     ->using(fn (UserAddress $record, array $data): UserAddress => app(UserAddressService::class)->update($record, $data)),
                 DeleteAction::make()

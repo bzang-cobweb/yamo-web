@@ -1,0 +1,31 @@
+# `2026-11-25` — Une adresse n'a plus de pays : sa région le donne
+
+- **Type** : décision
+- **Questions posées** :
+  - « vu que une région est dans un pays, enlever le pays dans une adresse » ;
+  - « dans les formulaires, remplacer le champ pays par région ».
+- **Réponse** : « Supprimer, région partout » (parmi : supprimer la colonne avec la région obligatoire partout ; garder la colonne, déduite).
+- **Ce qui est retenu** :
+  - **Base** : `addresses.country_id` est supprimée (migration `2026_12_07_150000_remove_country_from_addresses`).
+    - `region_id` devient obligatoire.
+    - L'unicité passe de (pays, empreinte) à (région, empreinte).
+    - Supprimer une région, ou son pays, supprime ses adresses, comme le pays avant.
+    - S'il reste une adresse sans région, la migration s'arrête sans rien changer.
+    - Le retour arrière remet le pays depuis la région.
+    - Vérifié en local sur MariaDB : montée, descente, montée.
+  - **Modèle** :
+    - `Address::country()` passe par la région (`hasOneThrough`) ;
+    - `Address::inCountry()` donne les adresses d'un pays ;
+    - `Country::addresses()` passe par ses régions (`hasManyThrough`).
+  - **Formulaires** : le champ pays est remplacé par la région, après la ville, avec recherche et obligatoire :
+    - le carnet d'adresses de l'app (`auth.address`, champ `region`, régions du pays courant) ;
+    - le back-office :
+      - les adresses d'un compte : régions de tous les pays actifs, avec le nom du pays ;
+      - les adresses d'un pays : ses régions.
+    - Le formulaire d'une offre l'avait déjà (décision 2026-11-25-region-de-l-adresse).
+  - **Suggestions de rue** : la suggestion remplit aussi la région (`fill.region`).
+  - **Service** : `AddressService` retrouve et crée une adresse par région. Une même rue dans deux régions fait deux adresses.
+  - **Offres** : le formulaire n'accepte qu'une région du pays de l'offre. L'offre garde son pays à elle : c'est son espace (décision 2026-11-18-espace-pays).
+  - **Tests** : `TestCase::regionOf($country)` donne une région du pays. La fabrique d'adresses garde `for($country)` en passant par une région nommée d'après la ville (sans casse ni espaces).
+- **Remplace** : la règle « la colonne accepte le vide » de 2026-11-25-region-de-l-adresse, et l'adresse unique par pays de 2026-11-18-adresses-liste-generique.
+- **Tranché par** : humain (supprimer le pays, la région partout) ; session (la suppression en cascade, l'unicité par région, la migration qui s'arrête)

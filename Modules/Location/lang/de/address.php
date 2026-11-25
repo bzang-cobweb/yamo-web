@@ -8,6 +8,7 @@ return [
     'street' => 'Straße',
     'zip' => 'Postleitzahl',
     'city' => 'Stadt',
+    'region' => 'Region',
     'latitude' => 'Breitengrad',
     'longitude' => 'Längengrad',
     'duplicate' => 'Diese Adresse gibt es in diesem Land bereits.',

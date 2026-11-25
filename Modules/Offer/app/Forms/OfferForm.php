@@ -12,6 +12,7 @@ use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
 use Modules\Form\Support\Step;
 use Modules\Form\Support\Submission;
+use Modules\Location\Models\Region;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
@@ -106,6 +107,15 @@ class OfferForm extends Form
                 ->default($offer?->address?->city)
                 ->required($domain->requiresAddress())
                 ->maxLength(255)
+                ->rules(['required_with:street']),
+            // La région, après la ville, obligatoire avec l'adresse ; une liste cherchable des régions actives du pays
+            // (décision 2026-11-25-region-de-l-adresse).
+            ! $domain->hasAddress() ? null : Field::select('region')
+                ->label(__('offer::offer.region'))
+                ->options($this->regionOptions($offer))
+                ->searchable()
+                ->default($offer?->address?->region_id === null ? null : (string) $offer->address->region_id)
+                ->required($domain->requiresAddress())
                 ->rules(['required_with:street']),
             // L'indication propre à l'offre, l'adresse étant partagée (décision 2026-11-19-contrat-adresse-offre-table).
             ! $domain->hasAddress() ? null : Field::textarea('indication')
@@ -256,6 +266,17 @@ class OfferForm extends Form
     public function titleAlign(): string
     {
         return 'center';
+    }
+
+    /**
+     * Les régions actives du pays de l'offre (sinon du pays courant), dans l'ordre du back-office : id => nom dans la
+     * langue de l'app (décision 2026-11-25-region-de-l-adresse).
+     *
+     * @return array<string, string>
+     */
+    private function regionOptions(?Offer $offer): array
+    {
+        return Region::optionsIn($offer?->country_id ?? CurrentCountry::require()->getKey());
     }
 
     public function title(): string

@@ -564,7 +564,8 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-21-reservations-filtre-statut : le statut réel, puis la période, en listes déroulantes.
         $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
         $filters = collect($data['filters'])->keyBy('name');
-        $this->assertSame(['status', 'period', 'city', 'offer', 'property_type', 'rental_type'], $filters->keys()->all());
+        // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
+        $this->assertSame(['status', 'period', 'region', 'city', 'offer', 'property_type', 'rental_type'], $filters->keys()->all());
         // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
         $this->assertSame(['Logement', 'select', true], [$filters['offer']['label'], $filters['offer']['type'], $filters['offer']['searchable']]);
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));

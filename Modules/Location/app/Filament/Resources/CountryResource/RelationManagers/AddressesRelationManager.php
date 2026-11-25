@@ -16,7 +16,8 @@ use Modules\Location\Models\Country;
 use Modules\Location\Rules\UniqueAddress;
 
 /**
- * Adresses d'un pays, gérées depuis sa fiche. Une adresse n'existe qu'une fois :
+ * Adresses d'un pays (celles de ses régions, décision 2026-11-25-adresse-sans-pays), gérées depuis sa fiche. Une
+ * adresse n'existe qu'une fois dans sa région :
  * un doublon (même rue, NPA et ville, sans casse ni espaces) est refusé
  * (décision 2026-11-18-adresses-liste-generique). Chaque action passe par
  * `AddressPolicy`.
@@ -30,9 +31,11 @@ class AddressesRelationManager extends RelationManager
         /** @var Country $country */
         $country = $this->getOwnerRecord();
 
+        // Ses régions ; l'unicité dans la région choisie (décision 2026-11-25-adresse-sans-pays).
         return AddressForm::configure(
             $schema,
-            streetRule: fn (?Address $record, Get $get): UniqueAddress => new UniqueAddress($country->getKey(), $get('zip'), $get('city'), $record),
+            streetRule: fn (?Address $record, Get $get): UniqueAddress => new UniqueAddress($get('region_id'), $get('zip'), $get('city'), $record),
+            country: (int) $country->getKey(),
         );
     }
 
@@ -54,6 +57,9 @@ class AddressesRelationManager extends RelationManager
                     ->label(__('location::address.city'))
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('region.name')
+                    ->label(__('location::address.region'))
+                    ->state(fn (Address $record): string => trim((string) $record->region?->getTranslation('name', app()->getLocale()))),
                 TextColumn::make('latitude')
                     ->label(__('location::address.latitude'))
                     ->toggleable(),
@@ -62,7 +68,9 @@ class AddressesRelationManager extends RelationManager
                     ->toggleable(),
             ])
             ->headerActions([
-                CreateAction::make(),
+                // Les adresses du pays passent par ses régions : la création vise la région choisie.
+                CreateAction::make()
+                    ->using(fn (array $data): Address => Address::query()->create($data)),
             ])
             ->recordActions(AbstractResource::getActions())
             ->toolbarActions(AbstractResource::getBulkActions());

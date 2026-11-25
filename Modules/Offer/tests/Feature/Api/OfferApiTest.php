@@ -12,6 +12,7 @@ use Modules\Form\Models\FormUpload;
 use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\OfferStatusEnum;
@@ -68,6 +69,8 @@ class OfferApiTest extends TestCase
             'street' => 'Rue du Lac 4',
             'zip' => '1200',
             'city' => 'Genève',
+            // Obligatoire (décision 2026-11-25-region-de-l-adresse).
+            'region' => (string) $this->regionOf((int) Country::query()->where('code', 'CH')->value('id')),
             'status' => 'published',
             'property_type' => 'apartment',
             'rental_type' => 'furnished',
@@ -116,7 +119,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'city', 'region', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -281,7 +284,7 @@ class OfferApiTest extends TestCase
             ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status'],
             ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],
-            ['street', 'zip', 'city', 'indication', 'show_address', 'phone', 'email'],
+            ['street', 'zip', 'city', 'region', 'indication', 'show_address', 'phone', 'email'],
             ['photos'],
         ], array_column($steps, 'fields'));
 
@@ -456,6 +459,30 @@ class OfferApiTest extends TestCase
         $this->assertSame('Studio', $offer->getTranslation('title', 'de'));
     }
 
+    public function test_the_region_is_required_comes_from_the_country_and_is_saved_on_the_address(): void
+    {
+        // Décision 2026-11-25-region-de-l-adresse.
+        $user = $this->member();
+        $swiss = (int) Country::query()->where('code', 'CH')->value('id');
+        $vaud = Region::factory()->create(['country_id' => $swiss, 'name' => ['fr' => 'Vaud', 'en' => 'Vaud']]);
+        Region::factory()->inactive()->create(['country_id' => $swiss]);
+        // Une région d'un autre pays, inactif : l'espace des tests reste la Suisse seule.
+        $elsewhere = Region::factory()->create(['country_id' => Country::factory()->create(['active' => false])->getKey()]);
+
+        // Une liste cherchable, après la ville : les régions actives du pays.
+        $fields = array_column($this->asUser($user)->getJson('/api/v1/forms/offer.offer')->json('data.fields'), null, 'name');
+        $this->assertTrue($fields['region']['searchable']);
+        $this->assertTrue($fields['region']['required']);
+        $this->assertSame('Vaud', collect($fields['region']['options'])->firstWhere('value', (string) $vaud->getKey())['label'] ?? null);
+        $this->assertCount(1, $fields['region']['options']);
+
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['region' => null]))->assertJsonValidationErrors('region');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['region' => (string) $elsewhere->getKey()]))->assertJsonValidationErrors('region');
+        $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['region' => (string) $vaud->getKey()]))->assertNoContent();
+
+        $this->assertSame($vaud->getKey(), Offer::query()->sole()->address->region_id);
+    }
+
     public function test_a_member_adds_a_home_with_its_attributes(): void
     {
         $user = $this->member();
@@ -499,7 +526,7 @@ class OfferApiTest extends TestCase
     public function test_an_existing_address_is_reused_otherwise_created_never_in_the_account(): void
     {
         $user = $this->member();
-        $existing = Address::query()->create(['country_id' => Country::query()->where('code', 'CH')->value('id'), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
+        $existing = Address::query()->create(['region_id' => $this->regionOf((int) Country::query()->where('code', 'CH')->value('id')), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève']);
 
         // Décision 2026-11-19-contrat-adresse-offre-recherche : même empreinte (casse, espaces), même adresse.
         $this->asUser($user)->postJson('/api/v1/offers', $this->input($user, ['street' => '  rue du lac 4 ', 'city' => 'GENÈVE']))->assertNoContent();
@@ -566,25 +593,25 @@ class OfferApiTest extends TestCase
         $this->assertNotNull($offer->fresh());
     }
 
-    public function test_street_suggestions_serve_only_street_zip_and_city_of_the_country(): void
+    public function test_street_suggestions_serve_only_street_zip_city_and_region_of_the_country(): void
     {
         $user = $this->member();
         $switzerland = Country::query()->where('code', 'CH')->value('id');
         foreach (['Rue du Lac 4', 'Rue du Lac 10', 'Avenue de la Gare'] as $street) {
-            Address::query()->create(['country_id' => $switzerland, 'street' => $street, 'zip' => '1200', 'city' => 'Genève']);
+            Address::query()->create(['region_id' => $this->regionOf((int) $switzerland), 'street' => $street, 'zip' => '1200', 'city' => 'Genève']);
         }
-        Address::query()->create(['country_id' => Country::factory()->create(['code' => 'FR'])->getKey(), 'street' => 'Rue du Lac 99', 'zip' => '75000', 'city' => 'Paris']);
+        Address::query()->create(['region_id' => $this->regionOf((int) Country::factory()->create(['code' => 'FR'])->getKey()), 'street' => 'Rue du Lac 99', 'zip' => '75000', 'city' => 'Paris']);
 
         $this->getJson('/api/v1/addresses/suggestions?q=lac')->assertUnauthorized();
         $this->assertSame([], $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=la')->assertOk()->json('data'));
 
         $suggestions = $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=du lac')->assertOk()->json('data');
         $this->assertSame(['Rue du Lac 10', 'Rue du Lac 4'], array_column($suggestions, 'value'));
-        $this->assertSame(['value' => 'Rue du Lac 4', 'label' => 'Rue du Lac 4 — 1200 Genève', 'fill' => ['zip' => '1200', 'city' => 'Genève']], $suggestions[1]);
+        $this->assertSame(['value' => 'Rue du Lac 4', 'label' => 'Rue du Lac 4 — 1200 Genève', 'fill' => ['zip' => '1200', 'city' => 'Genève', 'region' => (string) $this->regionOf((int) $switzerland)]], $suggestions[1]);
 
         // Au plus 10.
         foreach (range(1, 12) as $number) {
-            Address::query()->create(['country_id' => $switzerland, 'street' => "Chemin des Pins {$number}", 'zip' => '1260', 'city' => 'Nyon']);
+            Address::query()->create(['region_id' => $this->regionOf((int) $switzerland), 'street' => "Chemin des Pins {$number}", 'zip' => '1260', 'city' => 'Nyon']);
         }
         $this->assertCount(10, $this->asUser($user)->withHeader('X-Country', 'CH')->getJson('/api/v1/addresses/suggestions?q=pins')->json('data'));
     }

@@ -8,6 +8,7 @@ return [
     'street' => 'Rue',
     'zip' => 'NPA',
     'city' => 'Ville',
+    'region' => 'Région',
     'latitude' => 'Latitude',
     'longitude' => 'Longitude',
     'duplicate' => 'Cette adresse existe déjà dans ce pays.',

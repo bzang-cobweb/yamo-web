@@ -8,11 +8,12 @@ use Modules\Form\Support\Field;
 use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
+use Modules\Offer\Lists\OfferRegions;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferAddress;
 
 /**
- * Les filtres d'une liste d'offres : la ville, le prix, puis ceux du domaine
+ * Les filtres d'une liste d'offres : la région, la ville, le prix, puis ceux du domaine
  * (décision 2026-11-19-contrat-filtres-vitrine). Une seule définition pour
  * l'accueil et « Mes logements » (décision 2026-11-19-contrat-reservations-logements-profil).
  */
@@ -30,6 +31,10 @@ trait FiltersOffers
         $currency = (string) Currency::symbol(CurrentCountry::require()->currency);
 
         return array_values(array_filter([
+            // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
+            ! $domain->hasAddress() ? null : Field::select('region')
+                ->label(__('offer::offer.filters.region'))
+                ->options(OfferRegions::options($offers)),
             ! $domain->hasAddress() ? null : Field::select('city')
                 ->label(__('offer::offer.filters.city'))
                 ->options($this->offerCities($offers)),
@@ -67,6 +72,9 @@ trait FiltersOffers
      */
     protected function applyOfferFilters(Builder $query, array $filters): void
     {
+        if (isset($filters['region'])) {
+            OfferRegions::apply($query, $filters['region']);
+        }
         if (isset($filters['city'])) {
             $query->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city']));
         }

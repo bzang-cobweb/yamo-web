@@ -28,7 +28,7 @@ class AddressServiceTest extends TestCase
     private function input(Country $country, array $overrides = []): array
     {
         return [
-            'country_id' => $country->getKey(),
+            'region_id' => $this->regionOf($country),
             'street' => 'Rue du Lac 4',
             'zip' => '1200',
             'city' => 'Genève',
@@ -114,6 +114,7 @@ class AddressServiceTest extends TestCase
     {
         $address = $this->service()->findOrCreate($this->input(Country::factory()->create()));
 
+        // Son pays est celui de sa région (décision 2026-11-25-adresse-sans-pays).
         $address->country->delete();
 
         $this->assertNull($address->fresh());

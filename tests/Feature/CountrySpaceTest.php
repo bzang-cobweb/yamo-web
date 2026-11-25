@@ -13,6 +13,7 @@ use Modules\Form\Models\FormUpload;
 use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Location\Support\Currencies;
 use Modules\Offer\Models\Offer;
 use Tests\TestCase;
@@ -97,6 +98,7 @@ class CountrySpaceTest extends TestCase
 
         $this->in($user, 'CM')->postJson('/api/v1/offers', [
             'title' => 'Studio à Bonanza', 'status' => 'published', 'price' => '85000', 'street' => 'Rue Njo-Njo', 'city' => 'Douala',
+            'region' => (string) Region::factory()->create(['country_id' => $this->cameroon->getKey()])->getKey(),
             'property_type' => 'studio', 'rental_type' => 'long_term', 'surface' => '25', 'rooms' => '1', 'bedrooms' => '0', 'pets' => 'no', 'smoking' => 'no', 'parties' => 'no', 'photos' => [$this->pendingUpload($user)],
         ])->assertNoContent();
 
@@ -127,14 +129,16 @@ class CountrySpaceTest extends TestCase
         $this->in($user, 'CM')->getJson("/api/v1/forms/auth.address?record={$dakar->getKey()}")->assertNotFound();
         $this->in($user, 'CM')->deleteJson("/api/v1/auth/me/addresses/{$dakar->getKey()}")->assertNotFound();
 
-        $country = collect($this->in($user, 'CM')->getJson('/api/v1/forms/auth.address')->json('data.fields'))->firstWhere('name', 'country_id');
-        $this->assertTrue($country['locked']);
-        $this->assertSame((string) $this->cameroon->getKey(), $country['default']);
-        // Une adresse d'un autre pays est refusée dans cet espace.
+        // Plus de pays dans le formulaire : la région, parmi celles du pays courant (décision 2026-11-25-adresse-sans-pays).
+        $fields = collect($this->in($user, 'CM')->getJson('/api/v1/forms/auth.address')->json('data.fields'))->keyBy('name');
+        $this->assertFalse($fields->has('country_id'));
+        $this->assertContains((string) $douala->address->region_id, array_column($fields['region']['options'], 'value'));
+        $this->assertNotContains((string) $dakar->address->region_id, array_column($fields['region']['options'], 'value'));
+        // Une région d'un autre pays est refusée dans cet espace.
         $this->in($user, 'CM')->postJson('/api/v1/auth/me/addresses', [
             'gender' => 'female', 'first_name' => 'Awa', 'last_name' => 'Diop',
-            'country_id' => (string) $this->senegal->getKey(), 'street' => 'Rue 10', 'zip' => '1000', 'city' => 'Dakar',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['country_id']);
+            'region' => (string) $dakar->address->region_id, 'street' => 'Rue 10', 'zip' => '1000', 'city' => 'Dakar',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['region']);
     }
 
     public function test_the_phone_country_defaults_to_the_current_country(): void
@@ -147,12 +151,15 @@ class CountrySpaceTest extends TestCase
     public function test_existing_offers_get_the_country_of_their_address(): void
     {
         // Le lien vers l'adresse est revenu dans `offers` le temps de rejouer la migration du pays.
-        $addresses = require module_path('Offer', 'database/migrations/2026_11_29_110000_create_offer_addresses_table.php');
-        $migration = require module_path('Offer', 'database/migrations/2026_11_24_110000_add_country_to_offers.php');
-        $addresses->down();
-        $migration->down();
+        // Le pays revient aussi dans `addresses` (décision 2026-11-25-adresse-sans-pays), lu par la migration rejouée.
         $user = User::factory()->create();
         $address = Address::factory()->for($this->senegal)->create();
+        $noCountry = require module_path('Location', 'database/migrations/2026_12_07_150000_remove_country_from_addresses.php');
+        $addresses = require module_path('Offer', 'database/migrations/2026_11_29_110000_create_offer_addresses_table.php');
+        $migration = require module_path('Offer', 'database/migrations/2026_11_24_110000_add_country_to_offers.php');
+        $noCountry->down();
+        $addresses->down();
+        $migration->down();
         DB::table('offers')->insert([
             ['user_id' => $user->getKey(), 'address_id' => $address->getKey(), 'address_description' => 'Portail bleu', 'title' => '{"fr":"A"}', 'status' => 'draft', 'details' => '[]'],
             ['user_id' => $user->getKey(), 'address_id' => null, 'address_description' => null, 'title' => '{"fr":"B"}', 'status' => 'draft', 'details' => '[]'],
@@ -170,6 +177,8 @@ class CountrySpaceTest extends TestCase
         $addresses->down();
         $this->assertSame([[(int) $address->getKey(), 'Portail bleu'], [null, null]], DB::table('offers')->orderBy('id')->get()->map(fn (object $row): array => [$row->address_id === null ? null : (int) $row->address_id, $row->address_description])->all());
         $addresses->up();
+        // Puis l'adresse reperd son pays, comme en base ; à la fin seulement : SQLite reconstruit la table.
+        $noCountry->up();
     }
 
     public function test_currencies_come_from_icu(): void

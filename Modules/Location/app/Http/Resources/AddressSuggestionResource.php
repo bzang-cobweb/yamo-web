@@ -16,7 +16,7 @@ use Modules\Location\Models\Address;
 class AddressSuggestionResource extends JsonResource
 {
     /**
-     * @return array{value: string, label: string, fill: array{zip: string, city: string}}
+     * @return array{value: string, label: string, fill: array{zip: string, city: string, region: string}}
      */
     public function toArray(Request $request): array
     {
@@ -25,8 +25,8 @@ class AddressSuggestionResource extends JsonResource
             'value' => (string) $this->resource->street,
             /** « Rue du Lac 4 — 1200 Genève ». */
             'label' => $this->resource->suggestionLabel(),
-            /** Les autres champs qu'elle remplit. */
-            'fill' => ['zip' => (string) $this->resource->zip, 'city' => (string) $this->resource->city],
+            /** Les autres champs qu'elle remplit, sa région comprise (décision 2026-11-25-adresse-sans-pays). */
+            'fill' => ['zip' => (string) $this->resource->zip, 'city' => (string) $this->resource->city, 'region' => (string) $this->resource->region_id],
         ];
     }
 }

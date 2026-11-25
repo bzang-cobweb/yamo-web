@@ -5,6 +5,7 @@ namespace Modules\Offer\Tests\Feature\Api;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
 use Tests\TestCase;
@@ -47,6 +48,21 @@ class OfferFiltersApiTest extends TestCase
         return array_column($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse'.$query)->assertOk()->json('data.items'), 'id');
     }
 
+    public function test_the_region_filter_groups_the_cities_of_a_region(): void
+    {
+        // Décision 2026-11-25-region-de-l-adresse : la région avant la ville, ses offres de toutes ses villes.
+        $littoral = Region::factory()->create(['country_id' => $this->cameroon->getKey(), 'name' => ['fr' => 'Littoral', 'en' => 'Littoral']]);
+        $douala = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Douala', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+        $edea = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Edéa', 'region_id' => $littoral->getKey()]))->create(['status' => 'published']);
+        $this->home('Yaoundé', 1000, []);
+
+        $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
+        $this->assertSame('Région', $filters['region']['label']);
+        $this->assertContains('Littoral', array_column($filters['region']['options'], 'label'));
+
+        $this->assertEqualsCanonicalizing([(string) $douala->getKey(), (string) $edea->getKey()], $this->ids('?filter[region]='.$littoral->getKey()));
+    }
+
     public function test_the_list_describes_its_filters(): void
     {
         $this->home('Yaoundé', 1000, ['property_type' => 'studio']);
@@ -55,7 +71,8 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
-        $this->assertSame(['city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
+        // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
+        $this->assertSame(['region', 'city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'pets', 'smoking', 'parties'], array_keys($filters));
         // « Libre dès le » : sans type de location choisi ou pour un non meublé, pas pour la location meublée
         // (décision 2026-11-22-filtre-libre-des-sans-meuble).
         $this->assertSame(['field' => 'rental_type', 'value' => '', 'values' => ['', 'long_term', 'shared']], $filters['available_from']['visible_when']);

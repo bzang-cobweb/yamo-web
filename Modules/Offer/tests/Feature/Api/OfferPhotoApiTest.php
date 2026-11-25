@@ -12,6 +12,7 @@ use Modules\Auth\Models\User;
 use Modules\Form\Models\FormUpload;
 use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
+use Modules\Location\Models\Region;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\OfferPhotoService;
@@ -65,6 +66,8 @@ class OfferPhotoApiTest extends TestCase
             'price' => '1850',
             'street' => 'Rue du Lac 4',
             'city' => 'Genève',
+            // Obligatoire (décision 2026-11-25-region-de-l-adresse).
+            'region' => (string) $this->regionOf((int) Country::query()->where('active', true)->value('id')),
             'status' => 'published',
             'property_type' => 'apartment',
             'rental_type' => 'long_term',
