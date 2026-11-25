@@ -264,10 +264,8 @@ class OfferDetailResource extends JsonResource
 
                     continue;
                 }
-                // Toutes ses catégories (les règles) : « Oui » si cochée, sinon « Non » (décision 2026-11-26-fiche-toutes-les-regles).
-                $checked = $domain->checkedFlags($offer, $field->name);
-                foreach ($names as $id => $name) {
-                    $values['flag-'.$id] = ['label' => (string) $name, 'value' => (string) __(in_array((string) $id, $checked, true) ? 'offer::rental.rules.yes' : 'offer::rental.rules.no', [], $locale)];
+                foreach ($domain->checkedFlags($offer, $field->name) as $id) {
+                    $values['flag-'.$id] = ['label' => (string) ($names[$id] ?? $id), 'value' => (string) __('offer::rental.rules.yes', [], $locale)];
                 }
 
                 continue;

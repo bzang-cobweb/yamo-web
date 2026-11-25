@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-26-fiche-regles-cochees.md
+
 # `2026-11-26` — La fiche montre toutes les catégories de règles
 
 - **Type** : décision

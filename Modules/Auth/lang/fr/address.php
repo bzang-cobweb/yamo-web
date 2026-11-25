@@ -12,7 +12,7 @@ return [
     'detach' => 'Retirer',
     'form' => [
         'create_title' => 'Ajouter une adresse',
-        'edit_title' => 'Modifier l\'adresse',
+        'edit_title' => 'Modifier une adresse',
         'save' => 'Enregistrer',
         'saved' => 'Adresse enregistrée.',
     ],

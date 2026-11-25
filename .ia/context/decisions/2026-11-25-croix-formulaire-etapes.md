@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-26-croix-etapes-seulement.md
+
 # `2026-11-25` — Formulaires à étapes : la croix de fermeture à partir de la 2e étape
 
 - **Type** : décision

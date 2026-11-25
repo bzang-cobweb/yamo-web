@@ -255,7 +255,7 @@ class UserAddressApiTest extends TestCase
         $definition = $this->asUser($user)
             ->getJson("/api/v1/forms/auth.address?record={$entry->getKey()}")
             ->assertOk()
-            ->assertJsonPath('data.title', "Modifier l'adresse")
+            ->assertJsonPath('data.title', 'Modifier une adresse')
             ->assertJsonPath('data.submit.method', 'PATCH')
             ->assertJsonPath('data.submit.endpoint', "/v1/auth/me/addresses/{$entry->getKey()}")
             ->json('data.fields');

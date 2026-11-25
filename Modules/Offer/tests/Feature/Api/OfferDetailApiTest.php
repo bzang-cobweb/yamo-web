@@ -222,25 +222,22 @@ class OfferDetailApiTest extends TestCase
         $data = $this->show($furnished)->assertOk()->json('data');
         $this->assertSame([
             ['label' => 'Arrivée à partir de', 'value' => '15:00'],
-            // Toutes les règles : « Oui » cochée, sinon « Non » (décision 2026-11-26-fiche-toutes-les-regles).
+            // Les cases cochées seules, « Oui », par id de catégorie (décisions 2026-11-25-cases-par-categories et 2026-11-25-categories-slug-traduit).
             ['label' => 'Animaux acceptés', 'value' => 'Oui'],
-            ['label' => 'Fumeurs acceptés', 'value' => 'Non'],
-            ['label' => 'Fêtes et événements autorisés', 'value' => 'Non'],
             ['label' => 'Documents demandés', 'value' => "Pièce d'identité, Dépôt de garantie"],
         ], $data['rules']);
         $this->assertNotContains('Animaux acceptés', array_column($data['facts'], 'label'));
         $this->assertNotContains('15:00', array_column($data['facts'], 'value'));
         $this->assertNotContains('Âge minimum', array_column([...$data['facts'], ...$data['rules']], 'label'));
 
-        // Sans rien de coché : toutes les règles à « Non ».
+        // Sans rien de renseigné ni âge minimum réglé : rien.
         $unfurnished = $this->home(['details' => ['property_type' => 'studio', 'rental_type' => 'long_term']]);
-        $none = [['label' => 'Animaux acceptés', 'value' => 'Non'], ['label' => 'Fumeurs acceptés', 'value' => 'Non'], ['label' => 'Fêtes et événements autorisés', 'value' => 'Non']];
-        $this->assertSame($none, $this->show($unfurnished)->json('data.rules'));
+        $this->assertSame([], $this->show($unfurnished)->json('data.rules'));
 
         // L'âge minimum de l'application, réglé : en tête des règles de toute offre.
         Setting::current()->update(['minimum_age' => 18]);
         $this->assertSame(['label' => 'Âge minimum', 'value' => '18 ans'], $this->show($furnished)->json('data.rules.0'));
-        $this->assertSame([['label' => 'Âge minimum', 'value' => '18 ans'], ...$none], $this->show($this->home(['details' => ['property_type' => 'studio']]))->json('data.rules'));
+        $this->assertSame([['label' => 'Âge minimum', 'value' => '18 ans']], $this->show($this->home(['details' => ['property_type' => 'studio']]))->json('data.rules'));
 
     }
 
@@ -265,7 +262,7 @@ class OfferDetailApiTest extends TestCase
         $this->assertSame($this->show($offer)->json('data.facts'), $sections[1]['rows']);
         $this->assertSame($this->show($offer)->json('data.address'), $sections[2]['text']);
         $this->assertSame('Calme et lumineux.', $sections[3]['text']);
-        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Oui'], ['label' => 'Fumeurs acceptés', 'value' => 'Non'], ['label' => 'Fêtes et événements autorisés', 'value' => 'Non']], $sections[4]['rows']);
+        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Oui']], $sections[4]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
         config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);

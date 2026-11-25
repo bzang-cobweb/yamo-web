@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-26-croix-etapes-seulement.md
+
 # `2026-11-19` — Croix « Fermer » dans l'en-tête des sous-écrans
 
 - **Type** : décision
