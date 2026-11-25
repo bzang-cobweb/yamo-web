@@ -3,6 +3,7 @@
 namespace Modules\Location\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\Location\Database\Seeders\CountrySeeder;
 use Modules\Location\Database\Seeders\LocationDatabaseSeeder;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
@@ -29,6 +30,21 @@ class LocationSeedersTest extends TestCase
         $this->assertSame('Suisse', $switzerland->getTranslation('name', 'fr'));
         $this->assertSame('Switzerland', $switzerland->getTranslation('name', 'en'));
         $this->assertNotSame('', $switzerland->native_name);
+    }
+
+    public function test_each_country_gets_its_time_zone_the_capitals_for_a_country_with_several(): void
+    {
+        // Décision 2026-11-25-fuseau-par-pays.
+        $zones = Country::query()->whereIn('code', ['CM', 'CH', 'CI', 'US', 'RU'])->pluck('timezone', 'code')->all();
+        $this->assertSame(['CH' => 'Europe/Zurich', 'CI' => 'Africa/Abidjan', 'CM' => 'Africa/Douala', 'RU' => 'Europe/Moscow', 'US' => 'America/New_York'], collect($zones)->sortKeys()->all());
+        // Seuls les territoires sans fuseau dans la base de PHP restent vides (Ascension, Tristan da Cunha, Kosovo) :
+        // « aujourd'hui » y est celui de l'application.
+        $this->assertSame(['AC', 'TA', 'XK'], Country::query()->whereNull('timezone')->orderBy('code')->pluck('code')->all());
+
+        // Changé au back-office, il est gardé au prochain passage du seeder.
+        Country::query()->where('code', 'CM')->update(['timezone' => 'Africa/Lagos']);
+        $this->seed(CountrySeeder::class);
+        $this->assertSame('Africa/Lagos', Country::query()->where('code', 'CM')->value('timezone'));
     }
 
     public function test_native_names_come_from_the_country_language(): void

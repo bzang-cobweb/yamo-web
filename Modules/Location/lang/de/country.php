@@ -11,6 +11,7 @@ return [
     'region_label' => 'Name der Regionen',
     'dial_code' => 'Vorwahl',
     'currency' => 'Währung',
+    'timezone' => 'Zeitzone',
     'required' => 'Wählen Sie ein Land.',
     'active' => 'Aktiv',
     'regions_count' => 'Regionen',
@@ -19,6 +20,7 @@ return [
     ],
     'help' => [
         'currency' => 'ISO-4217-Code, zum Beispiel XAF oder CHF: die Währung der Angebote in diesem Land.',
+        'timezone' => 'Zum Beispiel Africa/Douala: „heute“ für die Angebote dieses Landes (Buchungsdaten).',
         'code' => 'ISO-3166-1-Alpha-2-Code, zum Beispiel CH.',
         'native_name' => 'Name des Landes in seiner eigenen Sprache, zum Beispiel Deutschland.',
         'region_label' => 'Kanton, Distrikt, Bundesstaat …: die Bezeichnung des Feldes und des Filters der Region. Leer: „Region“.',

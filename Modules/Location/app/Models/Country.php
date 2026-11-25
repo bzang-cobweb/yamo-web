@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Modules\Location\Database\Factories\CountryFactory;
 use Spatie\Translatable\HasTranslations;
@@ -25,9 +26,10 @@ use Spatie\Translatable\HasTranslations;
  * @property array<string, string>|null $region_label le nom de ses régions, traduit (décision 2026-11-25-regions-par-pays)
  * @property string $dial_code
  * @property string|null $currency
+ * @property string|null $timezone fuseau horaire (`Africa/Douala`, décision 2026-11-25-fuseau-par-pays)
  * @property bool $active
  */
-#[Fillable(['code', 'name', 'native_name', 'region_label', 'dial_code', 'currency', 'active'])]
+#[Fillable(['code', 'name', 'native_name', 'region_label', 'dial_code', 'currency', 'timezone', 'active'])]
 #[UseFactory(CountryFactory::class)]
 class Country extends Model
 {
@@ -96,6 +98,18 @@ class Country extends Model
      * Le nom de ses régions dans la langue courante : « Canton », « District », « Région »… ; sans réglage, « Région »
      * (décision 2026-11-25-regions-par-pays).
      */
+    /** Son fuseau horaire, sinon celui de l'application (décision 2026-11-25-fuseau-par-pays). */
+    public function localTimezone(): string
+    {
+        return filled($this->timezone) ? (string) $this->timezone : (string) config('app.timezone');
+    }
+
+    /** « Aujourd'hui » dans le pays : le jour qui commence à minuit chez lui, en date seule. */
+    public function today(): Carbon
+    {
+        return Carbon::parse(Carbon::now($this->localTimezone())->toDateString());
+    }
+
     public function regionLabel(): string
     {
         $label = trim((string) $this->getTranslation('region_label', app()->getLocale()));

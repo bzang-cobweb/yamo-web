@@ -9,6 +9,7 @@ use Locale;
 use Modules\Location\Models\Country;
 use Modules\Location\Support\Currencies;
 use Modules\Location\Support\RegionData;
+use Modules\Location\Support\Timezones;
 use ResourceBundle;
 
 /**
@@ -16,7 +17,7 @@ use ResourceBundle;
  * noms fr, en et natif tirés de l'extension intl (ICU).
  *
  * Rejouable : un pays existant voit ses noms mis à jour, mais garde son `active` et
- * son `dial_code`, sa `currency` et son `region_label`, modifiables dans le back-office.
+ * son `dial_code`, sa `currency`, son `timezone` et son `region_label`, modifiables dans le back-office.
  */
 class CountrySeeder extends Seeder
 {
@@ -57,6 +58,10 @@ class CountrySeeder extends Seeder
 
             // Devise d'après ICU, si elle n'a pas encore été posée (modifiable ensuite).
             $country->currency ??= Currencies::forCountry($code);
+
+            // Fuseau horaire d'après PHP, s'il n'a pas encore été posé (modifiable ensuite ; décision
+            // 2026-11-25-fuseau-par-pays).
+            $country->timezone ??= Timezones::forCountry($code);
 
             // Le nom de ses régions (« Canton », « District »…), traduit, d'après son fichier de régions s'il en a un, s'il
             // n'a pas encore été posé (modifiable ensuite au back-office ; décision 2026-11-25-regions-par-pays).

@@ -3,6 +3,8 @@
 namespace Modules\Location\Filament\Resources\CountryResource\Schemas;
 
 use App\Filament\Schemas\TranslatableTabs;
+use DateTimeZone;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -61,6 +63,12 @@ abstract class CountryForm
                     ->length(3)
                     ->regex('/^[A-Za-z]{3}$/')
                     ->dehydrateStateUsing(fn (?string $state): ?string => $state === null ? null : strtoupper($state)),
+                // Le fuseau du pays, pour dire « aujourd'hui » chez une offre (décision 2026-11-25-fuseau-par-pays).
+                Select::make('timezone')
+                    ->label(__('location::country.timezone'))
+                    ->helperText(__('location::country.help.timezone'))
+                    ->options(fn (): array => array_combine(DateTimeZone::listIdentifiers(), DateTimeZone::listIdentifiers()))
+                    ->searchable(),
                 Toggle::make('active')
                     ->label(__('location::country.active'))
                     ->default(true),

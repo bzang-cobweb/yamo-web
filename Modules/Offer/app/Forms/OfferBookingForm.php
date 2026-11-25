@@ -56,10 +56,20 @@ class OfferBookingForm extends Form
         return ($this->offer === null ? null : app(DomainRegistry::class)->require()->bookingType($this->offer)) ?? BookingTypeEnum::VISIT;
     }
 
+    /**
+     * « Aujourd'hui » chez l'offre : le jour de son pays, pas celui du serveur ni du voyageur (décision
+     * 2026-11-25-fuseau-par-pays). Sans offre ni pays, celui de l'application.
+     */
+    private function today(): Carbon
+    {
+        return $this->offer?->country?->today() ?? today();
+    }
+
     public function fields(): array
     {
-        $latest = today()->addDays(Booking::MAX_DAYS)->toDateString();
-        $dates = ['date', 'after_or_equal:today', 'before_or_equal:'.$latest];
+        $today = $this->today();
+        $latest = $today->copy()->addDays(Booking::MAX_DAYS)->toDateString();
+        $dates = ['date', 'after_or_equal:'.$today->toDateString(), 'before_or_equal:'.$latest];
         $tooFar = __('offer::booking.form.too_far', ['days' => Booking::MAX_DAYS]);
         $message = Field::textarea('message')
             ->label(__('offer::booking.form.message'))
@@ -67,13 +77,13 @@ class OfferBookingForm extends Form
             ->maxLength(Booking::MESSAGE_MAX_LENGTH);
 
         // Les jours déjà pris ou bloqués, grisés sur la grille (décision 2026-11-19-contrat-calendrier-offre).
-        $unavailable = $this->offer === null ? [] : app(OfferAvailability::class)->unavailableDays($this->offer, $this->type(), today(), today()->addDays(Booking::MAX_DAYS + 1));
+        $unavailable = $this->offer === null ? [] : app(OfferAvailability::class)->unavailableDays($this->offer, $this->type(), $today, $today->copy()->addDays(Booking::MAX_DAYS + 1));
 
         if ($this->type() === BookingTypeEnum::VISIT) {
             return [
                 Field::date('check_in')
                     ->label(__('offer::booking.form.visit_date'))
-                    ->dateRange(today()->toDateString(), $latest)
+                    ->dateRange($today->toDateString(), $latest)
                     ->calendar($unavailable)
                     ->required()
                     ->rules([...$dates, $this->onePending()]),
@@ -88,7 +98,7 @@ class OfferBookingForm extends Form
         return [
             Field::date('check_in')
                 ->label(__('offer::booking.form.check_in'))
-                ->dateRange(today()->toDateString(), $latest)
+                ->dateRange($today->toDateString(), $latest)
                 ->calendar($unavailable)
                 ->required()
                 // Un meublé se réserve encore à d'autres dates : seules ses propres demandes qui chevauchent
@@ -96,7 +106,7 @@ class OfferBookingForm extends Form
                 ->rules([...$dates, $this->noOwnOverlap()]),
             Field::date('check_out')
                 ->label(__('offer::booking.form.check_out'))
-                ->dateRange(today()->addDay()->toDateString(), $latest)
+                ->dateRange($today->copy()->addDay()->toDateString(), $latest)
                 ->calendar($unavailable, after: 'check_in')
                 ->help($price === null ? null : __('offer::booking.form.price_help', ['price' => $price]))
                 ->required()
@@ -194,13 +204,15 @@ class OfferBookingForm extends Form
      */
     private function withinMaxDays(string $message): Closure
     {
-        return function (string $attribute, mixed $value, Closure $fail) use ($message): void {
+        $today = $this->today();
+
+        return function (string $attribute, mixed $value, Closure $fail) use ($message, $today): void {
             try {
                 $date = Carbon::parse((string) $value);
             } catch (\Throwable) {
                 return;
             }
-            if ($date->greaterThan(today()->addDays(Booking::MAX_DAYS))) {
+            if ($date->greaterThan($today->copy()->addDays(Booking::MAX_DAYS))) {
                 $fail($message);
             }
         };

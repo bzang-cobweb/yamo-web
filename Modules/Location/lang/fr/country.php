@@ -11,6 +11,7 @@ return [
     'region_label' => 'Nom des régions',
     'dial_code' => 'Indicatif',
     'currency' => 'Devise',
+    'timezone' => 'Fuseau horaire',
     'required' => 'Choisissez un pays.',
     'active' => 'Actif',
     'regions_count' => 'Régions',
@@ -19,6 +20,7 @@ return [
     ],
     'help' => [
         'currency' => 'Code ISO 4217, par exemple XAF ou CHF : la devise des offres de ce pays.',
+        'timezone' => "Par exemple Africa/Douala : « aujourd'hui » pour les offres de ce pays (dates de réservation).",
         'code' => 'Code ISO 3166-1 alpha-2, par exemple CH.',
         'native_name' => 'Nom du pays dans sa langue, par exemple Deutschland.',
         'region_label' => 'Canton, District, État… : le libellé du champ et du filtre de la région. Vide : « Région ».',

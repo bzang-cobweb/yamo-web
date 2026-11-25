@@ -107,6 +107,23 @@ class BookingApiTest extends TestCase
         $this->withHeaders(['X-Country' => 'CM'])->getJson("/api/v1/offers/{$unfurnished->getKey()}")->assertJsonPath('data.edit', null);
     }
 
+    public function test_today_is_the_day_of_the_offer_country(): void
+    {
+        // Décision 2026-11-25-fuseau-par-pays : à 23:30 UTC, il est déjà 00:30 le lendemain à Douala.
+        Country::query()->where('code', 'CM')->update(['timezone' => 'Africa/Douala']);
+        $this->travelTo(Carbon::parse('2026-07-11 23:30:00', 'UTC'));
+        $offer = $this->home(true);
+
+        $this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$offer->getKey())
+            ->assertJsonPath('data.fields.0.date_range.min', '2026-07-12')
+            ->assertJsonPath('data.fields.1.date_range.min', '2026-07-13');
+        // Le 11, déjà passé au Cameroun, est refusé.
+        $this->asUser($this->member())->postJson("/api/v1/offers/{$offer->getKey()}/bookings", $this->stay(['check_in' => '2026-07-11', 'check_out' => '2026-07-14']))
+            ->assertJsonValidationErrors('check_in');
+        $this->asUser($this->member())->postJson("/api/v1/offers/{$offer->getKey()}/bookings", $this->stay(['check_in' => '2026-07-12', 'check_out' => '2026-07-14']))
+            ->assertNoContent();
+    }
+
     public function test_the_form_asks_dates_and_guests_for_a_stay_and_a_date_for_a_visit(): void
     {
         $guest = $this->member();
