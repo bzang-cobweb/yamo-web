@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Lists;
 
+use App\Support\DisplayTime;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -115,10 +116,9 @@ class OfferReviewListing extends Listing
     public function item(Model $record): ListItem
     {
         /** @var OfferReview $record */
-        // La date brute : l'app la formate comme sur la fiche, pour la même date partout (décision
-        // 2026-11-25-avis-date-formatee-app).
+        // La date formatée par le serveur, comme sur la fiche (décision 2026-11-25-dates-formatees-serveur).
         return ListItem::make($record->getKey(), (string) ($record->user?->first_name ?: $record->user?->name ?? ''), $record->comment)
-            ->date($record->created_at?->toIso8601String())
+            ->detail(DisplayTime::date($record->created_at, 'll', $this->locale()))
             ->rating($record->rating, 1)
             // Comme sur la fiche : le prénom, « ★★★★★ · 18 nov. 2026 », le commentaire.
             ->reviewLayout();

@@ -77,6 +77,15 @@ class FieldTest extends TestCase
         ];
     }
 
+    public function test_a_date_field_serves_its_display_formats_from_the_configuration(): void
+    {
+        // Décision 2026-11-25-dates-formatees-serveur : changer le format suffit côté serveur.
+        $this->assertSame(['day' => 'numeric', 'month' => 'long', 'year' => 'numeric'], Field::date('birth_date')->toArray()['date_formats']['value']);
+        config(['form.date_formats.value' => ['month' => 'short', 'year' => 'numeric']]);
+        $this->assertSame(['month' => 'short', 'year' => 'numeric'], Field::date('birth_date')->toArray()['date_formats']['value']);
+        $this->assertNull(Field::text('name')->toArray()['date_formats']);
+    }
+
     public function test_every_type_is_covered_by_the_test_form(): void
     {
         $types = array_map(fn (Field $field): string => $field->type->value, $this->form()->fields());
@@ -166,6 +175,7 @@ class FieldTest extends TestCase
             'suggestions' => null,
             'max_length' => null,
             'date_range' => null,
+            'date_formats' => null,
             'calendar' => null,
             'suffix' => null,
             'suffix_when' => null,

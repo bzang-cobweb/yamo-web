@@ -2,6 +2,7 @@
 
 namespace Modules\Notification\Http\Resources;
 
+use App\Support\DisplayTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
@@ -109,6 +110,10 @@ class NotificationResource extends JsonResource
             'read' => $this->read ?? $this->isRead($notification, $reader),
             /** Date ISO 8601. */
             'created_at' => $this->date($notification),
+            /** Formatées par le serveur (décision 2026-11-25-dates-formatees-serveur) : relative pour la carte (« il y a 5 min »,
+                « hier à 10:30 »), complète pour le détail (« mercredi 18 novembre 2026 10:30 »). */
+            'date' => DisplayTime::relative($notification->created_at),
+            'stamp' => DisplayTime::stamp($notification->created_at, full: true),
         ];
 
         if (! $this->withThread) {
@@ -181,6 +186,8 @@ class NotificationResource extends JsonResource
                 'actor' => $actor === null ? null : ActorData::from($actor),
                 'message' => $this->message((array) $step->data),
                 'created_at' => $this->date($step),
+                /** Le moment de l'étape, formaté (« 10:30 », « 18 nov. 2026 10:30 »). */
+                'stamp' => DisplayTime::stamp($step->created_at),
                 /** Une étape modifiée (`data.edited`) : « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date). */
                 'edited' => (bool) (((array) $step->data)['edited'] ?? false),
                 'delivery' => $mine ? $this->delivery($step, $this->user((int) $step->getAttribute('notifiable_id'))) : null,

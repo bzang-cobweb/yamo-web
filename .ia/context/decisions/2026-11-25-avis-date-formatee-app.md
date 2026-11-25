@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-25-dates-formatees-serveur.md
+
 # `2026-11-25` — La date d'un avis formatée par l'app, la même partout
 
 - **Type** : décision

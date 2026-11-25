@@ -2,6 +2,7 @@
 
 namespace Modules\Form\Support;
 
+use App\Support\DisplayTime;
 use Illuminate\Support\Str;
 
 /**
@@ -247,8 +248,8 @@ final class ListItem
 
     /**
      * La disposition d'un avis, comme sur la fiche d'une offre (décision 2026-11-25-liste-avis-generique) : le titre
-     * (le prénom), puis les étoiles de la note et la date (`date`, formatée par l'app) séparées par un point, puis le
-     * sous-titre (le commentaire).
+     * (le prénom), puis les étoiles de la note et la ligne à part (la date, formatée par le serveur) séparées par un
+     * point, puis le sous-titre (le commentaire).
      */
     public function reviewLayout(): self
     {
@@ -374,7 +375,7 @@ final class ListItem
             /** Les vues : un œil suivi du nombre ; `label` pour les lecteurs d'écran ; absent : rien. */
             ...($this->views === null ? [] : ['views' => $this->views]),
             /** Date ISO 8601 sous le message, à droite ; absente : aucune. */
-            ...($this->date === null ? [] : ['date' => $this->date]),
+            ...($this->date === null ? [] : ['date' => $this->date, 'date_text' => DisplayTime::relative($this->date)]),
             /** Notifications non lues, en pastille à droite du message ; absent : aucune. */
             ...($this->unreadCount > 0 ? ['unread_count' => $this->unreadCount] : []),
             'image' => $this->image,

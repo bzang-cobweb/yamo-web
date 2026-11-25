@@ -4,6 +4,7 @@ namespace Modules\Offer\Http\Resources;
 
 use App\Models\Setting;
 use App\Support\Currency;
+use App\Support\DisplayTime;
 use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -79,6 +80,8 @@ class OfferDetailResource extends JsonResource
             /** Blocs d'informations, dans l'ordre (décision 2026-11-19-contrat-offer-informations) : titre et description dans la langue demandée, retours à la ligne gardés. */
             'informations' => $informations,
             'published_at' => $offer->published_at?->toIso8601String(),
+            /** La date de publication, formatée (« 18 novembre 2026 », décision 2026-11-25-dates-formatees-serveur). */
+            'published_on' => DisplayTime::date($offer->published_at, 'LL', $locale),
             /** Statut, servi au seul propriétaire. */
             // Pour le propriétaire, avec son ton : une pastille sur la photo, à la place du cœur
             // (décision 2026-11-21-statut-a-la-place-du-coeur).
@@ -323,7 +326,7 @@ class OfferDetailResource extends JsonResource
 
         return array_values(array_filter([
             filled($author->first_name) ? ['label' => __('offer::offer.publisher.name', [], $locale), 'value' => (string) $author->first_name] : null,
-            $author->created_at === null ? null : ['label' => __('offer::offer.publisher.since', [], $locale), 'value' => $author->created_at->copy()->locale($locale)->isoFormat('ll')],
+            $author->created_at === null ? null : ['label' => __('offer::offer.publisher.since', [], $locale), 'value' => (string) DisplayTime::date($author->created_at, 'll', $locale)],
             ['label' => __('offer::offer.publisher.identified', [], $locale), 'value' => __($author->isIdentified() ? 'offer::offer.publisher.yes' : 'offer::offer.publisher.no', [], $locale)],
         ]));
     }

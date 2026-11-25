@@ -1079,6 +1079,8 @@ final class Field
             'max_length' => $this->maxLength,
             /** Bornes du calendrier d'une date (`AAAA-MM-JJ` ou `null`) ; `null` pour un autre champ. */
             'date_range' => $this->type !== FieldType::DATE ? null : ['min' => $this->dateMin, 'max' => $this->dateMax],
+            // Les formats de ses dates, appliqués par l'app (config `form.date_formats`, décision 2026-11-25-dates-formatees-serveur).
+            'date_formats' => $this->type !== FieldType::DATE ? null : (array) config('form.date_formats'),
             /** Grille de mois (date seulement) : jours indisponibles, et le champ du début d'une période (`after`) ; `null` : sélecteur natif. */
             'calendar' => $this->calendar,
             /** Unité affichée après la valeur (« m² »). */

@@ -43,7 +43,8 @@ class OfferReviewListingApiTest extends TestCase
 
     public function test_a_visitor_sees_the_reviews_with_the_rating_title_and_the_count(): void
     {
-        $data = $this->list($this->offer())->assertOk()->json('data');
+        $offer = $this->offer();
+        $data = $this->list($offer)->assertOk()->json('data');
 
         // « Avis » en titre ; la note et le nombre en tête de la liste (décision 2026-11-25-liste-avis-note-en-tete).
         $this->assertSame('Avis', $data['title']);
@@ -53,10 +54,25 @@ class OfferReviewListingApiTest extends TestCase
         $item = collect($data['items'])->firstWhere('title', 'Paul');
         $this->assertSame('Bon rapport qualité-prix.', $item['subtitle']);
         $this->assertEquals(['average' => 4, 'count' => 1], $item['rating']);
-        // La date brute, formatée par l'app comme sur la fiche (décision 2026-11-25-avis-date-formatee-app).
-        $this->assertArrayNotHasKey('detail', $item);
-        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $item['date']);
+        // La date formatée par le serveur, la même que sur la fiche (décision 2026-11-25-dates-formatees-serveur).
+        $fiche = $this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'CM'])->getJson('/api/v1/offers/'.$offer->getKey())->json('data.reviews.latest');
+        $this->assertSame(collect($fiche)->firstWhere('author', 'Paul')['date'], $item['detail']);
         $this->assertSame('review', $item['layout']);
+    }
+
+    public function test_the_reviews_come_by_pages_of_twenty(): void
+    {
+        // Défilement infini, comme toute liste : 20 par page, la suite par son curseur.
+        $offer = $this->offer();
+        OfferReview::factory()->count(20)->for($offer)->create();
+
+        $first = $this->list($offer)->assertOk()->json('data');
+        $this->assertCount(20, $first['items']);
+        $this->assertNotNull($first['next_cursor']);
+        $second = $this->list($offer, '&cursor='.urlencode($first['next_cursor']))->assertOk()->json('data');
+        $this->assertCount(3, $second['items']);
+        $this->assertNull($second['next_cursor']);
+        $this->assertSame([], array_intersect(array_column($first['items'], 'id'), array_column($second['items'], 'id')));
     }
 
     public function test_the_search_looks_in_the_comment_and_the_first_name(): void

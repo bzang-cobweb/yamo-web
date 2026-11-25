@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Http\Resources;
 
+use App\Support\DisplayTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Offer\Models\OfferReview;
@@ -16,7 +17,7 @@ use Modules\Offer\Models\OfferReview;
 class OfferReviewResource extends JsonResource
 {
     /**
-     * @return array{id: string, author: string, rating: int, comment: string, created_at: string|null}
+     * @return array{id: string, author: string, rating: int, comment: string, created_at: string|null, date: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -29,6 +30,8 @@ class OfferReviewResource extends JsonResource
             'rating' => $review->rating,
             'comment' => $review->comment,
             'created_at' => $review->created_at?->toIso8601String(),
+            /** La date, formatée (« 18 nov. 2026 »), la même que dans la liste des avis (décision 2026-11-25-dates-formatees-serveur). */
+            'date' => DisplayTime::date($review->created_at),
         ];
     }
 }

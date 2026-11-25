@@ -100,7 +100,7 @@ class OfferReviewApiTest extends TestCase
         $this->assertSame(2, $reviews['count']);
         $this->assertSame(['Paul', 'Awa'], array_column($reviews['latest'], 'author'));
         // Le prénom seulement : ni nom de famille, ni e-mail.
-        $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at'], array_keys($reviews['latest'][0]));
+        $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at', 'date'], array_keys($reviews['latest'][0]));
         $this->assertStringNotContainsString((string) $paul->email, json_encode($reviews, JSON_THROW_ON_ERROR));
         $this->assertSame(['rating' => 4, 'comment' => 'Très bon accueil.'], $reviews['mine']);
         $this->assertTrue($reviews['can_review']);
@@ -236,7 +236,7 @@ class OfferReviewApiTest extends TestCase
 
         $first = $this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}/reviews")->assertOk()->json('data');
         $this->assertCount(20, $first['items']);
-        $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at'], array_keys($first['items'][0]));
+        $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at', 'date'], array_keys($first['items'][0]));
         $this->assertSame(['Auteur 23', 'Avis 23'], [$first['items'][0]['author'], $first['items'][0]['comment']]);
         $this->assertNotNull($first['next_cursor']);
         // Le titre « Avis (4,0) » et « 23 avis » avant la liste (décision 2026-11-25-liste-avis-titre-nombre).

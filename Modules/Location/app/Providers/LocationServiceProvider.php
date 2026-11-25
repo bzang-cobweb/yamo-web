@@ -2,6 +2,7 @@
 
 namespace Modules\Location\Providers;
 
+use App\Support\DisplayTime;
 use Illuminate\Support\Facades\Gate;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -9,6 +10,7 @@ use Modules\Location\Models\Region;
 use Modules\Location\Policies\AddressPolicy;
 use Modules\Location\Policies\CountryPolicy;
 use Modules\Location\Policies\RegionPolicy;
+use Modules\Location\Support\CurrentCountry;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class LocationServiceProvider extends ModuleServiceProvider
@@ -16,6 +18,9 @@ class LocationServiceProvider extends ModuleServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        // Les dates montrées à l'app, dans le fuseau du pays courant (décision 2026-11-25-dates-formatees-serveur).
+        DisplayTime::resolveZoneUsing(fn (): ?string => CurrentCountry::get()?->localTimezone());
 
         Gate::policy(Country::class, CountryPolicy::class);
         Gate::policy(Region::class, RegionPolicy::class);

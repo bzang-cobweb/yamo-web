@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Services;
 
+use App\Support\DisplayTime;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Enums\VerificationPurpose;
@@ -55,6 +56,8 @@ final class LoginService
                 'next' => 'restore',
                 'challenge' => $verified->challenge,
                 'deletion_date' => AccountDeletionService::purgeDate($user)->toDateString(),
+                // La date formatée (« 12 avril 2027 », décision 2026-11-25-dates-formatees-serveur).
+                'deletion_date_text' => DisplayTime::day(AccountDeletionService::purgeDate($user)),
             ];
         }
 
