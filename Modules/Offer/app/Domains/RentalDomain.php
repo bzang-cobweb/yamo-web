@@ -332,7 +332,7 @@ class RentalDomain extends Domain
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],
             // Les blocs d'informations, à part (décision 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.informations'), 'fields' => ['informations']],
-            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'city', 'region', 'indication', 'show_address', 'phone', 'email']],
+            ['title' => __('offer::rental.steps.place'), 'fields' => ['street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email']],
             // Les photos en dernier (décision 2026-11-19-contrat-champ-upload-photos).
             ['title' => __('offer::rental.steps.photos'), 'fields' => ['photos']],
         ];

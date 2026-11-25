@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Modules\Auth\Models\User;
 use Modules\Form\Support\Field;
 use Modules\Location\Models\Address;
+use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingFilters;
@@ -44,7 +45,8 @@ trait FiltersBookings
             BookingFilters::period(),
             // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
             Field::select('region')
-                ->label(__('offer::booking.profile.filter_region'))
+                // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
+                ->label(CurrentCountry::require()->regionLabel())
                 ->options(OfferRegions::options($this->bookedOffers())),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))

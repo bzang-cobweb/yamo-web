@@ -38,6 +38,11 @@ abstract class CountryForm
                         ->label(__('location::country.name'))
                         ->required()
                         ->maxLength(255),
+                    // Le nom de ses régions (décision 2026-11-25-regions-par-pays) : facultatif, « Région » sinon.
+                    TextInput::make("region_label.{$locale}")
+                        ->label(__('location::country.region_label'))
+                        ->helperText(__('location::country.help.region_label'))
+                        ->maxLength(60),
                 ], 'name'),
                 TextInput::make('native_name')
                     ->label(__('location::country.native_name'))

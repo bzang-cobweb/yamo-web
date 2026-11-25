@@ -3,64 +3,56 @@
 namespace Modules\Location\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
+use Modules\Location\Support\RegionData;
 
 /**
- * Les 26 cantons suisses, rattachés au pays CH (CountrySeeder d'abord).
+ * Les régions de chaque pays qui a un fichier de données (`RegionData` : Cameroun, Côte d'Ivoire, Suisse…), rattachées
+ * à leur pays (CountrySeeder d'abord) (décision 2026-11-25-regions-par-pays).
  *
- * Rejouable : un canton déjà présent (même nom français ou anglais dans CH) voit
- * ses noms mis à jour et garde son `active`.
+ * Rejouable : une région déjà présente dans le pays (même nom dans une des langues, sans casse ni espaces en trop) voit
+ * ses noms mis à jour et garde son `active` et sa `position`, réglés au back-office ; une nouvelle se place à la fin de
+ * son pays. Aucune région n'est supprimée : ses adresses le seraient avec elle.
  */
 class RegionSeeder extends Seeder
 {
-    /**
-     * Noms officiels français, noms usuels anglais.
-     *
-     * @var list<array{fr: string, en: string}>
-     */
-    private const SWISS_CANTONS = [
-        ['fr' => 'Argovie', 'en' => 'Aargau'],
-        ['fr' => 'Appenzell Rhodes-Extérieures', 'en' => 'Appenzell Ausserrhoden'],
-        ['fr' => 'Appenzell Rhodes-Intérieures', 'en' => 'Appenzell Innerrhoden'],
-        ['fr' => 'Bâle-Campagne', 'en' => 'Basel-Landschaft'],
-        ['fr' => 'Bâle-Ville', 'en' => 'Basel-Stadt'],
-        ['fr' => 'Berne', 'en' => 'Bern'],
-        ['fr' => 'Fribourg', 'en' => 'Fribourg'],
-        ['fr' => 'Genève', 'en' => 'Geneva'],
-        ['fr' => 'Glaris', 'en' => 'Glarus'],
-        ['fr' => 'Grisons', 'en' => 'Grisons'],
-        ['fr' => 'Jura', 'en' => 'Jura'],
-        ['fr' => 'Lucerne', 'en' => 'Lucerne'],
-        ['fr' => 'Neuchâtel', 'en' => 'Neuchâtel'],
-        ['fr' => 'Nidwald', 'en' => 'Nidwalden'],
-        ['fr' => 'Obwald', 'en' => 'Obwalden'],
-        ['fr' => 'Saint-Gall', 'en' => 'St. Gallen'],
-        ['fr' => 'Schaffhouse', 'en' => 'Schaffhausen'],
-        ['fr' => 'Schwytz', 'en' => 'Schwyz'],
-        ['fr' => 'Soleure', 'en' => 'Solothurn'],
-        ['fr' => 'Tessin', 'en' => 'Ticino'],
-        ['fr' => 'Thurgovie', 'en' => 'Thurgau'],
-        ['fr' => 'Uri', 'en' => 'Uri'],
-        ['fr' => 'Valais', 'en' => 'Valais'],
-        ['fr' => 'Vaud', 'en' => 'Vaud'],
-        ['fr' => 'Zoug', 'en' => 'Zug'],
-        ['fr' => 'Zurich', 'en' => 'Zurich'],
-    ];
-
     public function run(): void
     {
-        $switzerland = Country::query()->where('code', 'CH')->firstOrFail();
+        foreach (RegionData::countries() as $code) {
+            $country = Country::query()->where('code', $code)->first();
+            if ($country === null) {
+                continue;
+            }
 
-        foreach (self::SWISS_CANTONS as $names) {
-            $canton = $switzerland->regions()
-                ->where(fn ($query) => $query
-                    ->where('name->fr', $names['fr'])
-                    ->orWhere('name->en', $names['en']))
-                ->first() ?? new Region(['country_id' => $switzerland->getKey(), 'active' => true]);
+            $existing = $country->regions()->get();
+            foreach (RegionData::of($code)['regions'] ?? [] as $names) {
+                $region = $existing->first(fn (Region $region): bool => self::sameName($region, $names))
+                    ?? new Region(['country_id' => $country->getKey(), 'active' => true]);
 
-            $canton->setTranslations('name', $names);
-            $canton->save();
+                $region->setTranslations('name', $names);
+                $region->save();
+            }
         }
+    }
+
+    /**
+     * La région porte-t-elle un de ces noms, dans une de ses langues ?
+     *
+     * @param  array<string, string>  $names
+     */
+    private static function sameName(Region $region, array $names): bool
+    {
+        $plain = fn (string $name): string => Str::lower(Str::squish($name));
+        $wanted = array_map($plain, array_values($names));
+
+        foreach ($region->getTranslations('name') as $name) {
+            if (in_array($plain((string) $name), $wanted, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

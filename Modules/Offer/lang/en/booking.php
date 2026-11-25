@@ -251,7 +251,6 @@ return [
         'filter_upcoming' => 'Upcoming',
         'filter_pending' => 'Pending',
         'filter_past' => 'Past',
-        'filter_region' => 'Region',
         'filter_city' => 'City',
         'filter_offer' => 'Home',
         'search_home' => 'Find a home',

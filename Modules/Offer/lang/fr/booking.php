@@ -251,7 +251,6 @@ return [
         'filter_upcoming' => 'À venir',
         'filter_pending' => 'En attente',
         'filter_past' => 'Passée',
-        'filter_region' => 'Région',
         'filter_city' => 'Ville',
         'filter_offer' => 'Logement',
         'search_home' => 'Rechercher un logement',

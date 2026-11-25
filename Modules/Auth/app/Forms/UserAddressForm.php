@@ -17,7 +17,7 @@ use Modules\Location\Support\CurrentCountry;
  * en ajouter une (`POST /api/v1/auth/me/addresses`), ou liée à l'une de ses
  * adresses (`?record=12`, une `UserAddress`) pour la modifier
  * (`PATCH …/addresses/12`). Destinataire (genre, prénom, nom, préremplis depuis
- * le compte à l'ajout), puis rue (avec suggestions), NPA, ville et région
+ * le compte à l'ajout), puis rue (avec suggestions), NPA, région et ville
  * obligatoires, et des indications facultatives. Latitude et longitude sont
  * réservées au back-office : une adresse créée depuis l'app n'a pas de coordonnées (décisions
  * 2026-11-18-adresses-liste-generique, 2026-11-18-adresse-du-compte-modele et
@@ -85,19 +85,20 @@ class UserAddressForm extends Form
                 ->default($address?->zip)
                 ->required()
                 ->maxLength(20),
+            // La région, avant la ville (décision 2026-11-25-region-avant-ville), une liste cherchable des régions actives du pays courant : elle donne le pays
+            // de l'adresse, qui n'est plus saisi (décisions 2026-11-25-region-de-l-adresse et 2026-11-25-adresse-sans-pays).
+            Field::select('region')
+                // Son nom dans le pays : « Canton », « District »… (décision 2026-11-25-regions-par-pays).
+                ->label($country->regionLabel())
+                ->options(Region::optionsIn($country->getKey()))
+                ->searchable()
+                ->default($address?->region_id === null ? null : (string) $address->region_id)
+                ->required(),
             Field::text('city')
                 ->label(__('location::address.city'))
                 ->default($address?->city)
                 ->required()
                 ->maxLength(255),
-            // La région, après la ville, une liste cherchable des régions actives du pays courant : elle donne le pays
-            // de l'adresse, qui n'est plus saisi (décisions 2026-11-25-region-de-l-adresse et 2026-11-25-adresse-sans-pays).
-            Field::select('region')
-                ->label(__('location::address.region'))
-                ->options(Region::optionsIn($country->getKey()))
-                ->searchable()
-                ->default($address?->region_id === null ? null : (string) $address->region_id)
-                ->required(),
             // Facultatives, propres au compte (l'adresse est partagée).
             Field::textarea('indication')
                 ->label(__('auth::address.indication'))

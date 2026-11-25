@@ -33,7 +33,8 @@ trait FiltersOffers
         return array_values(array_filter([
             // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
             ! $domain->hasAddress() ? null : Field::select('region')
-                ->label(__('offer::offer.filters.region'))
+                // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
+                ->label(CurrentCountry::require()->regionLabel())
                 ->options(OfferRegions::options($offers)),
             ! $domain->hasAddress() ? null : Field::select('city')
                 ->label(__('offer::offer.filters.city'))

@@ -239,8 +239,8 @@ class UserAddressApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         // Latitude et longitude sont réservées au back-office ; la rue propose les adresses
         // connues, comme pour une offre (décision 2026-11-19-carnet-adresses-recherche).
-        // La région après la ville, à la place du pays (décision 2026-11-25-adresse-sans-pays).
-        $this->assertSame(['gender', 'first_name', 'last_name', 'street', 'zip', 'city', 'region', 'indication'], array_keys($fields));
+        // La région avant la ville, à la place du pays (décisions 2026-11-25-adresse-sans-pays et 2026-11-25-region-avant-ville).
+        $this->assertSame(['gender', 'first_name', 'last_name', 'street', 'zip', 'region', 'city', 'indication'], array_keys($fields));
         $this->assertSame(['textarea', false, null], [$fields['indication']['type'], $fields['indication']['required'], $fields['indication']['default']]);
         $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
         $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);

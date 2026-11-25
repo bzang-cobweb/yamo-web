@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Modules\Location\Models\Address;
+use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Modules\Location\Services\AddressService;
 
@@ -46,13 +47,13 @@ abstract class AddressForm
                     ->label(__('location::address.zip'))
                     ->required()
                     ->maxLength(20),
+                // La région, avant la ville (décision 2026-11-25-region-avant-ville), à la place du pays : elle le donne (décisions 2026-11-25-region-de-l-adresse et
+                // 2026-11-25-adresse-sans-pays).
+                self::region($country),
                 TextInput::make('city')
                     ->label(__('location::address.city'))
                     ->required()
                     ->maxLength(255),
-                // La région, après la ville, à la place du pays : elle le donne (décisions 2026-11-25-region-de-l-adresse et
-                // 2026-11-25-adresse-sans-pays).
-                self::region($country),
                 TextInput::make('latitude')
                     ->label(__('location::address.latitude'))
                     ->numeric()
@@ -111,7 +112,8 @@ abstract class AddressForm
     public static function region(?int $country = null): Select
     {
         return Select::make('region_id')
-            ->label(__('location::address.region'))
+            // Dans la fiche d'un pays, le nom de ses régions (« Canton »…, décision 2026-11-25-regions-par-pays).
+            ->label(fn (): string => $country === null ? (string) __('location::address.region') : (Country::query()->find($country)?->regionLabel() ?? (string) __('location::address.region')))
             ->options(fn (): array => $country === null ? Region::optionsWithCountry() : Region::optionsIn($country))
             ->searchable()
             ->required();

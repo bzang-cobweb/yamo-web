@@ -22,11 +22,12 @@ use Spatie\Translatable\HasTranslations;
  *
  * @property string $code
  * @property string $native_name
+ * @property array<string, string>|null $region_label le nom de ses régions, traduit (décision 2026-11-25-regions-par-pays)
  * @property string $dial_code
  * @property string|null $currency
  * @property bool $active
  */
-#[Fillable(['code', 'name', 'native_name', 'dial_code', 'currency', 'active'])]
+#[Fillable(['code', 'name', 'native_name', 'region_label', 'dial_code', 'currency', 'active'])]
 #[UseFactory(CountryFactory::class)]
 class Country extends Model
 {
@@ -34,7 +35,7 @@ class Country extends Model
     use HasFactory, HasTranslations;
 
     /** @var list<string> */
-    public array $translatable = ['name'];
+    public array $translatable = ['name', 'region_label'];
 
     /**
      * @return array<string, string>
@@ -89,6 +90,17 @@ class Country extends Model
     protected function active(Builder $query): void
     {
         $query->where('active', true);
+    }
+
+    /**
+     * Le nom de ses régions dans la langue courante : « Canton », « District », « Région »… ; sans réglage, « Région »
+     * (décision 2026-11-25-regions-par-pays).
+     */
+    public function regionLabel(): string
+    {
+        $label = trim((string) $this->getTranslation('region_label', app()->getLocale()));
+
+        return $label === '' ? (string) __('location::address.region') : $label;
     }
 
     /**

@@ -8,6 +8,7 @@ return [
     'name' => 'Nom',
     'label' => 'Pays',
     'native_name' => 'Nom natif',
+    'region_label' => 'Nom des régions',
     'dial_code' => 'Indicatif',
     'currency' => 'Devise',
     'required' => 'Choisissez un pays.',
@@ -20,6 +21,7 @@ return [
         'currency' => 'Code ISO 4217, par exemple XAF ou CHF : la devise des offres de ce pays.',
         'code' => 'Code ISO 3166-1 alpha-2, par exemple CH.',
         'native_name' => 'Nom du pays dans sa langue, par exemple Deutschland.',
+        'region_label' => 'Canton, District, État… : le libellé du champ et du filtre de la région. Vide : « Région ».',
         'dial_code' => 'Avec le « + », par exemple +41.',
     ],
     // Décision 2026-11-19-pays-obligatoire-offre.

@@ -1,0 +1,26 @@
+# `2026-11-25` — Les régions de chaque pays dans les seeders, un fichier par pays, et leur nom
+
+- **Type** : décision
+- **Questions posées** :
+  - « les régions peuvent être les états (usa), des provinces (cameroun), des cantons (suisses)… est-ce que ces informations peuvent être mises dans un seeder ? » ;
+  - « oui, fais-le pour Cameroun, la Suisse, la Côte d'Ivoire (un fichier par pays si on ne trouve pas l'information comme on l'a fait pour les pays) » ;
+  - « ajouter region_label au seeder des pays et le rejouer » ;
+  - « region_label est multilingue ».
+- **Ce qui est retenu** :
+  - **Pas de source automatique** : les pays viennent d'ICU (extension intl), qui n'a pas leurs subdivisions, et aucune dépendance n'est ajoutée. Il y a donc un fichier par pays : `Modules/Location/database/data/regions/<CODE>.php`, avec `label` (le nom des régions) et `regions`, en français, anglais et allemand. `RegionData` les lit.
+    - **Cameroun** (`CM`) : les 10 régions (« provinces » jusqu'en 2008). Nom : « Région ». Noms officiels en français et en anglais ; en allemand, les noms français.
+    - **Suisse** (`CH`) : les 26 cantons. Nom : « Canton » / « Kanton ». Noms officiels français et allemands, usuels anglais. Ils remplacent la liste écrite dans le seeder.
+    - **Côte d'Ivoire** (`CI`) : les 14 districts, dont les districts autonomes d'Abidjan et de Yamoussoukro. C'est le premier niveau du découpage, celui d'ISO 3166-2:CI ; les 31 régions sont en dessous. Nom : « District » / « Distrikt ».
+  - **`countries.region_label`** : le nom des régions du pays, traduit (JSON, migration additive). Sans valeur, « Région ».
+    - `CountrySeeder` le prend dans le fichier du pays seulement s'il est vide : il reste modifiable au back-office, dans la fiche du pays.
+    - Il sert de libellé au champ et au filtre de la région : formulaire d'une offre, carnet d'adresses, filtres des listes, adresses d'un pays au back-office. Le libellé générique « Région » reste là où plusieurs pays se mêlent (les adresses d'un compte au back-office).
+  - **`RegionSeeder`, rejouable** :
+    - une région déjà présente (même nom dans une des langues, sans casse ni espaces en trop) voit ses noms mis à jour et garde son `active` et sa `position` ;
+    - une nouvelle se place à la fin de son pays ;
+    - aucune région n'est supprimée, car ses adresses le seraient avec elle.
+  - **Rejoué en local** :
+    - les 10 régions du Cameroun saisies à la main ont été reprises avec les mêmes identifiants, donc leurs adresses sont intactes ;
+    - « Extrême-Nord » a perdu son espace en trop et toutes ont reçu leur nom anglais et allemand ;
+    - la Côte d'Ivoire a ses 14 districts ;
+    - les trois pays ont leur nom de régions.
+- **Tranché par** : humain (seeders, un fichier par pays, les trois pays, `region_label` dans le seeder des pays, multilingue) ; session (le premier niveau ISO, les districts ivoiriens, « Région » pour le Cameroun, le nom gardé s'il est déjà réglé)
