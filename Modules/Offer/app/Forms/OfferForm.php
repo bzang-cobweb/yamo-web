@@ -72,7 +72,8 @@ class OfferForm extends Form
                 ->label(__('offer::offer.title_field'))
                 ->default($offer?->getTranslation('title', $this->locale()))
                 ->required()
-                ->maxLength(255),
+                // 50 caractères au plus (décision 2026-11-25-titre-offre-50).
+                ->maxLength(Offer::TITLE_MAX_LENGTH),
             Field::textarea('description')
                 ->label(__('offer::offer.description'))
                 ->default($offer?->getTranslation('description', $this->locale()))

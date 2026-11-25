@@ -84,6 +84,12 @@ class Offer extends Model implements HasMedia
     public const PHOTOS = 'photos';
 
     /**
+     * Le titre, saisi dans l'app comme au back-office : 50 caractères au plus (décision 2026-11-25-titre-offre-50) ;
+     * la base en garde 255.
+     */
+    public const TITLE_MAX_LENGTH = 50;
+
+    /**
      * Un texte manquant dans `$locale` s'affiche dans la langue d'origine de l'offre,
      * puis la langue par défaut, puis une autre (décision 2026-11-19-contrat-langue-saisie-allemand).
      */

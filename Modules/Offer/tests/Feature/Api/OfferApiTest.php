@@ -292,6 +292,12 @@ class OfferApiTest extends TestCase
             ->assertJsonMissingValidationErrors(['surface', 'rooms', 'price', 'street']);
         // Surface et pièces facultatives (décision 2026-11-19-charges-meuble-surface-facultative).
         $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'rental_type' => 'long_term', 'title' => 'Studio'])->assertNoContent();
+        // Le titre : 50 caractères au plus (décision 2026-11-25-titre-offre-50).
+        $this->assertSame(50, collect($form['fields'])->firstWhere('name', 'title')['max_length']);
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'rental_type' => 'long_term', 'title' => str_repeat('a', 51)])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['title']);
+        $this->asUser($user)->postJson('/api/v1/forms/offer.offer/steps/1', ['property_type' => 'studio', 'rental_type' => 'long_term', 'title' => str_repeat('a', 50)])->assertNoContent();
     }
 
     public function test_the_number_of_bedrooms_is_required(): void

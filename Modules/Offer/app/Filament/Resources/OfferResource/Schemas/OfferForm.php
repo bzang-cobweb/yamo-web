@@ -121,7 +121,8 @@ abstract class OfferForm
                                     TextInput::make("title.{$locale}")
                                         ->label(__('offer::offer.title_field'))
                                         ->required(fn (Get $get): bool => $locale === Locales::default() && collect(Locales::values())->every(fn (string $other): bool => blank($get("title.{$other}"))))
-                                        ->maxLength(255),
+                                        // 50 caractères au plus, comme dans l'app (décision 2026-11-25-titre-offre-50).
+                                        ->maxLength(Offer::TITLE_MAX_LENGTH),
                                     Textarea::make("description.{$locale}")
                                         ->label(__('offer::offer.description'))
                                         ->maxLength(Field::TEXTAREA_MAX_LENGTH)
