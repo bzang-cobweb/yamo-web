@@ -30,6 +30,7 @@ return [
     ],
     'profile' => [
         'personalInfo' => 'Personal information',
+        'identity' => 'Verify my identity',
         'password' => 'Change password',
         'preferences' => 'Preferences',
         'addresses' => 'My addresses',

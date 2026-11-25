@@ -8,7 +8,7 @@ return [
     'mine' => 'My homes',
     'add' => 'Add a home',
     'request' => 'Home request',
-    'property_type' => 'Property type',
+    'property_type' => 'Type',
     // Type de location (décision 2026-11-20-contrat-type-de-location).
     'rental_type' => 'Rental type',
     'rental_types' => [
@@ -41,6 +41,7 @@ return [
     'rooms_help' => 'Half rooms are allowed (3.5).',
     'bedrooms' => 'Bedrooms',
     'bathrooms' => 'Bathrooms',
+    'cameras' => 'Security cameras',
     'available_from' => 'Available from',
     'charges' => 'Monthly charges',
     'charges_help' => 'On top of the rent.',

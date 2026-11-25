@@ -12,10 +12,10 @@ return [
 
     /*
      * Nombre des derniers avis servis avec la fiche d'une offre (décision
-     * 2026-11-19-contrat-paiement-visibilite-avis) ; l'app propose « Voir tous les
-     * avis » quand il y en a davantage.
+     * 2026-11-19-contrat-paiement-visibilite-avis), que l'app montre en carrousel
+     * (décision 2026-11-25-fiche-avis-carrousel) ; « Voir tous les avis » ouvre la liste complète.
      */
-    'reviews_shown' => 1,
+    'reviews_shown' => 10,
 
     /*
      * Sections repliables de la fiche d'une offre, dans l'ordre, et ouvertes ou non à
@@ -29,6 +29,8 @@ return [
     // Caractéristiques, localisation, description, puis le reste (décision 2026-11-22-fiche-localisation-apres-caracteristiques) ;
     // seule la première ouverte à l'arrivée (décision 2026-11-22-fiche-premiere-section-ouverte).
     'sections' => [
+        // « Publiée par », avant les caractéristiques, ouvertes toutes deux (décision 2026-11-25-fiche-publiee-par).
+        'publisher' => true,
         'facts' => true,
         'location' => false,
         'description' => false,

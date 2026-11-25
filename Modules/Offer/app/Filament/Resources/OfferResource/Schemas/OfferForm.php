@@ -114,6 +114,12 @@ abstract class OfferForm
                                     ->getOptionLabelFromRecordUsing(fn (User $user): string => $user->getFilamentName())
                                     ->searchable(['name', 'first_name', 'last_name', 'email'])
                                     ->required(),
+                                // Après le propriétaire : la catégorie, puis le type et le type de location (décision
+                                // 2026-11-25-offre-categorie-cameras).
+                                Select::make('category_id')
+                                    ->label(__('offer::offer.category'))
+                                    ->options(fn (): array => OfferCategory::options()),
+                                ...self::attributes($domain, 'listing'),
                                 // Traduits : un onglet par langue ; un titre dans au moins une langue
                                 // (décision 2026-11-19-contrat-langue-saisie-allemand), l'erreur sous la langue par défaut.
                                 TranslatableTabs::make(fn (string $locale): array => [
@@ -127,11 +133,6 @@ abstract class OfferForm
                                         ->maxLength(Field::TEXTAREA_MAX_LENGTH)
                                         ->rows(4),
                                 ], 'texts')->columnSpanFull(),
-                                // Les attributs de l'annonce (type, meublé), avant la catégorie.
-                                ...self::attributes($domain, 'listing'),
-                                Select::make('category_id')
-                                    ->label(__('offer::offer.category'))
-                                    ->options(fn (): array => OfferCategory::options()),
                             ]),
                         // Le pays aussi (décision 2026-11-19-pays-dans-localisation) : l'onglet est
                         // toujours là ; l'adresse, pour un domaine qui en a une.
@@ -211,13 +212,19 @@ abstract class OfferForm
                                     ->options(OfferStatusEnum::options())
                                     ->default(OfferStatusEnum::DRAFT->value)
                                     ->required(),
+                                // Juste après le statut : « Disponible dès le » (décision 2026-11-25-disponible-apres-statut).
+                                ...self::attributes($domain, 'access'),
                                 // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
                                 DatePicker::make('featured_until')
                                     ->label(__('offer::offer.featured_until'))
                                     ->helperText(__('offer::offer.featured_help'))
                                     ->native(false)
                                     ->seconds(false),
-                                ...self::attributes($domain, 'access'),
+                                // En tête du carrousel de sa région (décision 2026-11-25-remontee-carrousel).
+                                DatePicker::make('boosted_until')
+                                    ->label(__('offer::offer.boosted_until'))
+                                    ->helperText(__('offer::offer.boosted_help'))
+                                    ->native(false),
                                 // Le début de la période payée (décision 2026-11-23-offre-paye-a-partir-du).
                                 DatePicker::make('starts_at')
                                     ->label(__('offer::offer.starts_at'))

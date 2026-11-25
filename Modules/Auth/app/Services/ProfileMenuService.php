@@ -23,6 +23,8 @@ class ProfileMenuService
      */
     public const MENU = [
         ProfileMenuKey::PERSONAL,
+        // « S'identifier », après « Informations personnelles » (décision 2026-11-25-identification).
+        ProfileMenuKey::IDENTITY,
         ProfileMenuKey::EMAIL,
         ProfileMenuKey::PHONE,
         ProfileMenuKey::PASSWORD,

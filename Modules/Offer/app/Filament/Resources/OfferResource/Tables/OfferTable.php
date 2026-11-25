@@ -68,6 +68,13 @@ abstract class OfferTable
                     ->date()
                     ->placeholder('—')
                     ->sortable(),
+                // Décision 2026-11-25-remontee-carrousel.
+                TextColumn::make('boosted_until')
+                    ->label(__('offer::offer.boosted_until'))
+                    ->date()
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(),
                 // Décision 2026-11-25-compteurs-offres.
                 TextColumn::make('views_count')
                     ->label(__('offer::offer.views_count'))

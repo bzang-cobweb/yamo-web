@@ -26,6 +26,7 @@ use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Notifications\Channels\SmsChannel;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Services\IdentityDocumentService;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
@@ -67,6 +68,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'birth_date' => 'date',
             'phone_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'identified_at' => 'datetime',
         ];
     }
 
@@ -130,6 +132,17 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             ->singleFile()
             ->acceptsMimeTypes(['image/webp'])
             ->useDisk('public');
+
+        // Les documents d'identité, privés, que l'équipe regarde au back-office (décision 2026-11-25-identification).
+        $this->addMediaCollection(IdentityDocumentService::COLLECTION)
+            ->acceptsMimeTypes(IdentityDocumentService::acceptedMimeTypes())
+            ->useDisk(IdentityDocumentService::DISK);
+    }
+
+    /** L'équipe a vérifié ses documents et rempli sa date d'identification (décision 2026-11-25-identification). */
+    public function isIdentified(): bool
+    {
+        return $this->identified_at !== null;
     }
 
     /**

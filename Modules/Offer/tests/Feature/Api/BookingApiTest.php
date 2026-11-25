@@ -580,7 +580,8 @@ class BookingApiTest extends TestCase
         $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused'));
         $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status]=cancelled'));
         // Décision 2026-11-21-reservations-filtre-type : les types réels de l'offre, plus séjour / visite.
-        $this->assertSame(['Type de logement', 'select'], [$filters['property_type']['label'], $filters['property_type']['type']]);
+        // « Type » (décision 2026-11-25-libelle-type).
+        $this->assertSame(['Type', 'select'], [$filters['property_type']['label'], $filters['property_type']['type']]);
         $this->assertSame(['apartment', 'house', 'studio', 'room'], array_column($filters['property_type']['options'], 'value'));
         $this->assertSame(['Type de location', 'select'], [$filters['rental_type']['label'], $filters['rental_type']['type']]);
         $house = $this->home(true);

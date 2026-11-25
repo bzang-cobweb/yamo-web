@@ -38,6 +38,13 @@ class OfferReview extends Model
     /**
      * @return array<string, string>
      */
+    /** Chaque avis donné, changé ou retiré met à jour la note de son offre (décision 2026-11-25-accueil-a-grande-echelle). */
+    protected static function booted(): void
+    {
+        static::saved(fn (self $review) => $review->offer?->refreshReviewSummary());
+        static::deleted(fn (self $review) => $review->offer?->refreshReviewSummary());
+    }
+
     protected function casts(): array
     {
         return ['rating' => 'integer'];

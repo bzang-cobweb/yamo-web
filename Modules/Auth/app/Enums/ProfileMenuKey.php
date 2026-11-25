@@ -3,6 +3,7 @@
 namespace Modules\Auth\Enums;
 
 use Modules\Auth\Forms\EmailChangeForm;
+use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
@@ -25,6 +26,7 @@ use Modules\Form\Support\Listing;
 enum ProfileMenuKey: string
 {
     case PERSONAL = 'personal';
+    case IDENTITY = 'identity';
     case EMAIL = 'email';
     case PHONE = 'phone';
     case PASSWORD = 'password';
@@ -40,6 +42,7 @@ enum ProfileMenuKey: string
     {
         return match ($this) {
             self::PERSONAL => PersonalInfoForm::class,
+            self::IDENTITY => IdentityForm::class,
             self::EMAIL => EmailChangeForm::class,
             self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
@@ -100,6 +103,7 @@ enum ProfileMenuKey: string
     {
         return __('auth::mobile.profile.'.match ($this) {
             self::PERSONAL => 'personalInfo',
+            self::IDENTITY => 'identity',
             self::EMAIL => filled($user->email) ? 'changeEmail' : 'addEmail',
             self::PHONE => filled($user->phone) ? 'changePhone' : 'addPhone',
             self::PASSWORD => 'password',

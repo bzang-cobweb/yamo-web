@@ -261,9 +261,19 @@ abstract class Listing
         if ($filters !== []) {
             $builder->where(fn (Builder $group) => $this->applyFilters($group, $filters));
         }
+        $this->constrain($builder, $filters);
 
         return $query;
     }
+
+    /**
+     * Une restriction toujours appliquée, filtres choisis ou non (les avis d'une seule offre, sans offre aucun :
+     * décision 2026-11-25-liste-avis-generique). Rien par défaut.
+     *
+     * @param  Builder<covariant Model>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    protected function constrain(Builder $query, array $filters): void {}
 
     /**
      * Texte affiché quand la liste est vide, traduit ; aucun par défaut.

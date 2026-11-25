@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
@@ -52,16 +53,18 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $email e-mail de contact (décision 2026-11-21-contact-offre)
  * @property Carbon|null $published_at
  * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris)
+ * @property Carbon|null $boosted_until remontée dans le carrousel de sa région jusqu'à ce jour (décision 2026-11-25-remontee-carrousel)
  * @property bool|null $is_favorite chargé par `withFavoriteOf()`
  * @property-read User $user
  * @property-read OfferCategory|null $category
  * @property-read OfferAddress|null $offerAddress l'adresse et son indication (décision 2026-11-19-contrat-adresse-offre-table)
  * @property-read Address|null $address l'adresse partagée, à travers `offerAddress`
  * @property-read Collection<int, OfferInformation> $informations
- * @property float|string|null $reviews_avg_rating moyenne des notes, chargée par `withReviewSummary()`
- * @property int|null $reviews_count nombre d'avis, chargé par `withReviewSummary()`
+ * @property float|string|null $reviews_avg_rating moyenne des notes, enregistrée et tenue à jour par ses avis
+ * @property int $reviews_count nombre d'avis, enregistré et tenu à jour par ses avis (décision
+ *                              2026-11-25-accueil-a-grande-echelle)
  */
-#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'starts_at', 'expires_at'])]
+#[Fillable(['user_id', 'country_id', 'locale', 'category_id', 'title', 'description', 'status', 'price', 'currency', 'details', 'show_address', 'phone', 'email', 'published_at', 'featured_until', 'boosted_until', 'starts_at', 'expires_at'])]
 #[UseFactory(OfferFactory::class)]
 class Offer extends Model implements HasMedia
 {
@@ -134,6 +137,11 @@ class Offer extends Model implements HasMedia
             'published_at' => 'datetime',
             // Un jour, sans heure (décision 2026-11-25-vedette-en-dates).
             'featured_until' => 'date',
+            // Enregistrés et tenus à jour par ses avis (décision 2026-11-25-accueil-a-grande-echelle).
+            'reviews_avg_rating' => 'decimal:2',
+            'reviews_count' => 'integer',
+            // Remontée dans le carrousel de sa région, jour inclus (décision 2026-11-25-remontee-carrousel).
+            'boosted_until' => 'date',
         ];
     }
 
@@ -297,6 +305,17 @@ class Offer extends Model implements HasMedia
     }
 
     /**
+     * Remontée en tête du carrousel de sa région maintenant : jusqu'à son jour inclus (décision
+     * 2026-11-25-remontee-carrousel).
+     *
+     * @param  Builder<Offer>  $query
+     */
+    public function scopeBoosted(Builder $query): void
+    {
+        $query->whereDate($query->qualifyColumn('boosted_until'), '>=', today());
+    }
+
+    /**
      * Pas en vedette maintenant.
      *
      * @param  Builder<Offer>  $query
@@ -320,13 +339,40 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Moyenne et nombre d'avis, calculés dans la requête.
+     * Moyenne et nombre d'avis : ils sont enregistrés sur l'offre (décision 2026-11-25-accueil-a-grande-echelle), rien à
+     * calculer ; gardé pour les listes qui le demandent.
      *
      * @param  Builder<Offer>  $query
      */
-    public function scopeWithReviewSummary(Builder $query): void
+    public function scopeWithReviewSummary(Builder $query): void {}
+
+    /**
+     * « Avis (4,7) » : le titre des avis avec la note moyenne enregistrée, dans la langue ; « Avis » sans avis
+     * (décisions 2026-11-25-avis-note-dans-le-titre et 2026-11-25-liste-avis-titre-nombre).
+     */
+    public function reviewsTitle(?string $locale = null): string
     {
-        $query->withAvg('reviews', 'rating')->withCount('reviews');
+        $locale ??= app()->getLocale();
+        $title = (string) __('offer::offer.section_titles.reviews', [], $locale);
+        if ($this->reviews_avg_rating === null) {
+            return $title;
+        }
+
+        return $title.' ('.Number::format((float) $this->reviews_avg_rating, precision: 1, locale: $locale).')';
+    }
+
+    /**
+     * Recalcule et enregistre sa moyenne et son nombre d'avis, sans toucher à sa date de mise à jour (décision
+     * 2026-11-25-accueil-a-grande-echelle) : appelé à chaque avis donné, changé ou retiré.
+     */
+    public function refreshReviewSummary(): void
+    {
+        $count = $this->reviews()->count();
+        $average = $count === 0 ? null : round((float) $this->reviews()->avg('rating'), 2);
+
+        $summary = ['reviews_avg_rating' => $average, 'reviews_count' => $count];
+        static::withTrashed()->whereKey($this->getKey())->toBase()->update($summary);
+        $this->forceFill($summary)->syncOriginalAttributes(array_keys($summary));
     }
 
     /**

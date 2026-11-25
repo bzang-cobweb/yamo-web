@@ -1,0 +1,22 @@
+# `2026-11-25` — L'identification d'un compte
+
+- **Type** : décision
+- **Question posée** : « ajouter un champ datetime contenant la date d'identification d'un utilisateur, un champ qui lui permet d'introduire un document ou une image que l'équipe va regarder pour pouvoir l'identifier et remplir la date d'identification, ajouter un lien s'identifier dans le menu profil après informations personnelles ». Validation : « par l'équipe backend dans filament ».
+- **Ce qui est retenu** :
+  - **La date** : `users.identified_at` (date et heure, vide par défaut). Un compte est identifié quand elle est remplie (`User::isIdentified()`).
+  - **Dans l'app** : « S'identifier » dans le menu du profil, juste après « Informations personnelles ».
+    - Il ouvre le formulaire `auth.identity` : jusqu'à 5 photos de la pièce d'identité, 10 Mo chacune. L'envoi passe par `POST /api/v1/auth/me/identity`.
+    - La note du formulaire dit où en est le compte : document à envoyer, vérification en cours, ou identifié depuis le… (avec la date).
+    - Les photos envoyées s'ajoutent ; celles retirées ne partent qu'avant l'identification (décision 2026-11-25-identite-plusieurs-photos).
+  - **Les documents** : collection de médias `identity` du compte, sur le disque privé `local`. Ils ne sont jamais servis publiquement.
+  - **Au back-office** (modifier un utilisateur) :
+    - une section « Identification » montre la date et les documents, ouverts par un lien signé valable 10 minutes ;
+    - « Valider l'identité » remplit la date (maintenant par défaut, modifiable) ;
+    - « Retirer l'identification » la vide ;
+    - la liste des utilisateurs a une colonne et un filtre « Identifié » ;
+    - il faut la permission de modifier l'utilisateur.
+  - **Images seulement, pour l'instant** : l'app ne sait choisir que dans la photothèque. Accepter un PDF demanderait `expo-document-picker`, une nouvelle dépendance à faire approuver.
+- **Motif** : l'équipe vérifie elle-même ; le compte n'a qu'un document à envoyer.
+- **Portée** : modules Auth (web) et menu du profil (app, servi par l'API).
+- **Corollaires** : « Identifié : Oui/Non » sur la fiche d'une offre (décision 2026-11-25-fiche-publiee-par).
+- **Tranché par** : humain (le besoin, la validation dans Filament) ; session (photos seulement, un lien signé de 10 minutes, l'action de retrait)

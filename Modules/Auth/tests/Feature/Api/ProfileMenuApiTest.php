@@ -37,25 +37,25 @@ class ProfileMenuApiTest extends TestCase
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
         // « Mes partenaires » (module Partner) vient après le compte (décision 2026-11-24-partenaires-par-les-membres).
-        $this->assertSame(['personal', 'email', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($menu, 'key'));
+        $this->assertSame(['personal', 'identity', 'email', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($menu, 'key'));
         $this->assertSame(
-            ['Informations personnelles', "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences', 'Mes adresses', 'Mes partenaires'],
+            ['Informations personnelles', "S'identifier", "Changer d'adresse e-mail", 'Ajouter un numéro', 'Changer le mot de passe', 'Préférences', 'Mes adresses', 'Mes partenaires'],
             array_column($menu, 'label'),
         );
         $this->assertSame(
-            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.preferences'],
+            ['auth.profile.personal', 'auth.identity', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.preferences'],
             array_column($menu, 'form'),
         );
         // Un lien vers une liste n'a pas de `form` : une version de l'app sans listes l'ignore.
         // Dans le groupe « Compte » (décision 2026-11-19-contrat-reservations-logements-profil).
-        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'auth.addresses', 'group' => ['key' => 'account', 'label' => 'Compte']], $menu[5]);
+        $this->assertSame(['key' => 'addresses', 'label' => 'Mes adresses', 'list' => 'auth.addresses', 'group' => ['key' => 'account', 'label' => 'Compte']], $menu[6]);
     }
 
     public function test_a_disabled_channel_removes_its_link(): void
     {
         config(['auth.channels' => ['email' => false, 'phone' => true]]);
 
-        $this->assertSame(['personal', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($this->menu($this->user()), 'key'));
+        $this->assertSame(['personal', 'identity', 'phone', 'password', 'preferences', 'addresses', 'partners'], array_column($this->menu($this->user()), 'key'));
     }
 
     public function test_labels_follow_the_account_language(): void

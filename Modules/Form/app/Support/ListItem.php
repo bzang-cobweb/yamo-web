@@ -63,6 +63,8 @@ final class ListItem
     /** L'image à gauche du texte, en petit (`side`), plutôt qu'au-dessus (par défaut). */
     private ?string $imageLayout = null;
 
+    private ?string $layout = null;
+
     /** Retrait : libellé, question de confirmation et envoi (tous nuls sans retrait). */
     private ?string $deleteLabel = null;
 
@@ -244,6 +246,18 @@ final class ListItem
     }
 
     /**
+     * La disposition d'un avis, comme sur la fiche d'une offre (décision 2026-11-25-liste-avis-generique) : le titre
+     * (le prénom), puis les étoiles de la note et la ligne à part (la date) séparées par un point, puis le sous-titre
+     * (le commentaire).
+     */
+    public function reviewLayout(): self
+    {
+        $this->layout = 'review';
+
+        return $this;
+    }
+
+    /**
      * L'image en petit, en entier, à gauche du texte, comme la page « Partenaires » ; le statut au-dessus du titre
      * (« Mes partenaires », décision 2026-11-24-mes-partenaires-comme-partenaires) ; sans appel, au-dessus du texte.
      */
@@ -380,6 +394,7 @@ final class ListItem
             ...($this->subtitleLines === null ? [] : ['subtitle_lines' => $this->subtitleLines]),
             ...($this->imageFit === null ? [] : ['image_fit' => $this->imageFit]),
             ...($this->imageLayout === null ? [] : ['image_layout' => $this->imageLayout]),
+            ...($this->layout === null ? [] : ['layout' => $this->layout]),
             'edit' => $this->edit,
             /** Boutons de la carte : libellé, style, confirmation, et un envoi, un formulaire à ouvrir (lié à `record`) ou un écran de l'app (`link`). */
             'actions' => array_map(fn (array $action): array => [

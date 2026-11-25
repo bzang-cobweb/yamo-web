@@ -8,7 +8,7 @@ return [
     'mine' => 'Meine Unterkünfte',
     'add' => 'Unterkunft hinzufügen',
     'request' => 'Unterkunftsanfrage',
-    'property_type' => 'Art der Unterkunft',
+    'property_type' => 'Art',
     // Type de location (décision 2026-11-20-contrat-type-de-location).
     'rental_type' => 'Art der Vermietung',
     'rental_types' => [
@@ -41,6 +41,7 @@ return [
     'rooms_help' => 'Halbe Zimmer sind erlaubt (3,5).',
     'bedrooms' => 'Schlafzimmer',
     'bathrooms' => 'Badezimmer',
+    'cameras' => 'Überwachungskameras',
     'available_from' => 'Verfügbar ab',
     'charges' => 'Monatliche Nebenkosten',
     'charges_help' => 'Zusätzlich zur Miete.',

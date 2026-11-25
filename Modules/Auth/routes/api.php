@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\Api\AccountController;
 use Modules\Auth\Http\Controllers\Api\EmailChangeController;
+use Modules\Auth\Http\Controllers\Api\IdentityController;
 use Modules\Auth\Http\Controllers\Api\LoginController;
 use Modules\Auth\Http\Controllers\Api\LogoutController;
 use Modules\Auth\Http\Controllers\Api\PasswordController;
@@ -44,6 +45,11 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         ->middleware('throttle:auth-codes')
         ->name('codes.resend');
 
+    // L'aperçu d'une photo d'identité, par un lien signé de quelques minutes (décision 2026-11-25-identite-plusieurs-photos).
+    Route::get('identity-documents/{uuid}', [IdentityController::class, 'show'])
+        ->middleware('signed:relative')
+        ->name('identity-documents.show');
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [LogoutController::class, 'logout'])->name('logout');
         Route::get('me', [ProfileController::class, 'show'])->can('me', User::class)->name('me');
@@ -51,6 +57,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::delete('me', [AccountController::class, 'destroy'])->can('deleteMe', User::class)->name('me.destroy');
         Route::patch('me/personal-info', [PersonalInfoController::class, 'update'])->can('updateMe', User::class)->name('me.personal-info.update');
         Route::put('me/password', [PasswordController::class, 'update'])->can('updateMe', User::class)->name('me.password.update');
+        Route::post('me/identity', [IdentityController::class, 'update'])->can('updateMe', User::class)->name('me.identity.update');
         Route::patch('me/preferences', [PreferencesController::class, 'update'])->can('updateMe', User::class)->name('me.preferences.update');
         Route::post('me/avatar', [ProfileController::class, 'updateAvatar'])->can('updateMe', User::class)->name('me.avatar.update');
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');

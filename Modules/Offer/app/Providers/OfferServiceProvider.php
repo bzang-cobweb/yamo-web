@@ -26,6 +26,7 @@ use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\OfferBrowseListing;
 use Modules\Offer\Lists\OfferFavoritesListing;
 use Modules\Offer\Lists\OfferListing;
+use Modules\Offer\Lists\OfferReviewListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -115,6 +116,8 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(FormRegistry::class)->register(BookingInviteReviewForm::class);
         $this->app->make(ListingRegistry::class)->register(BookingListing::class);
         $this->app->make(ListingRegistry::class)->register(ReceivedBookingListing::class);
+        // Tous les avis d'une offre, avec la recherche (décision 2026-11-25-liste-avis-generique).
+        $this->app->make(ListingRegistry::class)->register(OfferReviewListing::class);
 
         // Le menu du profil en groupes (décision 2026-11-19-contrat-reservations-logements-profil) :
         // « Voyageur » (ses réservations, ses favoris), puis « Hôte » (ses logements). Les demandes

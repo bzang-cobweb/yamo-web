@@ -83,6 +83,8 @@ return [
     'views_count' => 'Views',
     'clicks_count' => 'Clicks',
     'featured_help' => 'Empty: not featured. Later, a promotion paid by the owner will fill this date.',
+    'boosted_until' => 'Featured in the region until',
+    'boosted_help' => "Empty: not featured in its region. Featured, the offer comes first in its region's carousel on the home page, until this day included.",
     'favorites' => [
         'title' => 'My favorites',
         'empty' => 'No favorites yet. Tap the heart of an offer to find it here.',
@@ -141,7 +143,18 @@ return [
         'to_translate' => 'to translate',
     ],
     // Titres des sections de la fiche, servis avec elles (décision 2026-11-19-sections-construites-laravel).
+    // « Publiée par » sur la fiche (décision 2026-11-25-fiche-publiee-par).
+    'publisher' => [
+        'name' => 'Published by',
+        'since' => 'Member since',
+        'identified' => 'Verified',
+        'yes' => 'Yes',
+        'no' => 'No',
+    ],
+    // « 3 avis », avant la liste complète des avis (décision 2026-11-25-liste-avis-titre-nombre).
+    'reviews_count' => '{1} :count review|[2,*] :count reviews',
     'section_titles' => [
+        'publisher' => 'Publisher',
         'description' => 'Description',
         'location' => 'Location',
         'facts' => 'Features',

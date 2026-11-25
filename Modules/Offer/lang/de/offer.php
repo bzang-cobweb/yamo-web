@@ -83,6 +83,8 @@ return [
     'views_count' => 'Aufrufe',
     'clicks_count' => 'Klicks',
     'featured_help' => 'Leer: nicht hervorgehoben. Später füllt eine vom Eigentümer bezahlte Werbung dieses Datum.',
+    'boosted_until' => 'In der Region hervorgehoben bis',
+    'boosted_help' => 'Leer: nicht in seiner Region hervorgehoben. Sonst steht das Angebot bis einschließlich zu diesem Tag vorne im Karussell seiner Region auf der Startseite.',
     'favorites' => [
         'title' => 'Meine Favoriten',
         'empty' => 'Noch keine Favoriten. Tippen Sie auf das Herz eines Angebots, um es hier wiederzufinden.',
@@ -141,7 +143,18 @@ return [
         'to_translate' => 'zu übersetzen',
     ],
     // Titres des sections de la fiche, servis avec elles (décision 2026-11-19-sections-construites-laravel).
+    // « Publiée par » sur la fiche (décision 2026-11-25-fiche-publiee-par).
+    'publisher' => [
+        'name' => 'Veröffentlicht von',
+        'since' => 'Mitglied seit',
+        'identified' => 'Verifiziert',
+        'yes' => 'Ja',
+        'no' => 'Nein',
+    ],
+    // « 3 avis », avant la liste complète des avis (décision 2026-11-25-liste-avis-titre-nombre).
+    'reviews_count' => '{1} :count Bewertung|[2,*] :count Bewertungen',
     'section_titles' => [
+        'publisher' => 'Anbieter',
         'description' => 'Beschreibung',
         'location' => 'Lage',
         'facts' => 'Merkmale',

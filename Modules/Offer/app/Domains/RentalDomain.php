@@ -168,6 +168,11 @@ class RentalDomain extends Domain
             Field::number('bathrooms')
                 ->label(__('offer::rental.bathrooms'))
                 ->rules(['integer', 'min:0', 'max:20']),
+            // Des caméras dans le logement : Oui / Non, facultatif, dans les caractéristiques (décision
+            // 2026-11-25-offre-categorie-cameras).
+            Field::select('cameras')
+                ->label(__('offer::rental.cameras'))
+                ->options(['yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')]),
             // Pas pour un meublé, qui se réserve par dates (décision 2026-11-20-disponibilite-sans-meuble).
             Field::date('available_from')
                 ->label(__('offer::rental.available_from'))
@@ -326,7 +331,7 @@ class RentalDomain extends Domain
         return [
             // « Présentation » (décision 2026-11-19-etape-1-presentation).
             ['title' => __('offer::rental.steps.presentation'), 'fields' => ['property_type', 'rental_type', 'category_id', 'title', 'description']],
-            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'bathrooms', 'amenities']],
+            ['title' => __('offer::rental.steps.features'), 'fields' => ['surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'amenities']],
             ['title' => __('offer::rental.steps.price'), 'fields' => ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status']],
             // « Règles » (décisions 2026-11-19-contrat-regles-informations et 2026-11-19-etape-informations).
             ['title' => __('offer::rental.steps.rules'), 'fields' => $this->ruleAttributes()],

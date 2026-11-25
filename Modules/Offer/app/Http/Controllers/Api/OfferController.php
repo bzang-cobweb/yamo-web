@@ -49,7 +49,7 @@ class OfferController
         // Compte facultatif (jeton Sanctum s'il y en a un) : la route n'exige pas de connexion.
         Gate::forUser($request->user('sanctum'))->authorize('show', $offer);
 
-        return new OfferDetailResource($offer->load(['offerAddress', 'address.country', 'category.parent', 'media', 'informations']));
+        return new OfferDetailResource($offer->load(['offerAddress', 'address.country', 'category.parent', 'media', 'informations', 'user']));
     }
 
     /**

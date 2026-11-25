@@ -8,7 +8,7 @@ return [
     'mine' => 'Mes logements',
     'add' => 'Ajouter un logement',
     'request' => 'Demande de logement',
-    'property_type' => 'Type de logement',
+    'property_type' => 'Type',
     // Type de location (décision 2026-11-20-contrat-type-de-location).
     'rental_type' => 'Type de location',
     'rental_types' => [
@@ -41,6 +41,7 @@ return [
     'rooms_help' => 'Les demi-pièces sont admises (3,5).',
     'bedrooms' => 'Chambres',
     'bathrooms' => 'Salles de bain',
+    'cameras' => 'Caméras de surveillance',
     'available_from' => 'Disponible dès le',
     'charges' => 'Charges mensuelles',
     'charges_help' => 'En plus du loyer.',

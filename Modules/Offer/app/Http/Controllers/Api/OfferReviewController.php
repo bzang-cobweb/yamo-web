@@ -36,7 +36,7 @@ class OfferReviewController
 
         return new OfferReviewPageResource(
             $offer->reviews()->with('user')->orderByDesc('updated_at')->orderByDesc('id')->cursorPaginate(self::PER_PAGE),
-        );
+        )->forOffer($offer);
     }
 
     /**
@@ -62,7 +62,8 @@ class OfferReviewController
      */
     public function destroy(Request $request, Offer $offer): Response
     {
-        $offer->reviews()->where('user_id', $request->user()?->getAuthIdentifier())->delete();
+        // Un par un, pour que l'offre mette sa note à jour (décision 2026-11-25-accueil-a-grande-echelle).
+        $offer->reviews()->where('user_id', $request->user()?->getAuthIdentifier())->get()->each->delete();
 
         return response()->noContent();
     }

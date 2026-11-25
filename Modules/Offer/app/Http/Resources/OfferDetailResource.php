@@ -93,7 +93,7 @@ class OfferDetailResource extends JsonResource
              * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
              * d'informations est une section `text` à lui seul.
              */
-            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description),
+            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description, $this->publisher($offer, $locale), $reviews === null ? null : $offer->reviewsTitle($locale)),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */
@@ -272,7 +272,7 @@ class OfferDetailResource extends JsonResource
      * @param  list<array{id: string, title: string, description: string}>  $informations
      * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null}>
      */
-    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null): array
+    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null, array $publisher = [], ?string $reviewsTitle = null): array
     {
         $sections = [];
 
@@ -282,11 +282,13 @@ class OfferDetailResource extends JsonResource
 
             array_push($sections, ...match ((string) $key) {
                 'location' => $address === null ? [] : [['key' => 'location', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $address, 'note' => $indication]],
+                // Qui publie l'offre (décision 2026-11-25-fiche-publiee-par).
+                'publisher' => $publisher === [] ? [] : [['key' => 'publisher', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $publisher]],
                 'facts' => $facts === [] ? [] : [['key' => 'facts', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $facts]],
                 // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
                 'description' => $description === null ? [] : [['key' => 'description', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $description, 'note' => null]],
                 'rules' => $rules === [] ? [] : [['key' => 'rules', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $rules]],
-                'reviews' => $hasReviews ? [['key' => 'reviews', 'type' => 'reviews', 'title' => $title, 'open' => $open]] : [],
+                'reviews' => $hasReviews ? [['key' => 'reviews', 'type' => 'reviews', 'title' => $reviewsTitle ?? $title, 'open' => $open]] : [],
                 'informations' => array_map(fn (array $information): array => [
                     'key' => 'information-'.$information['id'],
                     'type' => 'text',
@@ -304,6 +306,26 @@ class OfferDetailResource extends JsonResource
         }
 
         return $sections;
+    }
+
+    /**
+     * « Éditeur » (décision 2026-11-25-fiche-publiee-par) : le prénom de l'auteur seul, depuis quand il est membre, au
+     * format court des avis (« 19 nov. 2026 », décision 2026-11-25-editeur-date-comme-avis), et s'il est identifié par l'équipe (décision 2026-11-25-identification). Sans auteur : rien.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    private function publisher(Offer $offer, string $locale): array
+    {
+        $author = $offer->user;
+        if ($author === null) {
+            return [];
+        }
+
+        return array_values(array_filter([
+            filled($author->first_name) ? ['label' => __('offer::offer.publisher.name', [], $locale), 'value' => (string) $author->first_name] : null,
+            $author->created_at === null ? null : ['label' => __('offer::offer.publisher.since', [], $locale), 'value' => $author->created_at->copy()->locale($locale)->isoFormat('ll')],
+            ['label' => __('offer::offer.publisher.identified', [], $locale), 'value' => __($author->isIdentified() ? 'offer::offer.publisher.yes' : 'offer::offer.publisher.no', [], $locale)],
+        ]));
     }
 
     /**

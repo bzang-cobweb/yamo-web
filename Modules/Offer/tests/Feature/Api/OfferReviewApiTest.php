@@ -88,6 +88,11 @@ class OfferReviewApiTest extends TestCase
         // Le commentaire reste sur la fiche, pas dans la liste (décision 2026-11-19-item-titre-saisi-details).
         $this->assertStringNotContainsString('recommande', (string) $item['highlight']);
 
+        // La moyenne dans le titre de la section : « Avis (4,5) » (décision 2026-11-25-avis-note-dans-le-titre).
+        $section = collect($this->api($awa, 'GET', "/api/v1/offers/{$offer->getKey()}")->assertOk()->json('data.sections'))->firstWhere('key', 'reviews');
+        $this->assertSame('Avis (4,5)', $section['title']);
+        // Dix avis servis par défaut, pour le carrousel de la fiche (décision 2026-11-25-fiche-avis-carrousel).
+        $this->assertSame(10, config('offer.reviews_shown'));
         // Plusieurs avis servis, pour lire leur ordre (décision 2026-11-19-contrat-paiement-visibilite-avis).
         config(['offer.reviews_shown' => 5]);
         $reviews = $this->api($awa, 'GET', "/api/v1/offers/{$offer->getKey()}")->assertOk()->json('data.reviews');
@@ -234,6 +239,9 @@ class OfferReviewApiTest extends TestCase
         $this->assertSame(['id', 'author', 'rating', 'comment', 'created_at'], array_keys($first['items'][0]));
         $this->assertSame(['Auteur 23', 'Avis 23'], [$first['items'][0]['author'], $first['items'][0]['comment']]);
         $this->assertNotNull($first['next_cursor']);
+        // Le titre « Avis (4,0) » et « 23 avis » avant la liste (décision 2026-11-25-liste-avis-titre-nombre).
+        $this->assertSame('Avis (4,0)', $first['title']);
+        $this->assertSame('23 avis', $first['heading']);
 
         $second = $this->api(null, 'GET', "/api/v1/offers/{$offer->getKey()}/reviews?cursor={$first['next_cursor']}")->assertOk()->json('data');
         $this->assertSame(['Avis 3', 'Avis 2', 'Avis 1'], array_column($second['items'], 'comment'));
@@ -252,5 +260,22 @@ class OfferReviewApiTest extends TestCase
         $this->api(null, 'GET', "/api/v1/offers/{$draft->getKey()}/reviews")->assertNotFound();
         // Même pour son propriétaire, qui voit pourtant la fiche de son brouillon.
         $this->api($draft->user, 'GET', "/api/v1/offers/{$draft->getKey()}/reviews")->assertNotFound();
+    }
+
+    public function test_the_offer_keeps_its_average_and_count_up_to_date(): void
+    {
+        // Décision 2026-11-25-accueil-a-grande-echelle : enregistrés sur l'offre, recalculés à chaque avis.
+        $offer = Offer::factory()->create(['status' => 'published']);
+        $this->assertSame([null, 0], [$offer->fresh()->reviews_avg_rating, $offer->fresh()->reviews_count]);
+
+        $first = OfferReview::factory()->for($offer)->create(['rating' => 5]);
+        OfferReview::factory()->for($offer)->create(['rating' => 4]);
+        $this->assertSame(['4.50', 2], [$offer->fresh()->reviews_avg_rating, $offer->fresh()->reviews_count]);
+
+        $first->update(['rating' => 2]);
+        $this->assertSame('3.00', $offer->fresh()->reviews_avg_rating);
+
+        $first->delete();
+        $this->assertSame(['4.00', 1], [$offer->fresh()->reviews_avg_rating, $offer->fresh()->reviews_count]);
     }
 }

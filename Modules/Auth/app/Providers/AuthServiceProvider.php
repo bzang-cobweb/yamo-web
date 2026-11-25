@@ -14,6 +14,7 @@ use Modules\Auth\Forms\CodeForm;
 use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Forms\ForgotPasswordForm;
+use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\LoginForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
@@ -70,6 +71,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry = $this->app->make(FormRegistry::class);
         $registry->register(LoginForm::class);
         $registry->register(PersonalInfoForm::class);
+        $registry->register(IdentityForm::class);
         $registry->register(PasswordForm::class);
         $registry->register(DeleteAccountForm::class);
         $registry->register(PreferencesForm::class);

@@ -1007,7 +1007,8 @@ final class Field
             FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
             FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) $value))).str_repeat('☆', 5 - $stars) : (string) $value,
             FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,
-            FieldType::DATE => Carbon::parse((string) $value)->locale($locale)->isoFormat('LL'),
+            // Le format court des avis (« 18 nov. 2026 », décision 2026-11-25-date-format-avis).
+            FieldType::DATE => Carbon::parse((string) $value)->locale($locale)->isoFormat('ll'),
             default => is_scalar($value) ? (string) $value : null,
         };
 

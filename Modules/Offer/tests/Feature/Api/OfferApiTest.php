@@ -119,7 +119,7 @@ class OfferApiTest extends TestCase
         $fields = array_column($data, null, 'name');
         $this->assertSame(
             // Sans catégorie créée, pas de champ « Catégorie » (décision 2026-11-20-type-de-location-garder-categories).
-            ['title', 'description', 'price', 'street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
+            ['title', 'description', 'price', 'street', 'zip', 'region', 'city', 'indication', 'show_address', 'phone', 'email', 'status', 'property_type', 'rental_type', 'surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'available_from', 'amenities', 'charges', 'deposit_months', 'advance_months', 'deposit', 'check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents', 'informations', 'photos'],
             array_keys($fields),
         );
         $this->assertSame('Loyer', $fields['price']['label']);
@@ -280,7 +280,7 @@ class OfferApiTest extends TestCase
         $this->assertSame([
             // Sans catégorie créée, pas de champ « Catégorie ».
             ['property_type', 'rental_type', 'title', 'description'],
-            ['surface', 'rooms', 'bedrooms', 'bathrooms', 'amenities'],
+            ['surface', 'rooms', 'bedrooms', 'bathrooms', 'cameras', 'amenities'],
             ['price', 'charges', 'deposit_months', 'advance_months', 'deposit', 'available_from', 'status'],
             ['check_in_from', 'check_out_until', 'pets', 'smoking', 'parties', 'documents'],
             ['informations'],

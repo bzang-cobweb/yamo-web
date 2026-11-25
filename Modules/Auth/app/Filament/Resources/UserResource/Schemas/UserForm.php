@@ -8,9 +8,11 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
 use Filament\Resources\Pages\CreateRecord;
-use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -21,12 +23,14 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\AvatarService;
+use Modules\Auth\Services\IdentityDocumentService;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Country;
 use Propaganistas\LaravelPhone\Rules\Phone;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 abstract class UserForm
 {
@@ -35,14 +39,21 @@ abstract class UserForm
         return $schema
             ->columns(1)
             ->components([
-                static::getGeneralSection(),
-                static::getAccessSection(),
+                // Des onglets plutôt que des sections (décision 2026-11-25-utilisateur-onglets).
+                Tabs::make('user')
+                    ->columnSpanFull()
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        static::getGeneralTab(),
+                        static::getIdentityTab(),
+                        static::getAccessTab(),
+                    ]),
             ]);
     }
 
-    public static function getGeneralSection(): Section
+    public static function getGeneralTab(): Tab
     {
-        return Section::make(__('auth::user.sections.general'))
+        return Tab::make(__('auth::user.sections.general'))
             ->columns(2)
             ->schema([
                 static::getAvatarField(),
@@ -165,9 +176,34 @@ abstract class UserForm
             ->columnSpanFull();
     }
 
-    public static function getAccessSection(): Section
+    /**
+     * L'identification (décision 2026-11-25-identification) : la date, remplie par « Valider l'identité » en haut de
+     * la page, et les pièces d'identité envoyées depuis l'app, ouvertes par un lien signé de quelques minutes (elles
+     * restent sur le disque privé). À la modification seulement.
+     */
+    public static function getIdentityTab(): Tab
     {
-        return Section::make(__('auth::user.sections.access'))
+        return Tab::make(__('auth::identity.admin.section'))
+            ->visible(fn (Page $livewire): bool => ! $livewire instanceof CreateRecord)
+            ->schema([
+                TextEntry::make('identified_at')
+                    ->label(__('auth::identity.admin.identified_at'))
+                    ->dateTime('d.m.Y H:i')
+                    ->placeholder('—'),
+                TextEntry::make('identity_documents')
+                    ->label(__('auth::identity.admin.documents'))
+                    ->state(fn (?User $record): array => $record?->getMedia(IdentityDocumentService::COLLECTION)
+                        ->map(fn (Media $media): string => '<a href="'.e($media->getTemporaryUrl(now()->addMinutes(10))).'" target="_blank" rel="noopener" class="underline">'.e($media->file_name).'</a>')
+                        ->all() ?? [])
+                    ->html()
+                    ->listWithLineBreaks()
+                    ->placeholder(__('auth::identity.admin.no_documents')),
+            ]);
+    }
+
+    public static function getAccessTab(): Tab
+    {
+        return Tab::make(__('auth::user.sections.access'))
             ->schema([
                 Select::make('roles')
                     ->label(__('auth::role.title'))

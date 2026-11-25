@@ -7,6 +7,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Modules\Auth\Filament\Resources\UserResource;
@@ -61,6 +62,12 @@ abstract class UserTable
                     ->formatStateUsing(fn (string $state): string => Locales::label($state))
                     ->badge()
                     ->sortable(),
+                // Identifié par l'équipe (décision 2026-11-25-identification).
+                IconColumn::make('identified_at')
+                    ->label(__('auth::identity.admin.identified'))
+                    ->boolean()
+                    ->state(fn (User $record): bool => $record->isIdentified())
+                    ->sortable(),
                 TextColumn::make('roles.name')
                     ->label(__('auth::role.title'))
                     ->badge(),
@@ -77,6 +84,9 @@ abstract class UserTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                TernaryFilter::make('identified_at')
+                    ->label(__('auth::identity.admin.identified'))
+                    ->nullable(),
                 SelectFilter::make('roles')
                     ->label(__('auth::role.title'))
                     ->relationship('roles', 'name')

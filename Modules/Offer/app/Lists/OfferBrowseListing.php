@@ -7,6 +7,7 @@ use App\Support\Locales;
 use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Modules\Form\Support\Listing;
@@ -170,11 +171,7 @@ class OfferBrowseListing extends Listing
         $perCity ??= Setting::homeOffersPerCity();
         $carousels = [];
         foreach (OfferRegions::of(Offer::query()->visibleToOthers()) as $region) {
-            $items = $this->base()
-                ->whereHas('address', fn (Builder $address) => $address->where('region_id', $region->getKey()))
-                ->inRandomOrder()
-                ->limit($perCity)
-                ->get();
+            $items = $this->regionDraw((int) $region->getKey(), $perCity);
             // Chacune compte une vue (décision 2026-11-25-compteurs-offres).
             app(OfferCounterService::class)->countViews($items, $this->user);
             $items = $items
@@ -187,6 +184,44 @@ class OfferBrowseListing extends Listing
         }
 
         return $carousels;
+    }
+
+    /** Le tirage d'un carrousel se fait parmi ses offres les plus récentes, au plus ce nombre (décision 2026-11-25-accueil-a-grande-echelle). */
+    public const CAROUSEL_WINDOW = 200;
+
+    /**
+     * Les offres du carrousel d'une région (décisions 2026-11-25-accueil-a-grande-echelle et 2026-11-25-remontee-carrousel) :
+     * d'abord les offres remontées, tirées au hasard entre elles ; puis les places restantes tirées au hasard parmi les
+     * `CAROUSEL_WINDOW` offres les plus récentes de la région. Le hasard se fait sur ces identifiants, pas dans la base :
+     * pas de tri de toutes les offres de la région à chaque affichage.
+     *
+     * @return EloquentCollection<int, Offer>
+     */
+    private function regionDraw(int $region, int $count): EloquentCollection
+    {
+        $inRegion = fn (Builder $query) => $query->whereHas('address', fn (Builder $address) => $address->where('region_id', $region));
+
+        $boosted = $inRegion(Offer::query()->visibleToOthers())
+            ->boosted()
+            ->orderByDesc('boosted_until')->orderByDesc('id')
+            ->limit(static::CAROUSEL_WINDOW)
+            ->pluck('id')->shuffle()->take($count);
+
+        $others = $boosted->count() >= $count ? collect() : $inRegion(Offer::query()->visibleToOthers())
+            ->whereKeyNot($boosted->all())
+            ->orderByDesc('published_at')->orderByDesc('id')
+            ->limit(static::CAROUSEL_WINDOW)
+            ->pluck('id')->shuffle()->take($count - $boosted->count());
+
+        $ids = $boosted->concat($others)->values();
+        if ($ids->isEmpty()) {
+            return new EloquentCollection;
+        }
+
+        // Dans l'ordre du tirage : les remontées d'abord.
+        $offers = $this->base()->whereKey($ids->all())->get()->keyBy('id');
+
+        return new EloquentCollection($ids->map(fn (int|string $id): ?Offer => $offers->get($id))->filter()->values()->all());
     }
 
     /**

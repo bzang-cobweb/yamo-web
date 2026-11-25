@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
+use Modules\Offer\Lists\OfferBrowseListing;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;
 use Tests\TestCase;
@@ -78,6 +79,38 @@ class HomeApiTest extends TestCase
         $this->assertSame(['Centre', 'Littoral'], array_column($carousels, 'title'));
         $this->assertCount(2, $carousels[1]['items']);
         $this->assertSame(['region' => (string) $littoral->getKey()], $carousels[1]['filter']);
+    }
+
+    public function test_boosted_offers_come_first_in_their_region_carousel_at_random(): void
+    {
+        // Décision 2026-11-25-remontee-carrousel : jusqu'à leur jour inclus, avec ou sans paiement.
+        Setting::current()->update(['home_offers_per_city' => 3]);
+        $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
+        Offer::factory()->count(10)->at($douala)->create(['status' => 'published']);
+        $today = Offer::factory()->at($douala)->create(['status' => 'published', 'boosted_until' => today()]);
+        $later = Offer::factory()->at($douala)->create(['status' => 'published', 'boosted_until' => today()->addWeek()]);
+        $past = Offer::factory()->at($douala)->create(['status' => 'published', 'boosted_until' => today()->subDay()]);
+
+        $draws = collect(range(1, 8))->map(fn (): array => array_column($this->home()->json('data.carousels.0.items'), 'id'));
+        $draws->each(function (array $ids) use ($today, $later): void {
+            $this->assertCount(3, $ids);
+            $this->assertEqualsCanonicalizing([(string) $today->getKey(), (string) $later->getKey()], array_slice($ids, 0, 2));
+        });
+        // Entre elles, au hasard.
+        $this->assertGreaterThan(1, $draws->map(fn (array $ids): string => $ids[0])->unique()->count());
+        // Une remontée passée reprend sa place, au hasard parmi les autres.
+        $this->assertFalse($past->fresh()->boosted_until->gte(today()));
+    }
+
+    public function test_a_carousel_draws_among_the_most_recent_offers_of_its_region_only(): void
+    {
+        // Décision 2026-11-25-accueil-a-grande-echelle : au plus 200 offres, les plus récentes.
+        $douala = Address::factory()->for($this->cameroon)->create(['city' => 'Douala']);
+        $old = Offer::factory()->at($douala)->create(['status' => 'published', 'published_at' => now()->subYear()]);
+        Offer::factory()->count(3)->at($douala)->create(['status' => 'published', 'published_at' => now()]);
+
+        $ids = collect(range(1, 5))->flatMap(fn (): array => array_column(OfferBrowseListingProbe::draw(), 'id'));
+        $this->assertNotContains((string) $old->getKey(), $ids->all());
     }
 
     public function test_the_draw_changes_between_calls(): void
@@ -174,5 +207,17 @@ class HomeApiTest extends TestCase
 
         $featured->update(['featured_until' => null]);
         $this->assertSame([], $this->featured());
+    }
+}
+
+/** Un tirage d'accueil avec une fenêtre de 3 offres, pour vérifier qu'elle borne bien le hasard. */
+final class OfferBrowseListingProbe extends OfferBrowseListing
+{
+    public const CAROUSEL_WINDOW = 3;
+
+    /** @return list<array<string, mixed>> */
+    public static function draw(): array
+    {
+        return (new self)->regionCarousels(3)[0]['items'] ?? [];
     }
 }

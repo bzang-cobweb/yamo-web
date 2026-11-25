@@ -95,7 +95,7 @@ class OfferDetailApiTest extends TestCase
             ['label' => 'Chambres', 'value' => '2'],
             // Après les chambres (décision 2026-11-21-salles-de-bain).
             ['label' => 'Salles de bain', 'value' => '1'],
-            ['label' => 'Disponible dès le', 'value' => '1 décembre 2026'],
+            ['label' => 'Disponible dès le', 'value' => '1 déc. 2026'],
             // Un montant, avec le symbole de la devise (décision 2026-11-19-contrat-formulaire-etapes-symbole-devise).
             ['label' => 'Charges mensuelles', 'value' => '15 000 FCFA'],
             // Le loyer mensuel après les charges (décision 2026-11-20-fiche-loyer-caution).
@@ -243,7 +243,9 @@ class OfferDetailApiTest extends TestCase
         $sections = $this->show($offer)->json('data.sections');
         // Caractéristiques, localisation, description, puis le reste ; seule la première ouverte (décisions
         // 2026-11-22-fiche-localisation-apres-caracteristiques et 2026-11-22-fiche-premiere-section-ouverte).
+        // « Éditeur » en tête, ouverte avec les caractéristiques (décision 2026-11-25-fiche-publiee-par).
         $this->assertSame([
+            ['key' => 'publisher', 'type' => 'rows', 'title' => 'Éditeur', 'open' => true],
             ['key' => 'facts', 'type' => 'rows', 'title' => 'Caractéristiques', 'open' => true],
             ['key' => 'location', 'type' => 'text', 'title' => 'Localisation', 'open' => false],
             ['key' => 'description', 'type' => 'text', 'title' => 'Description', 'open' => false],
@@ -251,10 +253,10 @@ class OfferDetailApiTest extends TestCase
             ['key' => 'reviews', 'type' => 'reviews', 'title' => 'Avis', 'open' => false],
         ], $this->outline($sections));
         // Le contenu avec : les lignes, l'adresse et son indication, la description.
-        $this->assertSame($this->show($offer)->json('data.facts'), $sections[0]['rows']);
-        $this->assertSame($this->show($offer)->json('data.address'), $sections[1]['text']);
-        $this->assertSame('Calme et lumineux.', $sections[2]['text']);
-        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[3]['rows']);
+        $this->assertSame($this->show($offer)->json('data.facts'), $sections[1]['rows']);
+        $this->assertSame($this->show($offer)->json('data.address'), $sections[2]['text']);
+        $this->assertSame('Calme et lumineux.', $sections[3]['text']);
+        $this->assertSame([['label' => 'Animaux acceptés', 'value' => 'Non']], $sections[4]['rows']);
 
         // Ordre et ouverture réglés par Laravel ; une section sans contenu n'est pas servie.
         config(['offer.sections' => ['reviews' => true, 'facts' => true, 'location' => false]]);
@@ -264,6 +266,33 @@ class OfferDetailApiTest extends TestCase
         config(['offer.sections' => ['location' => true, 'facts' => false, 'rules' => false]]);
         $withoutAddress = Offer::factory()->create(['status' => 'published', 'details' => ['property_type' => 'studio', 'surface' => 30, 'pets' => 'no']]);
         $this->assertSame([['facts', true], ['rules', false]], $this->keysAndOpen($this->show($withoutAddress)->json('data.sections')));
+    }
+
+    public function test_cameras_are_a_characteristic(): void
+    {
+        // Décision 2026-11-25-offre-categorie-cameras : Oui / Non, facultatif.
+        $facts = fn (array $details): array => array_column($this->show($this->home(['details' => ['property_type' => 'studio', ...$details]]))->json('data.facts'), 'value', 'label');
+
+        $this->assertSame('Oui', $facts(['cameras' => 'yes'])['Caméras de surveillance']);
+        $this->assertSame('Non', $facts(['cameras' => 'no'])['Caméras de surveillance']);
+        $this->assertArrayNotHasKey('Caméras de surveillance', $facts([]));
+    }
+
+    public function test_published_by_shows_the_first_name_the_membership_and_the_identification(): void
+    {
+        // Décision 2026-11-25-fiche-publiee-par : le prénom seul, le mois d'inscription, identifié ou non.
+        $offer = $this->home(['details' => ['property_type' => 'studio']]);
+        $offer->user->forceFill(['first_name' => 'Awa', 'last_name' => 'Nkoulou', 'created_at' => '2025-03-14 09:00:00'])->save();
+        $rows = fn (): array => collect($this->show($offer)->json('data.sections'))->firstWhere('key', 'publisher')['rows'];
+
+        $this->assertSame([
+            ['label' => 'Publié par', 'value' => 'Awa'],
+            ['label' => 'Membre depuis', 'value' => '14 mars 2025'],
+            ['label' => 'Identifié', 'value' => 'Non'],
+        ], $rows());
+
+        $offer->user->forceFill(['identified_at' => now()])->save();
+        $this->assertSame(['label' => 'Identifié', 'value' => 'Oui'], $rows()[2]);
     }
 
     public function test_a_hidden_address_is_not_shown_except_to_its_owner(): void

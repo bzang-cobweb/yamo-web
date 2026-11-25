@@ -83,6 +83,8 @@ return [
     'views_count' => 'Vues',
     'clicks_count' => 'Clics',
     'featured_help' => 'Vide : pas en vedette. Plus tard, une mise en avant payée par le propriétaire remplira cette date.',
+    'boosted_until' => "En vedette dans la région jusqu'au",
+    'boosted_help' => "Vide : pas en vedette dans sa région. En vedette, l'offre passe en tête du carrousel de sa région sur l'accueil, jusqu'à ce jour inclus.",
     'favorites' => [
         'title' => 'Mes favoris',
         'empty' => "Aucun favori pour l'instant. Touchez le cœur d'une offre pour la retrouver ici.",
@@ -141,7 +143,18 @@ return [
         'to_translate' => 'à traduire',
     ],
     // Titres des sections de la fiche, servis avec elles (décision 2026-11-19-sections-construites-laravel).
+    // « Publiée par » sur la fiche (décision 2026-11-25-fiche-publiee-par).
+    'publisher' => [
+        'name' => 'Publié par',
+        'since' => 'Membre depuis',
+        'identified' => 'Identifié',
+        'yes' => 'Oui',
+        'no' => 'Non',
+    ],
+    // « 3 avis », avant la liste complète des avis (décision 2026-11-25-liste-avis-titre-nombre).
+    'reviews_count' => '{1} :count avis|[2,*] :count avis',
     'section_titles' => [
+        'publisher' => 'Éditeur',
         'description' => 'Description',
         'location' => 'Localisation',
         'facts' => 'Caractéristiques',

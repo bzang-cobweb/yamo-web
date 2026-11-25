@@ -155,6 +155,9 @@ class CountrySpaceTest extends TestCase
         $user = User::factory()->create();
         $address = Address::factory()->for($this->senegal)->create();
         $noCountry = require module_path('Location', 'database/migrations/2026_12_07_150000_remove_country_from_addresses.php');
+        // Son index porte sur `offers.country_id`, que la migration rejouée retire (décision 2026-11-25-accueil-a-grande-echelle).
+        $reviewSummary = require module_path('Offer', 'database/migrations/2026_12_07_180000_store_review_summary_on_offers.php');
+        $reviewSummary->down();
         $addresses = require module_path('Offer', 'database/migrations/2026_11_29_110000_create_offer_addresses_table.php');
         $migration = require module_path('Offer', 'database/migrations/2026_11_24_110000_add_country_to_offers.php');
         $noCountry->down();
@@ -179,6 +182,7 @@ class CountrySpaceTest extends TestCase
         $addresses->up();
         // Puis l'adresse reperd son pays, comme en base ; à la fin seulement : SQLite reconstruit la table.
         $noCountry->up();
+        $reviewSummary->up();
     }
 
     public function test_currencies_come_from_icu(): void

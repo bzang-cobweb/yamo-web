@@ -97,7 +97,7 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         $this->assertSame('2026-12-15', $offer->detail('available_from'));
     }
 
-    public function test_type_and_rental_type_come_before_the_category_and_the_rent_before_the_charges(): void
+    public function test_the_category_then_type_and_rental_type_follow_the_owner_and_the_rent_comes_before_the_charges(): void
     {
         $this->actingAsUserWith(PermissionEnum::VIEW_OFFERS, PermissionEnum::UPDATE_OFFERS);
         $html = $this->get(OfferResource::getUrl('edit', ['record' => $this->offer()]))->assertOk()->getContent();
@@ -105,14 +105,19 @@ class OfferReviewsAndAccessTest extends AuthFilamentTestCase
         // Décision 2026-11-19-backoffice-loyer-type-annonce.
         // Les champs du formulaire, par leur chemin d'état (`data.…`), dans l'ordre de la page.
         $position = fn (string $path): int => (int) strpos((string) $html, '"data.'.$path.'"');
+        // Le propriétaire, une liste à recherche : son état sans guillemets autour.
+        $owner = (int) strpos((string) $html, 'data.user_id');
+        $this->assertGreaterThan(0, $owner);
         foreach (['details.property_type', 'details.rental_type', 'category_id', 'details.bedrooms', 'price', 'details.charges'] as $path) {
             $this->assertGreaterThan(0, $position($path), $path);
         }
-        $this->assertLessThan($position('category_id'), $position('details.property_type'));
-        $this->assertLessThan($position('category_id'), $position('details.rental_type'));
+        // Le propriétaire, la catégorie, le type, le type de location (décision 2026-11-25-offre-categorie-cameras).
+        $this->assertLessThan($position('category_id'), $owner);
+        $this->assertLessThan($position('details.property_type'), $position('category_id'));
+        $this->assertLessThan($position('details.rental_type'), $position('details.property_type'));
         // Le loyer puis les charges dans l'onglet « Prix », après « Localisation » et avant les
         // caractéristiques (décision 2026-11-19-onglet-prix).
-        $this->assertLessThan($position('price'), $position('category_id'));
+        $this->assertLessThan($position('price'), $position('details.rental_type'));
         $this->assertLessThan($position('details.charges'), $position('price'));
         $this->assertLessThan($position('details.bedrooms'), $position('details.charges'));
     }
