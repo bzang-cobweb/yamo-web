@@ -171,4 +171,27 @@ class ApplicationTest extends AuthFilamentTestCase
             ->call('save')
             ->assertHasFormErrors(['home_offers_per_city' => 'min', 'home_partners' => 'max']);
     }
+
+    public function test_settings_page_sets_the_featured_block_count(): void
+    {
+        // Décision 2026-11-25-bloc-a-la-une : 2 sans réglage, de 2 à 4.
+        $this->actingAsUserWith(PermissionEnum::UPDATE_SETTINGS);
+        $this->assertSame(2, Setting::homeFeatured());
+
+        Livewire::test(EditSettings::class)
+            ->assertSee('Offres « À la une »')
+            ->fillForm(['home_featured' => 4])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertSame(4, Setting::homeFeatured());
+
+        Livewire::test(EditSettings::class)
+            ->fillForm(['home_featured' => 5])
+            ->call('save')
+            ->assertHasFormErrors(['home_featured' => 'max']);
+        Livewire::test(EditSettings::class)
+            ->fillForm(['home_featured' => 1])
+            ->call('save')
+            ->assertHasFormErrors(['home_featured' => 'min']);
+    }
 }

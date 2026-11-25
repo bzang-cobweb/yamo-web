@@ -102,6 +102,14 @@ class SettingResource extends AbstractResource
                                     ->minValue(1)
                                     ->maxValue(50)
                                     ->placeholder((string) Setting::HOME_DEFAULT_COUNT),
+                                // Décision 2026-11-25-bloc-a-la-une.
+                                TextInput::make('home_featured')
+                                    ->label(__('settings.home_featured'))
+                                    ->helperText(__('settings.help.home_featured'))
+                                    ->integer()
+                                    ->minValue(Setting::HOME_FEATURED_MIN)
+                                    ->maxValue(Setting::HOME_FEATURED_MAX)
+                                    ->placeholder((string) Setting::HOME_FEATURED_DEFAULT),
                             ]),
                     ]),
             ]);

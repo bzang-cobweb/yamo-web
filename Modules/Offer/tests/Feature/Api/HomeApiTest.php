@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\OfferReview;
 use Tests\TestCase;
 
 /**
@@ -82,6 +83,77 @@ class HomeApiTest extends TestCase
 
     public function test_no_city_no_carousel(): void
     {
-        $this->home()->assertOk()->assertExactJson(['data' => ['carousels' => []]]);
+        $this->home()->assertOk()->assertExactJson(['data' => ['featured' => [], 'carousels' => []]]);
+    }
+
+    /**
+     * Une offre publiée à Douala, avec ses avis.
+     *
+     * @param  array<string, mixed>  $attributes
+     * @param  list<int>  $ratings
+     */
+    private function offer(array $attributes = [], array $ratings = []): Offer
+    {
+        $offer = Offer::factory()->at(Address::factory()->for($this->cameroon)->create(['city' => 'Douala']))->create(['status' => 'published', ...$attributes]);
+        foreach ($ratings as $rating) {
+            OfferReview::factory()->for($offer)->create(['rating' => $rating]);
+        }
+
+        return $offer;
+    }
+
+    /** @return list<string> */
+    private function featured(): array
+    {
+        return array_column($this->home()->assertOk()->json('data.featured'), 'id');
+    }
+
+    public function test_featured_block_puts_the_featured_offers_first_then_the_best_rated(): void
+    {
+        // Décision 2026-11-25-bloc-a-la-une : 2 sans réglage.
+        $featured = $this->offer(['featured_until' => now()->addWeek()]);
+        $this->offer(['featured_until' => now()->subDay()], [3]);
+        $best = $this->offer([], [5, 5]);
+        $this->offer([], [4]);
+        $this->offer();
+
+        $this->assertSame([(string) $featured->getKey(), (string) $best->getKey()], $this->featured());
+        // Des cartes comme celles des villes : la photo à la taille de l'accueil.
+        $this->assertArrayHasKey('image', $this->home()->json('data.featured.0'));
+    }
+
+    public function test_featured_block_breaks_ties_with_the_most_recent_and_follows_the_setting(): void
+    {
+        $old = $this->offer(['published_at' => now()->subMonth()], [4]);
+        $recent = $this->offer(['published_at' => now()->subDay()], [4]);
+        $unrated = $this->offer(['published_at' => now()]);
+        $this->offer(['published_at' => now()->subYear()]);
+        Setting::current()->update(['home_featured' => 3]);
+
+        $this->assertSame([(string) $recent->getKey(), (string) $old->getKey(), (string) $unrated->getKey()], $this->featured());
+    }
+
+    public function test_featured_block_draws_the_featured_offers_at_random(): void
+    {
+        foreach (range(1, 8) as $ignored) {
+            $this->offer(['featured_until' => now()->addWeek()]);
+        }
+
+        $draws = collect(range(1, 6))->map(fn (): string => implode(',', $this->featured()));
+        $this->assertGreaterThan(1, $draws->unique()->count());
+        $this->assertCount(2, explode(',', (string) $draws->first()));
+    }
+
+    public function test_with_payment_the_featured_block_shows_only_featured_offers(): void
+    {
+        Setting::current()->update(['payment_required' => true, 'home_featured' => 4]);
+        $paid = ['starts_at' => now()->subDay(), 'expires_at' => now()->addMonth()];
+        $featured = $this->offer([...$paid, 'featured_until' => now()->addWeek()]);
+        $this->offer($paid, [5]);
+
+        $this->assertSame([(string) $featured->getKey()], $this->featured());
+
+        $featured->update(['featured_until' => null]);
+        $this->assertSame([], $this->featured());
     }
 }

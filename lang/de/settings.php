@@ -18,10 +18,12 @@ return [
     'years' => 'Jahre',
     'home_offers_per_city' => 'Angebote pro Stadt',
     'home_partners' => 'Angezeigte Partner',
+    'home_featured' => 'Angebote „Im Fokus“',
     'help' => [
         'partner_notify_user' => 'Dieses Backoffice-Konto wird bei jedem Hinzufügen oder Ändern eines Partners in der App benachrichtigt. Leer: niemand.',
         'partner_payment_required' => 'Wenn aktiviert, ist ein Partner nach seinem Datum « Läuft ab am » in der App nicht mehr sichtbar; ohne Datum ist er nicht sichtbar. Deaktiviert wird das Datum ignoriert.',
         'home_count' => 'Bei jedem Aufruf der Startseite zufällig ausgewählt. Leer: 10.',
+        'home_featured' => '2 bis 4, oben auf der Startseite. Mit Bezahlung: nur hervorgehobene Angebote, zufällig gezogen. Sonst zuerst die hervorgehobenen, ergänzt durch die bestbewerteten und neuesten Angebote. Leer: 2.',
         'description' => 'Vorstellung der Anwendung auf der Startseite, eine pro Sprache.',
         'payment_required' => 'Wenn aktiviert, ist ein Angebot nach seinem Datum « Bezahlt bis » für andere nicht mehr sichtbar; ohne Datum ist es nicht sichtbar. Sein Verfasser sieht es immer.',
         'minimum_age' => 'Wenn angegeben, wird das Geburtsdatum bei der Registrierung und in den persönlichen Daten Pflicht und muss mindestens dieses Alter ergeben. Leer: keine Grenze.',

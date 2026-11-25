@@ -18,7 +18,7 @@ use Spatie\Translatable\HasTranslations;
  * par `Setting::current()`. Le logo n'est pas un réglage : ses fichiers sont
  * livrés avec le code (`public/images/logo`, et dans l'app mobile).
  */
-#[Fillable(['description', 'payment_required', 'partner_payment_required', 'partner_notify_user_id', 'minimum_age', 'home_offers_per_city', 'home_partners'])]
+#[Fillable(['description', 'payment_required', 'partner_payment_required', 'partner_notify_user_id', 'minimum_age', 'home_offers_per_city', 'home_partners', 'home_featured'])]
 class Setting extends Model
 {
     use HasTranslations;
@@ -37,6 +37,7 @@ class Setting extends Model
             'minimum_age' => 'integer',
             'home_offers_per_city' => 'integer',
             'home_partners' => 'integer',
+            'home_featured' => 'integer',
         ];
     }
 
@@ -98,6 +99,23 @@ class Setting extends Model
     public static function homePartners(): int
     {
         return (int) (self::query()->oldest('id')->value('home_partners') ?? self::HOME_DEFAULT_COUNT);
+    }
+
+    /** Le bloc « À la une » de l'accueil : 2 offres sans réglage, 4 au plus (décision 2026-11-25-bloc-a-la-une). */
+    public const HOME_FEATURED_DEFAULT = 2;
+
+    public const HOME_FEATURED_MIN = 2;
+
+    public const HOME_FEATURED_MAX = 4;
+
+    /**
+     * Combien d'offres dans le bloc « À la une » de l'accueil (décision 2026-11-25-bloc-a-la-une).
+     */
+    public static function homeFeatured(): int
+    {
+        $count = (int) (self::query()->oldest('id')->value('home_featured') ?? self::HOME_FEATURED_DEFAULT);
+
+        return min(max($count, self::HOME_FEATURED_MIN), self::HOME_FEATURED_MAX);
     }
 
     /**

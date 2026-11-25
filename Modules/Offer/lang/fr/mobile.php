@@ -7,6 +7,8 @@ return [
     // L'accueil : « Voir tout » d'une ville ouvre la recherche filtrée sur elle (décision 2026-11-23-accueil-voir-tout).
     'home' => [
         'seeAll' => 'Voir tout',
+        // Le bloc en haut de l'accueil (décision 2026-11-25-bloc-a-la-une).
+        'featured' => 'À la une',
     ],
     'offer' => [
         'unavailable' => "Cette offre n'est plus disponible.",

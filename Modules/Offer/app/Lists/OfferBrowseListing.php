@@ -174,6 +174,36 @@ class OfferBrowseListing extends Listing
         return $carousels;
     }
 
+    /**
+     * Le bloc « À la une » de l'accueil (décision 2026-11-25-bloc-a-la-une), `Setting::homeFeatured()` offres en
+     * cartes comme celles des villes. Les offres en vedette d'abord, tirées au hasard. Paiement appliqué, la vedette s'achète : elles
+     * seules, et le bloc est vide sans vedette. Sinon, les places restantes vont aux offres les mieux notées, les plus
+     * récentes à note égale.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function featuredOffers(?int $count = null): array
+    {
+        // Des cartes de la taille de celles des villes, deux par ligne : la conversion de l'accueil.
+        $this->photoConversion = 'home';
+        $count ??= Setting::homeFeatured();
+        $offers = $this->base()->featured()->inRandomOrder()->limit($count)->get();
+
+        $missing = $count - $offers->count();
+        if ($missing > 0 && ! Setting::paymentRequired()) {
+            $offers = $offers->concat($this->base()
+                ->whereKeyNot($offers->modelKeys())
+                // Sans avis : après les offres notées.
+                ->orderByDesc('reviews_avg_rating')
+                ->orderByDesc('published_at')
+                ->orderByDesc('id')
+                ->limit($missing)
+                ->get());
+        }
+
+        return $offers->map(fn (Offer $offer): array => $this->item($offer)->toArray())->values()->all();
+    }
+
     public function item(Model $record): ListItem
     {
         /** @var Offer $record */
