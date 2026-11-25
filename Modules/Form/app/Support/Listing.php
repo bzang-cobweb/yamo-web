@@ -193,7 +193,10 @@ abstract class Listing
             $query->where(fn (Builder $group) => $this->applyFilters($group, $filters));
         }
 
-        return $query->limit($this->pinnedLimit())->get()->all();
+        $records = $query->limit($this->pinnedLimit())->get();
+        $this->served($records);
+
+        return $records->all();
     }
 
     /**

@@ -45,7 +45,7 @@ class PartnerResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, name: string, url: string|null, slogan: string|null, description: string|null, website: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null, status?: array{label: string, tone: string}}
+     * @return array{id: string, name: string, url: string|null, slogan: string|null, description: string|null, website: string|null, cta_label: string|null, logo: string|null, contact_email?: string|null, contact_phone?: string|null, status?: array{label: string, tone: string}, views?: array{count: int, label: string}}
      */
     public function toArray(Request $request): array
     {
@@ -70,9 +70,10 @@ class PartnerResource extends JsonResource
 
     /**
      * Sa pastille, sur sa page, pour ses comptes seulement (décision 2026-11-24-partenaire-page-statut) : un visiteur ne
-     * voit qu'un partenaire affiché, il n'en a pas besoin.
+     * voit qu'un partenaire affiché, il n'en a pas besoin. Son nombre de vues aussi (décisions
+     * 2026-11-25-partenaire-vues-sur-sa-page et 2026-11-25-vues-oeil).
      *
-     * @return array{status?: array{label: string, tone: string}}
+     * @return array{status?: array{label: string, tone: string}, views?: array{count: int, label: string}}
      */
     private function status(Request $request): array
     {
@@ -83,6 +84,12 @@ class PartnerResource extends JsonResource
             return [];
         }
 
-        return ['status' => $this->resource->statusTag(Setting::partnerPaymentRequired())];
+        $views = (int) $this->resource->views_count;
+
+        return [
+            'status' => $this->resource->statusTag(Setting::partnerPaymentRequired()),
+            // Un œil et le nombre ; le libellé pour les lecteurs d'écran (décision 2026-11-25-vues-oeil).
+            'views' => ['count' => $views, 'label' => trans_choice('partner::partner.member.views', $views, ['count' => $views])],
+        ];
     }
 }

@@ -55,6 +55,12 @@ abstract class PartnerTable
                     ->date()
                     ->placeholder('—')
                     ->sortable(),
+                // Décision 2026-11-25-vedettes-d-abord.
+                TextColumn::make('featured_until')
+                    ->label(__('partner::partner.fields.featured_until'))
+                    ->date()
+                    ->placeholder('—')
+                    ->sortable(),
                 TextColumn::make('views_count')
                     ->label(__('partner::partner.fields.views_count'))
                     ->numeric()

@@ -38,6 +38,8 @@ return [
         'published' => 'Publié',
         'starts_at' => 'Début',
         'expires_at' => 'Expire le',
+        'featured_until' => "En vedette jusqu'au",
+        'featured_help' => "Vide : pas en vedette. En vedette, il passe avant les autres partenaires, sur l'accueil et sur la page Partenaires.",
         'contact_email' => 'E-mail de contact',
         'contact_phone' => 'Téléphone de contact',
         'views_count' => 'Vues',
@@ -55,6 +57,8 @@ return [
         ],
         'group' => 'Partenaire',
         'count' => '{0} Aucun partenaire|{1} :count partenaire|[2,*] :count partenaires',
+        // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
+        'views' => '{0} Aucune vue|{1} :count vue|[2,*] :count vues',
         'mine' => 'Mes partenaires',
         'add' => 'Ajouter un partenaire',
         'edit' => 'Modifier le partenaire',

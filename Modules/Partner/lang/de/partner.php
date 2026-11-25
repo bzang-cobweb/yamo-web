@@ -38,6 +38,8 @@ return [
         'published' => 'Veröffentlicht',
         'starts_at' => 'Beginn',
         'expires_at' => 'Läuft ab am',
+        'featured_until' => 'Hervorgehoben bis',
+        'featured_help' => 'Leer: nicht hervorgehoben. Hervorgehoben steht er vor den anderen Partnern, auf der Startseite und auf der Partnerseite.',
         'contact_email' => 'Kontakt-E-Mail',
         'contact_phone' => 'Kontakttelefon',
         'views_count' => 'Aufrufe',
@@ -55,6 +57,8 @@ return [
         ],
         'group' => 'Partner',
         'count' => '{0} Kein Partner|{1} :count Partner|[2,*] :count Partner',
+        // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
+        'views' => '{0} Keine Aufrufe|{1} :count Aufruf|[2,*] :count Aufrufe',
         'mine' => 'Meine Partner',
         'add' => 'Partner hinzufügen',
         'edit' => 'Partner bearbeiten',

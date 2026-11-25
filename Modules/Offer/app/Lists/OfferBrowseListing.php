@@ -8,11 +8,13 @@ use App\Support\MediaUrl;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Services\OfferCounterService;
 
 /**
  * Les offres publiées du pays courant, la vitrine de l'accueil (décision
@@ -67,9 +69,17 @@ class OfferBrowseListing extends Listing
      */
     public function query(): Builder
     {
-        // Les vedettes épinglées en tête (`pinned()`) sont exclues ici ; au-delà de la
-        // limite des épinglées, une vedette reste dans la liste, à sa place.
+        // Les vedettes, toutes épinglées en tête (`pinned()`), sont exclues ici (décision 2026-11-25-vedettes-d-abord).
         return $this->base()->whereNotIn('id', $this->pinnedIds())->orderByDesc('id');
+    }
+
+    /**
+     * Toutes les vedettes en tête, sans limite : elles sont le premier critère d'ordre de la recherche (décision
+     * 2026-11-25-vedettes-d-abord).
+     */
+    public function pinnedLimit(): int
+    {
+        return PHP_INT_MAX;
     }
 
     /** @var list<int>|null */
@@ -162,7 +172,10 @@ class OfferBrowseListing extends Listing
                 ->whereHas('address', fn (Builder $address) => $address->where('city', $city))
                 ->inRandomOrder()
                 ->limit($perCity)
-                ->get()
+                ->get();
+            // Chacune compte une vue (décision 2026-11-25-compteurs-offres).
+            app(OfferCounterService::class)->countViews($items, $this->user);
+            $items = $items
                 ->map(fn (Offer $offer): array => $this->item($offer)->toArray())
                 ->values()
                 ->all();
@@ -201,7 +214,32 @@ class OfferBrowseListing extends Listing
                 ->get());
         }
 
+        // Chacune compte une vue (décision 2026-11-25-compteurs-offres).
+        app(OfferCounterService::class)->countViews($offers, $this->user);
+
         return $offers->map(fn (Offer $offer): array => $this->item($offer)->toArray())->values()->all();
+    }
+
+    /**
+     * Les offres d'une page de la recherche comptent une vue, les vedettes épinglées comprises (décision
+     * 2026-11-25-compteurs-offres).
+     */
+    protected function served(Collection $records): void
+    {
+        app(OfferCounterService::class)->countViews($records, $this->user);
+    }
+
+    /**
+     * Sous les filtres, le nombre d'offres trouvées, recherche et filtres compris (« 12 logements »), comme les autres
+     * listes (décision 2026-11-25-recherche-nombre).
+     *
+     * @return array{title: string|null, subtitle: string|null}
+     */
+    public function headingFor(array $filters, ?string $search = null): array
+    {
+        $count = $this->countFor($search, $filters);
+
+        return ['title' => trans_choice('offer::offer.list.count', $count, ['count' => $count]), 'subtitle' => null];
     }
 
     public function item(Model $record): ListItem

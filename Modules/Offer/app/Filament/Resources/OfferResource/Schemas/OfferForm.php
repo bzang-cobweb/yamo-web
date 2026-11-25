@@ -6,7 +6,6 @@ use App\Filament\Schemas\TranslatableTabs;
 use App\Support\Locales;
 use Closure;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -212,7 +211,7 @@ abstract class OfferForm
                                     ->default(OfferStatusEnum::DRAFT->value)
                                     ->required(),
                                 // En tête de la vitrine jusqu'à cette date (décision 2026-11-19-contrat-vedette-favoris).
-                                DateTimePicker::make('featured_until')
+                                DatePicker::make('featured_until')
                                     ->label(__('offer::offer.featured_until'))
                                     ->helperText(__('offer::offer.featured_help'))
                                     ->native(false)
@@ -289,6 +288,21 @@ abstract class OfferForm
                                             ->store($record, $file->getRealPath())
                                             ->uuid,
                                     ),
+                            ]),
+                        // Lus seulement, comme ceux d'un partenaire : l'app les tient à jour (décision
+                        // 2026-11-25-compteurs-offres).
+                        Tab::make(__('offer::offer.tabs.stats'))
+                            ->columns(2)
+                            ->visibleOn('edit')
+                            ->schema([
+                                TextInput::make('views_count')
+                                    ->label(__('offer::offer.views_count'))
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('clicks_count')
+                                    ->label(__('offer::offer.clicks_count'))
+                                    ->disabled()
+                                    ->dehydrated(false),
                             ]),
                     ]),
             ]);

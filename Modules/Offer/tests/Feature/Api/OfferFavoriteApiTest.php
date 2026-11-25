@@ -85,8 +85,21 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame([(string) $featured->getKey()], array_column($this->api(null, 'GET', '/api/v1/lists/offer.browse?search=vedette')->json('data.items'), 'id'));
     }
 
-    public function test_beyond_the_pinned_limit_a_featured_offer_stays_in_the_list(): void
+    public function test_an_offer_is_featured_until_its_day_included(): void
     {
+        // Décision 2026-11-25-vedette-en-dates : une date, sans heure.
+        $today = Offer::factory()->create(['status' => 'published', 'featured_until' => today()]);
+        $yesterday = Offer::factory()->create(['status' => 'published', 'featured_until' => today()->subDay()]);
+
+        $this->assertTrue($today->fresh()->isFeatured());
+        $this->assertFalse($yesterday->fresh()->isFeatured());
+        $this->assertSame([(string) $today->getKey()], array_column(array_slice($this->api(null, 'GET', '/api/v1/lists/offer.browse')->json('data.items'), 0, 1), 'id'));
+        $this->assertSame([(int) $today->getKey()], Offer::query()->featured()->pluck('id')->all());
+    }
+
+    public function test_every_featured_offer_comes_first_without_limit(): void
+    {
+        // Décision 2026-11-25-vedettes-d-abord : plus de limite de 20.
         $featured = Offer::factory()->count(22)->sequence(fn ($sequence) => ['featured_until' => now()->addDays(30 - $sequence->index)])->create(['status' => 'published']);
         Offer::factory()->count(5)->create(['status' => 'published']);
 
@@ -99,8 +112,8 @@ class OfferFavoriteApiTest extends TestCase
             $cursor = $page['next_cursor'];
         }
 
-        // 20 vedettes épinglées, puis tout le reste, chacune une fois : aucune perdue.
-        $this->assertSame($featured->take(20)->map(fn (Offer $offer): string => (string) $offer->getKey())->all(), array_slice($ids, 0, 20));
+        // Les 22 vedettes en tête, la date la plus lointaine d'abord, puis le reste, chacune une fois.
+        $this->assertSame($featured->map(fn (Offer $offer): string => (string) $offer->getKey())->all(), array_slice($ids, 0, 22));
         $this->assertCount(27, $ids);
         $this->assertCount(27, array_unique($ids));
     }
@@ -125,7 +138,8 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame([(string) $offer->getKey()], array_column($favorites['items'], 'id'));
         $this->assertTrue($favorites['items'][0]['favorite']['active']);
         // Le nombre, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
-        $this->assertSame('1 logement', $favorites['heading']['title']);
+        // « 1 favori » (décision 2026-11-25-nombre-favoris).
+        $this->assertSame('1 favori', $favorites['heading']['title']);
         // Comme à l'accueil : le titre saisi, la ligne du type dessous (décision 2026-11-21-favoris-titre-saisi-ligne-type).
         // En titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
         $this->assertSame(['Location', $offer->getTranslation('title', 'fr')], [$favorites['items'][0]['title'], $favorites['items'][0]['subtitle']]);

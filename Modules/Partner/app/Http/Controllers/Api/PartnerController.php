@@ -43,8 +43,8 @@ class PartnerController
     }
 
     /**
-     * Un lien qui ouvre la fiche d'un partenaire : un clic de plus, sauf pour ses propres comptes (décision
-     * 2026-11-25-compteurs-partenaires). 404 s'il n'est pas visible.
+     * Sa page ouverte, par n'importe quel lien : un clic de plus, sauf pour ses propres comptes (décisions
+     * 2026-11-25-compteurs-partenaires et 2026-11-25-clic-a-l-ouverture). 404 s'il n'est pas visible.
      */
     public function click(Request $request, Partner $partner, PartnerService $partnerService): Response
     {

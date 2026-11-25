@@ -26,15 +26,21 @@ class PartnerService
     /**
      * Des partenaires visibles tirés au hasard, autant que réglé dans « Application » (décision
      * 2026-11-23-accueil-nombres-reglables), puis rangés dans l'ordre du back-office (décision
-     * 2026-11-23-partenaires-triables) ; chacun compte une vue, sauf pour ses propres comptes (décision
+     * 2026-11-23-partenaires-triables), les vedettes d'abord (décision 2026-11-25-vedettes-d-abord) ; chacun compte une vue, sauf pour ses propres comptes (décision
      * 2026-11-25-compteurs-partenaires).
      *
      * @return Collection<int, Partner>
      */
     public function shown(?Authenticatable $viewer = null): Collection
     {
-        $partners = Partner::query()->visible()->with('media')->inRandomOrder()->limit(Setting::homePartners())->get()
-            ->sortBy([['position', 'asc'], ['id', 'asc']])->values();
+        // Les vedettes d'abord, tirées au hasard, puis les autres (décision 2026-11-25-vedettes-d-abord).
+        $count = Setting::homePartners();
+        $featured = Partner::query()->visible()->featured()->with('media')->inRandomOrder()->limit($count)->get();
+        $others = $featured->count() >= $count ? collect() : Partner::query()->visible()->whereKeyNot($featured->modelKeys())->with('media')->inRandomOrder()->limit($count - $featured->count())->get();
+        // Rangés : les vedettes, la date la plus lointaine d'abord, puis l'ordre du back-office.
+        $partners = $featured->sortBy([['featured_until', 'desc'], ['position', 'asc'], ['id', 'asc']])
+            ->concat($others->sortBy([['position', 'asc'], ['id', 'asc']]))
+            ->values();
         $this->countViews($partners, $viewer);
 
         return $partners;
@@ -86,9 +92,8 @@ class PartnerService
     }
 
     /**
-     * Un lien qui ouvre la fiche d'un partenaire visible, depuis le carrousel de l'accueil ou la page « Partenaires » :
-     * un clic de plus, sauf pour ses propres comptes (décision 2026-11-25-compteurs-partenaires). Faux s'il n'est pas
-     * visible.
+     * La page d'un partenaire visible ouverte, par n'importe quel lien : un clic de plus, sauf pour ses propres comptes
+     * (décisions 2026-11-25-compteurs-partenaires et 2026-11-25-clic-a-l-ouverture). Faux s'il n'est pas visible.
      */
     public function click(Partner $partner, ?Authenticatable $viewer = null): bool
     {

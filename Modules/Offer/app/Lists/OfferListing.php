@@ -222,6 +222,9 @@ class OfferListing extends Listing
             // place du cœur : le propriétaire ne met pas son logement en favori (décision 2026-11-21-statut-a-la-place-du-coeur).
             ->tag($record->status->label(), $record->status->tone(), onImage: true)
             ->highlight(implode(' · ', array_filter([$start, $expiration, ...$domain->itemDetails($record), $price])))
+            // Ses vues, pour le propriétaire seul : un œil et le nombre (décisions 2026-11-25-compteurs-offres et
+            // 2026-11-25-vues-oeil).
+            ->views((int) $record->views_count, trans_choice('offer::offer.list.views', (int) $record->views_count, ['count' => (int) $record->views_count], $locale))
             ->edit(OfferForm::name())
             // Toucher la carte ouvre sa fiche, brouillon compris ; « Éditer » est dans le menu (décision
             // 2026-11-22-logements-carte-vers-fiche).

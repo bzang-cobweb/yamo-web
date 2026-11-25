@@ -238,6 +238,15 @@ class MyPartnerApiTest extends TestCase
         $this->assertNull(Partner::query()->find($partner->getKey()));
     }
 
+    public function test_my_partners_show_their_views(): void
+    {
+        // Décision 2026-11-25-compteurs-offres.
+        $user = $this->member();
+        Partner::factory()->for($this->cameroon)->create(['views_count' => 1])->users()->attach($user->getKey(), ['is_admin' => true]);
+
+        $this->assertSame(['count' => 1, 'label' => '1 vue'], $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data.items.0.views'));
+    }
+
     public function test_my_partners_show_their_status(): void
     {
         // Décision 2026-11-24-partenaires-statuts.

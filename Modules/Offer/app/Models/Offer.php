@@ -132,7 +132,8 @@ class Offer extends Model implements HasMedia
             'details' => 'array',
             'show_address' => 'boolean',
             'published_at' => 'datetime',
-            'featured_until' => 'datetime',
+            // Un jour, sans heure (décision 2026-11-25-vedette-en-dates).
+            'featured_until' => 'date',
         ];
     }
 
@@ -286,13 +287,13 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * En vedette maintenant : sa date n'est pas passée.
+     * En vedette maintenant : jusqu'à son jour inclus (décision 2026-11-25-vedette-en-dates).
      *
      * @param  Builder<Offer>  $query
      */
     public function scopeFeatured(Builder $query): void
     {
-        $query->where('featured_until', '>', now());
+        $query->whereDate($query->qualifyColumn('featured_until'), '>=', today());
     }
 
     /**
@@ -302,7 +303,7 @@ class Offer extends Model implements HasMedia
      */
     public function scopeNotFeatured(Builder $query): void
     {
-        $query->where(fn (Builder $dates) => $dates->whereNull('featured_until')->orWhere('featured_until', '<=', now()));
+        $query->where(fn (Builder $dates) => $dates->whereNull('featured_until')->orWhereDate('featured_until', '<', today()));
     }
 
     /**
@@ -315,7 +316,7 @@ class Offer extends Model implements HasMedia
 
     public function isFeatured(): bool
     {
-        return $this->featured_until !== null && $this->featured_until->isFuture();
+        return $this->featured_until !== null && $this->featured_until->gte(today());
     }
 
     /**

@@ -38,6 +38,8 @@ return [
         'published' => 'Published',
         'starts_at' => 'Starts',
         'expires_at' => 'Expires on',
+        'featured_until' => 'Featured until',
+        'featured_help' => 'Empty: not featured. Featured, it comes before the other partners, on the home page and on the Partners page.',
         'contact_email' => 'Contact email',
         'contact_phone' => 'Contact phone',
         'views_count' => 'Views',
@@ -55,6 +57,8 @@ return [
         ],
         'group' => 'Partner',
         'count' => '{0} No partner|{1} :count partner|[2,*] :count partners',
+        // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
+        'views' => '{0} No views|{1} :count view|[2,*] :count views',
         'mine' => 'My partners',
         'add' => 'Add a partner',
         'edit' => 'Edit the partner',

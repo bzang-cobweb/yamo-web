@@ -57,6 +57,10 @@ return [
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} Keine Unterkünfte|{1} :count Unterkunft|[2,*] :count Unterkünfte',
+        // Le nombre des favoris (décision 2026-11-25-nombre-favoris).
+        'favorites_count' => '{0} Keine Favoriten|{1} :count Favorit|[2,*] :count Favoriten',
+        // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
+        'views' => '{0} Keine Aufrufe|{1} :count Aufruf|[2,*] :count Aufrufe',
         'empty' => 'Noch nichts.',
         'create' => 'Hinzufügen',
         'confirm' => 'Dieses Angebot entfernen?',
@@ -74,6 +78,8 @@ return [
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Hervorgehoben bis',
     'featured' => 'Hervorgehoben',
+    'views_count' => 'Aufrufe',
+    'clicks_count' => 'Klicks',
     'featured_help' => 'Leer: nicht hervorgehoben. Später füllt eine vom Eigentümer bezahlte Werbung dieses Datum.',
     'favorites' => [
         'title' => 'Meine Favoriten',
@@ -90,6 +96,7 @@ return [
     'reviews' => 'Bewertungen',
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
     'tabs' => [
+        'stats' => 'Statistiken',
         'listing' => 'Allgemein',
         'price' => 'Preis',
         'rules' => 'Regeln',

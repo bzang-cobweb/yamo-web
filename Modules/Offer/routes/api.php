@@ -20,6 +20,8 @@ use Modules\Offer\Models\Offer;
 // L'accueil de l'app : un carrousel par ville (décision 2026-11-23-accueil-carrousels-par-ville).
 Route::middleware([RequireOfferDomain::class, 'throttle:60,1'])->get('v1/home', [HomeController::class, 'index'])->name('v1.home');
 Route::middleware(RequireOfferDomain::class)->get('v1/offers/{offer}', [OfferController::class, 'show'])->name('v1.offers.show');
+// La fiche ouverte, par n'importe quel lien : un clic de plus (décision 2026-11-25-clic-a-l-ouverture).
+Route::middleware([RequireOfferDomain::class, 'throttle:30,1'])->post('v1/offers/{offer}/click', [OfferController::class, 'click'])->whereNumber('offer')->name('v1.offers.click');
 // Tous ses avis, par pages, ouverts sans connexion comme la fiche (décision 2026-11-19-nuit-tous-les-avis).
 Route::middleware([RequireOfferDomain::class, 'throttle:60,1'])->get('v1/offers/{offer}/reviews', [OfferReviewController::class, 'index'])->name('v1.offers.reviews.index');
 

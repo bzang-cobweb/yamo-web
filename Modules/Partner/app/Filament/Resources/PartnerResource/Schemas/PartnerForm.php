@@ -87,6 +87,11 @@ abstract class PartnerForm
                                     ->label(__('partner::partner.fields.starts_at')),
                                 DatePicker::make('expires_at')
                                     ->label(__('partner::partner.fields.expires_at')),
+                                // Décision 2026-11-25-vedettes-d-abord : comme une offre.
+                                DatePicker::make('featured_until')
+                                    ->label(__('partner::partner.fields.featured_until'))
+                                    ->helperText(__('partner::partner.fields.featured_help'))
+                                    ->columnSpanFull(),
                             ]),
                         Tab::make(__('partner::partner.sections.contact'))
                             ->columns(2)

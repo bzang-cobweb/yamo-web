@@ -65,9 +65,20 @@ abstract class OfferTable
                 // Décision 2026-11-19-contrat-vedette-favoris.
                 TextColumn::make('featured_until')
                     ->label(__('offer::offer.featured_until'))
-                    ->dateTime()
+                    ->date()
                     ->placeholder('—')
                     ->sortable(),
+                // Décision 2026-11-25-compteurs-offres.
+                TextColumn::make('views_count')
+                    ->label(__('offer::offer.views_count'))
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('clicks_count')
+                    ->label(__('offer::offer.clicks_count'))
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')

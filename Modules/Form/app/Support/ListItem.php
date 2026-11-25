@@ -32,6 +32,9 @@ final class ListItem
     /** Une ligne sous le sous-titre, à part (« Séjour · du 2 au 6 déc. ») ; `null` : aucune. */
     private ?string $detail = null;
 
+    /** @var array{count: int, label: string}|null */
+    private ?array $views = null;
+
     /** Une date (ISO 8601) sous le message, à droite (« il y a 2 h ») ; `null` : aucune. */
     private ?string $date = null;
 
@@ -170,6 +173,17 @@ final class ListItem
     public function detail(?string $detail): self
     {
         $this->detail = $detail === '' ? null : $detail;
+
+        return $this;
+    }
+
+    /**
+     * Le nombre de vues, sous le sous-titre : l'app montre un œil suivi du nombre, `$label` (« 12 vues ») est lu par
+     * les lecteurs d'écran (décision 2026-11-25-vues-oeil).
+     */
+    public function views(int $count, string $label): self
+    {
+        $this->views = ['count' => $count, 'label' => $label];
 
         return $this;
     }
@@ -343,6 +357,8 @@ final class ListItem
             'subtitle' => $this->subtitle,
             /** Ligne sous le sous-titre, à part ; absente : aucune. */
             ...($this->detail === null ? [] : ['detail' => $this->detail]),
+            /** Les vues : un œil suivi du nombre ; `label` pour les lecteurs d'écran ; absent : rien. */
+            ...($this->views === null ? [] : ['views' => $this->views]),
             /** Date ISO 8601 sous le message, à droite ; absente : aucune. */
             ...($this->date === null ? [] : ['date' => $this->date]),
             /** Notifications non lues, en pastille à droite du message ; absent : aucune. */

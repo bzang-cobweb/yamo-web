@@ -1,0 +1,25 @@
+# `2026-11-25` — Les vues et les clics des offres, et les vues sur les cartes du propriétaire
+
+- **Type** : décision
+- **Question posée** :
+  - « rajouter aussi les vues et clics sur les offres sur les mêmes critères que les partenaires » ;
+  - « afficher le nombre de vues sur les cards mes logements et mes partenaires ».
+- **Ce qui est retenu** :
+  - Deux nouvelles colonnes sur `offers`, `views_count` et `clicks_count`, à 0 par défaut (migration additive).
+  - **Vue** : une offre compte une vue quand elle est servie :
+    - dans un carrousel d'une ville de l'accueil ;
+    - dans le bloc « À la une » ;
+    - dans une page de la recherche (`offer.browse`), vedettes épinglées comprises.
+  - Ouvrir sa fiche ne compte pas de vue.
+  - **Clic** : une offre compte un clic quand on touche sa carte sur l'accueil ou dans la recherche, ce qui ouvre sa fiche (`POST /api/v1/offers/{id}/click`, 404 pour une offre que les autres ne voient pas). Ouvrir la fiche autrement ne compte rien : un lien direct, « Mes logements », les favoris, les demandes.
+  - **Propriétaire** : il ne compte ni vue ni clic pour ses offres. C'est la même règle que les comptes d'un partenaire (décision 2026-11-25-compteurs-partenaires).
+  - `OfferCounterService` porte ces règles.
+  - **Cartes du propriétaire** :
+    - les cartes de « Mes logements » montrent leurs vues sur une ligne à part (« 12 vues », « Aucune vue ») ;
+    - celles de « Mes partenaires » aussi, pour les comptes du partenaire.
+    - Les clics n'y sont pas montrés.
+  - Au back-office, la liste des offres a deux colonnes triables et masquables, « Vues » et « Clics ».
+  - Le nombre de vues n'est pas montré aux visiteurs.
+- **Motif** : mesurer l'intérêt d'une offre comme celui d'un partenaire. Ce chiffre sert au propriétaire, pas aux autres membres.
+- **Portée** : les offres, « Mes logements », « Mes partenaires », la liste des offres au back-office.
+- **Tranché par** : humain (les critères, les vues sur les cartes) ; session (pas de vues pour les visiteurs, pas de clics sur les cartes)

@@ -107,6 +107,8 @@ class MyPartnerListing extends Listing
             ->imageSide()
             ->tag($status, $tone)
             ->subtitleLines(1)
+            // Ses vues, pour ses comptes : un œil et le nombre (décisions 2026-11-25-compteurs-offres et 2026-11-25-vues-oeil).
+            ->views((int) $record->views_count, trans_choice('partner::partner.member.views', (int) $record->views_count, ['count' => (int) $record->views_count]))
             ->link('/partners/'.$record->getKey())
             ->edit(PartnerForm::name());
 

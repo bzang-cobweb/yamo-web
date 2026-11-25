@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 use Modules\Auth\Models\User;
 use Modules\Notification\Concerns\HasNotifiableGroup;
 use Modules\Notification\Contracts\NotifiableGroup;
@@ -39,9 +40,10 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $contact_phone
  * @property int $views_count
  * @property int $clicks_count
+ * @property Carbon|null $featured_until en vedette jusqu'à cette date (décision 2026-11-25-vedettes-d-abord)
  * @property-read Collection<int, User> $users les comptes qui l'administrent
  */
-#[Fillable(['country_id', 'name', 'slogan', 'description', 'website', 'cta_label', 'status', 'starts_at', 'expires_at', 'position', 'contact_email', 'contact_phone'])]
+#[Fillable(['country_id', 'name', 'slogan', 'description', 'website', 'cta_label', 'status', 'starts_at', 'expires_at', 'featured_until', 'position', 'contact_email', 'contact_phone'])]
 #[UseFactory(PartnerFactory::class)]
 class Partner extends Model implements HasMedia, NotifiableGroup
 {
@@ -98,6 +100,7 @@ class Partner extends Model implements HasMedia, NotifiableGroup
             'position' => 'integer',
             'views_count' => 'integer',
             'clicks_count' => 'integer',
+            'featured_until' => 'date',
         ];
     }
 
@@ -233,6 +236,17 @@ class Partner extends Model implements HasMedia, NotifiableGroup
             ->visibleCountry()
             ->paymentStarted()
             ->visiblePaymentRange();
+    }
+
+    /**
+     * En vedette : jusqu'à son jour inclus (décisions 2026-11-25-vedettes-d-abord et 2026-11-25-vedette-en-dates), comme
+     * une offre.
+     *
+     * @param  Builder<Partner>  $query
+     */
+    public function scopeFeatured(Builder $query): void
+    {
+        $query->whereDate($query->qualifyColumn('featured_until'), '>=', today());
     }
 
     /**

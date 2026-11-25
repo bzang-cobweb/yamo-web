@@ -14,6 +14,7 @@ use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Http\Requests\OfferRequest;
 use Modules\Offer\Http\Resources\OfferDetailResource;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Services\OfferCounterService;
 use Modules\Offer\Services\OfferPhotoService;
 use Modules\Offer\Services\OfferService;
 
@@ -25,6 +26,17 @@ use Modules\Offer\Services\OfferService;
  */
 class OfferController
 {
+    /**
+     * La fiche ouverte, par n'importe quel lien : un clic de plus, sauf pour son propriétaire (décisions
+     * 2026-11-25-compteurs-offres et 2026-11-25-clic-a-l-ouverture). 404 si l'offre n'est pas visible des autres.
+     */
+    public function click(Request $request, Offer $offer, OfferCounterService $counters): Response
+    {
+        abort_unless($counters->click($offer, $request->user('sanctum')), 404);
+
+        return response()->noContent();
+    }
+
     /**
      * La fiche d'une offre, ouverte sans connexion : publiée et du pays courant ;
      * le propriétaire connecté voit aussi la sienne en brouillon ou archivée.

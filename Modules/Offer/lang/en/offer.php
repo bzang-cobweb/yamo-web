@@ -57,6 +57,10 @@ return [
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         'count' => '{0} No homes|{1} :count home|[2,*] :count homes',
+        // Le nombre des favoris (décision 2026-11-25-nombre-favoris).
+        'favorites_count' => '{0} No favourites|{1} :count favourite|[2,*] :count favourites',
+        // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
+        'views' => '{0} No views|{1} :count view|[2,*] :count views',
         'empty' => 'Nothing yet.',
         'create' => 'Add',
         'confirm' => 'Remove this offer?',
@@ -74,6 +78,8 @@ return [
     // Vedette et favoris (décision 2026-11-19-contrat-vedette-favoris).
     'featured_until' => 'Featured until',
     'featured' => 'Featured',
+    'views_count' => 'Views',
+    'clicks_count' => 'Clicks',
     'featured_help' => 'Empty: not featured. Later, a promotion paid by the owner will fill this date.',
     'favorites' => [
         'title' => 'My favorites',
@@ -90,6 +96,7 @@ return [
     'reviews' => 'Reviews',
     // Onglets de l'offre dans le back-office (décision 2026-11-19-ombre-coeur-onglets-offre).
     'tabs' => [
+        'stats' => 'Statistics',
         'listing' => 'General',
         'price' => 'Price',
         'rules' => 'Rules',

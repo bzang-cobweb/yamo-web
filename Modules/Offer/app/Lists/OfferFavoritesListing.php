@@ -54,7 +54,8 @@ class OfferFavoritesListing extends Listing
     {
         $count = $this->countFor($search, $filters);
 
-        return ['title' => trans_choice('offer::offer.list.count', $count, ['count' => $count]), 'subtitle' => null];
+        // « 3 favoris » (décision 2026-11-25-nombre-favoris).
+        return ['title' => trans_choice('offer::offer.list.favorites_count', $count, ['count' => $count]), 'subtitle' => null];
     }
 
     public function emptyText(): string

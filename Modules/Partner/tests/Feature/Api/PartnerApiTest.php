@@ -125,6 +125,31 @@ class PartnerApiTest extends TestCase
         $this->assertSame([0, 0], [$partner->fresh()->views_count, $partner->fresh()->clicks_count]);
     }
 
+    public function test_featured_partners_come_first_on_the_home_and_the_partners_page(): void
+    {
+        // Décision 2026-11-25-vedettes-d-abord.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $first = Partner::factory()->for($this->cameroon)->create(['position' => 1]);
+        $second = Partner::factory()->for($this->cameroon)->create(['position' => 2]);
+        // Jusqu'à son jour inclus : aujourd'hui compte encore (décision 2026-11-25-vedette-en-dates).
+        $soon = Partner::factory()->for($this->cameroon)->create(['position' => 3, 'featured_until' => today()]);
+        $later = Partner::factory()->for($this->cameroon)->create(['position' => 4, 'featured_until' => now()->addWeek()]);
+        Partner::factory()->for($this->cameroon)->create(['position' => 5, 'featured_until' => now()->subDay()]);
+        $ids = fn (Partner ...$partners): array => array_map(fn (Partner $partner): string => (string) $partner->getKey(), $partners);
+
+        // La page « Partenaires » : les vedettes, la plus lointaine d'abord, puis l'ordre du back-office ; une vedette
+        // passée reprend sa place.
+        $listed = array_column($this->withHeaders($headers)->getJson('/api/v1/lists/partner.all')->assertOk()->json('data.items'), 'id');
+        $this->assertSame([...$ids($later, $soon, $first, $second)], array_slice($listed, 0, 4));
+        $this->assertCount(5, $listed);
+
+        // L'accueil, avec 3 places : les deux vedettes d'abord, puis un autre tiré au hasard.
+        Setting::current()->update(['home_partners' => 3]);
+        $home = array_column($this->partners()->assertOk()->json('data'), 'id');
+        $this->assertSame($ids($later, $soon), array_slice($home, 0, 2));
+        $this->assertCount(3, $home);
+    }
+
     public function test_as_many_partners_as_set_in_the_application_drawn_at_random(): void
     {
         // Décision 2026-11-23-accueil-nombres-reglables : 10 sans réglage, sinon le nombre réglé.
@@ -225,6 +250,31 @@ class PartnerApiTest extends TestCase
         // Un visiteur : pas de pastille.
         $this->app['auth']->forgetGuards();
         $this->withoutToken()->withHeaders($headers)->getJson("/api/v1/partners/{$shown->getKey()}")->assertOk()->assertJsonMissingPath('data.status');
+    }
+
+    public function test_the_page_shows_the_views_to_the_partner_accounts_only(): void
+    {
+        // Décision 2026-11-25-partenaire-vues-sur-sa-page.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $member = User::factory()->create(['locale' => 'fr']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $other = User::factory()->create(['locale' => 'fr']);
+        $other->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $partner = Partner::factory()->for($this->cameroon)->create(['views_count' => 12]);
+        // Un compte rattaché, sans être administrateur.
+        $partner->users()->attach($member->getKey(), ['is_admin' => false]);
+
+        $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
+            ->assertOk()->assertJsonPath('data.views', ['count' => 12, 'label' => '12 vues']);
+
+        // Un autre membre, un visiteur : rien.
+        $this->app['auth']->forgetGuards();
+        $this->withToken($other->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
+            ->assertOk()->assertJsonMissingPath('data.views');
+        $this->app['auth']->forgetGuards();
+        $this->withoutToken()->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonMissingPath('data.views');
+        // La liste de l'accueil ne le donne pas.
+        $this->assertArrayNotHasKey('views', $this->withHeaders($headers)->getJson('/api/v1/partners')->json('data.0'));
     }
 
     public function test_the_list_is_searched_by_name_or_description_in_every_language(): void

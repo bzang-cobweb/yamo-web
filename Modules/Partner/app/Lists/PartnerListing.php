@@ -62,7 +62,26 @@ class PartnerListing extends Listing
      */
     public function query(): Builder
     {
-        return Partner::query()->visible()->with('media')->orderBy('position')->orderBy('id');
+        // Les vedettes, épinglées en tête (`pinned()`), sont exclues ici (décision 2026-11-25-vedettes-d-abord).
+        return Partner::query()->visible()->where(fn (Builder $notFeatured) => $notFeatured->whereNull('featured_until')->orWhereDate('featured_until', '<', today()))
+            ->with('media')->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * Les partenaires en vedette, en tête de la première page : la date la plus lointaine d'abord, puis l'ordre du
+     * back-office (décision 2026-11-25-vedettes-d-abord).
+     *
+     * @return Builder<Partner>
+     */
+    protected function pinned(): Builder
+    {
+        return Partner::query()->visible()->featured()->with('media')->orderByDesc('featured_until')->orderBy('position')->orderBy('id');
+    }
+
+    /** Toutes les vedettes, sans limite. */
+    public function pinnedLimit(): int
+    {
+        return PHP_INT_MAX;
     }
 
     public function searchPlaceholder(): string
