@@ -111,6 +111,11 @@ return [
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
         'city' => 'Ville',
+        'price' => 'Prix',
+        'identified' => 'Membre identifié',
+        'any' => 'Tous',
+        'yes' => 'Oui',
+        'no' => 'Non',
     ],
     // Adresse saisie (décision 2026-11-19-contrat-adresse-offre-recherche).
     'street' => 'Rue',

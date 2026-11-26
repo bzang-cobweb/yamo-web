@@ -112,7 +112,7 @@ final class FieldComponent
             FieldType::RADIO => Radio::make($name)->options($field->optionLabels()),
             FieldType::CHECKBOX, FieldType::SWITCH => Toggle::make($name),
             FieldType::CHECKBOX_GROUP => self::boundedCheckboxList(CheckboxList::make($name)->options($field->optionLabels())),
-            FieldType::MULTISELECT => Select::make($name)->multiple()->options($field->optionLabels()),
+            FieldType::MULTISELECT, FieldType::CHIPS => Select::make($name)->multiple()->options($field->optionLabels()),
             FieldType::RATING => Select::make($name)->options(array_combine(range(1, 5), array_map(fn (int $stars): string => str_repeat('★', $stars), range(1, 5)))),
             FieldType::DATE => DatePicker::make($name)->native(false)->format('Y-m-d'),
             default => throw new LogicException("Champ « {$field->name} » : type {$field->type->value} sans équivalent dans le back-office."),

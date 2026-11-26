@@ -46,6 +46,8 @@ class FieldTest extends TestCase
                         Field::text('title')->required()->maxLength(5),
                     ]),
                     Field::multiselect('colors')->options(['red' => 'Rouge', 'blue' => 'Bleu']),
+                    // Des puces : la liste des options choisies, comme une liste à choix multiples (décision 2026-11-26-filtres-en-puces).
+                    Field::chips('moods')->options(['calm' => 'Calme', 'bright' => 'Lumineux']),
                     Field::range('budget')->rules(['min:0']),
                     Field::segmented('contact')->options(['mail' => 'E-mail', 'sms' => 'SMS']),
                     Field::text('pager')->visibleWhen('contact', 'sms')->required(),
@@ -108,6 +110,8 @@ class FieldTest extends TestCase
     {
         $this->assertNotContains('colors.0', $this->errors([...$this->valid(), 'colors' => ['red', 'blue']]));
         $this->assertContains('colors.1', $this->errors([...$this->valid(), 'colors' => ['red', 'green']]));
+        $this->assertNotContains('moods.0', $this->errors([...$this->valid(), 'moods' => ['calm']]));
+        $this->assertContains('moods.0', $this->errors([...$this->valid(), 'moods' => ['noisy']]));
         foreach ([[null, '100'], ['50', null], ['50', '100'], ['5', '5']] as $valid) {
             $this->assertSame([], array_values(array_filter($this->errors([...$this->valid(), 'budget' => $valid]), fn (string $key): bool => str_starts_with($key, 'budget'))), json_encode($valid));
         }

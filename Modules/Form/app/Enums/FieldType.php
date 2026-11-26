@@ -32,6 +32,11 @@ enum FieldType: string
     case SEGMENTED = 'segmented';
     /** Liste déroulante à choix multiples : la liste des options choisies (décision 2026-11-19-contrat-multiselect-intervalle-equipements). */
     case MULTISELECT = 'multiselect';
+    /**
+     * Choix multiples en puces sur une ligne qui défile : la liste des options choisies, comme `multiselect`
+     * (décision 2026-11-26-filtres-en-puces).
+     */
+    case CHIPS = 'chips';
     /** Intervalle : `[min, max]`, chaque borne facultative, max ≥ min. */
     case RANGE = 'range';
     /** Note en étoiles, entier de 1 à 5 (décision 2026-11-19-contrat-avis-offres). */
@@ -54,7 +59,7 @@ enum FieldType: string
      */
     public function hasOptions(): bool
     {
-        return in_array($this, [self::SELECT, self::RADIO, self::SEGMENTED, self::CHECKBOX_GROUP, self::MULTISELECT, self::PHONE], true);
+        return in_array($this, [self::SELECT, self::RADIO, self::SEGMENTED, self::CHECKBOX_GROUP, self::MULTISELECT, self::CHIPS, self::PHONE], true);
     }
 
     /**
@@ -71,7 +76,7 @@ enum FieldType: string
             self::NUMBER => ['numeric'],
             self::SELECT, self::RADIO, self::SEGMENTED => ['string', Rule::in($optionValues)],
             self::CHECKBOX, self::SWITCH => ['boolean'],
-            self::CHECKBOX_GROUP, self::MULTISELECT => ['array'],
+            self::CHECKBOX_GROUP, self::MULTISELECT, self::CHIPS => ['array'],
             self::RANGE => ['array', 'size:2'],
             self::DATE => ['date_format:Y-m-d'],
             self::PHONE => ['string', 'phone'],

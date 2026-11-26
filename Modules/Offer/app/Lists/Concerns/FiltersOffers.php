@@ -20,13 +20,14 @@ use Modules\Offer\Models\OfferAddress;
 trait FiltersOffers
 {
     /**
-     * La ville (parmi les offres de `$offers`), le prix, puis les filtres du domaine.
+     * La ville (parmi les offres de `$offers`), le prix, les filtres du domaine, puis l'éditeur identifié.
      *
      * @param  Builder<Offer>  $offers  les offres dont les villes sont proposées
      * @param  bool  $regionRequired  la région obligatoire, la première par défaut (la recherche)
+     * @param  bool  $withIdentified  le filtre « Membre identifié » ; pas pour ses propres offres
      * @return list<Field>
      */
-    protected function offerFilters(Builder $offers, bool $regionRequired = false): array
+    protected function offerFilters(Builder $offers, bool $regionRequired = false, bool $withIdentified = true): array
     {
         $regions = OfferRegions::options($offers);
         $domain = app(DomainRegistry::class)->require();
@@ -54,10 +55,16 @@ trait FiltersOffers
                 ->countryScoped(),
             // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
             ! $domain->hasPrice() ? null : Field::range('price')
-                ->label($domain->priceLabel())
+                // « Prix » quel que soit le domaine (décision 2026-11-26-filtre-prix-membre-identifie).
+                ->label(__('offer::offer.filters.price'))
                 ->suffix($currency)
                 ->rules(['min:0']),
             ...$domain->filters(),
+            // L'éditeur de l'offre identifié ou non (décision 2026-11-26-filtre-prix-membre-identifie).
+            ! $withIdentified ? null : Field::segmented('identified')
+                ->label(__('offer::offer.filters.identified'))
+                ->options(['any' => __('offer::offer.filters.any'), 'yes' => __('offer::offer.filters.yes'), 'no' => __('offer::offer.filters.no')])
+                ->default('any'),
         ]));
     }
 
@@ -93,6 +100,14 @@ trait FiltersOffers
         }
         if (is_numeric($max)) {
             $query->where('price', '<=', $max);
+        }
+
+        // « Oui » : l'éditeur identifié ; « Non » : pas identifié ; « Tous », ou une autre valeur, ne filtre rien.
+        $identified = $filters['identified'] ?? 'any';
+        if ($identified === 'yes') {
+            $query->whereHas('user', fn (Builder $user) => $user->whereNotNull('identified_at'));
+        } elseif ($identified === 'no') {
+            $query->whereHas('user', fn (Builder $user) => $user->whereNull('identified_at'));
         }
 
         app(DomainRegistry::class)->require()->applyFilters($query, $filters);

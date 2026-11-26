@@ -231,6 +231,15 @@ final class Field
     }
 
     /**
+     * Choix multiples en puces sur une ligne qui défile : la valeur est la liste des options choisies, comme
+     * `multiselect` (décision 2026-11-26-filtres-en-puces).
+     */
+    public static function chips(string $name): self
+    {
+        return new self($name, FieldType::CHIPS);
+    }
+
+    /**
      * Intervalle : deux bornes `[min, max]`, chacune facultative ; max ≥ min.
      * L'unité éventuelle (`suffix()`) vaut pour les deux.
      */
@@ -850,7 +859,7 @@ final class Field
             return [$this->name => [...$presence, ...$this->type->rules($values), new OptionBelongsToParent($this->dependsOn, $parents), ...$this->rules]];
         }
 
-        if (in_array($this->type, [FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT], true)) {
+        if (in_array($this->type, [FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT, FieldType::CHIPS], true)) {
             return [
                 $this->name => [...$presence, 'array', ...$this->rules],
                 $this->name.'.*' => ['string', Rule::in($values)],
@@ -1049,7 +1058,7 @@ final class Field
         $text = match ($this->type) {
             FieldType::SELECT, FieldType::RADIO, FieldType::SEGMENTED => $labels[(string) $value] ?? (string) $value,
             FieldType::RANGE => self::rangeText((array) $value, $locale),
-            FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
+            FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT, FieldType::CHIPS => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
             FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
             FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) $value))).str_repeat('☆', 5 - $stars) : (string) $value,
             FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,

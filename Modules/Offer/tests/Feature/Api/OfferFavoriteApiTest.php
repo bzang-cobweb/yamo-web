@@ -210,7 +210,7 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
 
         $this->assertSame([(string) $douala->getKey()], $ids('?filter[city]=Douala'));
-        $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[rental_type]=long_term'));
+        $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[rental_type][]=long_term'));
         $this->assertSame([(string) $douala->getKey()], $ids('?filter[price][]=&filter[price][]=100000'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?search=bastos'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?search=yaound'));

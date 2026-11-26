@@ -68,6 +68,7 @@ return [
     // Filtres de la vitrine (décision 2026-11-19-contrat-filtres-vitrine).
     'filters' => [
         'amenities_help' => 'Unterkünfte mit allen gewählten Ausstattungen.',
+        'rules_help' => 'Unterkünfte mit allen gewählten Regeln.',
         'any' => 'Alle',
         'furnished' => 'Ja',
         'unfurnished' => 'Nein',

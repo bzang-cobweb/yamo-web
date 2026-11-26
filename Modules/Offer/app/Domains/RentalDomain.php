@@ -171,9 +171,6 @@ class RentalDomain extends Domain
     }
 
     /** Documents qu'un propriétaire peut demander (décision 2026-11-19-contrat-regles-informations). */
-    /** Le nom d'un filtre de règle : `rule_` suivi de l'id de sa case. */
-    public const RULE_FILTER = 'rule_';
-
     public const DOCUMENTS = ['id_card', 'passport', 'residence_permit', 'proof_of_income', 'guarantor', 'deposit'];
 
     public function flagGroups(): array
@@ -403,36 +400,41 @@ class RentalDomain extends Domain
     public function filters(): array
     {
         return [
-            Field::multiselect('property_type')
+            // Le type de logement en puces, comme les équipements et les règles (décision 2026-11-26-filtres-en-puces).
+            Field::chips('property_type')
                 ->label(__('offer::rental.property_type'))
                 ->options(collect(self::PROPERTY_TYPES)->mapWithKeys(fn (string $type): array => [$type => __('offer::rental.property_types.'.$type)])->all()),
-            Field::select('rental_type')
+            // Le type de location en puces aussi, plusieurs à la fois (décision 2026-11-26-filtres-en-puces).
+            Field::chips('rental_type')
                 ->label(__('offer::rental.rental_type'))
                 ->options(RentalTypeEnum::options()),
-            Field::select('bedrooms')
+            // Chambres et salles de bain en puces : les nombres choisis, le dernier « et plus » (décision
+            // 2026-11-26-filtres-en-puces, remplace « au moins » de la décision 2026-11-21-salles-de-bain).
+            Field::chips('bedrooms')
                 ->label(__('offer::rental.filters.bedrooms'))
-                ->options(collect([1, 2, 3, 4])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
-            // Au moins tant de salles de bain, comme les chambres (décision 2026-11-21-salles-de-bain).
-            Field::select('bathrooms')
+                ->options(self::countOptions(self::BEDROOMS_FILTER_MAX)),
+            Field::chips('bathrooms')
                 ->label(__('offer::rental.filters.bathrooms'))
-                ->options(collect([1, 2, 3])->mapWithKeys(fn (int $count): array => [(string) $count => $count.'+'])->all()),
+                ->options(self::countOptions(self::BATHROOMS_FILTER_MAX)),
             // Pas pour la location meublée, qui se réserve par dates : visible sans type de location choisi ou
-            // pour un non meublé (décision 2026-11-22-filtre-libre-des-sans-meuble).
+            // pour un non meublé (décision 2026-11-22-filtre-libre-des-sans-meuble) ; plusieurs types choisis, tous non
+            // meublés (décision 2026-11-26-filtres-en-puces).
             Field::date('available_from')
                 ->label(__('offer::rental.filters.available_from'))
                 ->help(__('offer::rental.filters.available_from_help'))
                 ->visibleWhen('rental_type', ['', ...RentalTypeEnum::unfurnishedValues()]),
-            // Les « Équipements » cherchés, par id de case (décision 2026-11-25-equipements-en-categories).
-            Field::multiselect('feature_flags')
+            // Les « Équipements » cherchés, par id de case (décision 2026-11-25-equipements-en-categories), en puces (décision
+            // 2026-11-26-filtres-en-puces).
+            Field::chips('feature_flags')
                 ->label(__('offer::rental.amenities_label'))
                 ->help(__('offer::rental.filters.amenities_help'))
                 ->optionsUsing(fn (): array => OfferCategory::childrenOf($this->flagGroups()['feature_flags'])),
-            // Une règle Oui / Non par case de « Règles », comme « Meublé » (décision 2026-11-19-filtres-regles ; décision 2026-11-25-categories-slug-traduit) :
-            // une case ajoutée au back-office a son filtre.
-            ...array_map(fn (string $id, string $name): Field => Field::segmented(self::RULE_FILTER.$id)
-                ->label($name)
-                ->options(['any' => __('offer::rental.filters.any'), 'yes' => __('offer::rental.rules.yes'), 'no' => __('offer::rental.rules.no')])
-                ->default('any'), array_keys($rules = OfferCategory::childrenOf($this->flagGroups()['rule_flags'])), $rules),
+            // Les « Règles » cherchées, en puces comme les équipements : chaque règle choisie doit être cochée (décision
+            // 2026-11-26-filtres-en-puces, remplace un Oui / Non par règle). Une case ajoutée au back-office a sa puce.
+            Field::chips('rule_flags')
+                ->label(__('offer::rental.flag_roots.rules'))
+                ->help(__('offer::rental.filters.rules_help'))
+                ->optionsUsing(fn (): array => OfferCategory::childrenOf($this->flagGroups()['rule_flags'])),
         ];
     }
 
@@ -448,21 +450,57 @@ class RentalDomain extends Domain
         ];
     }
 
+    /** La dernière puce des chambres, « 4+ » (décision 2026-11-26-filtres-en-puces). */
+    public const BEDROOMS_FILTER_MAX = 4;
+
+    /** La dernière puce des salles de bain, « 3+ ». */
+    public const BATHROOMS_FILTER_MAX = 3;
+
+    /**
+     * Les puces d'un nombre : 1, 2… jusqu'à `$max`, la dernière « et plus » (« 4+ »).
+     *
+     * @return array<string, string>
+     */
+    private static function countOptions(int $max): array
+    {
+        return collect(range(1, $max))->mapWithKeys(fn (int $count): array => [(string) $count => $count === $max ? $count.'+' : (string) $count])->all();
+    }
+
+    /**
+     * Garde les offres dont le nombre `$column` est l'un des `$chosen` ; `$max` vaut « `$max` ou plus ». Une valeur hors
+     * des puces est ignorée ; aucune, rien n'est filtré.
+     *
+     * @param  Builder<Offer>  $query
+     */
+    private static function filterCount(Builder $query, string $column, mixed $chosen, int $max): void
+    {
+        $counts = array_values(array_filter(array_map('intval', array_filter((array) $chosen, 'is_numeric')), fn (int $count): bool => $count >= 1 && $count <= $max));
+        if ($counts === []) {
+            return;
+        }
+        $query->where(function (Builder $any) use ($column, $counts, $max): void {
+            $exact = array_values(array_filter($counts, fn (int $count): bool => $count < $max));
+            if ($exact !== []) {
+                $any->orWhereIn($column, $exact);
+            }
+            if (in_array($max, $counts, true)) {
+                $any->orWhere($column, '>=', $max);
+            }
+        });
+    }
+
     public function applyFilters(Builder $query, array $filters): void
     {
         if (isset($filters['property_type'])) {
             $query->whereIn('details->property_type', (array) $filters['property_type']);
         }
-        // « Tous » ne filtre rien.
-        if (is_string($filters['rental_type'] ?? null) && RentalTypeEnum::tryFrom($filters['rental_type']) !== null) {
-            $query->where('details->rental_type', $filters['rental_type']);
+        // Les types de location choisis (décision 2026-11-26-filtres-en-puces) ; aucun, ou une valeur inconnue, ne filtre rien.
+        $rentalTypes = array_values(array_filter(array_map('strval', (array) ($filters['rental_type'] ?? [])), fn (string $type): bool => RentalTypeEnum::tryFrom($type) !== null));
+        if ($rentalTypes !== []) {
+            $query->whereIn('details->rental_type', $rentalTypes);
         }
-        if (isset($filters['bedrooms'])) {
-            $query->where('details->bedrooms', '>=', (int) $filters['bedrooms']);
-        }
-        if (isset($filters['bathrooms'])) {
-            $query->where('details->bathrooms', '>=', (int) $filters['bathrooms']);
-        }
+        self::filterCount($query, 'details->bedrooms', $filters['bedrooms'] ?? [], self::BEDROOMS_FILTER_MAX);
+        self::filterCount($query, 'details->bathrooms', $filters['bathrooms'] ?? [], self::BATHROOMS_FILTER_MAX);
         // Libre à cette date : disponible avant ou ce jour-là, ou sans date (libre tout de suite) ;
         // un meublé n'a pas de date de disponibilité (décision 2026-11-20-disponibilite-sans-meuble).
         if (isset($filters['available_from'])) {
@@ -475,16 +513,9 @@ class RentalDomain extends Domain
         foreach ((array) ($filters['feature_flags'] ?? []) as $id) {
             $query->whereJsonContains('details->feature_flags', (string) $id);
         }
-        // Une règle : « Oui », sa case cochée ; « Non », pas cochée (décision 2026-11-25-cases-par-categories, remplace « non renseignée ne répond ni oui ni
-        // non » de la décision 2026-11-19-filtres-regles).
-        // Par l'id de la case dans `details.rule_flags` (décision 2026-11-25-categories-slug-traduit).
-        foreach (array_keys(OfferCategory::childrenOf($this->flagGroups()['rule_flags'])) as $id) {
-            $answer = $filters[self::RULE_FILTER.$id] ?? 'any';
-            if ($answer === 'yes') {
-                $query->whereJsonContains('details->rule_flags', (string) $id);
-            } elseif ($answer === 'no') {
-                $query->where(fn (Builder $unchecked) => $unchecked->whereNull('details->rule_flags')->orWhereJsonDoesntContain('details->rule_flags', (string) $id));
-            }
+        // Toutes les règles choisies, cochées sur l'offre, par id de case (décision 2026-11-26-filtres-en-puces).
+        foreach ((array) ($filters['rule_flags'] ?? []) as $id) {
+            $query->whereJsonContains('details->rule_flags', (string) $id);
         }
     }
 

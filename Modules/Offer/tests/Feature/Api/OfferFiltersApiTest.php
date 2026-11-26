@@ -139,52 +139,62 @@ class OfferFiltersApiTest extends TestCase
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
 
         // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
-        // Une règle par case de « Règles », par son id (décision 2026-11-25-categories-slug-traduit).
-        $rules = array_map(fn (string $name): string => 'rule_'.$this->flag($name), ['Animaux acceptés', 'Fumeurs acceptés', 'Fêtes et événements autorisés']);
-        $this->assertSame(['region', 'city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'feature_flags', ...$rules], array_keys($filters));
+        // Les équipements, puis les règles, en puces (décision 2026-11-26-filtres-en-puces).
+        $this->assertSame(['region', 'city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'feature_flags', 'rule_flags', 'identified'], array_keys($filters));
+        // « Prix », quel que soit le domaine (décision 2026-11-26-filtre-prix-membre-identifie).
+        $this->assertSame('Prix', $filters['price']['label']);
         // « Libre dès le » : sans type de location choisi ou pour un non meublé, pas pour la location meublée
         // (décision 2026-11-22-filtre-libre-des-sans-meuble).
         $this->assertSame(['field' => 'rental_type', 'value' => '', 'values' => ['', 'long_term', 'shared']], $filters['available_from']['visible_when']);
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
-        // Un seul intervalle pour le loyer ; le type et les équipements en liste à choix multiples.
+        // Un seul intervalle pour le loyer ; le type et les équipements en puces.
         $this->assertSame('range', $filters['price']['type']);
         $this->assertSame('FCFA', $filters['price']['suffix']);
-        $this->assertSame('multiselect', $filters['property_type']['type']);
-        $this->assertSame('multiselect', $filters['feature_flags']['type']);
+        $this->assertSame('chips', $filters['property_type']['type']);
+        $this->assertSame('chips', $filters['feature_flags']['type']);
         $this->assertSame('Équipements', $filters['feature_flags']['label']);
         $this->assertCount(15, $filters['feature_flags']['options']);
-        // Le type de location, en liste (« Tous » ajouté par l'app).
-        $this->assertSame('select', $filters['rental_type']['type']);
+        // Le type de location en puces, plusieurs à la fois (décision 2026-11-26-filtres-en-puces).
+        $this->assertSame('chips', $filters['rental_type']['type']);
         $this->assertSame(['long_term', 'furnished', 'shared'], array_column($filters['rental_type']['options'], 'value'));
     }
 
-    public function test_yes_no_rules_filter_on_the_owner_answer(): void
+    public function test_rules_filter_keeps_offers_with_every_chosen_rule(): void
     {
-        // Décision 2026-11-19-filtres-regles.
+        // Les règles en puces, chaque règle choisie cochée sur l'offre (décision 2026-11-26-filtres-en-puces).
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
-        $pets = 'rule_'.$this->flag('Animaux acceptés');
-        $smoking = 'rule_'.$this->flag('Fumeurs acceptés');
-        $parties = 'rule_'.$this->flag('Fêtes et événements autorisés');
-        $this->assertSame('segmented', $filters[$pets]['type']);
-        $this->assertSame('Animaux acceptés', $filters[$pets]['label']);
-        $this->assertSame(['Tous', 'Oui', 'Non'], array_column($filters[$pets]['options'], 'label'));
-        $this->assertSame('any', $filters[$pets]['default']);
+        $this->assertSame('chips', $filters['rule_flags']['type']);
+        $this->assertSame('Règles', $filters['rule_flags']['label']);
+        $this->assertSame(['Animaux acceptés', 'Fumeurs acceptés', 'Fêtes et événements autorisés'], array_column($filters['rule_flags']['options'], 'label'));
 
-        // Les cases cochées, par id de catégorie (décision 2026-11-25-categories-slug-traduit).
-        $withPets = $this->home('Douala', 80000, ['property_type' => 'studio', 'rule_flags' => [(string) $this->flag('Animaux acceptés')]]);
-        $noPets = $this->home('Douala', 80000, ['property_type' => 'studio', 'rule_flags' => []]);
+        $pets = (string) $this->flag('Animaux acceptés');
+        $parties = (string) $this->flag('Fêtes et événements autorisés');
+        $withPets = $this->home('Douala', 80000, ['property_type' => 'studio', 'rule_flags' => [$pets]]);
+        $both = $this->home('Douala', 80000, ['property_type' => 'studio', 'rule_flags' => [$pets, $parties]]);
         $unknown = $this->home('Douala', 80000, ['property_type' => 'studio']);
 
-        $this->assertSame([(string) $withPets->getKey()], $this->ids("?filter[{$pets}]=yes"));
-        // « Non » : la case pas cochée, rien d'enregistré compris.
-        $this->assertEqualsCanonicalizing(array_map('strval', [$noPets->getKey(), $unknown->getKey()]), $this->ids("?filter[{$pets}]=no"));
-        $this->assertCount(3, $this->ids("?filter[{$smoking}]=no"));
-        $this->assertSame([], $this->ids("?filter[{$pets}]=yes&filter[{$parties}]=yes"));
-        // « Tous », ou une valeur inconnue, ne filtre rien.
-        $this->assertCount(3, $this->ids("?filter[{$pets}]=any"));
-        $this->assertCount(3, $this->ids("?filter[{$pets}]=maybe"));
+        $this->assertEqualsCanonicalizing([(string) $withPets->getKey(), (string) $both->getKey()], $this->ids("?filter[rule_flags][]={$pets}"));
+        $this->assertSame([(string) $both->getKey()], $this->ids("?filter[rule_flags][]={$pets}&filter[rule_flags][]={$parties}"));
+        // Aucune règle choisie : rien n'est filtré.
         $this->assertContains((string) $unknown->getKey(), $this->ids());
+    }
+
+    public function test_identified_filter_keeps_offers_by_their_publisher(): void
+    {
+        // Décision 2026-11-26-filtre-prix-membre-identifie.
+        $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
+        $this->assertSame('segmented', $filters['identified']['type']);
+        $this->assertSame('Membre identifié', $filters['identified']['label']);
+        $this->assertSame(['Tous', 'Oui', 'Non'], array_column($filters['identified']['options'], 'label'));
+        $this->assertSame('any', $filters['identified']['default']);
+
+        $identified = $this->home('Douala', 80000, ['property_type' => 'studio'], ['user_id' => User::factory()->create(['identified_at' => now()])->getKey()]);
+        $unidentified = $this->home('Douala', 80000, ['property_type' => 'studio'], ['user_id' => User::factory()->create(['identified_at' => null])->getKey()]);
+
+        $this->assertSame([(string) $identified->getKey()], $this->ids('?filter[identified]=yes'));
+        $this->assertSame([(string) $unidentified->getKey()], $this->ids('?filter[identified]=no'));
+        $this->assertCount(2, $this->ids('?filter[identified]=any'));
     }
 
     public function test_filters_combine_with_each_other_and_the_search(): void
@@ -198,12 +208,18 @@ class OfferFiltersApiTest extends TestCase
 
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
         $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city]=Douala&filter[price][]=&filter[price][]=100000'));
-        $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[rental_type]=furnished'));
-        $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[rental_type]=long_term'));
+        $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[rental_type][]=furnished'));
+        $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[rental_type][]=long_term'));
+        // Plusieurs types de location à la fois (décision 2026-11-26-filtres-en-puces).
+        $this->assertCount(5, $this->ids('?filter[rental_type][]=long_term&filter[rental_type][]=furnished'));
         $this->assertCount(5, $this->ids('?filter[furnished]=any'));
-        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $furnished->getKey()]), $this->ids('?filter[bedrooms]=2'));
-        // Au moins tant de salles de bain ; non renseigné : écarté (décision 2026-11-21-salles-de-bain).
-        $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms]=2'));
+        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $furnished->getKey()]), $this->ids('?filter[bedrooms][]=2&filter[bedrooms][]=3'));
+        // Les nombres choisis, exacts ; « 4+ » (la dernière puce) : 4 ou plus (décision 2026-11-26-filtres-en-puces).
+        $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[bedrooms][]=2'));
+        $this->assertSame([], $this->ids('?filter[bedrooms][]=4'));
+        $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms][]=2&filter[bathrooms][]=3&filter[bedrooms][]=3'));
+        // Les salles de bain choisies ; non renseigné : écarté (décision 2026-11-26-filtres-en-puces).
+        $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms][]=2'));
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
         // Libre le 1er janvier : pas celui qui se libère le 15.

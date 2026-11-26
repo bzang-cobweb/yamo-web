@@ -108,7 +108,7 @@ class OfferListing extends Listing
             Field::select('booking_status')
                 ->label(__('offer::booking.profile.filter_booking_status'))
                 ->options(collect(self::BOOKING_STATUSES)->mapWithKeys(fn (BookingStatusEnum $status): array => [$status->value => $status->label()])->all()),
-            ...$this->offerFilters($this->mine()),
+            ...$this->offerFilters($this->mine(), withIdentified: false),
         ];
     }
 
