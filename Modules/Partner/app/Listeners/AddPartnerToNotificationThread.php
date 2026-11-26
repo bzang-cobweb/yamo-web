@@ -2,7 +2,9 @@
 
 namespace Modules\Partner\Listeners;
 
+use App\Support\DisplayTime;
 use Illuminate\Support\Str;
+use Modules\Auth\Models\User;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Notifications\PartnerNotification;
@@ -10,7 +12,7 @@ use Modules\Partner\Notifications\PartnerNotificationFilter;
 
 /**
  * Sur la page d'une notification du fil d'un partenaire (`partner:group:5`), l'en-tête du partenaire (décisions
- * 2026-11-26-booking-summary et 2026-11-26-entete-partenaire) : son nom, en lien vers sa page, et son slogan dessous. Un
+ * 2026-11-26-booking-summary et 2026-11-26-entete-partenaire) : son nom, en lien vers sa page (décision 2026-11-26-entete-partenaire-sans-slogan). Un
  * partenaire introuvable : aucun en-tête, le texte de la notification à la place. Sous l'en-tête, ses dernières
  * modifications (décision 2026-11-26-partenaire-dernieres-modifications).
  */
@@ -35,29 +37,60 @@ final class AddPartnerToNotificationThread
             return;
         }
 
-        $slogan = (string) $partner->getTranslation('slogan', $locale);
+        // Son nom seul, sans slogan (décision 2026-11-26-entete-partenaire-sans-slogan).
         $event->data['heading'] = [
             'title' => $name,
-            'subtitle' => $slogan === '' ? null : $slogan,
+            'subtitle' => null,
             'link' => '/partners/'.$partner->getKey(),
         ];
 
-        // Sous l'en-tête, ses dernières modifications depuis l'app, un champ par ligne : « Slogan » — « avant » → « après »
-        // (décision 2026-11-26-partenaire-dernieres-modifications) ; aucune : pas de lignes.
-        $changes = is_array($partner->last_changes['changes'] ?? null) ? $partner->last_changes['changes'] : [];
+        // Sous l'en-tête, ses dernières modifications depuis l'app, deux lignes par champ : « Slogan (avant) », « Slogan
+        // (après) » (décisions 2026-11-26-partenaire-dernieres-modifications et 2026-11-26-modifications-avant-apres) ;
+        // aucune : pas de lignes.
+        $last = is_array($partner->last_changes) ? $partner->last_changes : [];
+        $changes = is_array($last['changes'] ?? null) ? $last['changes'] : [];
         $lines = [];
         foreach ($changes as $change) {
             if (! is_array($change) || ! is_string($change['field'] ?? null)) {
                 continue;
             }
-            $lines[] = [
-                'key' => $change['field'],
-                'label' => (string) __('partner::partner.fields.'.$change['field']),
-                'value' => PartnerNotification::changeValue((string) ($change['old'] ?? ''), (string) ($change['new'] ?? '')),
-            ];
+            array_push($lines, ...PartnerNotification::changeLines($change['field'], (string) ($change['old'] ?? ''), (string) ($change['new'] ?? '')));
         }
         if ($lines !== []) {
-            $event->data['lines'] = $lines;
+            // En tête, quand et par qui (décision 2026-11-26-modifications-date-auteur) : les deux lignes ouvertes ; les
+            // champs changés derrière « Voir plus ».
+            $event->data['lines'] = [...$this->when($last), ...$this->who($last), ...$lines];
+            // Le titre du panneau de « Voir plus » (décision 2026-11-26-lignes-en-panneau).
+            $event->data['lines_title'] = (string) __('partner::partner.notify.changes.title');
         }
+    }
+
+    /**
+     * « Dernière modification » : la date et l'heure de la modification (« 26 nov. 2026 16:31 ») ; rien sans date.
+     *
+     * @param  array<string, mixed>  $last
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    private function when(array $last): array
+    {
+        $at = is_string($last['at'] ?? null) ? DisplayTime::date($last['at'], 'll LT') : null;
+
+        return $at === null ? [] : [['key' => 'changed_at', 'label' => (string) __('partner::partner.notify.changes.at'), 'value' => $at]];
+    }
+
+    /**
+     * « Modifié par » : le nom du compte, lu à l'affichage, en lien vers sa page ; rien si le compte n'existe plus.
+     *
+     * @param  array<string, mixed>  $last
+     * @return list<array{key: string, label: string, value: string, link: string}>
+     */
+    private function who(array $last): array
+    {
+        $author = is_int($last['by'] ?? null) ? User::query()->find($last['by']) : null;
+        if (! $author instanceof User) {
+            return [];
+        }
+
+        return [['key' => 'changed_by', 'label' => (string) __('partner::partner.notify.changes.by'), 'value' => (string) $author->full_name, 'link' => '/members/'.$author->getKey()]];
     }
 }

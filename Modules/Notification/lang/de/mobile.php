@@ -20,7 +20,8 @@ return [
         // Près de la date d'une étape modifiée (décision 2026-11-21-etape-modifiee-date).
         'edited' => 'Bearbeitet',
         'more' => 'Mehr anzeigen',
-        'less' => 'Weniger anzeigen',
+        // Le titre du panneau de « Voir plus », sans titre donné par le module (décision 2026-11-26-lignes-en-panneau).
+        'details' => 'Details',
         // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
         'delivery' => ['sent' => 'Gesendet', 'delivered' => 'Zugestellt', 'read' => 'Gelesen'],
         'open' => 'Öffnen',

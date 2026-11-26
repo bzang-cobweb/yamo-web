@@ -99,7 +99,7 @@ return [
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'notify' => [
         // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
-        'changes' => ['line' => ':field : :value', 'empty' => '(vide)'],
+        'changes' => ['line' => ':field : :value', 'empty' => '(vide)', 'before' => ':field (avant)', 'after' => ':field (après)', 'at' => 'Dernière modification', 'by' => 'Modifié par', 'title' => 'Modifications'],
         // La liste « Notifications » : le type « Partenaire », puis un type par statut, ses statuts dans le filtre « Statut » (décision 2026-11-24-notifications-types-groupes-statut).
         'filter_type' => 'Partenaire',
         'greeting' => 'Bonjour :name,',

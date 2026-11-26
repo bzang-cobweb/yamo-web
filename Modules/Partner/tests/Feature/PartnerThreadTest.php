@@ -3,6 +3,7 @@
 namespace Modules\Partner\Tests\Feature;
 
 use App\Models\Setting;
+use App\Support\DisplayTime;
 use Filament\Facades\Filament;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Notifications\DatabaseNotification;
@@ -83,15 +84,33 @@ class PartnerThreadTest extends AuthFilamentTestCase
         $this->assertSame($author->getKey(), $partner->last_changes['by']);
         $edit = $team->notifications()->latest()->first();
         $this->assertArrayNotHasKey('changes', $edit->data);
-        // La page de la notification les montre en lignes, sous l'en-tête.
+        // La page de la notification les montre en lignes, sous l'en-tête : d'abord quand et par qui (décision
+        // 2026-11-26-modifications-date-auteur), puis les champs changés.
         $this->assertSame([
-            ['key' => 'slogan', 'label' => 'Slogan', 'value' => '« Vos meubles en sécurité. » → (vide)'],
-            ['key' => 'website', 'label' => 'Lien', 'value' => '(vide) → « https://wouri.test »'],
+            ['key' => 'changed_at', 'label' => 'Dernière modification', 'value' => DisplayTime::date($partner->last_changes['at'], 'll LT', 'fr')],
+            ['key' => 'changed_by', 'label' => 'Modifié par', 'value' => $author->full_name, 'link' => '/members/'.$author->getKey()],
+            ['key' => 'slogan_before', 'label' => 'Slogan (avant)', 'value' => 'Vos meubles en sécurité.'],
+            ['key' => 'slogan_after', 'label' => 'Slogan (après)', 'value' => '(vide)'],
+            ['key' => 'website_before', 'label' => 'Lien (avant)', 'value' => '(vide)'],
+            ['key' => 'website_after', 'label' => 'Lien (après)', 'value' => 'https://wouri.test'],
         ], $this->api($author, 'GET', '/notifications/'.$this->api($author, 'GET', '/notifications')->json('data.items.0.id'))->json('data.lines'));
+
+        // Un auteur qui n'existe plus : pas de ligne « Modifié par ».
+        $kept = $partner->last_changes;
+        $partner->forceFill(['last_changes' => [...$kept, 'by' => 999999]])->save();
+        $lines = $this->api($author, 'GET', '/notifications/'.$this->api($author, 'GET', '/notifications')->json('data.items.0.id'))->json('data.lines');
+        $this->assertSame(['changed_at', 'slogan_before', 'slogan_after', 'website_before', 'website_after'], array_column($lines, 'key'));
+        $partner->forceFill(['last_changes' => $kept])->save();
+
+        // La description, changée avec un autre champ, vient toujours en dernier (décision 2026-11-26-description-en-dernier).
+        $this->travel(1)->minutes();
+        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", [...$fields, 'description' => 'Nouveau texte.', 'slogan' => '', 'website' => 'https://wouri.test', 'cta_label' => 'Écrire'])->assertNoContent();
+        $this->assertSame(['cta_label', 'description'], array_column($partner->refresh()->last_changes['changes'], 'field'));
+        $fields = [...$fields, 'description' => 'Nouveau texte.', 'cta_label' => 'Écrire'];
 
         // Rien de changé : aucune notification de plus.
         $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", [...$fields, 'slogan' => '', 'website' => 'https://wouri.test'])->assertNoContent();
-        $this->assertSame(2, $team->notifications()->count());
+        $this->assertSame(3, $team->notifications()->count());
     }
 
     public function test_a_partner_thread_is_read_by_all_its_accounts(): void
@@ -132,12 +151,18 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $this->assertSame($labels, array_column($page['history'], 'label'));
             // Sous l'en-tête, la dernière modification du partenaire, gardée sur lui (décision
             // 2026-11-26-partenaire-dernieres-modifications) ; les étapes du suivi gardent leur libellé.
-            $this->assertSame([['key' => 'description', 'label' => 'Description', 'value' => '« Autre texte. » → « Encore. »']], $page['lines']);
+            $this->assertSame(['changed_at', 'changed_by', 'description_before', 'description_after'], array_column($page['lines'], 'key'));
+            $this->assertSame('Modifications', $page['lines_title']);
+            $this->assertSame($author->full_name, $page['lines'][1]['value']);
+            $this->assertSame([
+                ['key' => 'description_before', 'label' => 'Description (avant)', 'value' => 'Autre texte.'],
+                ['key' => 'description_after', 'label' => 'Description (après)', 'value' => 'Encore.'],
+            ], array_slice($page['lines'], 2));
             $this->assertSame([null, null, null, null], array_column($page['history'], 'message'));
-            // L'en-tête du partenaire : son nom vers sa page, son slogan dessous (décision 2026-11-26-entete-partenaire).
+            // L'en-tête du partenaire : son nom vers sa page, sans slogan (décision 2026-11-26-entete-partenaire-sans-slogan).
             $this->assertSame([
                 'title' => (string) $partner->getTranslation('name', 'fr'),
-                'subtitle' => 'Vos meubles en sécurité.',
+                'subtitle' => null,
                 'link' => '/partners/'.$partner->getKey(),
             ], $page['heading']);
         }

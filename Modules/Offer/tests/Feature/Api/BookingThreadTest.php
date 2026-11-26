@@ -267,6 +267,8 @@ class BookingThreadTest extends TestCase
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande de séjour reçue', $page['title']);
             // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
             $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
+            // Le titre du panneau de « Voir plus » (décision 2026-11-26-lignes-en-panneau).
+            $this->assertSame('Détails de la demande', $page['lines_title']);
             // L'en-tête générique de la page : le nom du logement vers sa fiche, et le titre composé.
             $this->assertSame([
                 'title' => $this->offer->getTranslation('title', 'fr'),

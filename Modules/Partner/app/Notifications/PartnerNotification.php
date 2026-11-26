@@ -186,14 +186,36 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     }
 
     /**
-     * Un champ changé, dans la langue courante : « « avant » → « après » » ; un champ vide se dit « (vide) » (décision
-     * 2026-11-26-partenaire-modifications).
+     * Un champ changé, dans la langue courante, pour l'e-mail : « « avant » → « après » » ; un champ vide se dit
+     * « (vide) » (décision 2026-11-26-partenaire-modifications).
      */
     public static function changeValue(string $old, string $new): string
     {
-        $value = fn (string $text): string => $text === '' ? (string) __('partner::partner.notify.changes.empty') : '« '.$text.' »';
+        return self::quoted($old).' → '.self::quoted($new);
+    }
 
-        return $value($old).' → '.$value($new);
+    /**
+     * Les lignes d'un champ changé sur la page d'une notification, dans la langue courante : « Slogan (avant) » puis
+     * « Slogan (après) », chacune avec sa valeur ; un champ vide se dit « (vide) » (décision
+     * 2026-11-26-modifications-avant-apres).
+     *
+     * @return list<array{key: string, label: string, value: string}>
+     */
+    public static function changeLines(string $field, string $old, string $new): array
+    {
+        $label = (string) __('partner::partner.fields.'.$field);
+        $value = fn (string $text): string => $text === '' ? (string) __('partner::partner.notify.changes.empty') : $text;
+
+        return [
+            ['key' => $field.'_before', 'label' => (string) __('partner::partner.notify.changes.before', ['field' => $label]), 'value' => $value($old)],
+            ['key' => $field.'_after', 'label' => (string) __('partner::partner.notify.changes.after', ['field' => $label]), 'value' => $value($new)],
+        ];
+    }
+
+    /** Une valeur entre guillemets, « (vide) » sans valeur. */
+    private static function quoted(string $text): string
+    {
+        return $text === '' ? (string) __('partner::partner.notify.changes.empty') : '« '.$text.' »';
     }
 
     private function isAuthor(object $notifiable): bool

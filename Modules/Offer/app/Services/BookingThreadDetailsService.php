@@ -39,6 +39,10 @@ class BookingThreadDetailsService
         $booking = $bookingId === null ? null : $this->cache->find($bookingId);
 
         $data['booking'] = $booking === null ? null : (new BookingResource($booking))->resolve(request());
+        // Le titre du panneau de « Voir plus » : toutes les lignes de la demande (décision 2026-11-26-lignes-en-panneau).
+        if ($booking !== null) {
+            $data['lines_title'] = (string) __('offer::booking.detail.lines_title');
+        }
 
         $mine = $booking !== null && (string) $booking->user_id === $readerId;
 

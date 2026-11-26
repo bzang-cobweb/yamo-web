@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-26-entete-partenaire-sans-slogan.md (plus de slogan en sous-titre)
+
 # `2026-11-26` — L'en-tête de la page d'une notification d'un partenaire
 
 - **Type** : décision (complète 2026-11-26-booking-summary)

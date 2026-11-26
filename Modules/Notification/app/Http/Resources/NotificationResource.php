@@ -132,6 +132,8 @@ class NotificationResource extends JsonResource
          * Données par le module du fil (décision 2026-11-26-partenaire-dernieres-modifications).
          */
         $item['lines'] = null;
+        /** Le titre du panneau qui montre toutes les lignes (« Voir plus ») ; `null` : un titre générique (décision 2026-11-26-lignes-en-panneau). */
+        $item['lines_title'] = null;
 
         // Le module du fil complète la réponse (une demande : `booking`).
         $thread = $notification->getAttribute('thread');

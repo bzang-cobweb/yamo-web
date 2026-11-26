@@ -163,7 +163,8 @@ class PartnerService
     }
 
     /**
-     * Les champs qu'un membre modifie, dans la langue `$locale` pour les textes ; `''` pour un champ vide.
+     * Les champs qu'un membre modifie, dans la langue `$locale` pour les textes, la description en dernier ; `''` pour un
+     * champ vide.
      *
      * @return array<string, string>
      */
@@ -173,8 +174,14 @@ class PartnerService
         foreach (self::TEXT_FIELDS as $key) {
             $values[$key] = (string) $partner->getTranslation($key, $locale, false);
         }
+        $values = [...$values, 'contact_email' => (string) $partner->contact_email, 'contact_phone' => (string) $partner->contact_phone];
 
-        return [...$values, 'contact_email' => (string) $partner->contact_email, 'contact_phone' => (string) $partner->contact_phone];
+        // La description, le texte le plus long, toujours en dernier (décision 2026-11-26-description-en-dernier) : ses
+        // changements suivent ceux des autres champs, sur la page comme dans l'e-mail.
+        $description = $values['description'];
+        unset($values['description']);
+
+        return [...$values, 'description' => $description];
     }
 
     /**
