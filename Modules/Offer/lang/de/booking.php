@@ -70,7 +70,7 @@ return [
         'check_out' => 'Abreisedatum',
         'visit_date' => 'Wunschdatum',
         'guests' => 'Gäste',
-        'message' => 'Nachricht an den Eigentümer',
+        'message' => 'Nachricht',
         'message_placeholder' => 'Stellen Sie sich vor, nennen Sie Ihre Wünsche…',
         'price_help' => ':price; der Gesamtbetrag steht nach dem Senden in den Buchungsdetails.',
         'submit_stay' => 'Anfrage senden',
@@ -79,7 +79,7 @@ return [
         'sent_visit' => 'Besichtigungsanfrage gesendet. Der Eigentümer antwortet Ihnen.',
         'pending_exists' => 'Sie haben für dieses Angebot bereits eine ausstehende Anfrage.',
         'own_overlap' => 'Sie haben für diese Unterkunft bereits eine Anfrage an diesen Daten.',
-        'edit_title' => 'Anfrage ändern',
+        'edit_title' => ':Request ändern',
         'save' => 'Speichern',
         'updated' => ':Request geändert.',
         'edit' => 'Ändern',
@@ -103,14 +103,14 @@ return [
         'sent' => 'Antwort gesendet.',
     ],
     'cancel' => [
-        'label' => 'Anfrage stornieren',
+        'label' => ':Request stornieren',
         'confirm' => 'Diese Anfrage stornieren? Der Eigentümer wird benachrichtigt.',
         'done' => ':Request storniert.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Stornieren',
         'submit' => 'Bestätigen',
-        'message' => 'Nachricht an den Eigentümer',
-        'message_placeholder' => 'Erklären Sie, warum Sie stornieren (optional)…',
+        'message' => 'Nachricht',
+        'message_placeholder' => 'Erklären Sie, warum Sie stornieren…',
     ],
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'Meine Buchung', 'received' => ':Request erhalten', 'lines_title' => 'Details der Anfrage'],
+    'detail' => ['mine' => 'Meine Buchung', 'received' => ':Request erhalten', 'lines_title' => 'Details der :request'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Buchung',

@@ -20,7 +20,8 @@ use Modules\Offer\Models\OfferAddress;
  * Les filtres de « Mes réservations » (« Demandes » d'une offre a les siens, décision
  * 2026-11-21-demandes-d-une-offre) : statut réel, période d'après
  * les dates, ville du logement, le logement (avec une recherche), puis les types de l'offre servis par le
- * domaine ; tous en liste déroulante (décisions 2026-11-21-reservations-filtre-statut,
+ * domaine. Statut, période, région, type et type de location en puces, plusieurs valeurs à la fois (décision
+ * 2026-11-26-reservations-filtres-en-puces) ; ville et logement en liste déroulante (décisions 2026-11-21-reservations-filtre-statut,
  * 2026-11-21-reservations-periode-dates, 2026-11-21-reservations-filtre-type,
  * 2026-11-21-reservations-filtre-logement et 2026-11-21-filtre-logement-recherche).
  */
@@ -39,29 +40,35 @@ trait FiltersBookings
     public function filters(): array
     {
         return [
-            Field::select('status')
+            Field::chips('status')
                 ->label(__('offer::booking.profile.filter_status'))
                 ->options(BookingStatusEnum::options()),
-            BookingFilters::period(),
-            // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
-            Field::select('region')
+            BookingFilters::period(chips: true),
+            // Les types de l'offre, puis la région, la ville et le logement à la fin (décision
+            // 2026-11-26-reservations-lieu-en-dernier).
+            ...app(DomainRegistry::class)->require()->offerTypeFilters(),
+            // La région avant la ville (décision 2026-11-25-region-de-l-adresse) ; la ville, celles des régions choisies.
+            Field::chips('region')
                 // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
                 ->label(CurrentCountry::require()->regionLabel())
-                ->options(OfferRegions::options($this->bookedOffers()))
+                ->options($regions = OfferRegions::options($this->bookedOffers()))
                 ->countryScoped(),
             Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 // Les villes de la région choisie (décision 2026-11-25-ville-selon-region).
                 ->dependsOn('region')
+                // Visible seulement une région choisie (décision 2026-11-26-ville-et-logement-apres-region).
+                ->visibleWhen('region', $chosen = array_map('strval', array_keys($regions)))
                 ->options($this->bookedCities())
                 ->countryScoped(),
             Field::select('offer')
                 ->label(__('offer::booking.profile.filter_offer'))
                 ->options($this->bookedOfferOptions())
                 ->searchable()
+                // Comme la ville, seulement une région choisie (décision 2026-11-26-ville-et-logement-apres-region).
+                ->visibleWhen('region', $chosen)
                 // Les logements du pays courant (décision 2026-11-25-region-en-tete-recherche).
                 ->countryScoped(),
-            ...app(DomainRegistry::class)->require()->offerTypeFilters(),
         ];
     }
 
@@ -71,15 +78,20 @@ trait FiltersBookings
      */
     protected function applyFilters(Builder $query, array $filters): void
     {
-        $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
-        // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
-        if ($status === BookingStatusEnum::PENDING) {
-            $query->awaitingAnswer();
-        } elseif ($status !== null) {
-            $query->where('status', $status);
+        // Un statut ou plusieurs (puces) : les demandes de l'un d'eux ; une valeur inconnue est ignorée.
+        $statuses = array_values(array_filter(array_map(fn (mixed $status): ?BookingStatusEnum => BookingStatusEnum::tryFrom((string) $status), (array) ($filters['status'] ?? []))));
+        if ($statuses !== []) {
+            $query->where(function (Builder $any) use ($statuses): void {
+                foreach ($statuses as $status) {
+                    // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+                    $status === BookingStatusEnum::PENDING
+                        ? $any->orWhere(fn (Builder $one) => $one->awaitingAnswer())
+                        : $any->orWhere('status', $status);
+                }
+            });
         }
         BookingFilters::applyPeriod($query, $filters);
-        if (isset($filters['region'])) {
+        if (($filters['region'] ?? []) !== [] && ($filters['region'] ?? '') !== '') {
             $query->whereHas('offer', fn (Builder $offer) => OfferRegions::apply($offer->withTrashed(), $filters['region']));
         }
         if (isset($filters['city'])) {

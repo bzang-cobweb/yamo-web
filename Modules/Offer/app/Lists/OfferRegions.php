@@ -49,7 +49,9 @@ class OfferRegions
      */
     public static function apply(Builder $offers, mixed $region): void
     {
-        $offers->whereHas('address', fn (Builder $address) => $address->where('region_id', (int) $region));
+        // Une région (liste déroulante) ou plusieurs (puces, décision 2026-11-26-reservations-filtres-en-puces).
+        $ids = array_map('intval', (array) $region);
+        $offers->whereHas('address', fn (Builder $address) => $address->whereIn('region_id', $ids));
     }
 
     /**

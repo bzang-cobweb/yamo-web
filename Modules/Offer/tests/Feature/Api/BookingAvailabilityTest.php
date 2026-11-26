@@ -239,7 +239,7 @@ class BookingAvailabilityTest extends TestCase
         // La pastille dans « Mes réservations » ; plus dans le filtre « En attente ».
         $items = collect($this->asUser($expired->user)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id');
         $this->assertSame('Expirée', $items[(string) $expired->getKey()]['tag']['label']);
-        $this->assertSame([], $this->asUser($expired->user)->getJson('/api/v1/lists/offer.bookings?filter[status]=pending')->json('data.items'));
+        $this->assertSame([], $this->asUser($expired->user)->getJson('/api/v1/lists/offer.bookings?filter[status][]=pending')->json('data.items'));
         $this->assertSame('Terminée', collect($this->asUser($completed->user)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->first()['tag']['label']);
 
         // Le compteur des demandes en attente de « Mes logements » ne la compte plus.

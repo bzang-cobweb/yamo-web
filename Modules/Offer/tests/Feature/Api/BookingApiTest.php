@@ -205,6 +205,16 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.subtitle', 'Studio meublé à Bonanjo');
     }
 
+    public function test_the_edit_and_cancel_forms_name_the_request_type(): void
+    {
+        // Décision 2026-11-26-formulaires-titre-type : « Modifier la demande de visite », « Annuler la demande de visite ».
+        $guest = $this->member();
+        $visit = Booking::factory()->for($this->home(false))->for($guest)->visit()->create(['check_in' => today()->addDays(5)]);
+
+        $this->assertSame('Modifier la demande de visite', $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$visit->getKey()}")->assertOk()->json('data.navigation_title'));
+        $this->assertSame('Annuler la demande de visite', $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$visit->getKey()}")->assertOk()->json('data.navigation_title'));
+    }
+
     public function test_the_guest_edits_a_pending_request_from_its_card(): void
     {
         // Décision 2026-11-21-modifier-reservation.
@@ -220,7 +230,7 @@ class BookingApiTest extends TestCase
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
         // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
-        $this->assertSame(['Modifier la demande', $pending->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
+        $this->assertSame(['Modifier la demande de séjour', $pending->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
         // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
         $this->assertSame([OfferCardTitle::of($pending->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
         $this->assertNotNull($form['subtitle']);
@@ -257,7 +267,7 @@ class BookingApiTest extends TestCase
 
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertOk()->json('data');
         // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
-        $this->assertSame(['Annuler la demande', $accepted->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
+        $this->assertSame(['Annuler la demande de séjour', $accepted->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
         // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
         $this->assertSame([OfferCardTitle::of($accepted->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
         $this->assertNotNull($form['subtitle']);
@@ -269,6 +279,7 @@ class BookingApiTest extends TestCase
         // Les champs de « Modifier », remplis, en lecture seule ; le message, vide, à écrire.
         $this->assertSame(['check_in', 'check_out', 'guests', 'message'], $fields->keys()->all());
         $this->assertSame([true, true, true, false], $fields->pluck('readonly')->all());
+        $this->assertTrue($fields['message']['required']);
         $this->assertSame(today()->addDays(5)->toDateString(), $fields['check_in']['default']);
         $this->assertNull($fields['message']['default']);
 
@@ -279,10 +290,11 @@ class BookingApiTest extends TestCase
 
         // Plus annulable : le formulaire est refusé.
         $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertForbidden();
-        // Sans message (le menu de la carte) : toujours possible.
+        // Sans message : refusée, la demande reste en attente (décision 2026-11-26-annulation-message-obligatoire).
         $pending = Booking::factory()->for($offer)->for($guest)->create(['check_in' => today()->addDays(30), 'check_out' => today()->addDays(31)]);
-        $this->asUser($guest)->postJson('/api/v1/bookings/'.$pending->getKey().'/cancel')->assertNoContent();
-        $this->assertNull($pending->refresh()->cancel_message);
+        $this->asUser($guest)->postJson('/api/v1/bookings/'.$pending->getKey().'/cancel')->assertUnprocessable()->assertJsonValidationErrors('message');
+        $this->asUser($guest)->postJson('/api/v1/bookings/'.$pending->getKey().'/cancel', ['message' => '   '])->assertUnprocessable()->assertJsonValidationErrors('message');
+        $this->assertSame(BookingStatusEnum::PENDING, $pending->refresh()->status);
     }
 
     public function test_a_visit_keeps_one_date_and_no_price(): void
@@ -431,13 +443,13 @@ class BookingApiTest extends TestCase
         $this->assertNotNull($items[(string) $pending->getKey()]['favorite']);
         // Le nombre, sous les filtres, filtres compris (décision 2026-11-22-listes-nombre-en-tete).
         $this->assertSame('2 réservations', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.heading.title'));
-        $this->assertSame('1 réservation', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings?filter[status]=pending')->json('data.heading.title'));
+        $this->assertSame('1 réservation', $this->asUser($guest)->getJson('/api/v1/lists/offer.bookings?filter[status][]=pending')->json('data.heading.title'));
 
-        $this->asUser($guest)->postJson("/api/v1/bookings/{$pending->getKey()}/cancel")->assertNoContent();
+        $this->asUser($guest)->postJson("/api/v1/bookings/{$pending->getKey()}/cancel", ['message' => 'Empêchement.'])->assertNoContent();
         $this->assertSame(BookingStatusEnum::CANCELLED, $pending->fresh()->status);
         Notification::assertSentTo($pending->offer->user, BookingRequestCancelled::class, fn (BookingRequestCancelled $notification): bool => $notification->step === BookingStepEnum::CANCELLED);
 
-        $this->asUser($guest)->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertForbidden();
+        $this->asUser($guest)->postJson("/api/v1/bookings/{$started->getKey()}/cancel", ['message' => 'Empêchement.'])->assertForbidden();
         $this->asUser($this->member())->postJson("/api/v1/bookings/{$started->getKey()}/cancel")->assertNotFound();
     }
 
@@ -584,32 +596,37 @@ class BookingApiTest extends TestCase
         $cancelled = Booking::factory()->for($this->home(true), 'offer')->for($guest)->status(BookingStatusEnum::CANCELLED)->create();
         $filters = collect($data['filters'])->keyBy('name');
         // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
-        $this->assertSame(['status', 'period', 'region', 'city', 'offer', 'property_type', 'rental_type'], $filters->keys()->all());
+        $this->assertSame(['status', 'period', 'property_type', 'rental_type', 'region', 'city', 'offer'], $filters->keys()->all());
         // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
         $this->assertSame(['Logement', 'select', true], [$filters['offer']['label'], $filters['offer']['type'], $filters['offer']['searchable']]);
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
         $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[offer]='.$upcoming->offer_id));
-        $this->assertSame(['Statut', 'select'], [$filters['status']['label'], $filters['status']['type']]);
+        // La ville et le logement, seulement une région choisie (décision 2026-11-26-ville-et-logement-apres-region).
+        $this->assertSame([array_column($filters['region']['options'], 'value'), array_column($filters['region']['options'], 'value')], [$filters['city']['visible_when']['values'], $filters['offer']['visible_when']['values']]);
+        // En puces (décision 2026-11-26-reservations-filtres-en-puces).
+        $this->assertSame(['Statut', 'chips'], [$filters['status']['label'], $filters['status']['type']]);
         $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Terminée', 'Expirée'], array_column($filters['status']['options'], 'label'));
-        $this->assertSame(['Période', 'select'], [$filters['period']['label'], $filters['period']['type']]);
+        $this->assertSame(['Période', 'chips'], [$filters['period']['label'], $filters['period']['type']]);
         $this->assertSame(['upcoming', 'ongoing', 'past'], array_column($filters['period']['options'], 'value'));
 
-        $this->assertSame([(string) $pending->getKey()], $ids('?filter[status]=pending'));
-        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status]=accepted'));
-        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status]=refused'));
-        $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status]=cancelled'));
+        $this->assertSame([(string) $pending->getKey()], $ids('?filter[status][]=pending'));
+        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[status][]=accepted'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[status][]=refused'));
+        // Plusieurs statuts : les demandes de l'un d'eux (décision 2026-11-26-reservations-filtres-en-puces).
+        $this->assertEqualsCanonicalizing([(string) $pending->getKey(), (string) $refused->getKey()], $ids('?filter[status][]=pending&filter[status][]=refused'));
+        $this->assertSame([(string) $cancelled->getKey()], $ids('?filter[status][]=cancelled'));
         // Décision 2026-11-21-reservations-filtre-type : les types réels de l'offre, plus séjour / visite.
         // « Type » (décision 2026-11-25-libelle-type).
-        $this->assertSame(['Type', 'select'], [$filters['property_type']['label'], $filters['property_type']['type']]);
+        $this->assertSame(['Type', 'chips'], [$filters['property_type']['label'], $filters['property_type']['type']]);
         $this->assertSame(['apartment', 'house', 'studio', 'room'], array_column($filters['property_type']['options'], 'value'));
-        $this->assertSame(['Type de location', 'select'], [$filters['rental_type']['label'], $filters['rental_type']['type']]);
+        $this->assertSame(['Type de location', 'chips'], [$filters['rental_type']['label'], $filters['rental_type']['type']]);
         $house = $this->home(true);
         $house->update(['details' => [...$house->details, 'property_type' => 'house']]);
         $inHouse = Booking::factory()->for($house, 'offer')->for($guest)->create();
         $house->delete();
-        $this->assertSame([(string) $inHouse->getKey()], $ids('?filter[property_type]=house'));
-        $this->assertSame([(string) $refused->getKey()], $ids('?filter[rental_type]=long_term'));
-        $this->assertSame([], $ids('?filter[property_type]=house&filter[rental_type]=long_term'));
+        $this->assertSame([(string) $inHouse->getKey()], $ids('?filter[property_type][]=house'));
+        $this->assertSame([(string) $refused->getKey()], $ids('?filter[rental_type][]=long_term'));
+        $this->assertSame([], $ids('?filter[property_type][]=house&filter[rental_type][]=long_term'));
         $this->assertCount(5, $ids('?filter[type]=visit'));
     }
 
@@ -627,7 +644,7 @@ class BookingApiTest extends TestCase
         $done = $make(-6, -2, BookingStatusEnum::PENDING);
         // Une visite : de sa première à sa dernière date proposée.
         $visit = (string) Booking::factory()->for($this->home(false))->for($guest)->visit()->create(['check_in' => today()->addDays(3), 'check_out' => today()->subDay()])->getKey();
-        $ids = fn (string $period): array => collect($this->asUser($guest)->getJson("/api/v1/lists/offer.bookings?filter[period]={$period}")->json('data.items'))->pluck('id')->sort()->values()->all();
+        $ids = fn (string $period): array => collect($this->asUser($guest)->getJson("/api/v1/lists/offer.bookings?filter[period][]={$period}")->json('data.items'))->pluck('id')->sort()->values()->all();
         $sorted = fn (string ...$keys): array => collect($keys)->sort()->values()->all();
 
         $filter = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.filters'))->firstWhere('name', 'period');

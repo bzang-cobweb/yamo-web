@@ -65,10 +65,13 @@ class BookingEditForm extends OfferBookingForm
         return OfferCardTitle::of($this->offer, app()->getLocale())[0];
     }
 
-    /** « Modifier la demande », dans la barre du haut (décision 2026-11-23-modifier-annuler-comme-accepter). */
+    /**
+     * « Modifier la demande de séjour » ou « de visite », dans la barre du haut (décisions
+     * 2026-11-23-modifier-annuler-comme-accepter et 2026-11-26-formulaires-titre-type).
+     */
     public function navigationTitle(): ?string
     {
-        return __('offer::booking.form.edit_title');
+        return __('offer::booking.form.edit_title', ['request' => BookingNotification::requestLabel($this->editing?->type)]);
     }
 
     /**

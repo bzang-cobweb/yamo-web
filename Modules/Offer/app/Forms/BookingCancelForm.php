@@ -32,19 +32,23 @@ class BookingCancelForm extends BookingEditForm
     }
 
     /**
-     * Les champs de la demande en lecture seule ; le message, à écrire, pour le propriétaire.
+     * Les champs de la demande en lecture seule ; le message, obligatoire, pour le propriétaire (décision
+     * 2026-11-26-annulation-message-obligatoire).
      */
     public function fields(): array
     {
         return array_map(fn (Field $field): Field => $field->name === 'message'
-            ? $field->default(null)->label(__('offer::booking.cancel.message'))->placeholder(__('offer::booking.cancel.message_placeholder'))
+            ? $field->default(null)->label(__('offer::booking.cancel.message'))->placeholder(__('offer::booking.cancel.message_placeholder'))->required()
             : $field->readonly(), parent::fields());
     }
 
-    /** « Annuler la demande », dans la barre du haut ; le titre du logement en tête (décision 2026-11-23-modifier-annuler-comme-accepter). */
+    /**
+     * « Annuler la demande de séjour » ou « de visite », dans la barre du haut ; le titre du logement en tête (décisions
+     * 2026-11-23-modifier-annuler-comme-accepter et 2026-11-26-formulaires-titre-type).
+     */
     public function navigationTitle(): ?string
     {
-        return __('offer::booking.cancel.label');
+        return __('offer::booking.cancel.label', ['request' => BookingNotification::requestLabel($this->editing?->type)]);
     }
 
     public function submitLabel(): string

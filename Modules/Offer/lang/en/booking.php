@@ -70,7 +70,7 @@ return [
         'check_out' => 'Departure date',
         'visit_date' => 'Preferred date',
         'guests' => 'Guests',
-        'message' => 'Message to the owner',
+        'message' => 'Message',
         'message_placeholder' => 'Introduce yourself, tell them what you need…',
         'price_help' => ':price; the total appears in the booking details once the request is sent.',
         'submit_stay' => 'Send request',
@@ -79,7 +79,7 @@ return [
         'sent_visit' => 'Visit request sent. The owner will reply.',
         'pending_exists' => 'You already have a pending request for this offer.',
         'own_overlap' => 'You already have a request for this home on these dates.',
-        'edit_title' => 'Edit the request',
+        'edit_title' => 'Edit the :request',
         'save' => 'Save',
         'updated' => ':Request updated.',
         'edit' => 'Edit',
@@ -103,14 +103,14 @@ return [
         'sent' => 'Reply sent.',
     ],
     'cancel' => [
-        'label' => 'Cancel request',
+        'label' => 'Cancel the :request',
         'confirm' => 'Cancel this request? The owner will be told.',
         'done' => ':Request cancelled.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Cancel',
         'submit' => 'Confirm',
-        'message' => 'Message to the owner',
-        'message_placeholder' => 'Explain why you are cancelling (optional)…',
+        'message' => 'Message',
+        'message_placeholder' => 'Explain why you are cancelling…',
     ],
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Stay request', 'visit' => 'Visit request'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'My booking', 'received' => ':Request received', 'lines_title' => 'Request details'],
+    'detail' => ['mine' => 'My booking', 'received' => ':Request received', 'lines_title' => ':Request details'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Booking',

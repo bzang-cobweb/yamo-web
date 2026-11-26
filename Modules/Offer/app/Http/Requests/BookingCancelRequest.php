@@ -7,8 +7,8 @@ use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Models\Booking;
 
 /**
- * Une annulation, validée par le formulaire `offer.booking.cancel` : seul le message, facultatif,
- * est pris en compte (décision 2026-11-21-annuler-depuis-le-detail).
+ * Une annulation, validée par le formulaire `offer.booking.cancel` : seul le message, obligatoire
+ * (décision 2026-11-26-annulation-message-obligatoire), est pris en compte (décision 2026-11-21-annuler-depuis-le-detail).
  */
 class BookingCancelRequest extends FormBackedRequest
 {

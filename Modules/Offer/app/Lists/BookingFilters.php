@@ -32,9 +32,10 @@ final class BookingFilters
      * La période d'une demande, d'après ses dates seulement : à venir, en cours, passées ; vide :
      * toutes (décision 2026-11-21-reservations-periode-dates).
      */
-    public static function period(string $name = 'period'): Field
+    public static function period(string $name = 'period', bool $chips = false): Field
     {
-        return Field::select($name)
+        // En puces, plusieurs périodes à la fois (« Mes réservations », décision 2026-11-26-reservations-filtres-en-puces).
+        return ($chips ? Field::chips($name) : Field::select($name))
             ->label(__('offer::booking.profile.filter_period'))
             ->options(collect(Booking::PERIODS)->mapWithKeys(fn (string $period): array => [$period => __('offer::booking.profile.period_'.$period)])->all());
     }
@@ -45,9 +46,14 @@ final class BookingFilters
      */
     public static function applyPeriod(Builder $query, array $filters, string $name = 'period'): void
     {
-        $period = $filters[$name] ?? null;
-        if (is_string($period) && in_array($period, Booking::PERIODS, true)) {
-            $query->inPeriod($period);
+        // Une période ou plusieurs (puces) : les demandes de l'une d'elles ; une valeur inconnue est ignorée.
+        $periods = array_values(array_intersect(array_map('strval', (array) ($filters[$name] ?? [])), Booking::PERIODS));
+        if ($periods !== []) {
+            $query->where(function (Builder $any) use ($periods): void {
+                foreach ($periods as $period) {
+                    $any->orWhere(fn (Builder $one) => $one->inPeriod($period));
+                }
+            });
         }
     }
 

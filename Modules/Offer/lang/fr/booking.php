@@ -70,7 +70,7 @@ return [
         'check_out' => 'Date de départ',
         'visit_date' => 'Date souhaitée',
         'guests' => 'Voyageurs',
-        'message' => 'Message au propriétaire',
+        'message' => 'Message',
         'message_placeholder' => 'Présentez-vous, précisez vos besoins…',
         'price_help' => ':price ; le total figure dans le détail de la réservation une fois la demande envoyée.',
         'submit_stay' => 'Envoyer la demande',
@@ -79,7 +79,7 @@ return [
         'sent_visit' => 'Demande de visite envoyée. Le propriétaire vous répondra.',
         'pending_exists' => 'Vous avez déjà une demande en attente pour cette offre.',
         'own_overlap' => 'Vous avez déjà une demande pour ce logement sur ces dates.',
-        'edit_title' => 'Modifier la demande',
+        'edit_title' => 'Modifier la :request',
         'save' => 'Enregistrer',
         'updated' => ':Request modifiée.',
         'edit' => 'Modifier',
@@ -103,14 +103,14 @@ return [
         'sent' => 'Réponse envoyée.',
     ],
     'cancel' => [
-        'label' => 'Annuler la demande',
+        'label' => 'Annuler la :request',
         'confirm' => 'Annuler cette demande ? Le propriétaire sera prévenu.',
         'done' => ':Request annulée.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Annuler',
         'submit' => 'Confirmer',
-        'message' => 'Message au propriétaire',
-        'message_placeholder' => 'Expliquez pourquoi vous annulez (facultatif)…',
+        'message' => 'Message',
+        'message_placeholder' => 'Expliquez pourquoi vous annulez…',
     ],
     'list' => [
         // Le nombre de la liste, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Demande de séjour', 'visit' => 'Demande de visite'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'Ma réservation', 'received' => ':Request reçue', 'lines_title' => 'Détails de la demande'],
+    'detail' => ['mine' => 'Ma réservation', 'received' => ':Request reçue', 'lines_title' => 'Détail :request'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Réservation',
