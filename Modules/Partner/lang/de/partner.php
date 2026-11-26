@@ -16,7 +16,7 @@ return [
     'statuses' => [
         'pending' => 'In Prüfung',
         'awaiting_payment' => 'Zahlung ausstehend',
-        'published' => 'Veröffentlicht',
+        'published' => 'Online',
         'rejected' => 'Abgelehnt',
     ],
     'fields' => [
@@ -83,7 +83,7 @@ return [
         'remove_confirm' => 'Diesen Partner entfernen?',
         'removed' => 'Partner entfernt.',
         'status' => [
-            'shown' => 'Angezeigt',
+            'shown' => 'Online',
             'hidden' => 'Nicht angezeigt',
         ],
     ],

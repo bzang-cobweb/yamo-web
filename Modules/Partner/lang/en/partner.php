@@ -16,7 +16,7 @@ return [
     'statuses' => [
         'pending' => 'Under review',
         'awaiting_payment' => 'Awaiting payment',
-        'published' => 'Published',
+        'published' => 'Online',
         'rejected' => 'Rejected',
     ],
     'fields' => [
@@ -83,7 +83,7 @@ return [
         'remove_confirm' => 'Remove this partner?',
         'removed' => 'Partner removed.',
         'status' => [
-            'shown' => 'Shown',
+            'shown' => 'Online',
             'hidden' => 'Not shown',
         ],
     ],

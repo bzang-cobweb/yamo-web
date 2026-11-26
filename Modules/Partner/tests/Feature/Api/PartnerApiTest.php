@@ -245,7 +245,7 @@ class PartnerApiTest extends TestCase
         $this->withToken($token)->withHeaders($headers)->getJson("/api/v1/partners/{$pending->getKey()}")
             ->assertOk()->assertJsonPath('data.status', ['label' => 'En validation', 'tone' => 'warning']);
         $this->withToken($token)->withHeaders($headers)->getJson("/api/v1/partners/{$shown->getKey()}")
-            ->assertJsonPath('data.status', ['label' => 'Affiché', 'tone' => 'success']);
+            ->assertJsonPath('data.status', ['label' => 'En ligne', 'tone' => 'success']);
 
         // Un visiteur : pas de pastille.
         $this->app['auth']->forgetGuards();

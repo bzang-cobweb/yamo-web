@@ -254,7 +254,7 @@ class MyPartnerApiTest extends TestCase
         $partners = [
             'Refusé' => ['status' => PartnerStatusEnum::REJECTED],
             'Paiement' => ['status' => PartnerStatusEnum::AWAITING_PAYMENT],
-            'Affiché' => ['status' => PartnerStatusEnum::PUBLISHED],
+            'En ligne' => ['status' => PartnerStatusEnum::PUBLISHED],
             'Pas affiché' => ['status' => PartnerStatusEnum::PUBLISHED, 'starts_at' => now()->addMonth()],
         ];
         foreach ($partners as $name => $attributes) {
@@ -266,7 +266,7 @@ class MyPartnerApiTest extends TestCase
 
         $this->assertSame(['Refusé', 'danger'], $tags['Refusé']);
         $this->assertSame(['En attente de paiement', 'warning'], $tags['Paiement']);
-        $this->assertSame(['Affiché', 'success'], $tags['Affiché']);
+        $this->assertSame(['En ligne', 'success'], $tags['En ligne']);
         $this->assertSame(['Pas affiché', 'neutral'], $tags['Pas affiché']);
     }
 }
