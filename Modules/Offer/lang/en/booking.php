@@ -75,13 +75,13 @@ return [
         'price_help' => ':price; the total appears in the booking details once the request is sent.',
         'submit_stay' => 'Send request',
         'submit_visit' => 'Send request',
-        'sent_stay' => 'Request sent. Find it, with its total, under “My bookings”.',
+        'sent_stay' => 'Stay request sent. Find it, with its total, under “My bookings”.',
         'sent_visit' => 'Visit request sent. The owner will reply.',
         'pending_exists' => 'You already have a pending request for this offer.',
         'own_overlap' => 'You already have a request for this home on these dates.',
         'edit_title' => 'Edit the request',
         'save' => 'Save',
-        'updated' => 'Request updated.',
+        'updated' => ':Request updated.',
         'edit' => 'Edit',
         'too_far' => 'Choose a date within the next :days days.',
     ],
@@ -98,14 +98,14 @@ return [
         'accept_other_visits' => '{1} Also accept the other visit that day|[2,*] Also accept the :count other visits that day',
         'accept_other_visits_short' => 'Also accept the other visits that day',
         'submit' => 'Send reply',
-        'accepted' => 'Request accepted.',
-        'refused' => 'Request declined.',
+        'accepted' => ':Request accepted.',
+        'refused' => ':Request declined.',
         'sent' => 'Reply sent.',
     ],
     'cancel' => [
         'label' => 'Cancel request',
         'confirm' => 'Cancel this request? The owner will be told.',
-        'done' => 'Request cancelled.',
+        'done' => ':Request cancelled.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Cancel',
         'submit' => 'Confirm',
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Stay request', 'visit' => 'Visit request'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'My booking', 'received' => 'Request received'],
+    'detail' => ['mine' => 'My booking', 'received' => ':Request received'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Booking',
@@ -140,7 +140,7 @@ return [
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
         // Le type de demande dans chaque titre : « Demande de séjour acceptée » (décision 2026-11-26-titres-type-de-demande).
         'types' => [
-            'received' => 'New :request',
+            'received' => ':Request received',
             'received_own' => ':Request sent',
             'updated' => ':Request updated',
             'accepted' => ':Request accepted',
@@ -156,7 +156,7 @@ return [
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'requested' => [
-            'subject' => 'New :request: :offer',
+            'subject' => ':Request received: :offer',
             'body' => ':guest sent a :request for “:offer” (:period).',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'You sent a :request for “:offer” (:period).',
@@ -269,7 +269,7 @@ return [
         'accept_overlaps' => '{1} :count other request overlaps these dates and will be declined.|[2,*] :count other requests overlap these dates and will be declined.',
         // Les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
         'accept_same_day_visits' => '{1} :count other visit is requested that day.|[2,*] :count other visits are requested that day.',
-        'accepted_notice' => 'Request accepted.',
+        'accepted_notice' => ':Request accepted.',
         'refuse' => 'Decline',
         'accept_title' => 'Accept the request',
         'accept_submit' => 'Accept the request',

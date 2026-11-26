@@ -9,6 +9,7 @@ use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\BookingNotification;
 use Modules\Offer\Services\OfferAvailability;
 
 /**
@@ -108,7 +109,7 @@ class BookingAcceptForm extends Form
         return $this->booking === null ? null : Submission::toRoute(
             'api.v1.bookings.answer',
             SuccessAction::BACK,
-            __('offer::booking.profile.accepted_notice'),
+            __('offer::booking.profile.accepted_notice', ['request' => BookingNotification::requestLabel($this->booking?->type)]),
             parameters: ['booking' => $this->booking->getKey()],
         );
     }

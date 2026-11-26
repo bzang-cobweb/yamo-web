@@ -9,6 +9,7 @@ use Modules\Form\Support\Form;
 use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Refuser une demande, depuis sa carte (décision
@@ -80,7 +81,7 @@ class BookingRefuseForm extends Form
         return $this->booking === null ? null : Submission::toRoute(
             'api.v1.bookings.answer',
             SuccessAction::BACK,
-            __('offer::booking.answer.refused'),
+            __('offer::booking.answer.refused', ['request' => BookingNotification::requestLabel($this->booking?->type)]),
             parameters: ['booking' => $this->booking->getKey()],
         );
     }

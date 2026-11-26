@@ -62,17 +62,20 @@ abstract class BookingNotification extends Notification implements HasNotificati
      */
     public static function title(BookingStepEnum $step, bool $own, ?BookingTypeEnum $type = null): string
     {
-        return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''), ['request' => self::request($type)]);
+        return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''), ['request' => self::requestLabel($type)]);
     }
 
     /** L'étape dans le suivi d'une demande (« Demande de séjour acceptée »), dans la langue courante. */
     public static function stepLabel(BookingStepEnum $step, ?BookingTypeEnum $type = null): string
     {
-        return __('offer::booking.history.'.$step->value, ['request' => self::request($type)]);
+        return __('offer::booking.history.'.$step->value, ['request' => self::requestLabel($type)]);
     }
 
-    /** « demande de séjour », « demande de visite » ; sans type connu, « demande » (décision 2026-11-26-titres-type-de-demande). */
-    private static function request(?BookingTypeEnum $type): string
+    /**
+     * « demande de séjour », « demande de visite » ; sans type connu, « demande » (décision 2026-11-26-titres-type-de-demande) :
+     * le `:request` des titres et des messages d'une demande.
+     */
+    public static function requestLabel(?BookingTypeEnum $type): string
     {
         return __('offer::booking.notify.request_lower.'.($type === null ? 'any' : $type->value));
     }

@@ -8,6 +8,7 @@ use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Forms\BookingInviteReviewForm;
 use Modules\Offer\Http\Resources\BookingResource;
+use Modules\Offer\Notifications\BookingNotification;
 use Modules\Offer\Support\BookingCache;
 use Modules\Offer\Support\OfferHeading;
 
@@ -46,7 +47,7 @@ class BookingThreadDetailsService
         // (décision 2026-11-22-detail-lignes-titre-dates-adresse).
         if ($booking !== null) {
             $owner = (string) $booking->offer?->user_id === $readerId;
-            $data['title'] = $mine ? __('offer::booking.detail.mine') : ($owner ? __('offer::booking.detail.received') : __('offer::booking.detail_title.'.$booking->type->value));
+            $data['title'] = $mine ? __('offer::booking.detail.mine') : ($owner ? __('offer::booking.detail.received', ['request' => BookingNotification::requestLabel($booking->type)]) : __('offer::booking.detail_title.'.$booking->type->value));
         }
 
         // L'en-tête de la page : le nom du logement, en lien vers sa fiche, et son titre composé (« Location meublée ·

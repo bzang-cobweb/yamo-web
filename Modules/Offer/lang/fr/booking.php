@@ -75,13 +75,13 @@ return [
         'price_help' => ':price ; le total figure dans le détail de la réservation une fois la demande envoyée.',
         'submit_stay' => 'Envoyer la demande',
         'submit_visit' => 'Envoyer la demande',
-        'sent_stay' => 'Demande envoyée. Retrouvez-la, avec son total, dans « Mes réservations ».',
+        'sent_stay' => 'Demande de séjour envoyée. Retrouvez-la, avec son total, dans « Mes réservations ».',
         'sent_visit' => 'Demande de visite envoyée. Le propriétaire vous répondra.',
         'pending_exists' => 'Vous avez déjà une demande en attente pour cette offre.',
         'own_overlap' => 'Vous avez déjà une demande pour ce logement sur ces dates.',
         'edit_title' => 'Modifier la demande',
         'save' => 'Enregistrer',
-        'updated' => 'Demande modifiée.',
+        'updated' => ':Request modifiée.',
         'edit' => 'Modifier',
         'too_far' => 'Choisissez une date dans les :days prochains jours.',
     ],
@@ -98,14 +98,14 @@ return [
         'accept_other_visits' => '{1} Accepter aussi l\'autre visite de ce jour|[2,*] Accepter aussi les :count autres visites de ce jour',
         'accept_other_visits_short' => 'Accepter aussi les autres visites de ce jour',
         'submit' => 'Envoyer la réponse',
-        'accepted' => 'Demande acceptée.',
-        'refused' => 'Demande refusée.',
+        'accepted' => ':Request acceptée.',
+        'refused' => ':Request refusée.',
         'sent' => 'Réponse envoyée.',
     ],
     'cancel' => [
         'label' => 'Annuler la demande',
         'confirm' => 'Annuler cette demande ? Le propriétaire sera prévenu.',
-        'done' => 'Demande annulée.',
+        'done' => ':Request annulée.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Annuler',
         'submit' => 'Confirmer',
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Demande de séjour', 'visit' => 'Demande de visite'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'Ma réservation', 'received' => 'Demande reçue'],
+    'detail' => ['mine' => 'Ma réservation', 'received' => ':Request reçue'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Réservation',
@@ -140,7 +140,7 @@ return [
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
         // Le type de demande dans chaque titre : « Demande de séjour acceptée » (décision 2026-11-26-titres-type-de-demande).
         'types' => [
-            'received' => 'Nouvelle :request',
+            'received' => ':Request reçue',
             'received_own' => ':Request envoyée',
             'updated' => ':Request modifiée',
             'accepted' => ':Request acceptée',
@@ -156,7 +156,7 @@ return [
         'greeting' => 'Bonjour :name,',
         'salutation' => "L'équipe :app",
         'requested' => [
-            'subject' => 'Nouvelle :request : :offer',
+            'subject' => ':Request reçue : :offer',
             'body' => ':guest a envoyé une :request pour « :offer » (:period).',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'Vous avez envoyé une :request pour « :offer » (:period).',
@@ -269,7 +269,7 @@ return [
         'accept_overlaps' => '{1} :count autre demande chevauche ces dates et sera refusée.|[2,*] :count autres demandes chevauchent ces dates et seront refusées.',
         // Les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
         'accept_same_day_visits' => '{1} :count autre visite est demandée ce jour-là.|[2,*] :count autres visites sont demandées ce jour-là.',
-        'accepted_notice' => 'Demande acceptée.',
+        'accepted_notice' => ':Request acceptée.',
         'refuse' => 'Refuser',
         'accept_title' => 'Accepter la demande',
         'accept_submit' => 'Accepter la demande',

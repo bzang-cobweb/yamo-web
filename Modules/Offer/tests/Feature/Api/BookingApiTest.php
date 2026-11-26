@@ -263,6 +263,8 @@ class BookingApiTest extends TestCase
         $this->assertNotNull($form['subtitle']);
         $this->assertSame('Confirmer', $form['submit']['label']);
         $this->assertSame(['method' => 'POST', 'endpoint' => '/v1/bookings/'.$accepted->getKey().'/cancel'], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
+        // Le message de réussite dit le type de la demande (décision 2026-11-26-titres-type-de-demande).
+        $this->assertSame('Demande de séjour annulée.', $form['submit']['success']['message']);
         $fields = collect($form['fields'])->keyBy('name');
         // Les champs de « Modifier », remplis, en lecture seule ; le message, vide, à écrire.
         $this->assertSame(['check_in', 'check_out', 'guests', 'message'], $fields->keys()->all());

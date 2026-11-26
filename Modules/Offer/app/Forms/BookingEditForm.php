@@ -8,6 +8,7 @@ use Modules\Form\Support\Field;
 use Modules\Form\Support\Submission;
 use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Modifier sa demande tant qu'elle est en attente (décision 2026-11-21-modifier-reservation) :
@@ -101,7 +102,7 @@ class BookingEditForm extends OfferBookingForm
         return $this->editing === null ? null : Submission::toRoute(
             'api.v1.bookings.update',
             SuccessAction::BACK,
-            __('offer::booking.form.updated'),
+            __('offer::booking.form.updated', ['request' => BookingNotification::requestLabel($this->editing->type)]),
             parameters: ['booking' => $this->editing->getKey()],
         );
     }

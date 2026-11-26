@@ -247,7 +247,7 @@ class BookingThreadTest extends TestCase
 
             // La barre du haut : « Ma réservation » pour le membre, « Demande reçue » pour le propriétaire (décision
             // 2026-11-22-detail-titre-compose-et-dates) ; le titre composé sans ville, la première ligne (décision 2026-11-22-detail-lignes-titre-dates-adresse).
-            $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
+            $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande de séjour reçue', $page['title']);
             // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
             $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
             // L'en-tête générique de la page : le nom du logement vers sa fiche, et le titre composé.

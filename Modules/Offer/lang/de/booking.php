@@ -75,13 +75,13 @@ return [
         'price_help' => ':price; der Gesamtbetrag steht nach dem Senden in den Buchungsdetails.',
         'submit_stay' => 'Anfrage senden',
         'submit_visit' => 'Anfrage senden',
-        'sent_stay' => 'Anfrage gesendet. Sie finden sie mit dem Gesamtbetrag unter „Meine Buchungen“.',
+        'sent_stay' => 'Aufenthaltsanfrage gesendet. Sie finden sie mit dem Gesamtbetrag unter „Meine Buchungen“.',
         'sent_visit' => 'Besichtigungsanfrage gesendet. Der Eigentümer antwortet Ihnen.',
         'pending_exists' => 'Sie haben für dieses Angebot bereits eine ausstehende Anfrage.',
         'own_overlap' => 'Sie haben für diese Unterkunft bereits eine Anfrage an diesen Daten.',
         'edit_title' => 'Anfrage ändern',
         'save' => 'Speichern',
-        'updated' => 'Anfrage geändert.',
+        'updated' => ':Request geändert.',
         'edit' => 'Ändern',
         'too_far' => 'Wählen Sie ein Datum innerhalb der nächsten :days Tage.',
     ],
@@ -98,14 +98,14 @@ return [
         'accept_other_visits' => '{1} Auch die andere Besichtigung an diesem Tag annehmen|[2,*] Auch die :count anderen Besichtigungen an diesem Tag annehmen',
         'accept_other_visits_short' => 'Auch die anderen Besichtigungen an diesem Tag annehmen',
         'submit' => 'Antwort senden',
-        'accepted' => 'Anfrage angenommen.',
-        'refused' => 'Anfrage abgelehnt.',
+        'accepted' => ':Request angenommen.',
+        'refused' => ':Request abgelehnt.',
         'sent' => 'Antwort gesendet.',
     ],
     'cancel' => [
         'label' => 'Anfrage stornieren',
         'confirm' => 'Diese Anfrage stornieren? Der Eigentümer wird benachrichtigt.',
-        'done' => 'Anfrage storniert.',
+        'done' => ':Request storniert.',
         // Depuis la page de la demande (décision 2026-11-21-annuler-depuis-le-detail).
         'button' => 'Stornieren',
         'submit' => 'Bestätigen',
@@ -132,7 +132,7 @@ return [
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
     // Le titre de la barre du haut de la page d'une demande (décision 2026-11-22-detail-titre-compose-et-dates).
-    'detail' => ['mine' => 'Meine Buchung', 'received' => 'Erhaltene Anfrage'],
+    'detail' => ['mine' => 'Meine Buchung', 'received' => ':Request erhalten'],
     'notify' => [
         // Le type « Réservation » du filtre des notifications (décision 2026-11-24-notifications-types-reservation-partenaire).
         'filter_type' => 'Buchung',
@@ -140,7 +140,7 @@ return [
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
         // Le type de demande dans chaque titre : « Demande de séjour acceptée » (décision 2026-11-26-titres-type-de-demande).
         'types' => [
-            'received' => 'Neue :request',
+            'received' => ':Request erhalten',
             'received_own' => ':Request gesendet',
             'updated' => ':Request geändert',
             'accepted' => ':Request angenommen',
@@ -156,7 +156,7 @@ return [
         'greeting' => 'Hallo :name,',
         'salutation' => 'Ihr :app-Team',
         'requested' => [
-            'subject' => 'Neue :request: :offer',
+            'subject' => ':Request erhalten: :offer',
             'body' => ':guest hat eine :request für „:offer“ (:period) gesendet.',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'Sie haben eine :request für „:offer“ (:period) gesendet.',
@@ -269,7 +269,7 @@ return [
         'accept_overlaps' => '{1} :count weitere Anfrage überschneidet sich mit diesen Daten und wird abgelehnt.|[2,*] :count weitere Anfragen überschneiden sich mit diesen Daten und werden abgelehnt.',
         // Les autres visites du même jour (décision 2026-11-22-accepter-autres-visites).
         'accept_same_day_visits' => '{1} :count weitere Besichtigung ist an diesem Tag angefragt.|[2,*] :count weitere Besichtigungen sind an diesem Tag angefragt.',
-        'accepted_notice' => 'Anfrage angenommen.',
+        'accepted_notice' => ':Request angenommen.',
         'refuse' => 'Ablehnen',
         'accept_title' => 'Anfrage annehmen',
         'accept_submit' => 'Anfrage annehmen',

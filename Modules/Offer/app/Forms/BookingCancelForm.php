@@ -7,6 +7,7 @@ use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Submission;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\BookingNotification;
 
 /**
  * Annuler sa demande depuis sa page (décision 2026-11-21-annuler-depuis-le-detail) : les champs
@@ -56,7 +57,7 @@ class BookingCancelForm extends BookingEditForm
         return $this->editing === null ? null : Submission::toRoute(
             'api.v1.bookings.cancel',
             SuccessAction::BACK,
-            __('offer::booking.cancel.done'),
+            __('offer::booking.cancel.done', ['request' => BookingNotification::requestLabel($this->editing->type)]),
             destructive: true,
             parameters: ['booking' => $this->editing->getKey()],
         );
