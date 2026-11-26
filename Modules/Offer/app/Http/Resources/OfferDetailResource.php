@@ -31,6 +31,13 @@ use Modules\Offer\Models\OfferReview;
 class OfferDetailResource extends JsonResource
 {
     /**
+     * Les sections ajoutées par `addSection()`, dans l'ordre de `offer.sections`.
+     *
+     * @var list<array<string, mixed>>
+     */
+    private array $sections = [];
+
+    /**
      * @return array{id: string, title: string, composed_title: string|null, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string, tone: string}|null, favorite: array{active: bool, endpoint: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, mine: array{rating: int, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
@@ -49,6 +56,28 @@ class OfferDetailResource extends JsonResource
         $informations = $this->informations($offer, $locale);
         $reviews = $this->reviews($offer, $request);
         $description = $offer->getTranslation('description', $locale) ?: null;
+        $publisher = $this->publisher($offer, $locale);
+
+        // Les sections de la fiche, dans l'ordre et l'ouverture de `offer.sections` ; une section sans contenu (`null`)
+        // n'est pas ajoutée.
+        $this->sections = [];
+        foreach ((array) config('offer.sections', []) as $group => $open) {
+            $open = (bool) $open;
+            match ((string) $group) {
+                // Qui publie l'offre (décision 2026-11-25-fiche-publiee-par), et son bouton « Envoyer un message », ou
+                // `null` (décision 2026-11-26-messages-editeur).
+                'publisher' => $this->addSection('publisher', 'rows', $open, $publisher === [] ? null : ['rows' => $publisher, 'action' => $this->publisherAction($offer, $owner)]),
+                'facts' => $this->addSection('facts', 'rows', $open, $facts === [] ? null : ['rows' => $facts]),
+                'location' => $this->addSection('location', 'text', $open, $address === null ? null : ['text' => $address, 'note' => $indication]),
+                // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
+                'description' => $this->addSection('description', 'text', $open, $description === null ? null : ['text' => $description, 'note' => null]),
+                'rules' => $this->addSection('rules', 'rows', $open, $rules === [] ? null : ['rows' => $rules]),
+                'reviews' => $this->addSection('reviews', 'reviews', $open, $reviews === null ? null : [], $offer->reviewsTitle($locale)),
+                // Un bloc d'informations, une section à lui, avec l'ouverture réglée pour `informations`.
+                'informations' => $this->addInformations($informations, $open),
+                default => $this,
+            };
+        }
 
         return [
             'id' => (string) $offer->getKey(),
@@ -97,7 +126,7 @@ class OfferDetailResource extends JsonResource
              * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
              * d'informations est une section `text` à lui seul.
              */
-            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description, $this->publisher($offer, $locale), $reviews === null ? null : $offer->reviewsTitle($locale), $this->publisherAction($offer, $owner)),
+            'sections' => $this->sections(),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */
@@ -283,47 +312,52 @@ class OfferDetailResource extends JsonResource
     }
 
     /**
-     * Les sections de la fiche, complètes (décisions 2026-11-19-sections-fiche-laravel
-     * et 2026-11-19-sections-construites-laravel) : dans l'ordre de `offer.sections`,
-     * celles qui ont un contenu, ouvertes ou non ; si aucune n'est ouverte, la première
-     * l'est. Les blocs d'informations prennent chacun une section, à la place de la clé
-     * `informations`, avec l'ouverture réglée pour elle.
+     * Ajoute une section de la fiche : sa clé, son type (`rows`, `text`, `reviews`), son ouverture, son contenu et son
+     * titre (par défaut celui de `offer::offer.section_titles.<clé>`). Sans contenu (`null`), rien n'est ajouté.
      *
-     * @param  list<array{label: string, value: string}>  $facts
-     * @param  list<array{label: string, value: string}>  $rules
+     * @param  array<string, mixed>|null  $content
+     */
+    private function addSection(string $key, string $type, bool $open, ?array $content, ?string $title = null): static
+    {
+        if ($content === null) {
+            return $this;
+        }
+
+        $this->sections[] = [
+            'key' => $key,
+            'type' => $type,
+            'title' => $title ?? (string) __('offer::offer.section_titles.'.$key),
+            'open' => $open,
+            ...$content,
+        ];
+
+        return $this;
+    }
+
+    /**
+     * Ajoute les blocs d'informations, une section `text` chacun (clé `information-{id}`, son titre), avec l'ouverture
+     * réglée pour `informations` (décision 2026-11-19-contrat-offer-informations).
+     *
      * @param  list<array{id: string, title: string, description: string}>  $informations
-     * @param  array{label: string, link: string}|null  $publisherAction
+     */
+    private function addInformations(array $informations, bool $open): static
+    {
+        foreach ($informations as $information) {
+            $this->addSection('information-'.$information['id'], 'text', $open, ['text' => $information['description'], 'note' => null], $information['title']);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Les sections ajoutées (décisions 2026-11-19-sections-fiche-laravel et 2026-11-19-sections-construites-laravel) ;
+     * si aucune n'est ouverte, la première l'est.
+     *
      * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null, action?: array{label: string, link: string}|null}>
      */
-    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null, array $publisher = [], ?string $reviewsTitle = null, ?array $publisherAction = null): array
+    private function sections(): array
     {
-        $sections = [];
-
-        foreach ((array) config('offer.sections', []) as $key => $open) {
-            $open = (bool) $open;
-            $title = __('offer::offer.section_titles.'.$key);
-
-            array_push($sections, ...match ((string) $key) {
-                'location' => $address === null ? [] : [['key' => 'location', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $address, 'note' => $indication]],
-                // Qui publie l'offre (décision 2026-11-25-fiche-publiee-par).
-                // Son bouton « Envoyer un message », ou `null` (décision 2026-11-26-messages-editeur).
-                'publisher' => $publisher === [] ? [] : [['key' => 'publisher', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $publisher, 'action' => $publisherAction]],
-                'facts' => $facts === [] ? [] : [['key' => 'facts', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $facts]],
-                // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
-                'description' => $description === null ? [] : [['key' => 'description', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $description, 'note' => null]],
-                'rules' => $rules === [] ? [] : [['key' => 'rules', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $rules]],
-                'reviews' => $hasReviews ? [['key' => 'reviews', 'type' => 'reviews', 'title' => $reviewsTitle ?? $title, 'open' => $open]] : [],
-                'informations' => array_map(fn (array $information): array => [
-                    'key' => 'information-'.$information['id'],
-                    'type' => 'text',
-                    'title' => $information['title'],
-                    'open' => $open,
-                    'text' => $information['description'],
-                    'note' => null,
-                ], $informations),
-                default => [],
-            });
-        }
+        $sections = $this->sections;
 
         if ($sections !== [] && ! in_array(true, array_column($sections, 'open'), true)) {
             $sections[0]['open'] = true;
@@ -365,7 +399,10 @@ class OfferDetailResource extends JsonResource
             return null;
         }
 
-        return ['label' => (string) __('offer::message.action'), 'link' => '/profile/'.OfferMessageForm::name().'?record='.$offer->getKey()];
+        return [
+            'label' => (string) __('offer::message.action'),
+            'link' => '/profile/'.OfferMessageForm::name().'?record='.$offer->getKey(),
+        ];
     }
 
     /**
