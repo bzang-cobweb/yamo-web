@@ -40,12 +40,12 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Réservation », « Message », « Partenaire »), en puces : un ou
-            // plusieurs (décision 2026-11-26-filtre-type-en-puces).
-            Field::chips('type')
+            // Le type, parmi ceux de ses notifications (« Réservation », « Message », « Partenaire »), en liste : un seul
+            // (décision 2026-11-26-filtre-type-select).
+            Field::select('type')
                 ->label(__('notification::notification.filter_type'))
                 ->options($this->typeOptions($user)),
-            // Le statut, ceux des types choisis, seulement quand chaque type choisi a des statuts (décisions
+            // Le statut, ceux du type choisi, seulement quand ce type a des statuts (décisions
             // 2026-11-24-notifications-types-groupes-statut et 2026-11-24-notifications-types-reservation-partenaire).
             Field::select('status')
                 ->label(__('notification::notification.filter_status'))
@@ -188,7 +188,7 @@ class NotificationFilters
      */
     public function apply(Builder $query, array $filters, User $user): void
     {
-        // Un ou plusieurs types (des puces) ; un type inconnu est ignoré (décision 2026-11-26-filtre-type-en-puces).
+        // Un type ; une liste de types est encore lue (décision 2026-11-26-filtre-type-select) ; un type inconnu est ignoré.
         $types = array_intersect_key($this->types(), array_flip(array_filter((array) ($filters['type'] ?? []), 'is_string')));
         if ($types !== []) {
             $query->whereIn('type', array_merge(...array_column($types, 'types')));

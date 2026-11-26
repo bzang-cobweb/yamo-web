@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-26-filtre-type-select.md
+
 # `2026-11-26` — Filtre « Type » des notifications en puces ; le type « Message »
 
 - **Type** : décision

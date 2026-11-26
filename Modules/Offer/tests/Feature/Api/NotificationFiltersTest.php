@@ -81,8 +81,8 @@ class NotificationFiltersTest extends TestCase
         // « Réservation » seulement, toutes les actions (décision 2026-11-24-notifications-types-reservation-partenaire) ;
         // un type inconnu des modules n'est pas proposé.
         $this->assertSame(['booking' => 'Réservation', 'offer_message' => 'Message'], array_column($filters['type']['options'], 'label', 'value'));
-        // En puces : un ou plusieurs types (décision 2026-11-26-filtre-type-en-puces).
-        $this->assertSame('chips', $filters['type']['type']);
+        // En liste : un seul type (décision 2026-11-26-filtre-type-select).
+        $this->assertSame('select', $filters['type']['type']);
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
