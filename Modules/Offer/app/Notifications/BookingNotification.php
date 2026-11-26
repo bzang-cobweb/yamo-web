@@ -11,6 +11,7 @@ use Modules\Notification\Contracts\HasNotificationThread;
 use Modules\Notification\Contracts\HasNotificationUser;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
 use Modules\Offer\Models\Booking;
@@ -55,12 +56,25 @@ abstract class BookingNotification extends Notification implements HasNotificati
     }
 
     /**
-     * Le type d'une notification, sur sa carte (« Nouvelle demande », « Demande acceptée »), dans la langue
-     * courante ; la copie de sa propre demande : « Demande envoyée » (décision 2026-11-22-types-sans-logement).
+     * Le type d'une notification, sur sa carte (« Nouvelle demande de séjour », « Demande de visite acceptée »), dans la
+     * langue courante ; la copie de sa propre demande : « Demande de séjour envoyée » (décisions
+     * 2026-11-22-types-sans-logement et 2026-11-26-titres-type-de-demande). Sans type connu : « Demande acceptée ».
      */
-    public static function title(BookingStepEnum $step, bool $own): string
+    public static function title(BookingStepEnum $step, bool $own, ?BookingTypeEnum $type = null): string
     {
-        return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''));
+        return __('offer::booking.notify.types.'.$step->value.($own && $step === BookingStepEnum::RECEIVED ? '_own' : ''), ['request' => self::request($type)]);
+    }
+
+    /** L'étape dans le suivi d'une demande (« Demande de séjour acceptée »), dans la langue courante. */
+    public static function stepLabel(BookingStepEnum $step, ?BookingTypeEnum $type = null): string
+    {
+        return __('offer::booking.history.'.$step->value, ['request' => self::request($type)]);
+    }
+
+    /** « demande de séjour », « demande de visite » ; sans type connu, « demande » (décision 2026-11-26-titres-type-de-demande). */
+    private static function request(?BookingTypeEnum $type): string
+    {
+        return __('offer::booking.notify.request_lower.'.($type === null ? 'any' : $type->value));
     }
 
     /**
@@ -155,7 +169,7 @@ abstract class BookingNotification extends Notification implements HasNotificati
      * dans la langue du destinataire. La pastille de statut ne vient pas d'ici :
      * l'API la lit sur la demande, au statut réel (décision 2026-11-20-statut-reel).
      *
-     * @return array{title: string, step: string, booking_id: int, booking_status: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
+     * @return array{title: string, step: string, booking_id: int, booking_status: string, booking_type: string, body: string, summary: string, total: string|null, message: string|null, edited: bool, link: string, link_label: string, offer_id: int, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public function toArray(object $notifiable): array
     {
@@ -165,12 +179,15 @@ abstract class BookingNotification extends Notification implements HasNotificati
 
         return [
             // Le type de l'action (« Nouvelle demande », « Demande acceptée »), décision 2026-11-22-notification-par-action.
-            'title' => self::title($this->step, $own),
+            'title' => self::title($this->step, $own, $this->booking->type),
             // L'étape notifiée : `received`, `accepted`, `refused`, `cancelled`, `updated`.
             'step' => $this->step->value,
             // La demande et son statut à l'envoi.
             'booking_id' => (int) $this->booking->getKey(),
             'booking_status' => $this->status->value,
+            // Le type de la demande, `stay` ou `visit` : son titre quand elle n'existe plus (décision
+            // 2026-11-26-titres-type-de-demande).
+            'booking_type' => $this->booking->type->value,
             'body' => $this->body($notifiable),
             // La carte : qui agit (colonne `user_id`, lu à l'affichage), puis le texte sans son nom ;
             // sa propre action ne montre pas qui agit : la carte montre `body`.

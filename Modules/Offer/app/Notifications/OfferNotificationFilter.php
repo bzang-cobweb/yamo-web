@@ -12,6 +12,7 @@ use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Notification\Support\NotificationThreads;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
@@ -71,7 +72,21 @@ class OfferNotificationFilter implements NotificationFilter
         }
 
         // Sa propre action : le lecteur en est l'auteur (décision 2026-11-24-notifications-fil-de-groupe).
-        return BookingNotification::title($step, app(NotificationThreads::class)->isOwn($notification, $reader));
+        return BookingNotification::title($step, app(NotificationThreads::class)->isOwn($notification, $reader), $this->bookingType($notification));
+    }
+
+    /**
+     * Le type de la demande d'une notification : celui de la demande, sinon celui enregistré à l'envoi (une demande
+     * supprimée) ; `null` pour une ancienne notification d'une demande supprimée (décision
+     * 2026-11-26-titres-type-de-demande).
+     */
+    private function bookingType(DatabaseNotification $notification): ?BookingTypeEnum
+    {
+        $data = (array) $notification->data;
+        $id = $data['booking_id'] ?? null;
+        $booking = is_int($id) ? app(BookingCache::class)->find($id) : null;
+
+        return $booking?->type ?? (is_string($data['booking_type'] ?? null) ? BookingTypeEnum::tryFrom($data['booking_type']) : null);
     }
 
     /**
@@ -144,7 +159,7 @@ class OfferNotificationFilter implements NotificationFilter
 
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
 
-        return $step === null ? null : __('offer::booking.history.'.$step->value);
+        return $step === null ? null : BookingNotification::stepLabel($step, $this->bookingType($notification));
     }
 
     /** La pastille d'un statut de demande : son libellé et sa couleur. Aussi dans le calendrier. */

@@ -4,6 +4,7 @@ namespace Modules\Offer\Tests\Feature;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
@@ -14,14 +15,17 @@ use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingStepEnum;
+use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Events\BookingAnswered;
 use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingNotification;
+use Modules\Offer\Notifications\BookingRequestAccepted;
 use Modules\Offer\Notifications\BookingRequestReceived;
 use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Services\BookingService;
 use Tests\TestCase;
 
@@ -145,7 +149,7 @@ class BookingNotificationsTest extends TestCase
 
         app()->setLocale('fr');
         $mail = BookingNotification::for($booking, BookingStepEnum::RECEIVED)->toMail($booking->offer->user);
-        $this->assertSame('Nouvelle demande : '.$booking->offer->getTranslation('title', 'fr'), $mail->subject);
+        $this->assertSame('Nouvelle demande de séjour : '.$booking->offer->getTranslation('title', 'fr'), $mail->subject);
         $this->assertStringContainsString('Marie Curie a envoyé une demande de séjour pour « ', $mail->introLines[0]);
         $this->assertSame('Message : Bonjour !', $mail->introLines[1]);
         $this->assertStringContainsString('« Réservations reçues »', $mail->introLines[2]);
@@ -176,7 +180,55 @@ class BookingNotificationsTest extends TestCase
 
         $this->assertSame('pending', $data['booking_status']);
         $this->assertSame('received', $data['step']);
-        $this->assertSame('Nouvelle demande', $data['title']);
+        $this->assertSame('Nouvelle demande de séjour', $data['title']);
+    }
+
+    public function test_every_title_names_the_request_type(): void
+    {
+        // Décision 2026-11-26-titres-type-de-demande : la carte, le suivi et l'e-mail disent « séjour » ou « visite ».
+        $this->assertSame('Nouvelle demande de séjour', BookingNotification::title(BookingStepEnum::RECEIVED, false, BookingTypeEnum::STAY));
+        $this->assertSame('Demande de visite envoyée', BookingNotification::title(BookingStepEnum::RECEIVED, true, BookingTypeEnum::VISIT));
+        $this->assertSame('Demande de visite acceptée', BookingNotification::title(BookingStepEnum::ACCEPTED, false, BookingTypeEnum::VISIT));
+        $this->assertSame('Demande de séjour modifiée', BookingNotification::title(BookingStepEnum::UPDATED, false, BookingTypeEnum::STAY));
+        $this->assertSame('Demande de visite refusée', BookingNotification::stepLabel(BookingStepEnum::REFUSED, BookingTypeEnum::VISIT));
+        $this->assertSame('Demande de séjour annulée', BookingNotification::stepLabel(BookingStepEnum::CANCELLED, BookingTypeEnum::STAY));
+        // Sans type connu : le titre d'avant.
+        $this->assertSame('Demande acceptée', BookingNotification::title(BookingStepEnum::ACCEPTED, false));
+
+        app()->setLocale('en');
+        $this->assertSame('New visit request', BookingNotification::title(BookingStepEnum::RECEIVED, false, BookingTypeEnum::VISIT));
+        $this->assertSame('Stay request sent', BookingNotification::stepLabel(BookingStepEnum::RECEIVED, BookingTypeEnum::STAY));
+        app()->setLocale('de');
+        $this->assertSame('Besichtigungsanfrage angenommen', BookingNotification::title(BookingStepEnum::ACCEPTED, false, BookingTypeEnum::VISIT));
+        app()->setLocale('fr');
+
+        // Une visite : le titre enregistré, le type gardé pour une demande supprimée, le sujet de l'e-mail.
+        $booking = $this->booking();
+        $booking->forceFill(['type' => BookingTypeEnum::VISIT, 'check_out' => null, 'guests' => null, 'total' => null])->save();
+        $notification = BookingNotification::for($booking->refresh(), BookingStepEnum::ACCEPTED);
+        $data = $notification->toArray($booking->user);
+        $this->assertSame('Demande de visite acceptée', $data['title']);
+        $this->assertSame('visit', $data['booking_type']);
+        $this->assertSame('Demande de visite acceptée : '.$booking->offer->getTranslation('title', 'fr'), $notification->toMail($booking->user)->subject);
+    }
+
+    public function test_the_card_title_keeps_the_type_of_a_deleted_request(): void
+    {
+        // Décision 2026-11-26-titres-type-de-demande : la demande n'existe plus, son type est lu dans la notification.
+        $reader = User::factory()->create(['locale' => 'fr']);
+        $notification = fn (array $data): DatabaseNotification => DatabaseNotification::query()->create([
+            'id' => (string) Str::uuid(),
+            'type' => BookingRequestAccepted::class,
+            'notifiable_type' => $reader->getMorphClass(),
+            'notifiable_id' => $reader->getKey(),
+            'data' => ['booking_id' => 999999, ...$data],
+        ]);
+        $filter = app(OfferNotificationFilter::class);
+
+        $this->assertSame('Demande de visite acceptée', $filter->cardTitle($notification(['booking_type' => 'visit']), $reader));
+        $this->assertSame('Demande de visite acceptée', $filter->step($notification(['booking_type' => 'visit']), $reader));
+        // Une ancienne notification, sans type : le titre d'avant.
+        $this->assertSame('Demande acceptée', $filter->cardTitle($notification([]), $reader));
     }
 
     public function test_the_pill_is_the_real_booking_status_in_the_reader_language(): void
@@ -236,7 +288,7 @@ class BookingNotificationsTest extends TestCase
 
         $notification = $owner->notifications()->sole();
         // Le type de l'action (décision 2026-11-22-notification-par-action).
-        $this->assertSame('New request', $notification->data['title']);
+        $this->assertSame('New stay request', $notification->data['title']);
         $this->assertStringContainsString('Marie Curie sent a stay request for', $notification->data['body']);
         $this->assertSame('/offers/'.$booking->offer_id.'/calendar?month='.today()->addDay()->format('Y-m'), $notification->data['link']);
         $this->assertSame([], $notification->data['links']);

@@ -123,11 +123,11 @@ return [
     ],
     // The follow-up of a request (decision 2026-11-20-suivi-demande).
     'history' => [
-        'received' => 'Request sent',
-        'accepted' => 'Request accepted',
-        'refused' => 'Request declined',
-        'cancelled' => 'Request cancelled',
-        'updated' => 'Request changed',
+        'received' => ':Request sent',
+        'accepted' => ':Request accepted',
+        'refused' => ':Request declined',
+        'cancelled' => ':Request cancelled',
+        'updated' => ':Request changed',
     ],
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Stay request', 'visit' => 'Visit request'],
@@ -138,13 +138,14 @@ return [
         'filter_type' => 'Booking',
         // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
+        // Le type de demande dans chaque titre : « Demande de séjour acceptée » (décision 2026-11-26-titres-type-de-demande).
         'types' => [
-            'received' => 'New request',
-            'received_own' => 'Request sent',
-            'updated' => 'Request updated',
-            'accepted' => 'Request accepted',
-            'refused' => 'Request declined',
-            'cancelled' => 'Request cancelled',
+            'received' => 'New :request',
+            'received_own' => ':Request sent',
+            'updated' => ':Request updated',
+            'accepted' => ':Request accepted',
+            'refused' => ':Request declined',
+            'cancelled' => ':Request cancelled',
         ],
         'filter_rental_type' => 'Rental type',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
@@ -155,7 +156,7 @@ return [
         'greeting' => 'Hello :name,',
         'salutation' => 'The :app team',
         'requested' => [
-            'subject' => 'New request: :offer',
+            'subject' => 'New :request: :offer',
             'body' => ':guest sent a :request for “:offer” (:period).',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'You sent a :request for “:offer” (:period).',
@@ -165,7 +166,7 @@ return [
             'sms' => ':app: :guest sent a :request for “:offer” (:period). Reply in the app.',
         ],
         'accepted' => [
-            'subject' => 'Request accepted: :offer',
+            'subject' => ':Request accepted: :offer',
             'body' => 'Your :request for “:offer” (:period) has been accepted.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You accepted :guest’s :request for “:offer” (:period).',
@@ -175,7 +176,7 @@ return [
             'sms' => ':app: your :request for “:offer” (:period) has been accepted.',
         ],
         'refused' => [
-            'subject' => 'Request declined: :offer',
+            'subject' => ':Request declined: :offer',
             'body' => 'Your :request for “:offer” (:period) has been declined.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'You declined :guest’s :request for “:offer” (:period).',
@@ -185,7 +186,7 @@ return [
             'sms' => ':app: your :request for “:offer” (:period) has been declined.',
         ],
         'cancelled' => [
-            'subject' => 'Request cancelled: :offer',
+            'subject' => ':Request cancelled: :offer',
             'body' => ':guest cancelled their :request for “:offer” (:period).',
             'own' => 'You cancelled your :request for “:offer” (:period).',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
@@ -195,7 +196,7 @@ return [
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
         'updated' => [
-            'subject' => 'Request changed: :offer',
+            'subject' => ':Request changed: :offer',
             'body' => ':guest changed their :request for “:offer” (:period).',
             'own' => 'You changed your :request for “:offer” (:period).',
             'summary' => 'The :request for “:offer” has been changed (:period).',
@@ -217,7 +218,7 @@ return [
             'sent' => ':count review invitation(s) sent.',
         ],
         // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
-        'request_lower' => ['stay' => 'stay request', 'visit' => 'visit request'],
+        'request_lower' => ['stay' => 'stay request', 'visit' => 'visit request', 'any' => 'request'],
     ],
     'resource' => [
         'singular' => 'Booking',

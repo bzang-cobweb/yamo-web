@@ -123,11 +123,11 @@ return [
     ],
     // Der Verlauf einer Anfrage (Entscheidung 2026-11-20-suivi-demande).
     'history' => [
-        'received' => 'Anfrage gesendet',
-        'accepted' => 'Anfrage angenommen',
-        'refused' => 'Anfrage abgelehnt',
-        'cancelled' => 'Anfrage storniert',
-        'updated' => 'Anfrage geändert',
+        'received' => ':Request gesendet',
+        'accepted' => ':Request angenommen',
+        'refused' => ':Request abgelehnt',
+        'cancelled' => ':Request storniert',
+        'updated' => ':Request geändert',
     ],
     // Le titre de la page d'une demande (décision 2026-11-22-detail-titre-sejour-visite).
     'detail_title' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
@@ -138,13 +138,14 @@ return [
         'filter_type' => 'Buchung',
         // Le type d'une notification de demande, par action, sur sa carte et dans le filtre « Type » (décisions
         // 2026-11-22-notification-par-action et 2026-11-22-types-sans-logement) ; `received_own` : sa propre demande.
+        // Le type de demande dans chaque titre : « Demande de séjour acceptée » (décision 2026-11-26-titres-type-de-demande).
         'types' => [
-            'received' => 'Neue Anfrage',
-            'received_own' => 'Anfrage gesendet',
-            'updated' => 'Anfrage geändert',
-            'accepted' => 'Anfrage angenommen',
-            'refused' => 'Anfrage abgelehnt',
-            'cancelled' => 'Anfrage storniert',
+            'received' => 'Neue :request',
+            'received_own' => ':Request gesendet',
+            'updated' => ':Request geändert',
+            'accepted' => ':Request angenommen',
+            'refused' => ':Request abgelehnt',
+            'cancelled' => ':Request storniert',
         ],
         'filter_rental_type' => 'Art der Vermietung',
         // Le nombre de personnes d'une demande, dans le texte de la carte.
@@ -155,7 +156,7 @@ return [
         'greeting' => 'Hallo :name,',
         'salutation' => 'Ihr :app-Team',
         'requested' => [
-            'subject' => 'Neue Anfrage: :offer',
+            'subject' => 'Neue :request: :offer',
             'body' => ':guest hat eine :request für „:offer“ (:period) gesendet.',
             // Sa propre demande, dans le fil du membre (décision 2026-11-21-reservation-comme-notification).
             'own' => 'Sie haben eine :request für „:offer“ (:period) gesendet.',
@@ -165,7 +166,7 @@ return [
             'sms' => ':app: :guest hat eine :request für „:offer“ (:period) gesendet. Antworten Sie in der App.',
         ],
         'accepted' => [
-            'subject' => 'Anfrage angenommen: :offer',
+            'subject' => ':Request angenommen: :offer',
             'body' => 'Ihre :request für „:offer“ (:period) wurde angenommen.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'Sie haben die :request von :guest für „:offer“ (:period) angenommen.',
@@ -175,7 +176,7 @@ return [
             'sms' => ':app: Ihre :request für „:offer“ (:period) wurde angenommen.',
         ],
         'refused' => [
-            'subject' => 'Anfrage abgelehnt: :offer',
+            'subject' => ':Request abgelehnt: :offer',
             'body' => 'Ihre :request für „:offer“ (:period) wurde abgelehnt.',
             // Sa propre réponse, dans le fil du propriétaire (décision 2026-11-20-reponse-dans-son-fil).
             'own' => 'Sie haben die :request von :guest für „:offer“ (:period) abgelehnt.',
@@ -185,7 +186,7 @@ return [
             'sms' => ':app: Ihre :request für „:offer“ (:period) wurde abgelehnt.',
         ],
         'cancelled' => [
-            'subject' => 'Anfrage storniert: :offer',
+            'subject' => ':Request storniert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) storniert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) storniert.',
             // Le texte de la carte, sans le nom de qui agit (décision 2026-11-22-annulation-visite-sejour).
@@ -195,7 +196,7 @@ return [
         ],
         // La demande modifiée par le membre (décision 2026-11-21-demande-modifiee-notification).
         'updated' => [
-            'subject' => 'Anfrage geändert: :offer',
+            'subject' => ':Request geändert: :offer',
             'body' => ':guest hat die :request für „:offer“ (:period) geändert.',
             'own' => 'Sie haben Ihre :request für „:offer“ (:period) geändert.',
             'summary' => 'Die :request für „:offer“ wurde geändert (:period).',
@@ -217,7 +218,7 @@ return [
             'sent' => ':count Einladung(en) zur Bewertung gesendet.',
         ],
         // « demande de séjour », « demande de visite » : les textes d'une annulation (décision 2026-11-22-annulation-visite-sejour).
-        'request_lower' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage'],
+        'request_lower' => ['stay' => 'Aufenthaltsanfrage', 'visit' => 'Besichtigungsanfrage', 'any' => 'Anfrage'],
     ],
     'resource' => [
         'singular' => 'Buchung',

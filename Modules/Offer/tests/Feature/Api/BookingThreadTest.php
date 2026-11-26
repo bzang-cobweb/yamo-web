@@ -89,11 +89,11 @@ class BookingThreadTest extends TestCase
         $this->assertCount(1, $owner);
         $this->assertSame(['label' => 'Annulée', 'tone' => 'neutral'], $owner[0]['tag']);
         // Le titre de la carte : le type de l'action, sa dernière étape (décision 2026-11-22-notification-par-action).
-        $this->assertSame('Demande annulée', $owner[0]['card_title']);
+        $this->assertSame('Demande de séjour annulée', $owner[0]['card_title']);
         // Le membre : une carte, l'acceptation.
         $this->assertCount(1, $this->cards($this->guest));
 
-        $expected = ['Demande envoyée', 'Demande acceptée', 'Demande annulée'];
+        $expected = ['Demande de séjour envoyée', 'Demande de séjour acceptée', 'Demande de séjour annulée'];
         foreach ([[$this->owner, $owner[0]['id']], [$this->guest, $this->cards($this->guest)[0]['id']]] as [$reader, $id]) {
             $history = $this->api($reader, 'GET', '/'.$id)->assertOk()->json('data.history');
             // Les deux côtés, de la plus ancienne étape à la plus récente.
@@ -114,7 +114,7 @@ class BookingThreadTest extends TestCase
 
         $history = $this->api($this->owner, 'GET', '/'.$this->cards($this->owner)[0]['id'])->assertOk()->json('data.history');
 
-        $this->assertSame(['Demande envoyée', 'Demande refusée'], array_column($history, 'label'));
+        $this->assertSame(['Demande de séjour envoyée', 'Demande de séjour refusée'], array_column($history, 'label'));
         $this->assertSame('Déjà réservé', $history[1]['message']);
     }
 
@@ -159,7 +159,7 @@ class BookingThreadTest extends TestCase
         $this->assertSame(2, $this->api($this->owner, 'GET', '/unread-count')->json('data.unread'));
         // Le suivi : la demande reçue, puis sa réponse, de lui.
         $history = $this->api($this->owner, 'GET', '/'.$cards[0]['id'])->assertOk()->json('data.history');
-        $this->assertSame(['Demande envoyée', 'Demande acceptée'], array_column($history, 'label'));
+        $this->assertSame(['Demande de séjour envoyée', 'Demande de séjour acceptée'], array_column($history, 'label'));
         $this->assertSame((string) $this->owner->getKey(), $history[1]['actor']['id']);
     }
 
@@ -250,6 +250,12 @@ class BookingThreadTest extends TestCase
             $this->assertSame($reader->is($this->guest) ? 'Ma réservation' : 'Demande reçue', $page['title']);
             // Le titre composé, sous le nom du logement (décision 2026-11-22-detail-titre-compose-sous-titre) : sans adresse, pas de ville.
             $this->assertSame('Location meublée · Studio', $page['booking']['composed_title']);
+            // L'en-tête générique de la page : le nom du logement vers sa fiche, et le titre composé.
+            $this->assertSame([
+                'title' => $this->offer->getTranslation('title', 'fr'),
+                'subtitle' => 'Location meublée · Studio',
+                'link' => '/offers/'.$this->offer->getKey(),
+            ], $page['heading']);
             $this->assertSame(['label' => 'Refusée', 'tone' => 'neutral'], $page['tag']);
             // L'en-tête, l'étape de la carte ouverte, le refus (décision 2026-11-24-entete-etape-ouverte) : chez le membre,
             // reçu du propriétaire ; chez le propriétaire, sa propre réponse, sans qui agit ni résumé.
@@ -494,12 +500,12 @@ class BookingThreadTest extends TestCase
         $this->assertSame(2, $this->api($this->owner, 'GET', '/unread-count')->assertOk()->json('data.unread'));
         $cards = collect($this->cards($this->owner))->keyBy('title');
         $this->assertCount(2, $cards);
-        $this->assertFalse($cards['Demande annulée']['read']);
+        $this->assertFalse($cards['Demande de séjour annulée']['read']);
 
-        $this->api($this->owner, 'POST', '/'.$cards['Demande annulée']['id'].'/read')->assertNoContent();
+        $this->api($this->owner, 'POST', '/'.$cards['Demande de séjour annulée']['id'].'/read')->assertNoContent();
 
         $this->assertSame(1, $this->api($this->owner, 'GET', '/unread-count')->json('data.unread'));
-        $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande annulée']['read']);
+        $this->assertTrue(collect($this->cards($this->owner))->keyBy('title')['Demande de séjour annulée']['read']);
     }
 
     public function test_opening_a_request_from_a_read_step_still_marks_the_whole_thread_read(): void
@@ -597,7 +603,7 @@ class BookingThreadTest extends TestCase
         $this->assertStringContainsString('modifiée', (string) $card['summary']);
         $this->assertStringContainsString(', 2 personnes)', (string) $card['summary']);
         $history = $this->api($this->owner, 'GET', '/'.$card['id'])->json('data.history');
-        $this->assertSame(['Demande modifiée'], array_column($history, 'label'));
+        $this->assertSame(['Demande de séjour modifiée'], array_column($history, 'label'));
         // « Modifié » près de sa date (décision 2026-11-21-etape-modifiee-date).
         $this->assertSame([true], array_column($history, 'edited'));
         $this->assertSame(['Message modifié'], array_column($history, 'message'));
