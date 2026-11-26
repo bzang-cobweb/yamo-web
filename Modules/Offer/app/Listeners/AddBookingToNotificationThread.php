@@ -21,10 +21,11 @@ final class AddBookingToNotificationThread
     public function handle(NotificationThreadSerializing $event): void
     {
         // 1. Réunir : le fil, son identifiant de demande, le lecteur.
-        if (! str_starts_with($event->thread, OfferNotificationFilter::bookingThreadPrefix())) {
+        $prefix = OfferNotificationFilter::bookingThreadPrefix();
+        if (! str_starts_with($event->thread, $prefix)) {
             return;
         }
-        $id = Str::after($event->thread, OfferNotificationFilter::bookingThreadPrefix());
+        $id = Str::after($event->thread, $prefix);
         $reader = request()->user();
 
         // 2. Appeler le service ; un identifiant illisible vaut une demande supprimée.

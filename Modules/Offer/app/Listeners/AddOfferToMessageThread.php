@@ -17,11 +17,12 @@ final class AddOfferToMessageThread
 {
     public function handle(NotificationThreadSerializing $event): void
     {
-        if (! str_starts_with($event->thread, OfferNotificationFilter::messageThreadPrefix())) {
+        $prefix = OfferNotificationFilter::messageThreadPrefix();
+        if (! str_starts_with($event->thread, $prefix)) {
             return;
         }
 
-        $id = Str::before(Str::after($event->thread, OfferNotificationFilter::messageThreadPrefix()), ':');
+        $id = Str::before(Str::after($event->thread, $prefix), ':');
         $offer = ctype_digit($id) ? Offer::query()->withTrashed()->find((int) $id) : null;
 
         $heading = OfferHeading::of($offer, app()->getLocale());
