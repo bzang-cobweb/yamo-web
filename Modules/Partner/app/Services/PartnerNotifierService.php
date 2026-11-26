@@ -52,7 +52,7 @@ class PartnerNotifierService
     public function submitted(Partner $partner, int|string $actorId, bool $created): void
     {
         $actor = User::query()->find($actorId);
-        $actorName = $actor === null ? '' : (string) $actor->full_name;
+        $actorName = (string) $actor?->full_name;
         $action = $created ? PartnerNotification::CREATED : PartnerNotification::UPDATED;
 
         // La notification de son statut : en validation pour un ajout, l'actuel pour une modification (décision
