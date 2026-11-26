@@ -122,15 +122,10 @@ class RentalDomain extends Domain
     }
 
     /**
-     * Les anciens équipements (décision 2026-11-19-contrat-multiselect-intervalle-equipements), devenus des cases de la
-     * catégorie « Équipements » (décision 2026-11-25-equipements-en-categories) ; leurs libellés sont dans `offer::rental.amenities`.
-     */
-    public const AMENITIES = ['wifi', 'parking', 'air_conditioning', 'hot_water', 'water_tank', 'security', 'equipped_kitchen', 'washing_machine', 'iron', 'tv', 'balcony', 'pool'];
-
-    /**
      * Les cases de départ, sous deux catégories racines au même niveau, « Règles » et « Équipements » (décision
      * 2026-11-25-cases-par-categories) : les clés de leurs libellés ; leurs slugs sont tirés des noms (décision
-     * 2026-11-25-categories-slug-traduit). Les anciens équipements en tête des « Équipements » (décision 2026-11-25-equipements-en-categories).
+     * 2026-11-25-categories-slug-traduit). Les anciens équipements en tête des « Équipements » (décision 2026-11-25-equipements-en-categories) ;
+     * les libellés des « Équipements » sont dans `offer::rental.amenities`, ceux des « Règles » dans `offer::rental.rules`.
      */
     public const FLAG_TREE = [
         'rules' => ['pets', 'smoking', 'parties'],
@@ -144,7 +139,7 @@ class RentalDomain extends Domain
     {
         return match (true) {
             $root === 'rules' => 'offer::rental.rules.'.$key,
-            in_array($key, self::AMENITIES, true) => 'offer::rental.amenities.'.$key,
+            in_array($key, self::FLAG_TREE['features'], true) => 'offer::rental.amenities.'.$key,
             default => 'offer::rental.'.$key,
         };
     }

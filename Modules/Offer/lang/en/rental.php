@@ -82,6 +82,7 @@ return [
     'amenities' => [
         'wifi' => 'Wi-Fi',
         'parking' => 'Parking',
+        'free_parking' => 'Free parking',
         'air_conditioning' => 'Air conditioning',
         'hot_water' => 'Hot water',
         'generator' => 'Generator',
@@ -93,6 +94,7 @@ return [
         'tv' => 'Television',
         'balcony' => 'Balcony / terrace',
         'pool' => 'Swimming pool',
+        'cameras' => 'Security cameras',
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [

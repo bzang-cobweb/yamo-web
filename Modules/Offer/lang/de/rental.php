@@ -82,9 +82,10 @@ return [
     'amenities' => [
         'wifi' => 'WLAN',
         'parking' => 'Parkplatz',
+        'free_parking' => 'Kostenloser Parkplatz',
         'air_conditioning' => 'Klimaanlage',
         'hot_water' => 'Warmwasser',
-        'generator' => 'Stromgenerator',
+        'generator' => 'Stromaggregat',
         'water_tank' => 'Wassertank / Brunnen',
         'security' => 'Wachdienst / Sicherheit',
         'equipped_kitchen' => 'Ausgestattete Küche',
@@ -93,6 +94,7 @@ return [
         'tv' => 'Fernseher',
         'balcony' => 'Balkon / Terrasse',
         'pool' => 'Schwimmbad',
+        'cameras' => 'Überwachungskameras',
     ],
     // Règles et informations pratiques (décision 2026-11-19-contrat-regles-informations).
     'rules' => [
