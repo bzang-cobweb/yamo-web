@@ -70,10 +70,35 @@ second endroit où lire ses échanges) ; WhatsApp / téléphone (expose le numé
 
 ## Ce que j'ai décidé seul
 
-(à compléter à la clôture)
+- La solution : un fil de notifications plutôt qu'un module de messagerie (moins de code, réutilise la carte, la page
+  en bulles, les non-lus et les canaux e-mail / SMS existants).
+- Le membre à qui répond l'éditeur passe par un champ caché `member` du formulaire, pas par l'URL.
+- La clé `action` de la section « Éditeur » est toujours servie, `null` pour l'éditeur ; un visiteur voit le bouton et
+  passe par la connexion.
+- L'e-mail contient le texte du message ; le SMS, court, ne le contient pas.
+- Pas d'exception pour le super administrateur ; le filtre « Type » des notifications ne propose pas « Message ».
+- Le bouton de section, côté app, est générique (`section.action`), pas propre à « Éditeur ».
 
 ## Ce qui a été fait
 
+- web `043e3db` : formulaire `offer.message`, policy `message`, route `POST /api/v1/offers/{offer}/messages`
+  (20/min), notification `OfferMessageReceived` (fil `offer-message:{offre}:{membre}`, bouton « Répondre »), action
+  de la section « Éditeur », traductions fr/en/de, 4 tests (77 assertions), décision `2026-11-26-messages-editeur`.
+- mobile `5e7fb69` : `section.action` affiché sous les lignes d'une section (`SectionAction`), connexion d'abord pour un
+  visiteur ; 2 tests.
+- Preuves : web 762 tests verts, Pint propre ; mobile tsc sans erreur, 401 tests verts ; `bza-dev:qa-check` : GO,
+  0 écart bloquant.
+
 ## Ce que je n'ai pas vérifié
 
+- Le parcours dans le simulateur : toutes les offres de démo appartiennent au membre connecté (Awa) ; j'ai seulement
+  vu que le bouton est absent sur sa propre offre, et, par l'API, qu'il est servi aux autres lecteurs.
+- L'e-mail et le SMS envoyés.
+- Qu'un tiers ne voit pas le fil de deux autres membres : couvert par le mécanisme existant (`visibleTo`), sans test
+  dédié.
+
 ## Ce qui reste en suspens
+
+- Une liste « Mes messages » à part, si l'onglet Notifications ne suffit pas.
+- Le type « Message » dans le filtre des notifications.
+- Un test : un tiers ne voit pas le fil des autres.
