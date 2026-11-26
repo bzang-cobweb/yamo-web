@@ -23,6 +23,9 @@ use Modules\Partner\Models\Partner;
  */
 class PartnerService
 {
+    /** Les textes d'un partenaire, saisis par langue. */
+    private const TEXT_FIELDS = ['name', 'slogan', 'description', 'website', 'cta_label'];
+
     /**
      * Des partenaires visibles tirés au hasard, autant que réglé dans « Application » (décision
      * 2026-11-23-accueil-nombres-reglables), puis rangés dans l'ordre du back-office (décision
@@ -138,9 +141,40 @@ class PartnerService
     {
         // Le statut ne change pas : affiché, il reste en ligne avec ses nouvelles données (décision
         // 2026-11-24-partenaire-modification-sans-validation).
+        $before = $this->values($partner, $locale);
         $this->fill($partner, $data, $locale);
+
+        // Seulement ce qui a changé, avant et après, gardé sur le partenaire (décisions 2026-11-26-partenaire-modifications
+        // et 2026-11-26-partenaire-dernieres-modifications) ; rien de changé : personne n'est prévenu.
+        $changes = [];
+        foreach ($this->values($partner, $locale) as $field => $value) {
+            if ($value !== $before[$field]) {
+                $changes[] = ['field' => $field, 'old' => $before[$field], 'new' => $value];
+            }
+        }
+        if ($changes !== []) {
+            $partner->last_changes = ['changes' => $changes, 'by' => $actor->getKey(), 'at' => now()->toIso8601String()];
+        }
         $partner->save();
-        PartnerSubmitted::dispatch($partner, $actor->getKey(), false);
+
+        if ($changes !== []) {
+            PartnerSubmitted::dispatch($partner, $actor->getKey(), false, $changes);
+        }
+    }
+
+    /**
+     * Les champs qu'un membre modifie, dans la langue `$locale` pour les textes ; `''` pour un champ vide.
+     *
+     * @return array<string, string>
+     */
+    private function values(Partner $partner, string $locale): array
+    {
+        $values = [];
+        foreach (self::TEXT_FIELDS as $key) {
+            $values[$key] = (string) $partner->getTranslation($key, $locale, false);
+        }
+
+        return [...$values, 'contact_email' => (string) $partner->contact_email, 'contact_phone' => (string) $partner->contact_phone];
     }
 
     /**
@@ -158,7 +192,7 @@ class PartnerService
      */
     private function fill(Partner $partner, array $data, string $locale): void
     {
-        foreach (['name', 'slogan', 'description', 'website', 'cta_label'] as $key) {
+        foreach (self::TEXT_FIELDS as $key) {
             $value = trim((string) ($data[$key] ?? ''));
             if ($value === '') {
                 $partner->forgetTranslation($key, $locale);

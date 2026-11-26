@@ -122,7 +122,8 @@ class PartnerStatusNotificationTest extends TestCase
             $data = $notification->toArray($team);
 
             return $data['title'] === 'Partenaire modifié'
-                && $data['body'] === '« Wouri Express » a été modifié par '.$helper->full_name.'.'
+                // Pour le destinataire : le partenaire, sans qui l'a modifié (décision 2026-11-26-partenaire-modifie-destinataires).
+                && $data['body'] === 'Le partenaire « Wouri Express » a été modifié.'
                 && $notification->notificationUserId($team) === $helper->getKey()
                 && $data['partner_status'] === 'published';
         });
@@ -162,7 +163,7 @@ class PartnerStatusNotificationTest extends TestCase
         Event::assertListening(PartnerSubmitted::class, NotifyPartnerUsersOfSubmission::class);
 
         $partner = new Partner;
-        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true));
+        $this->mock(PartnerNotifierService::class, fn (MockInterface $notifier) => $notifier->shouldReceive('submitted')->once()->with($partner, 7, true, []));
 
         app(NotifyPartnerUsersOfSubmission::class)->handle(new PartnerSubmitted($partner, 7, true));
     }

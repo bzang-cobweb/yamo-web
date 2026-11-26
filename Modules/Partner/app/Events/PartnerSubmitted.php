@@ -17,5 +17,8 @@ class PartnerSubmitted
         public readonly Partner $partner,
         public readonly int|string $actorId,
         public readonly bool $created,
+        // Une modification : les champs changés, avant et après (décision 2026-11-26-partenaire-modifications).
+        /** @var list<array{field: string, old: string, new: string}> */
+        public readonly array $changes = [],
     ) {}
 }

@@ -102,6 +102,9 @@ class Partner extends Model implements HasMedia, NotifiableGroup
             'views_count' => 'integer',
             'clicks_count' => 'integer',
             'featured_until' => 'date',
+            // La dernière modification depuis l'app : `changes` (champ, avant, après), `by`, `at` (décision
+            // 2026-11-26-partenaire-dernieres-modifications).
+            'last_changes' => 'array',
         ];
     }
 

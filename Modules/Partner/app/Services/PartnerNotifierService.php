@@ -48,8 +48,10 @@ class PartnerNotifierService
     /**
      * Il a été ajouté ou modifié depuis l'app par `$actorId` et attend la validation : le compte du back-office choisi
      * sur la page Application est prévenu (sans compte choisi, personne), ses administrateurs par e-mail et SMS.
+     *
+     * @param  list<array{field: string, old: string, new: string}>  $changes  les champs modifiés (décision 2026-11-26-partenaire-modifications)
      */
-    public function submitted(Partner $partner, int|string $actorId, bool $created): void
+    public function submitted(Partner $partner, int|string $actorId, bool $created, array $changes = []): void
     {
         $actor = User::query()->find($actorId);
         $actorName = (string) $actor?->full_name;
@@ -57,7 +59,7 @@ class PartnerNotifierService
 
         // La notification de son statut : en validation pour un ajout, l'actuel pour une modification (décision
         // 2026-11-24-partenaire-modification-sans-validation).
-        $this->send($partner, Setting::partnerNotifyUser(), $actorId, fn (bool $inTab): PartnerNotification => PartnerNotification::for($partner, $partner->status, $action, $actorId, $actorName, $inTab));
+        $this->send($partner, Setting::partnerNotifyUser(), $actorId, fn (bool $inTab): PartnerNotification => PartnerNotification::for($partner, $partner->status, $action, $actorId, $actorName, $inTab, $changes));
     }
 
     /**

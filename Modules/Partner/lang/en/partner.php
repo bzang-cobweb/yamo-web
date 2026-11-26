@@ -98,6 +98,8 @@ return [
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'notify' => [
+        // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
+        'changes' => ['line' => ':field: :value', 'empty' => '(empty)'],
         // La liste « Notifications » : le type « Partenaire », puis un type par statut, ses statuts dans le filtre « Statut » (décision 2026-11-24-notifications-types-groupes-statut).
         'filter_type' => 'Partner',
         'greeting' => 'Hello :name,',
@@ -127,7 +129,9 @@ return [
             ],
             'others' => [
                 'created' => '« :name » was added by :actor; it is under review.',
-                'updated' => '“:name” was updated by :actor.',
+                // Pour les destinataires : le partenaire, sans qui l'a modifié, nommé au-dessus sur la carte (décision
+                // 2026-11-26-partenaire-modifie-destinataires).
+                'updated' => 'The partner “:name” was updated.',
             ],
         ],
     ],

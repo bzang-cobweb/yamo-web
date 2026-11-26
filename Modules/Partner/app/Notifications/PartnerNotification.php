@@ -42,11 +42,14 @@ abstract class PartnerNotification extends Notification implements HasNotificati
     abstract public static function status(): PartnerStatusEnum;
 
     /** La notification du statut `$status`, de sa classe. */
-    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = '', bool $inTab = true): self
+    /**
+     * @param  list<array{field: string, old: string, new: string}>  $changes  une modification : les champs changés
+     */
+    public static function for(Partner $partner, PartnerStatusEnum $status, ?string $action = null, int|string|null $actorId = null, string $actorName = '', bool $inTab = true, array $changes = []): self
     {
         $class = $status->notification();
 
-        return new $class($partner, $action, $actorId, $actorName, $inTab);
+        return new $class($partner, $action, $actorId, $actorName, $inTab, $changes);
     }
 
     /**
@@ -70,6 +73,10 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         // Faux : par e-mail et SMS seulement, sans notification dans l'onglet (ses administrateurs, décision
         // 2026-11-24-partenaire-admins-email-sms).
         public readonly bool $inTab = true,
+        // Une modification : les champs changés, avant et après, pour l'e-mail ; la page les lit sur le partenaire
+        // (décisions 2026-11-26-partenaire-modifications et 2026-11-26-partenaire-dernieres-modifications).
+        /** @var list<array{field: string, old: string, new: string}> */
+        public readonly array $changes = [],
     ) {
         $this->afterCommit();
     }
@@ -131,6 +138,7 @@ abstract class PartnerNotification extends Notification implements HasNotificati
             ->subject(static::title(static::status(), $this->action))
             ->greeting(__('partner::partner.notify.greeting', ['name' => $notifiable instanceof User ? $notifiable->first_name : '']))
             ->line($this->body($notifiable))
+            ->lineIf($this->changes !== [], (string) $this->changesText())
             ->salutation(__('partner::partner.notify.salutation', ['app' => (string) config('app.name')]));
     }
 
@@ -159,6 +167,33 @@ abstract class PartnerNotification extends Notification implements HasNotificati
         }
 
         return __('partner::partner.notify.submitted.others.'.$this->action, ['name' => $name, 'actor' => $this->actorName]);
+    }
+
+    /**
+     * Les champs changés, un par ligne, dans la langue courante : « Description : « avant » → « après » » ; un champ vide
+     * se dit « (vide) » ; `null` sans changement.
+     */
+    private function changesText(): ?string
+    {
+        if ($this->changes === []) {
+            return null;
+        }
+
+        return implode("\n", array_map(fn (array $change): string => __('partner::partner.notify.changes.line', [
+            'field' => __('partner::partner.fields.'.$change['field']),
+            'value' => self::changeValue($change['old'], $change['new']),
+        ]), $this->changes));
+    }
+
+    /**
+     * Un champ changé, dans la langue courante : « « avant » → « après » » ; un champ vide se dit « (vide) » (décision
+     * 2026-11-26-partenaire-modifications).
+     */
+    public static function changeValue(string $old, string $new): string
+    {
+        $value = fn (string $text): string => $text === '' ? (string) __('partner::partner.notify.changes.empty') : '« '.$text.' »';
+
+        return $value($old).' → '.$value($new);
     }
 
     private function isAuthor(object $notifiable): bool

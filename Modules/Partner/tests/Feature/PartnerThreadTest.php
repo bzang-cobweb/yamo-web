@@ -61,6 +61,39 @@ class PartnerThreadTest extends AuthFilamentTestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->json($method, '/api/v1'.$uri, $data);
     }
 
+    public function test_an_edit_records_only_what_changed_and_an_edit_without_change_notifies_nobody(): void
+    {
+        // Décision 2026-11-26-partenaire-modifications.
+        $team = User::factory()->create(['locale' => 'fr']);
+        Setting::current()->update(['partner_notify_user_id' => $team->getKey()]);
+        $author = $this->member();
+        $fields = ['name' => 'Déménageurs du Wouri', 'slogan' => 'Vos meubles en sécurité.', 'description' => 'Texte.'];
+        $this->api($author, 'POST', '/partners', $fields)->assertNoContent();
+        $partner = Partner::query()->where('name->fr', 'Déménageurs du Wouri')->sole();
+
+        $this->travel(1)->minutes();
+        // Le slogan retiré, le lien ajouté : deux changements ; le nom et la description, pareils, n'y sont pas.
+        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", [...$fields, 'slogan' => '', 'website' => 'https://wouri.test'])->assertNoContent();
+        // Gardée sur le partenaire, avec qui l'a faite (décision 2026-11-26-partenaire-dernieres-modifications).
+        $partner->refresh();
+        $this->assertSame([
+            ['field' => 'slogan', 'old' => 'Vos meubles en sécurité.', 'new' => ''],
+            ['field' => 'website', 'old' => '', 'new' => 'https://wouri.test'],
+        ], $partner->last_changes['changes']);
+        $this->assertSame($author->getKey(), $partner->last_changes['by']);
+        $edit = $team->notifications()->latest()->first();
+        $this->assertArrayNotHasKey('changes', $edit->data);
+        // La page de la notification les montre en lignes, sous l'en-tête.
+        $this->assertSame([
+            ['key' => 'slogan', 'label' => 'Slogan', 'value' => '« Vos meubles en sécurité. » → (vide)'],
+            ['key' => 'website', 'label' => 'Lien', 'value' => '(vide) → « https://wouri.test »'],
+        ], $this->api($author, 'GET', '/notifications/'.$this->api($author, 'GET', '/notifications')->json('data.items.0.id'))->json('data.lines'));
+
+        // Rien de changé : aucune notification de plus.
+        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", [...$fields, 'slogan' => '', 'website' => 'https://wouri.test'])->assertNoContent();
+        $this->assertSame(2, $team->notifications()->count());
+    }
+
     public function test_a_partner_thread_is_read_by_all_its_accounts(): void
     {
         $team = User::factory()->create(['locale' => 'fr']);
@@ -97,6 +130,10 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $this->assertCount(1, $cards);
             $page = $this->api($reader, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data');
             $this->assertSame($labels, array_column($page['history'], 'label'));
+            // Sous l'en-tête, la dernière modification du partenaire, gardée sur lui (décision
+            // 2026-11-26-partenaire-dernieres-modifications) ; les étapes du suivi gardent leur libellé.
+            $this->assertSame([['key' => 'description', 'label' => 'Description', 'value' => '« Autre texte. » → « Encore. »']], $page['lines']);
+            $this->assertSame([null, null, null, null], array_column($page['history'], 'message'));
             // L'en-tête du partenaire : son nom vers sa page, son slogan dessous (décision 2026-11-26-entete-partenaire).
             $this->assertSame([
                 'title' => (string) $partner->getTranslation('name', 'fr'),

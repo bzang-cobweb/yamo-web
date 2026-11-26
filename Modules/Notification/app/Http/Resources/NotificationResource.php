@@ -127,6 +127,11 @@ class NotificationResource extends JsonResource
          * du logement et son titre composé).
          */
         $item['heading'] = null;
+        /**
+         * Des lignes sous l'en-tête, libellé et valeur (les dernières modifications d'un partenaire) ; `null` : aucune.
+         * Données par le module du fil (décision 2026-11-26-partenaire-dernieres-modifications).
+         */
+        $item['lines'] = null;
 
         // Le module du fil complète la réponse (une demande : `booking`).
         $thread = $notification->getAttribute('thread');
