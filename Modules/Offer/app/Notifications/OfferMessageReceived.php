@@ -50,28 +50,25 @@ class OfferMessageReceived extends Notification implements HasNotificationThread
     }
 
     /**
-     * Les données d'un message pour le lecteur, dans la langue courante : le titre « Message », le texte, l'offre
-     * (son titre, dans `summary`, mène à la fiche) et « Répondre ».
+     * Les données d'un message pour le lecteur, dans la langue courante : le titre « Message », le texte, qui est aussi
+     * celui de la carte (décision 2026-11-26-carte-message-texte), l'offre et « Répondre ». L'offre dont on parle est
+     * l'en-tête de la page (`AddOfferToMessageThread`).
      *
      * @return array{title: string, body: string, summary: string, message: string, offer_id: int, member_id: int, link: string, link_label: string, text_links: list<array{text: string, link: string}>, links: list<array{label: string, link: string}>}
      */
     public static function data(Offer $offer, int $memberId, string $text, bool $forPublisher): array
     {
-        $title = (string) $offer->getTranslation('title', app()->getLocale());
-        $summary = __('offer::message.notify.summary', ['offer' => $title]);
-
         return [
             'title' => __('offer::message.notify.title'),
             'body' => $text,
-            // Sur la carte et en tête de la page : l'offre dont on parle ; le texte est dans la bulle (`message`).
-            'summary' => $summary,
+            // Sur la carte : le message lui-même, tronqué par l'app (décision 2026-11-26-carte-message-texte).
+            'summary' => $text,
             'message' => $text,
             'offer_id' => (int) $offer->getKey(),
             'member_id' => $memberId,
             'link' => self::replyLink((int) $offer->getKey(), $memberId, $forPublisher),
             'link_label' => __('offer::message.notify.reply'),
-            // Le titre de l'offre, dans le texte de la carte, mène à la fiche.
-            'text_links' => $title !== '' && str_contains($summary, $title) ? [['text' => $title, 'link' => '/offers/'.$offer->getKey()]] : [],
+            'text_links' => [],
             'links' => [],
         ];
     }

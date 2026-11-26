@@ -130,7 +130,9 @@ class OfferMessageApiTest extends TestCase
         $this->assertSame('Répondre', $received->data['link_label']);
         // L'éditeur répond à ce membre.
         $this->assertSame('/profile/offer.message?record='.$this->offer->getKey().'.'.$this->member->getKey(), $received->data['link']);
-        $this->assertSame([['text' => 'Studio Bonapriso', 'link' => '/offers/'.$this->offer->getKey()]], $received->data['text_links']);
+        // La carte montre le message lui-même (décision 2026-11-26-carte-message-texte) ; l'offre est l'en-tête de la page.
+        $this->assertSame('Le studio est-il libre en décembre ?', $received->data['summary']);
+        $this->assertSame([], $received->data['text_links']);
 
         // Le membre voit le fil : son message, de lui, et « Répondre » écrit à l'éditeur.
         $cards = $this->api($this->member, 'GET', '/api/v1/notifications')->assertOk()->json('data.items');
