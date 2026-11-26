@@ -138,6 +138,8 @@ class NotificationFiltersTest extends TestCase
         $filters = $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
             ->getJson('/api/v1/notifications')->json('data.filters');
         $this->assertSame(['Awa Ngono', 'Paul Etoa'], array_column(collect($filters)->firstWhere('name', 'user')['options'], 'label'));
+        // « Expéditeur » : qui a envoyé la notification (décision 2026-11-26-filtre-expediteur).
+        $this->assertSame('Expéditeur', collect($filters)->firstWhere('name', 'user')['label']);
 
         $this->assertSame(['De Paul'], $this->titles($user, "?filter[user]={$paul->getKey()}"));
     }
