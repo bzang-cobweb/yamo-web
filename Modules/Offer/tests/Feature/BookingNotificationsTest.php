@@ -225,10 +225,10 @@ class BookingNotificationsTest extends TestCase
         ]);
         $filter = app(OfferNotificationFilter::class);
 
-        $this->assertSame('Demande de visite acceptée', $filter->cardTitle($notification(['booking_type' => 'visit']), $reader));
+        $this->assertSame('Demande de visite acceptée', $filter->title($notification(['booking_type' => 'visit']), $reader));
         $this->assertSame('Demande de visite acceptée', $filter->step($notification(['booking_type' => 'visit']), $reader));
         // Une ancienne notification, sans type : le titre d'avant.
-        $this->assertSame('Demande acceptée', $filter->cardTitle($notification([]), $reader));
+        $this->assertSame('Demande acceptée', $filter->title($notification([]), $reader));
     }
 
     public function test_the_pill_is_the_real_booking_status_in_the_reader_language(): void
@@ -238,14 +238,15 @@ class BookingNotificationsTest extends TestCase
         $booking = $this->booking();
         $create = fn (string $type, array $data) => $owner->notifications()->create(['id' => (string) Str::uuid(), 'type' => $type, 'data' => ['title' => 'Demande', 'body' => 'Texte', ...$data]]);
         // Reçue en attente, puis acceptée : la pastille suit la demande, pas l'étape.
-        $create(BookingRequestReceived::class, ['step' => 'received', 'title' => 'Reçue', 'booking_id' => $booking->getKey()]);
+        $create(BookingRequestReceived::class, ['step' => 'received', 'title' => 'Reçue', 'body' => 'Reçue', 'booking_id' => $booking->getKey()]);
         $booking->forceFill(['status' => BookingStatusEnum::ACCEPTED])->save();
         // Sans demande connue (ancienne notification) : le statut que nomme l'étape.
-        $create(BookingRequestRefused::class, ['step' => 'refused', 'title' => 'Ancienne']);
-        $create('Autre', ['title' => 'Autre', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]);
+        $create(BookingRequestRefused::class, ['step' => 'refused', 'title' => 'Ancienne', 'body' => 'Ancienne']);
+        $create('Autre', ['title' => 'Autre', 'body' => 'Autre', 'tag' => ['label' => 'Gardée', 'tone' => 'neutral']]);
 
         $tags = collect($this->withToken($owner->createToken('iPhone')->plainTextToken)->withHeaders(['Accept-Language' => 'en', 'X-Country' => 'CM'])
-            ->getJson('/api/v1/notifications')->assertOk()->json('data.items'))->pluck('tag', 'title');
+            ->getJson('/api/v1/notifications')->assertOk()->json('data.items'))->pluck('tag', 'body');
+        // Le titre d'une demande est calculé (décision 2026-11-26-titre-calcule) : les notifications se reconnaissent à leur texte.
 
         $this->assertSame(['label' => 'Accepted', 'tone' => 'success'], $tags['Reçue']);
         $this->assertSame(['label' => 'Declined', 'tone' => 'neutral'], $tags['Ancienne']);

@@ -41,6 +41,15 @@ class NotificationFiltersTest extends TestCase
     }
 
     /** @return list<string> */
+    private function bodies(User $user, string $query = ''): array
+    {
+        $this->app['auth']->forgetGuards();
+
+        return array_column($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
+            ->getJson('/api/v1/notifications'.$query)->assertOk()->json('data.items'), 'body');
+    }
+
+    /** @return list<string> */
     private function titles(User $user, string $query = ''): array
     {
         $this->app['auth']->forgetGuards();
@@ -51,6 +60,8 @@ class NotificationFiltersTest extends TestCase
 
     public function test_one_request_type_with_the_real_status_home_and_rental_type(): void
     {
+        // Le titre d'une demande est calculé (décision 2026-11-26-titre-calcule) : les notifications se reconnaissent à leur
+        // texte.
         // Décisions 2026-11-20-filtres-notifications et 2026-11-20-statut-reel.
         $user = User::factory()->create(['locale' => 'fr']);
         $studio = Offer::factory()->create(['title' => ['fr' => 'Studio photos'], 'details' => ['rental_type' => 'furnished']]);
@@ -59,7 +70,7 @@ class NotificationFiltersTest extends TestCase
         $accepted = Booking::factory()->for($flat)->status(BookingStatusEnum::ACCEPTED)->create();
         $create = fn (string $type, string $title, ?Offer $offer, ?Booking $booking) => $user->notifications()->create([
             'id' => (string) Str::uuid(), 'type' => $type,
-            'data' => ['title' => $title, 'body' => 'Texte', ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($booking === null ? [] : ['booking_id' => $booking->getKey()])],
+            'data' => ['title' => $title, 'body' => $title, ...($offer === null ? [] : ['offer_id' => $offer->getKey()]), ...($booking === null ? [] : ['booking_id' => $booking->getKey()])],
         ]);
         $create(BookingRequestReceived::class, 'Demande studio', $studio, $pending);
         // Reçue en attente, acceptée depuis : son statut réel est « Acceptée ».
@@ -99,18 +110,24 @@ class NotificationFiltersTest extends TestCase
         $this->assertTrue($filters['offer']['searchable']);
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
-        $this->assertCount(3, $this->titles($user, '?filter[type]=booking'));
-        $this->assertCount(3, $this->titles($user, '?filter[type][]=booking'));
-        $this->assertSame(['Un message'], $this->titles($user, '?filter[type][]=offer_message'));
-        $this->assertCount(4, $this->titles($user, '?filter[type][]=booking&filter[type][]=offer_message'));
+        $this->assertCount(3, $this->bodies($user, '?filter[type]=booking'));
+        $this->assertCount(3, $this->bodies($user, '?filter[type][]=booking'));
+        $this->assertSame(['Un message'], $this->bodies($user, '?filter[type][]=offer_message'));
+        $this->assertCount(4, $this->bodies($user, '?filter[type][]=booking&filter[type][]=offer_message'));
         // Le statut réel de la demande, pas l'étape notifiée.
-        $this->assertSame(['Demande studio'], $this->titles($user, '?filter[type]=booking&filter[status]=pending'));
-        $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->titles($user, '?filter[type]=booking&filter[status]=accepted'));
-        $this->assertSame(['Demande studio'], $this->titles($user, "?filter[offer]={$studio->getKey()}"));
-        $this->assertSame(['Demande studio'], $this->titles($user, '?filter[rental_type]=furnished'));
+        $this->assertSame(['Demande studio'], $this->bodies($user, '?filter[type]=booking&filter[status]=pending'));
+        $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->bodies($user, '?filter[type]=booking&filter[status]=accepted'));
+        // En puces : plusieurs statuts, plusieurs types de location (décision 2026-11-26-filtres-statut-location-en-puces).
+        $this->assertSame(['chips', 'chips'], [$filters['status']['type'], $filters['rental_type']['type']]);
+        $this->assertCount(3, $this->bodies($user, '?filter[type]=booking&filter[status][]=pending&filter[status][]=accepted'));
+        $this->assertSame(['Demande studio'], $this->bodies($user, '?filter[type]=booking&filter[status][]=pending&filter[status][]=refused'));
+        $this->assertCount(3, $this->bodies($user, '?filter[rental_type][]=furnished&filter[rental_type][]=long_term'));
+        $this->assertSame(['Demande studio'], $this->bodies($user, '?filter[rental_type][]=furnished'));
+        $this->assertSame(['Demande studio'], $this->bodies($user, "?filter[offer]={$studio->getKey()}"));
+        $this->assertSame(['Demande studio'], $this->bodies($user, '?filter[rental_type]=furnished'));
         // Un type inconnu ne filtre rien.
-        $this->assertCount(5, $this->titles($user, '?filter[type]=Inconnu'));
-        $this->assertCount(5, $this->titles($user, '?filter[type][]=Inconnu'));
+        $this->assertCount(5, $this->bodies($user, '?filter[type]=Inconnu'));
+        $this->assertCount(5, $this->bodies($user, '?filter[type][]=Inconnu'));
     }
 
     public function test_the_search_finds_who_acted_and_the_home_title(): void

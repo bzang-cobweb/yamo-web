@@ -76,11 +76,13 @@ class PartnerNotificationFilterTest extends TestCase
         $this->assertSame(['En validation'], array_values(array_unique(array_column(array_column($pending, 'tag'), 'label'))));
         $published = $this->items($member, '?filter[type]=partner&filter[status]=partner_published');
         $this->assertSame(['Partenaire accepté'], array_column($published, 'title'));
-        $this->assertSame('Publié', $published[0]['tag']['label']);
+        $this->assertSame('En ligne', $published[0]['tag']['label']);
 
         // Le filtre « Statut » commun, avec le groupe.
         $this->assertSame(['Partenaire accepté'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_published'), 'title'));
         $this->assertSame(['Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[status]=partner_pending'), 'title'));
+        // Plusieurs statuts à la fois, en puces (décision 2026-11-26-filtres-statut-location-en-puces).
+        $this->assertEqualsCanonicalizing(['Partenaire accepté', 'Partenaire modifié'], array_column($this->items($member, '?filter[type]=partner&filter[status][]=partner_pending&filter[status][]=partner_published'), 'title'));
 
         // Par le nom du partenaire.
         $this->assertEqualsCanonicalizing(['Partenaire modifié'], array_column($this->items($member, '?search=Akwa'), 'title'));
@@ -90,7 +92,7 @@ class PartnerNotificationFilterTest extends TestCase
             ->getJson('/api/v1/notifications')->json('data.filters'))->keyBy('name');
         $this->assertSame(['partner' => 'Partenaire'], array_column($filters['type']['options'], 'label', 'value'));
         $statuses = collect($filters['status']['options'])->where('parent', 'partner');
-        $this->assertSame(['En validation', 'En attente de paiement', 'Publié', 'Refusé'], $statuses->pluck('label')->all());
+        $this->assertSame(['En validation', 'En attente de paiement', 'En ligne', 'Refusé'], $statuses->pluck('label')->all());
         $this->assertArrayNotHasKey('partner_status', $filters->all());
     }
 }

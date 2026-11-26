@@ -59,11 +59,11 @@ class PartnerNotificationFilter implements NotificationFilter
     /** L'étape d'une demande dans son suivi (« Partenaire modifié », « Partenaire accepté »), dans la langue du lecteur. */
     public function step(DatabaseNotification $notification, User $reader): ?string
     {
-        return $this->cardTitle($notification, $reader);
+        return $this->title($notification, $reader);
     }
 
     /** « Partenaire accepté », « Partenaire modifié »…, dans la langue du lecteur ; `null` pour une autre notification. */
-    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
+    public function title(DatabaseNotification $notification, User $reader): ?string
     {
         $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
         if ($status === null) {
@@ -129,12 +129,17 @@ class PartnerNotificationFilter implements NotificationFilter
     /** « Statut » : les notifications de ce statut, sa classe ; rien pour un statut d'un autre module. */
     public function apply(Builder $query, array $filters, User $user): void
     {
+        // Un ou plusieurs statuts, en puces (décision 2026-11-26-filtres-statut-location-en-puces) ; ceux d'un autre module
+        // sont ignorés ici.
+        $chosen = array_filter((array) ($filters['status'] ?? []), 'is_string');
+        $types = [];
         foreach (PartnerStatusEnum::cases() as $status) {
-            if (($filters['status'] ?? null) === self::status($status)) {
-                $query->where('type', $status->notification());
-
-                return;
+            if (in_array(self::status($status), $chosen, true)) {
+                $types[] = $status->notification();
             }
+        }
+        if ($types !== []) {
+            $query->whereIn('type', $types);
         }
     }
 

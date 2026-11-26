@@ -66,7 +66,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, card_title: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -86,9 +86,8 @@ class NotificationResource extends JsonResource
 
         $item = [
             'id' => (string) $notification->getKey(),
-            'title' => (string) ($data['title'] ?? ''),
-            /** Le titre de sa carte dans la liste, donné par son module (« Demande acceptée » pour une demande) ; `null` : `title`. */
-            'card_title' => app(NotificationFilters::class)->cardTitle($notification, $reader),
+            /** Le titre (« Demande de séjour acceptée », « Partenaire modifié », « Message »), décision 2026-11-26-titre-destinataire. */
+            'title' => $this->title($notification, $reader, $data),
             /** Statut en pastille, selon le type de la notification (« Acceptée », ton `success`), à défaut celui des données ; ou `null`. */
             'tag' => $this->tag($data),
             'body' => (string) ($data['body'] ?? ''),
@@ -293,6 +292,25 @@ class NotificationResource extends JsonResource
         $message = $data['message'] ?? null;
 
         return is_string($message) && trim($message) !== '' ? $message : null;
+    }
+
+    /**
+     * Le titre pour le lecteur (décision 2026-11-26-titre-destinataire) :
+     * - il a reçu la notification : le titre enregistré à l'envoi, déjà rédigé pour lui, dans sa langue, par la même
+     *   fonction que `title()` de son module ;
+     * - il ne l'a pas reçue (sa propre action, le fil d'un groupe) : le titre que calcule son module pour lui, dans sa
+     *   langue ; à défaut (un type sans module), le titre enregistré.
+     *
+     * @param  array<mixed>  $data
+     */
+    private function title(DatabaseNotification $notification, User $reader, array $data): string
+    {
+        $stored = (string) ($data['title'] ?? '');
+        if (app(NotificationThreads::class)->isReceivedBy($notification, $reader)) {
+            return $stored;
+        }
+
+        return app(NotificationFilters::class)->title($notification, $reader) ?? $stored;
     }
 
     /**

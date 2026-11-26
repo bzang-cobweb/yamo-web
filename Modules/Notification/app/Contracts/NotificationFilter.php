@@ -50,11 +50,11 @@ interface NotificationFilter
     public function step(DatabaseNotification $notification, User $reader): ?string;
 
     /**
-     * Le titre de la carte d'une notification du module dans la liste, dans la langue du lecteur `$reader`
-     * (« Demande acceptée » pour une demande, « Demande envoyée » pour sa propre demande, décision
-     * 2026-11-22-notification-par-action) ; `null` : son titre.
+     * Le titre d'une notification du module, dans la langue du lecteur `$reader`, calculé à l'affichage (« Demande de
+     * séjour acceptée », « Demande de visite envoyée » pour sa propre demande, décisions 2026-11-22-notification-par-action
+     * et 2026-11-26-titre-calcule) ; `null` : le titre enregistré à l'envoi.
      */
-    public function cardTitle(DatabaseNotification $notification, User $reader): ?string;
+    public function title(DatabaseNotification $notification, User $reader): ?string;
 
     /**
      * Les données d'une notification du module rédigées pour `$reader`, qui ne l'a pas reçue : sa propre action

@@ -47,7 +47,8 @@ class NotificationFilters
                 ->options($this->typeOptions($user)),
             // Le statut, ceux du type choisi, seulement quand ce type a des statuts (décisions
             // 2026-11-24-notifications-types-groupes-statut et 2026-11-24-notifications-types-reservation-partenaire).
-            Field::select('status')
+            // En puces : un ou plusieurs statuts du type choisi (décision 2026-11-26-filtres-statut-location-en-puces).
+            Field::chips('status')
                 ->label(__('notification::notification.filter_status'))
                 ->options($statuses = array_merge(...array_map(fn (string $filter): array => app($filter)->statuses(), $this->filters)))
                 ->dependsOn('type')
@@ -95,11 +96,11 @@ class NotificationFilters
      * Le libellé d'une étape d'un fil, donné par le module qui l'inscrit ; à défaut, le
      * titre de la notification.
      */
-    /** Le titre de la carte pour `$reader`, donné par le module qui l'inscrit ; à défaut, `null` (son titre). */
-    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
+    /** Le titre pour `$reader`, donné par le module qui l'inscrit ; à défaut, `null` (le titre enregistré). */
+    public function title(DatabaseNotification $notification, User $reader): ?string
     {
         foreach ($this->filters as $filter) {
-            $title = app($filter)->cardTitle($notification, $reader);
+            $title = app($filter)->title($notification, $reader);
             if ($title !== null) {
                 return $title;
             }

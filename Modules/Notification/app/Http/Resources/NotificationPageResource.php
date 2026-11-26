@@ -60,7 +60,7 @@ class NotificationPageResource extends JsonResource
     }
 
     /**
-     * @return array{items: list<array{id: string, title: string, card_title: string|null, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, count: string, filters: list<array<string, mixed>>}
+     * @return array{items: list<array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}>, next_cursor: string|null, count: string, filters: list<array<string, mixed>>}
      */
     public function toArray(Request $request): array
     {

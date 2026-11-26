@@ -75,6 +75,21 @@ class BookingThreadTest extends TestCase
         return $this->api($user, 'GET', '')->assertOk()->json('data.items');
     }
 
+    public function test_the_recipient_reads_the_stored_title_and_the_sender_the_one_written_for_him(): void
+    {
+        // Décision 2026-11-26-titre-destinataire.
+        $booking = $this->request(3);
+        $received = $this->owner->notifications()->sole();
+        $this->assertSame('Demande de séjour reçue', $received->data['title']);
+
+        // Le destinataire : le titre enregistré à l'envoi, tel quel, même s'il a changé depuis.
+        $received->forceFill(['data' => [...$received->data, 'title' => 'Titre à l’envoi']])->save();
+        $this->assertSame('Titre à l’envoi', $this->cards($this->owner)[0]['title']);
+        // L'expéditeur : le titre de son action, rédigé pour lui dans sa langue, pas celui du destinataire.
+        $this->assertSame('Demande de séjour envoyée', $this->cards($this->guest)[0]['title']);
+        $this->assertSame((string) $booking->getKey(), (string) $received->data['booking_id']);
+    }
+
     public function test_one_card_per_request_and_the_whole_follow_up_on_both_sides(): void
     {
         $this->travelTo(now()->setTime(9, 0));
@@ -89,7 +104,9 @@ class BookingThreadTest extends TestCase
         $this->assertCount(1, $owner);
         $this->assertSame(['label' => 'Annulée', 'tone' => 'neutral'], $owner[0]['tag']);
         // Le titre de la carte : le type de l'action, sa dernière étape (décision 2026-11-22-notification-par-action).
-        $this->assertSame('Demande de séjour annulée', $owner[0]['card_title']);
+        $this->assertSame('Demande de séjour annulée', $owner[0]['title']);
+        // Un seul titre, calculé à l'affichage : plus de `card_title` (décision 2026-11-26-titre-calcule).
+        $this->assertArrayNotHasKey('card_title', $owner[0]);
         // Le membre : une carte, l'acceptation.
         $this->assertCount(1, $this->cards($this->guest));
 

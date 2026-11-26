@@ -89,10 +89,11 @@ class OfferNotificationFilter implements NotificationFilter
     }
 
     /**
-     * Le type de l'action, sur la carte (« Nouvelle demande », « Demande acceptée »), dans la langue du lecteur
-     * (décision 2026-11-22-notification-par-action) ; `null` pour une autre notification.
+     * Le titre d'une demande, le type de l'action (« Demande de visite reçue », « Demande de séjour acceptée »), dans la
+     * langue du lecteur (décisions 2026-11-22-notification-par-action et 2026-11-26-titre-calcule) ; `null` pour une
+     * autre notification.
      */
-    public function cardTitle(DatabaseNotification $notification, User $reader): ?string
+    public function title(DatabaseNotification $notification, User $reader): ?string
     {
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
         if ($step === null) {
@@ -217,7 +218,8 @@ class OfferNotificationFilter implements NotificationFilter
                 ->options($this->offers($user))
                 ->searchable()
                 ->visibleWhen('type', self::BOOKING),
-            Field::select('rental_type')
+            // En puces : un ou plusieurs types de location (décision 2026-11-26-filtres-statut-location-en-puces).
+            Field::chips('rental_type')
                 ->label(__('offer::booking.notify.filter_rental_type'))
                 ->options(RentalTypeEnum::options())
                 ->visibleWhen('type', self::BOOKING),
@@ -226,19 +228,36 @@ class OfferNotificationFilter implements NotificationFilter
 
     public function apply(Builder $query, array $filters, User $user): void
     {
-        // Le statut réel de la demande (décision 2026-11-20-statut-reel).
-        $status = $filters['status'] ?? null;
-        if (is_string($status) && BookingStatusEnum::tryFrom($status) !== null) {
-            // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+        // Le statut réel de la demande (décision 2026-11-20-statut-reel) : un ou plusieurs, en puces (décision
+        // 2026-11-26-filtres-statut-location-en-puces) ; les statuts d'un autre module sont ignorés ici.
+        $statuses = array_values(array_filter(array_map(
+            fn (mixed $value): ?BookingStatusEnum => is_string($value) ? BookingStatusEnum::tryFrom($value) : null,
+            (array) ($filters['status'] ?? []),
+        )));
+        if ($statuses !== []) {
+            $pending = in_array(BookingStatusEnum::PENDING, $statuses, true);
+            $others = array_values(array_filter($statuses, fn (BookingStatusEnum $status): bool => $status !== BookingStatusEnum::PENDING));
             $ids = Booking::query()->whereKey($this->bookingIds($user))
-                ->when($status === BookingStatusEnum::PENDING->value, fn (Builder $bookings) => $bookings->awaitingAnswer(), fn (Builder $bookings) => $bookings->where('status', $status))
+                ->where(function (Builder $bookings) use ($pending, $others): void {
+                    // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+                    if ($pending) {
+                        $bookings->orWhere(fn (Builder $awaiting) => $awaiting->awaitingAnswer());
+                    }
+                    if ($others !== []) {
+                        $bookings->orWhereIn('status', $others);
+                    }
+                })
                 ->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
             $query->whereIn('data->booking_id', $ids === [] ? [0] : $ids);
         }
 
-        $rentalType = $filters['rental_type'] ?? null;
-        if (is_string($rentalType) && RentalTypeEnum::tryFrom($rentalType) !== null) {
-            $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->where('details->rental_type', $rentalType)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+        // Un ou plusieurs types de location, en puces.
+        $rentalTypes = array_values(array_filter(array_map(
+            fn (mixed $value): ?string => is_string($value) ? RentalTypeEnum::tryFrom($value)?->value : null,
+            (array) ($filters['rental_type'] ?? []),
+        )));
+        if ($rentalTypes !== []) {
+            $ids = Offer::query()->withTrashed()->whereKey($this->offerIds($user))->whereIn('details->rental_type', $rentalTypes)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
             $query->whereIn('data->offer_id', $ids === [] ? [0] : $ids);
         }
 
