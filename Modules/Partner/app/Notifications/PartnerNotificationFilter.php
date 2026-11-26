@@ -25,6 +25,15 @@ class PartnerNotificationFilter implements NotificationFilter
     /** La clé du groupe « Partenaire » dans le filtre « Type » : tous les statuts. */
     public const PARTNER = 'partner';
 
+    /**
+     * Le préfixe du fil d'un partenaire, lu par tous ses comptes : `partner:group:` (`partner:group:5`, décisions
+     * 2026-11-24-notifications-fil-de-groupe et 2026-11-26-prefixes-de-fil-des-filtres).
+     */
+    public static function partnerThreadPrefix(): string
+    {
+        return self::PARTNER.':group:';
+    }
+
     public function types(): array
     {
         return [self::PARTNER => ['label' => __('partner::partner.notify.filter_type'), 'types' => PartnerStatusEnum::notifications()]];

@@ -15,6 +15,7 @@ use Modules\Auth\Models\User;
 use Modules\Offer\Database\Factories\BookingFactory;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 
 /**
  * Une demande d'un membre sur une offre (décision 2026-11-19-contrat-reservations) :
@@ -58,13 +59,12 @@ class Booking extends Model
 
     public const MESSAGE_MAX_LENGTH = 1000;
 
-    /** Le préfixe du fil de notifications d'une demande : `booking:12` (décision 2026-11-20-notification-generique). */
-    public const THREAD_PREFIX = 'booking:';
-
     /** Le fil de notifications de cette demande. */
     public function thread(): string
     {
-        return self::THREAD_PREFIX.$this->getKey();
+        // `booking:12`, préfixé par la clé du type « Réservation » (décisions 2026-11-20-notification-generique et
+        // 2026-11-26-prefixes-de-fil-des-filtres).
+        return OfferNotificationFilter::bookingThreadPrefix().$this->getKey();
     }
 
     /**

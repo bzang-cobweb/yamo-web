@@ -14,7 +14,7 @@ use Modules\Offer\Models\Offer;
 
 /**
  * Un message au sujet d'une offre, entre un membre et son éditeur (décision 2026-11-26-messages-editeur) : une
- * notification par message, envoyée à l'autre partie, dans le fil `offer-message:{offre}:{membre}` (le membre est
+ * notification par message, envoyée à l'autre partie, dans le fil `offer_message:{offre}:{membre}` (le membre est
  * toujours celui qui n'est pas l'éditeur). L'expéditeur en est l'auteur (`user_id`) et la retrouve dans son fil ; la
  * page de la notification montre tous les messages en bulles (`message`), et « Répondre » rouvre le formulaire
  * `offer.message` avec le `record` qui convient au lecteur.
@@ -22,9 +22,6 @@ use Modules\Offer\Models\Offer;
 class OfferMessageReceived extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
 {
     use Queueable;
-
-    /** Le préfixe du fil d'une discussion : `offer-message:{offre}:{membre}`. */
-    public const THREAD_PREFIX = 'offer-message:';
 
     public function __construct(
         public readonly Offer $offer,
@@ -39,7 +36,8 @@ class OfferMessageReceived extends Notification implements HasNotificationThread
     /** Le fil de la discussion du membre `$memberId` sur l'offre `$offerId`. */
     public static function thread(int $offerId, int $memberId): string
     {
-        return self::THREAD_PREFIX.$offerId.':'.$memberId;
+        // Préfixé par la clé du type « Message » (décision 2026-11-26-prefixes-de-fil-des-filtres).
+        return OfferNotificationFilter::messageThreadPrefix().$offerId.':'.$memberId;
     }
 
     /**

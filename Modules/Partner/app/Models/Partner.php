@@ -19,6 +19,7 @@ use Modules\Notification\Contracts\NotifiableGroup;
 use Modules\Partner\Database\Factories\PartnerFactory;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Events\PartnerStatusChanged;
+use Modules\Partner\Notifications\PartnerNotificationFilter;
 use Modules\Partner\Services\PartnerLogoService;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -124,7 +125,8 @@ class Partner extends Model implements HasMedia, NotifiableGroup
     /** Le préfixe du fil de ses notifications, partagé par tous ses comptes (décision 2026-11-24-notifications-fil-de-groupe). */
     public static function groupThreadPrefix(): string
     {
-        return 'partner:group:';
+        // Préfixé par la clé du type « Partenaire » (décision 2026-11-26-prefixes-de-fil-des-filtres).
+        return PartnerNotificationFilter::partnerThreadPrefix();
     }
 
     /**

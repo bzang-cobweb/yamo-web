@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 /**
  * Écrire à l'éditeur d'une offre, et lui répondre (décision 2026-11-26-messages-editeur) : chaque message est une
- * notification envoyée à l'autre partie, dans le fil `offer-message:{offre}:{membre}`.
+ * notification envoyée à l'autre partie, dans le fil `offer_message:{offre}:{membre}`.
  */
 class OfferMessageApiTest extends TestCase
 {
@@ -70,7 +70,7 @@ class OfferMessageApiTest extends TestCase
 
     private function thread(): string
     {
-        return 'offer-message:'.$this->offer->getKey().':'.$this->member->getKey();
+        return 'offer_message:'.$this->offer->getKey().':'.$this->member->getKey();
     }
 
     /** @return array<string, mixed>|null */

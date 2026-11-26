@@ -29,8 +29,32 @@ use Modules\Offer\Support\BookingCache;
  */
 class OfferNotificationFilter implements NotificationFilter
 {
-    /** La clé du type « Réservation » dans le filtre « Type » : toutes les actions d'une demande. */
+    /**
+     * La clé du type « Réservation » dans le filtre « Type » : toutes les actions d'une demande ; aussi le préfixe du fil
+     * d'une demande, `booking:{demande}` (décision 2026-11-26-prefixes-de-fil-des-filtres).
+     */
     public const BOOKING = 'booking';
+
+    /**
+     * La clé du type « Message » : les messages à l'éditeur d'une offre (décision 2026-11-26-filtre-type-en-puces) ; aussi
+     * le préfixe de leur fil, `offer_message:{offre}:{membre}` (décision 2026-11-26-prefixes-de-fil-des-filtres).
+     */
+    public const MESSAGE = 'offer_message';
+
+    /** Le préfixe du fil d'une demande : `booking:` (`booking:12`, décision 2026-11-26-prefixes-de-fil-des-filtres). */
+    public static function bookingThreadPrefix(): string
+    {
+        return self::BOOKING.':';
+    }
+
+    /**
+     * Le préfixe du fil d'une discussion avec l'éditeur : `offer_message:` (`offer_message:12:37`, décision
+     * 2026-11-26-prefixes-de-fil-des-filtres).
+     */
+    public static function messageThreadPrefix(): string
+    {
+        return self::MESSAGE.':';
+    }
 
     /**
      * Le filtre « Type » : « Réservation », toutes les actions d'une demande (décisions 2026-11-22-notification-par-action
@@ -38,7 +62,11 @@ class OfferNotificationFilter implements NotificationFilter
      */
     public function types(): array
     {
-        return [self::BOOKING => ['label' => __('offer::booking.notify.filter_type'), 'types' => BookingStepEnum::notifications()]];
+        return [
+            self::BOOKING => ['label' => __('offer::booking.notify.filter_type'), 'types' => BookingStepEnum::notifications()],
+            // Les messages à l'éditeur, sans statut (décision 2026-11-26-filtre-type-en-puces).
+            self::MESSAGE => ['label' => __('offer::message.notify.filter_type'), 'types' => [OfferMessageReceived::class]],
+        ];
     }
 
     /**

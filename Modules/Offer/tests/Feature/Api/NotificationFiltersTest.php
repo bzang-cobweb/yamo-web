@@ -12,6 +12,7 @@ use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\BookingRequestAccepted;
 use Modules\Offer\Notifications\BookingRequestReceived;
+use Modules\Offer\Notifications\OfferMessageReceived;
 use Tests\TestCase;
 
 /**
@@ -65,6 +66,8 @@ class NotificationFiltersTest extends TestCase
         $create(BookingRequestReceived::class, 'Demande appartement', $flat, $accepted);
         $create(BookingRequestAccepted::class, 'Acceptée appartement', $flat, $accepted);
         $create('Autre', 'Sans logement', null, null);
+        // Un message à l'éditeur : le type « Message » (décision 2026-11-26-filtre-type-en-puces).
+        $create(OfferMessageReceived::class, 'Un message', null, null);
 
         $this->app['auth']->forgetGuards();
         $filters = collect($this->withToken($user->createToken('iPhone')->plainTextToken)->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])
@@ -77,7 +80,9 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame('partner', collect($filters['status']['options'])->firstWhere('value', 'partner_published')['parent']);
         // « Réservation » seulement, toutes les actions (décision 2026-11-24-notifications-types-reservation-partenaire) ;
         // un type inconnu des modules n'est pas proposé.
-        $this->assertSame(['booking' => 'Réservation'], array_column($filters['type']['options'], 'label', 'value'));
+        $this->assertSame(['booking' => 'Réservation', 'offer_message' => 'Message'], array_column($filters['type']['options'], 'label', 'value'));
+        // En puces : un ou plusieurs types (décision 2026-11-26-filtre-type-en-puces).
+        $this->assertSame('chips', $filters['type']['type']);
         // Une seule option ne verrouille pas un filtre ni n'en fait la valeur par défaut : l'app ne la prend pas pour « Tous »
         // (décision 2026-11-20-filtre-option-unique).
         $this->assertFalse($filters['type']['locked']);
@@ -95,13 +100,17 @@ class NotificationFiltersTest extends TestCase
         $this->assertSame(['Appartement Akwa', 'Studio photos'], array_column($filters['offer']['options'], 'label'));
 
         $this->assertCount(3, $this->titles($user, '?filter[type]=booking'));
+        $this->assertCount(3, $this->titles($user, '?filter[type][]=booking'));
+        $this->assertSame(['Un message'], $this->titles($user, '?filter[type][]=offer_message'));
+        $this->assertCount(4, $this->titles($user, '?filter[type][]=booking&filter[type][]=offer_message'));
         // Le statut réel de la demande, pas l'étape notifiée.
         $this->assertSame(['Demande studio'], $this->titles($user, '?filter[type]=booking&filter[status]=pending'));
         $this->assertEqualsCanonicalizing(['Demande appartement', 'Acceptée appartement'], $this->titles($user, '?filter[type]=booking&filter[status]=accepted'));
         $this->assertSame(['Demande studio'], $this->titles($user, "?filter[offer]={$studio->getKey()}"));
         $this->assertSame(['Demande studio'], $this->titles($user, '?filter[rental_type]=furnished'));
         // Un type inconnu ne filtre rien.
-        $this->assertCount(4, $this->titles($user, '?filter[type]=Inconnu'));
+        $this->assertCount(5, $this->titles($user, '?filter[type]=Inconnu'));
+        $this->assertCount(5, $this->titles($user, '?filter[type][]=Inconnu'));
     }
 
     public function test_the_search_finds_who_acted_and_the_home_title(): void

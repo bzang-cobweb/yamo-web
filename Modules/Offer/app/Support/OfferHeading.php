@@ -7,7 +7,7 @@ use Modules\Offer\Models\Offer;
 
 /**
  * L'en-tête de la page d'une notification dont le fil parle d'une offre (décision 2026-11-26-booking-summary) : une
- * demande (`booking:12`) ou une discussion avec l'éditeur (`offer-message:12:37`). Le titre saisi de l'offre, en lien
+ * demande (`booking:12`) ou une discussion avec l'éditeur (`offer_message:12:37`). Le titre saisi de l'offre, en lien
  * vers sa fiche, et dessous son titre composé (« Location meublée · Studio · Douala »), par la règle commune des
  * titres d'offre (`OfferCardTitle`).
  */

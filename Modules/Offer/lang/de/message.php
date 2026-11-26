@@ -12,6 +12,8 @@ return [
     'not_started' => 'Sie können nur einem Mitglied antworten, das Ihnen zu diesem Angebot geschrieben hat.',
     'not_yours' => 'Sie können in dieser Unterhaltung nicht schreiben.',
     'notify' => [
+        // Le type « Message » du filtre des notifications (décision 2026-11-26-filtre-type-en-puces).
+        'filter_type' => 'Nachricht',
         'title' => 'Nachricht',
         'summary' => 'Zu „:offer“',
         'reply' => 'Antworten',

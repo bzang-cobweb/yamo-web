@@ -13,6 +13,8 @@ return [
     'not_started' => 'Vous ne pouvez répondre qu\'à un membre qui vous a écrit au sujet de cette offre.',
     'not_yours' => 'Vous ne pouvez pas écrire dans cette discussion.',
     'notify' => [
+        // Le type « Message » du filtre des notifications (décision 2026-11-26-filtre-type-en-puces).
+        'filter_type' => 'Message',
         'title' => 'Message',
         'summary' => 'Au sujet de « :offer »',
         'reply' => 'Répondre',

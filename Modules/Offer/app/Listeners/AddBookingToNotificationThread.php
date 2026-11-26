@@ -5,7 +5,7 @@ namespace Modules\Offer\Listeners;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Notification\Events\NotificationThreadSerializing;
-use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Services\BookingThreadDetailsService;
 
 /**
@@ -21,10 +21,10 @@ final class AddBookingToNotificationThread
     public function handle(NotificationThreadSerializing $event): void
     {
         // 1. Réunir : le fil, son identifiant de demande, le lecteur.
-        if (! str_starts_with($event->thread, Booking::THREAD_PREFIX)) {
+        if (! str_starts_with($event->thread, OfferNotificationFilter::bookingThreadPrefix())) {
             return;
         }
-        $id = Str::after($event->thread, Booking::THREAD_PREFIX);
+        $id = Str::after($event->thread, OfferNotificationFilter::bookingThreadPrefix());
         $reader = request()->user();
 
         // 2. Appeler le service ; un identifiant illisible vaut une demande supprimée.

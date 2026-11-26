@@ -16,6 +16,7 @@ use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
 use Modules\Offer\Models\Booking;
+use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Services\BookingNotifierService;
 use Modules\Offer\Services\BookingThreadDetailsService;
 use Tests\TestCase;
@@ -63,11 +64,11 @@ class BookingListenersTest extends TestCase
             $bookingThreadDetailsService->shouldReceive('forThread')->once()->with(null, [], $reader)->andReturn(['booking' => null]);
         });
 
-        $event = new NotificationThreadSerializing(new DatabaseNotification, Booking::THREAD_PREFIX.'12', ['title' => 'Avant']);
+        $event = new NotificationThreadSerializing(new DatabaseNotification, OfferNotificationFilter::bookingThreadPrefix().'12', ['title' => 'Avant']);
         app(AddBookingToNotificationThread::class)->handle($event);
         $this->assertSame(['title' => 'Après'], $event->data);
 
-        $unreadable = new NotificationThreadSerializing(new DatabaseNotification, Booking::THREAD_PREFIX.'abc', []);
+        $unreadable = new NotificationThreadSerializing(new DatabaseNotification, OfferNotificationFilter::bookingThreadPrefix().'abc', []);
         app(AddBookingToNotificationThread::class)->handle($unreadable);
         $this->assertSame(['booking' => null], $unreadable->data);
     }

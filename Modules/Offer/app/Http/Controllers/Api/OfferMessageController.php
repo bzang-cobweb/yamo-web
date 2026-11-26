@@ -10,7 +10,7 @@ use Modules\Offer\Notifications\OfferMessageReceived;
 
 /**
  * Écrire à l'éditeur d'une offre, ou lui répondre (décision 2026-11-26-messages-editeur) : chaque message est une
- * notification envoyée à l'autre partie, dans le fil `offer-message:{offre}:{membre}`. La réponse est vide : l'app
+ * notification envoyée à l'autre partie, dans le fil `offer_message:{offre}:{membre}`. La réponse est vide : l'app
  * revient à l'écran précédent.
  */
 class OfferMessageController

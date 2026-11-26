@@ -40,17 +40,18 @@ class NotificationFilters
                 ->label(__('notification::notification.filter_user'))
                 ->options($this->members($user))
                 ->searchable(),
-            // Le type, parmi ceux de ses notifications (« Réservation », « Partenaire »).
-            Field::select('type')
+            // Le type, parmi ceux de ses notifications (« Réservation », « Message », « Partenaire »), en puces : un ou
+            // plusieurs (décision 2026-11-26-filtre-type-en-puces).
+            Field::chips('type')
                 ->label(__('notification::notification.filter_type'))
                 ->options($this->typeOptions($user)),
-            // Le statut, ceux du type choisi, seulement quand un type l'est (décisions
+            // Le statut, ceux des types choisis, seulement quand chaque type choisi a des statuts (décisions
             // 2026-11-24-notifications-types-groupes-statut et 2026-11-24-notifications-types-reservation-partenaire).
             Field::select('status')
                 ->label(__('notification::notification.filter_status'))
-                ->options(array_merge(...array_map(fn (string $filter): array => app($filter)->statuses(), $this->filters)))
+                ->options($statuses = array_merge(...array_map(fn (string $filter): array => app($filter)->statuses(), $this->filters)))
                 ->dependsOn('type')
-                ->visibleWhen('type', array_keys($this->types())),
+                ->visibleWhen('type', array_values(array_unique(array_column($statuses, 'parent')))),
             ...array_merge(...array_map(fn (string $filter): array => app($filter)->fields($user), $this->filters)),
             // En dernier, après ceux des modules, qui suivent « Type » ; non lues : Tous (par défaut), Oui, Non, en interrupteur à trois positions
             // (décision 2026-11-21-filtre-non-lues).
@@ -187,9 +188,10 @@ class NotificationFilters
      */
     public function apply(Builder $query, array $filters, User $user): void
     {
-        $type = $filters['type'] ?? null;
-        if (is_string($type) && array_key_exists($type, $this->types())) {
-            $query->whereIn('type', $this->types()[$type]['types']);
+        // Un ou plusieurs types (des puces) ; un type inconnu est ignoré (décision 2026-11-26-filtre-type-en-puces).
+        $types = array_intersect_key($this->types(), array_flip(array_filter((array) ($filters['type'] ?? []), 'is_string')));
+        if ($types !== []) {
+            $query->whereIn('type', array_merge(...array_column($types, 'types')));
         }
 
         $member = $filters['user'] ?? null;
