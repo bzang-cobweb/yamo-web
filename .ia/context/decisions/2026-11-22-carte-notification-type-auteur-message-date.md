@@ -1,3 +1,5 @@
+Remplacée en partie par : 2026-11-26-carte-notification-statut.md (la pastille du statut revient sur la carte)
+
 # Carte de notification : le type, qui envoie, le message, la date
 
 - **Date** : 2026-11-22
