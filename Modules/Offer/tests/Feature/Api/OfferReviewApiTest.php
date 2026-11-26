@@ -130,6 +130,8 @@ class OfferReviewApiTest extends TestCase
         // Le formulaire, prérempli avec son avis.
         $form = $this->api($awa, 'GET', "/api/v1/forms/offer.review?record={$offer->getKey()}")->assertOk()->json('data');
         $this->assertSame('Modifier mon avis', $form['title']);
+        // Sans le titre de l'offre (décision 2026-11-26-avis-sans-titre-offre).
+        $this->assertNull($form['subtitle']);
         $this->assertSame(['rating', 'textarea'], array_column($form['fields'], 'type'));
         $this->assertSame(['3', 'Bruyant le soir, mais bien situé.'], array_column($form['fields'], 'default'));
         $this->assertSame('PUT', $form['submit']['method']);

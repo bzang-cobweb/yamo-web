@@ -159,7 +159,12 @@ abstract class Listing
             // 2026-11-25-ville-selon-region) ; sans parent choisi, toute option de la liste vaut.
             $parent = $field->parentField();
             $check = $parent !== null && blank($data[$parent] ?? null) ? (clone $field)->dependsOn(null) : $field;
-            if (Validator::make([...$data, $field->name => $value], $check->validationRules())->passes()) {
+            // Masqué par sa condition (la ville sans région choisie) : ignoré. La visibilité se vérifie ici, des puces
+            // comprises, que la règle `exclude_unless` ne sait pas lire (décision 2026-11-26-region-ville-en-puces).
+            if (! $check->isVisibleFor($data)) {
+                continue;
+            }
+            if (Validator::make([...$data, $field->name => $value], $check->withoutVisibility()->validationRules())->passes()) {
                 $valid[$field->name] = $value;
             }
         }

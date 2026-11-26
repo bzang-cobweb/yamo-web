@@ -69,9 +69,10 @@ class OfferFiltersApiTest extends TestCase
 
         $filters = array_column($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'), null, 'name');
         $this->assertSame('Région', $filters['region']['label']);
-        // Sans l'option « Tous » (décision 2026-11-25-region-sans-tous) ; la ville la garde.
-        $this->assertFalse($filters['region']['all_option']);
-        $this->assertArrayNotHasKey('all_option', $filters['city']);
+        // Dans la recherche, une seule région, sans « Tous » (décision 2026-11-25-region-sans-tous) ; la ville en puces,
+        // visible dès qu'une région est choisie (décision 2026-11-26-region-ville-en-puces).
+        $this->assertSame(['select', false, 'chips'], [$filters['region']['type'], $filters['region']['all_option'], $filters['city']['type']]);
+        $this->assertSame(array_column($filters['region']['options'], 'value'), $filters['city']['visible_when']['values']);
         $this->assertContains('Littoral', array_column($filters['region']['options'], 'label'));
 
         $this->assertEqualsCanonicalizing([(string) $douala->getKey(), (string) $edea->getKey()], $this->ids('?filter[region]='.$littoral->getKey()));
@@ -114,10 +115,10 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame((string) $littoral->getKey(), collect($city['options'])->firstWhere('value', 'Douala')['parent']);
         $this->assertTrue($city['country_scoped']);
 
-        $this->assertSame([(string) $douala->getKey()], $this->ids('?filter[region]='.$littoral->getKey().'&filter[city]=Douala'));
+        $this->assertSame([(string) $douala->getKey()], $this->ids('?filter[region]='.$littoral->getKey().'&filter[city][]=Douala'));
         // Douala n'est pas dans la région par défaut (Centre) : la ville est ignorée.
-        $this->assertCount(1, $this->ids('?filter[city]=Douala'));
-        $this->assertNotContains((string) $douala->getKey(), $this->ids('?filter[city]=Douala'));
+        $this->assertCount(1, $this->ids('?filter[city][]=Douala'));
+        $this->assertNotContains((string) $douala->getKey(), $this->ids('?filter[city][]=Douala'));
     }
 
     public function test_my_homes_keep_an_optional_region(): void
@@ -128,6 +129,8 @@ class OfferFiltersApiTest extends TestCase
             ->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'region');
         $this->assertFalse($region['required']);
         $this->assertNull($region['default']);
+        // Hors de la recherche, en puces (décision 2026-11-26-region-ville-en-puces).
+        $this->assertSame('chips', $region['type']);
     }
 
     public function test_the_list_describes_its_filters(): void
@@ -206,8 +209,8 @@ class OfferFiltersApiTest extends TestCase
         // Une ancienne date sur un meublé ne compte pas (décision 2026-11-20-disponibilite-sans-meuble).
         $furnished = $this->home('Douala', 30000, ['property_type' => 'apartment', 'rental_type' => 'furnished', 'bedrooms' => 2, 'available_from' => '2027-01-15']);
 
-        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
-        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city]=Douala&filter[price][]=&filter[price][]=100000'));
+        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[city][]=Douala&filter[property_type][]=studio&filter[price][]=&filter[price][]=100000'));
+        $this->assertEqualsCanonicalizing(array_map('strval', [$house->getKey(), $match->getKey()]), $this->ids('?filter[property_type][]=studio&filter[property_type][]=house&filter[city][]=Douala&filter[price][]=&filter[price][]=100000'));
         $this->assertSame([(string) $furnished->getKey()], $this->ids('?filter[rental_type][]=furnished'));
         $this->assertNotContains((string) $furnished->getKey(), $this->ids('?filter[rental_type][]=long_term'));
         // Plusieurs types de location à la fois (décision 2026-11-26-filtres-en-puces).
@@ -221,15 +224,15 @@ class OfferFiltersApiTest extends TestCase
         // Les salles de bain choisies ; non renseigné : écarté (décision 2026-11-26-filtres-en-puces).
         $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms][]=2'));
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
-        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
+        $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city][]=Douala'));
         // Libre le 1er janvier : pas celui qui se libère le 15.
         $this->assertNotContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
         $this->assertContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-02-01'));
         $this->assertContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
         // Avec la recherche.
-        $this->assertSame([(string) $match->getKey()], $this->ids('?search=akwa&filter[city]=Douala'));
-        $this->assertSame([], $this->ids('?search=akwa&filter[city]=Yaoundé'));
-        $this->assertNotContains((string) $otherCity->getKey(), $this->ids('?filter[city]=Douala'));
+        $this->assertSame([(string) $match->getKey()], $this->ids('?search=akwa&filter[city][]=Douala'));
+        $this->assertSame([], $this->ids('?search=akwa&filter[city][]=Yaoundé'));
+        $this->assertNotContains((string) $otherCity->getKey(), $this->ids('?filter[city][]=Douala'));
     }
 
     public function test_an_invalid_or_unknown_filter_is_ignored(): void
@@ -237,7 +240,7 @@ class OfferFiltersApiTest extends TestCase
         $this->home('Douala', 1000, ['property_type' => 'studio']);
         $this->home('Yaoundé', 1000, ['property_type' => 'house']);
 
-        $this->assertCount(2, $this->ids('?filter[city]=Paris&filter[price][]=abc&filter[price][]=1&filter[property_type][]=castle&filter[bedrooms]=9&filter[colour]=red&filter=oops'));
+        $this->assertCount(2, $this->ids('?filter[city][]=Paris&filter[price][]=abc&filter[price][]=1&filter[property_type][]=castle&filter[bedrooms]=9&filter[colour]=red&filter=oops'));
         $this->assertCount(2, $this->ids('?filter[available_from]=demain'));
     }
 
@@ -261,8 +264,8 @@ class OfferFiltersApiTest extends TestCase
         $featuredInDouala = $this->home('Douala', 1000, ['property_type' => 'studio'], ['featured_until' => now()->addDays(2)]);
         Offer::factory()->count(22)->at(Address::factory()->state(['city' => 'Douala', 'region_id' => $this->regionOf($this->cameroon)]))->create(['status' => 'published']);
 
-        $first = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala')->json('data');
-        $second = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city]=Douala&cursor='.urlencode($first['next_cursor']))->json('data');
+        $first = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city][]=Douala')->json('data');
+        $second = $this->withHeaders(['X-Country' => 'CM'])->getJson('/api/v1/lists/offer.browse?filter[city][]=Douala&cursor='.urlencode($first['next_cursor']))->json('data');
         $ids = [...array_column($first['items'], 'id'), ...array_column($second['items'], 'id')];
 
         $this->assertSame((string) $featuredInDouala->getKey(), $ids[0]);

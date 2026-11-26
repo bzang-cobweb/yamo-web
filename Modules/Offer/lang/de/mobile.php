@@ -19,7 +19,6 @@ return [
         'description' => 'Beschreibung',
         // La description repliée à quelques lignes (décision 2026-11-22-description-voir-plus).
         'more' => 'Mehr anzeigen',
-        'less' => 'Weniger anzeigen',
         // Indications sur l'adresse, après la description (décision 2026-11-19-fiche-offre-ordre).
         'location' => 'Lage',
         // Avis (décision 2026-11-19-contrat-avis-offres).

@@ -89,15 +89,36 @@ class OfferMessageApiTest extends TestCase
         $this->assertNull($this->publisherSection($this->publisher)['action']);
     }
 
+    public function test_a_member_who_already_wrote_finds_the_conversation(): void
+    {
+        // Décision 2026-11-27-message-vers-conversation : « Envoyer un message » ouvre la page de sa dernière notification
+        // du fil, une fois un premier message envoyé ; le formulaire avant.
+        $this->assertSame('/profile/offer.message?record='.$this->offer->getKey(), $this->publisherSection($this->member)['action']['link']);
+        $this->send($this->member, 'Bonjour')->assertNoContent();
+        $this->travel(1)->seconds();
+        $this->send($this->member, 'Encore une question')->assertNoContent();
+
+        $latest = DatabaseNotification::query()->where('thread', $this->thread())->latest()->value('id');
+        $this->assertSame('/notifications/'.$latest, $this->publisherSection($this->member)['action']['link']);
+        // La page s'ouvre pour lui.
+        $this->api($this->member, 'GET', '/api/v1/notifications/'.$latest)->assertOk();
+        // Un autre membre, qui n'a rien écrit : le formulaire.
+        $other = User::factory()->create();
+        $this->assertSame('/profile/offer.message?record='.$this->offer->getKey(), $this->publisherSection($other)['action']['link']);
+    }
+
     public function test_the_form_is_served_to_a_member_and_to_the_publisher_replying(): void
     {
         $form = $this->api($this->member, 'GET', '/api/v1/forms/offer.message?record='.$this->offer->getKey())->assertOk()->json('data');
         $this->assertSame('Envoyer un message', $form['title']);
-        $this->assertSame('Studio Bonapriso', $form['subtitle']);
+        // Sans le titre de l'offre (décision 2026-11-26-message-sans-titre-offre).
+        $this->assertNull($form['subtitle']);
         $this->assertSame(['message', 'member'], array_column($form['fields'], 'name'));
         $this->assertSame(['textarea', 'hidden'], array_column($form['fields'], 'type'));
         $this->assertSame(1000, $form['fields'][0]['max_length']);
         $this->assertTrue($form['fields'][0]['required']);
+        // Sans libellé affiché (décision 2026-11-26-message-sans-libelle).
+        $this->assertSame(['Message', true], [$form['fields'][0]['label'], $form['fields'][0]['label_hidden']]);
         $this->assertNull($form['fields'][1]['default']);
         $this->assertSame('POST', $form['submit']['method']);
         $this->assertSame('/v1/offers/'.$this->offer->getKey().'/messages', $form['submit']['endpoint']);
@@ -109,7 +130,7 @@ class OfferMessageApiTest extends TestCase
         $this->send($this->member, 'Bonjour')->assertNoContent();
 
         $form = $this->api($this->publisher, 'GET', $reply)->assertOk()->json('data');
-        $this->assertSame('Studio Bonapriso · Awa', $form['subtitle']);
+        $this->assertSame('Awa', $form['subtitle']);
         $this->assertSame((string) $this->member->getKey(), $form['fields'][1]['default']);
         // Sa propre offre, sans membre : il s'écrirait à lui-même.
         $this->api($this->publisher, 'GET', '/api/v1/forms/offer.message?record='.$this->offer->getKey())->assertForbidden();

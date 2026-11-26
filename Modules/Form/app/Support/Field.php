@@ -576,6 +576,15 @@ final class Field
         return $this->dependsOn;
     }
 
+    /** Le même champ, sans sa condition d'affichage : ses règles, une fois sa visibilité vérifiée à part. */
+    public function withoutVisibility(): static
+    {
+        $field = clone $this;
+        $field->visibleWhen = null;
+
+        return $field;
+    }
+
     /**
      * La condition d'affichage (`visibleWhen()`), ou `null`.
      *
@@ -588,7 +597,8 @@ final class Field
 
     /**
      * Le champ s'affiche-t-il avec ces valeurs (par nom) ? Une case vaut « true » ou
-     * « false » (décision 2026-11-19-charges-meuble-surface-facultative).
+     * « false » (décision 2026-11-19-charges-meuble-surface-facultative). Une liste (des puces), comme dans l'app :
+     * chacune de ses valeurs doit être admise, vide valant « vide » (décision 2026-11-26-region-ville-en-puces).
      *
      * @param  array<string, mixed>  $values
      */
@@ -597,8 +607,10 @@ final class Field
         if ($this->visibleWhen === null) {
             return true;
         }
+        $current = $values[$this->visibleWhen['field']] ?? null;
+        $chosen = is_array($current) ? ($current === [] ? [''] : $current) : [$current];
 
-        return in_array(self::conditionValue($values[$this->visibleWhen['field']] ?? null), $this->visibleWhen['values'], true);
+        return array_diff(array_map(self::conditionValue(...), $chosen), $this->visibleWhen['values']) === [];
     }
 
     /**

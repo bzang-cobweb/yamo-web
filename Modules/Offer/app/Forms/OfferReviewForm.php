@@ -65,9 +65,10 @@ class OfferReviewForm extends Form
         return __('offer::review.'.($this->review === null ? 'create_title' : 'edit_title'));
     }
 
+    /** Sans le titre de l'offre (décision 2026-11-26-avis-sans-titre-offre). */
     public function subtitle(): ?string
     {
-        return $this->offer === null ? null : (string) $this->offer->getTranslation('title', app()->getLocale());
+        return null;
     }
 
     /**

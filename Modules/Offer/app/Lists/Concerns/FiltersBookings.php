@@ -53,7 +53,8 @@ trait FiltersBookings
                 ->label(CurrentCountry::require()->regionLabel())
                 ->options($regions = OfferRegions::options($this->bookedOffers()))
                 ->countryScoped(),
-            Field::select('city')
+            // En puces, comme la région (décision 2026-11-26-region-ville-en-puces).
+            Field::chips('city')
                 ->label(__('offer::booking.profile.filter_city'))
                 // Les villes de la région choisie (décision 2026-11-25-ville-selon-region).
                 ->dependsOn('region')
@@ -94,8 +95,9 @@ trait FiltersBookings
         if (($filters['region'] ?? []) !== [] && ($filters['region'] ?? '') !== '') {
             $query->whereHas('offer', fn (Builder $offer) => OfferRegions::apply($offer->withTrashed(), $filters['region']));
         }
-        if (isset($filters['city'])) {
-            $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city'])));
+        $cities = array_values(array_filter(array_map('strval', (array) ($filters['city'] ?? [])), fn (string $city): bool => $city !== ''));
+        if ($cities !== []) {
+            $query->whereHas('offer', fn (Builder $offer) => $offer->withTrashed()->whereHas('address', fn (Builder $address) => $address->whereIn('city', $cities)));
         }
         if (isset($filters['offer']) && is_scalar($filters['offer'])) {
             $query->where('offer_id', (string) $filters['offer']);

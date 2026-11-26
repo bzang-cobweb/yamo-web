@@ -57,6 +57,9 @@ class OfferMessageForm extends Form
         return [
             Field::textarea('message')
                 ->label(__('offer::message.field'))
+                // Le libellé seulement pour l'accessibilité : le titre du formulaire le dit déjà (décision
+                // 2026-11-26-message-sans-libelle).
+                ->hideLabel()
                 ->placeholder(__('offer::message.placeholder'))
                 ->required()
                 ->maxLength(self::MAX_LENGTH),
@@ -71,16 +74,13 @@ class OfferMessageForm extends Form
         return __('offer::message.title');
     }
 
-    /** Le titre de l'offre ; pour une réponse, suivi du prénom du membre. */
+    /**
+     * Sans le titre de l'offre (décision 2026-11-26-message-sans-titre-offre) : pour une réponse, le prénom du membre à
+     * qui elle va ; sinon rien.
+     */
     public function subtitle(): ?string
     {
-        if ($this->offer === null) {
-            return null;
-        }
-
-        $title = (string) $this->offer->getTranslation('title', app()->getLocale());
-
-        return $this->member === null || blank($this->member->first_name) ? $title : $title.' · '.$this->member->first_name;
+        return $this->member === null || blank($this->member->first_name) ? null : (string) $this->member->first_name;
     }
 
     /** Sans offre (`?record=` absent), le formulaire n'a nulle part où aller : aucun envoi. */

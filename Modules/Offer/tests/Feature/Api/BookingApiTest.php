@@ -600,7 +600,12 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
         $this->assertSame(['Logement', 'select', true], [$filters['offer']['label'], $filters['offer']['type'], $filters['offer']['searchable']]);
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
-        $this->assertSame([(string) $upcoming->getKey()], $ids('?filter[offer]='.$upcoming->offer_id));
+        // Le logement se choisit une région choisie (décision 2026-11-26-ville-et-logement-apres-region) : sans région,
+        // il est masqué et ignoré.
+        $this->assertCount(4, $ids('?filter[offer]='.$upcoming->offer_id));
+        $there = Booking::factory()->for(Offer::factory()->at(Address::factory()->for(Country::query()->where('code', 'CM')->sole())->create(['city' => 'Douala']))->create(['status' => 'published']), 'offer')->for($guest)->create();
+        $this->assertSame([(string) $there->getKey()], $ids('?filter[region][]='.$there->offer->address->region_id.'&filter[offer]='.$there->offer_id));
+        $there->delete();
         // La ville et le logement, seulement une région choisie (décision 2026-11-26-ville-et-logement-apres-region).
         $this->assertSame([array_column($filters['region']['options'], 'value'), array_column($filters['region']['options'], 'value')], [$filters['city']['visible_when']['values'], $filters['offer']['visible_when']['values']]);
         // En puces (décision 2026-11-26-reservations-filtres-en-puces).

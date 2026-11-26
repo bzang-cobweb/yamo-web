@@ -35,22 +35,24 @@ trait FiltersOffers
 
         return array_values(array_filter([
             // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
-            ! $domain->hasAddress() ? null : Field::select('region')
+            // Région et ville en puces, plusieurs à la fois (décision 2026-11-26-region-ville-en-puces) ; sauf la région
+            // de la recherche, une seule, choisie dans la carte en tête de la page.
+            ! $domain->hasAddress() ? null : ($regionRequired ? Field::select('region')->withoutAllOption() : Field::chips('region'))
                 // Son nom dans le pays courant (décision 2026-11-25-regions-par-pays).
                 ->label(CurrentCountry::require()->regionLabel())
                 ->options($regions)
-                // Sans « Tous » (décision 2026-11-25-region-sans-tous).
-                ->withoutAllOption()
                 // Obligatoire dans la recherche : par défaut, la première région qui a des offres, dans l'ordre du
                 // back-office (décision 2026-11-25-region-obligatoire-recherche).
                 ->required($regionRequired)
                 // Une chaîne, comme les valeurs des options (PHP fait des clés numériques des entiers).
                 ->default($regionRequired && $regions !== [] ? (string) array_key_first($regions) : null)
                 ->countryScoped(),
-            ! $domain->hasAddress() ? null : Field::select('city')
+            ! $domain->hasAddress() ? null : Field::chips('city')
                 ->label(__('offer::offer.filters.city'))
-                // Les villes de la région choisie ; changer de région efface la ville (décision 2026-11-25-ville-selon-region).
+                // Les villes des régions choisies (décision 2026-11-25-ville-selon-region).
                 ->dependsOn('region')
+                // Visible dès qu'une région est choisie (décision 2026-11-26-region-ville-en-puces).
+                ->visibleWhen('region', array_map('strval', array_keys($regions)))
                 ->options($this->offerCities($offers))
                 ->countryScoped(),
             // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
@@ -88,11 +90,13 @@ trait FiltersOffers
      */
     protected function applyOfferFilters(Builder $query, array $filters): void
     {
-        if (isset($filters['region'])) {
+        if (($filters['region'] ?? []) !== [] && ($filters['region'] ?? '') !== '') {
             OfferRegions::apply($query, $filters['region']);
         }
-        if (isset($filters['city'])) {
-            $query->whereHas('address', fn (Builder $address) => $address->where('city', $filters['city']));
+        // Une ville ou plusieurs (puces, décision 2026-11-26-region-ville-en-puces).
+        $cities = array_values(array_filter(array_map('strval', (array) ($filters['city'] ?? [])), fn (string $city): bool => $city !== ''));
+        if ($cities !== []) {
+            $query->whereHas('address', fn (Builder $address) => $address->whereIn('city', $cities));
         }
         [$min, $max] = array_values((array) ($filters['price'] ?? [])) + [null, null];
         if (is_numeric($min)) {

@@ -9,8 +9,10 @@ use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
+use Modules\Auth\Models\User;
 use Modules\Form\Enums\SuccessAction;
 use Modules\Form\Support\Submission;
+use Modules\Notification\Support\NotificationThreads;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\OfferBookingForm;
@@ -20,6 +22,7 @@ use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
 use Modules\Offer\Models\OfferReview;
+use Modules\Offer\Notifications\OfferMessageReceived;
 
 /**
  * La fiche d'une offre, telle que l'app l'affiche sans connaître le domaine
@@ -66,7 +69,7 @@ class OfferDetailResource extends JsonResource
             match ((string) $group) {
                 // Qui publie l'offre (décision 2026-11-25-fiche-publiee-par), et son bouton « Envoyer un message », ou
                 // `null` (décision 2026-11-26-messages-editeur).
-                'publisher' => $this->addSection('publisher', 'rows', $open, $publisher === [] ? null : ['rows' => $publisher, 'action' => $this->publisherAction($offer, $owner)]),
+                'publisher' => $this->addSection('publisher', 'rows', $open, $publisher === [] ? null : ['rows' => $publisher, 'action' => $this->publisherAction($offer, $owner, $request->user('sanctum'))]),
                 'facts' => $this->addSection('facts', 'rows', $open, $facts === [] ? null : ['rows' => $facts]),
                 'location' => $this->addSection('location', 'text', $open, $address === null ? null : ['text' => $address, 'note' => $indication]),
                 // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
@@ -389,19 +392,30 @@ class OfferDetailResource extends JsonResource
     /**
      * Le bouton de la section « Éditeur » (décision 2026-11-26-messages-editeur) : « Envoyer un message » et le formulaire
      * `offer.message` lié à l'offre, pour tout lecteur sauf l'éditeur, visiteur non connecté compris (le formulaire
-     * demande la connexion, comme « Réserver ») ; `null` pour l'éditeur.
+     * demande la connexion, comme « Réserver ») ; `null` pour l'éditeur. Un membre qui a déjà écrit à l'éditeur au sujet
+     * de cette offre retrouve leur conversation : la page de sa dernière notification (décision
+     * 2026-11-27-message-vers-conversation).
      *
      * @return array{label: string, link: string}|null
      */
-    private function publisherAction(Offer $offer, bool $owner): ?array
+    private function publisherAction(Offer $offer, bool $owner, mixed $reader): ?array
     {
         if ($owner) {
             return null;
         }
 
+        $conversation = $reader instanceof User
+            ? app(NotificationThreads::class)->visibleTo($reader)
+                ->where('thread', OfferMessageReceived::thread((int) $offer->getKey(), (int) $reader->getKey()))
+                ->latest()
+                ->value('id')
+            : null;
+
         return [
             'label' => (string) __('offer::message.action'),
-            'link' => '/profile/'.OfferMessageForm::name().'?record='.$offer->getKey(),
+            'link' => $conversation !== null
+                ? '/notifications/'.$conversation
+                : '/profile/'.OfferMessageForm::name().'?record='.$offer->getKey(),
         ];
     }
 

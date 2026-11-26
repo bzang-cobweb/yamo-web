@@ -32,10 +32,16 @@ final class OptionBelongsToParent implements DataAwareRule, ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $parent = data_get($this->data, $this->parentField);
+        // Un parent ou plusieurs (puces) ; une option ou plusieurs : chacune doit appartenir à l'un des parents choisis
+        // (la ville dans l'une des régions choisies, décision 2026-11-26-region-ville-en-puces).
+        $parents = array_map('strval', (array) data_get($this->data, $this->parentField));
 
-        if (($this->parents[(string) $value] ?? null) !== (string) $parent) {
-            $fail('form::validation.option_parent')->translate();
+        foreach ((array) $value as $option) {
+            if (! in_array($this->parents[(string) $option] ?? null, $parents, true)) {
+                $fail('form::validation.option_parent')->translate();
+
+                return;
+            }
         }
     }
 }
