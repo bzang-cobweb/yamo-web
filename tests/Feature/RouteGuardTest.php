@@ -27,6 +27,7 @@ class RouteGuardTest extends TestCase
         'api/v1/locales' => 'publique : langues disponibles, aucune donnée de compte',
         'api/v1/messages' => "publique : textes de l'interface de l'app, aucune donnée de compte",
         'api/v1/offers/{offer}' => "publique : fiche d'une offre ; policy `show` appelée dans le contrôleur avec le compte facultatif (Sanctum)",
+        'api/v1/offers/{offer}/messages' => "écrire à l'éditeur ou lui répondre (décision 2026-11-26-messages-editeur) : la policy `message` dépend du membre envoyé dans la requête ; `OfferMessageRequest::authorize()` l'appelle (404 offre invisible, 403 sinon)",
         'api/v1/countries' => "publique : pays actifs proposés à l'entrée de l'app, aucune donnée de compte",
         // Module Notification (décision 2026-11-19-contrat-centre-notifications) : ses propres notifications.
         'api/v1/notifications' => 'ses notifications seulement (relation `notifications` du compte) : gardée par auth:sanctum',

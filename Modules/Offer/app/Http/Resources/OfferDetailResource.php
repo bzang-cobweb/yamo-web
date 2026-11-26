@@ -15,6 +15,7 @@ use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
+use Modules\Offer\Forms\OfferMessageForm;
 use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferInformation;
@@ -96,7 +97,7 @@ class OfferDetailResource extends JsonResource
              * `reviews` : les avis de `reviews`), son titre et son contenu ; un bloc
              * d'informations est une section `text` à lui seul.
              */
-            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description, $this->publisher($offer, $locale), $reviews === null ? null : $offer->reviewsTitle($locale)),
+            'sections' => $this->sections($address, $indication, $facts, $rules, $informations, $reviews !== null, $description, $this->publisher($offer, $locale), $reviews === null ? null : $offer->reviewsTitle($locale), $this->publisherAction($offer, $owner)),
             /** Bouton de la barre fixe (décision 2026-11-19-contrat-reservations) : « Réserver » (séjour) ou « Demander une visite », et le formulaire à ouvrir avec l'offre ; `null` pour son auteur, ou si le domaine ne le propose pas. Un visiteur non connecté le voit aussi : l'app le mène d'abord à la connexion. */
             'booking' => $this->booking($offer, $domain, $owner),
             /** Bouton de la barre fixe pour son auteur (décision 2026-11-19-fiche-bouton-modifier) : « Modifier » et le formulaire de l'offre, à ouvrir lié à elle ; `null` pour les autres. */
@@ -291,9 +292,10 @@ class OfferDetailResource extends JsonResource
      * @param  list<array{label: string, value: string}>  $facts
      * @param  list<array{label: string, value: string}>  $rules
      * @param  list<array{id: string, title: string, description: string}>  $informations
-     * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null}>
+     * @param  array{label: string, link: string}|null  $publisherAction
+     * @return list<array{key: string, type: string, title: string, open: bool, rows?: list<array{label: string, value: string}>, text?: string, note?: string|null, action?: array{label: string, link: string}|null}>
      */
-    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null, array $publisher = [], ?string $reviewsTitle = null): array
+    private function sections(?string $address, ?string $indication, array $facts, array $rules, array $informations, bool $hasReviews, ?string $description = null, array $publisher = [], ?string $reviewsTitle = null, ?array $publisherAction = null): array
     {
         $sections = [];
 
@@ -304,7 +306,8 @@ class OfferDetailResource extends JsonResource
             array_push($sections, ...match ((string) $key) {
                 'location' => $address === null ? [] : [['key' => 'location', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $address, 'note' => $indication]],
                 // Qui publie l'offre (décision 2026-11-25-fiche-publiee-par).
-                'publisher' => $publisher === [] ? [] : [['key' => 'publisher', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $publisher]],
+                // Son bouton « Envoyer un message », ou `null` (décision 2026-11-26-messages-editeur).
+                'publisher' => $publisher === [] ? [] : [['key' => 'publisher', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $publisher, 'action' => $publisherAction]],
                 'facts' => $facts === [] ? [] : [['key' => 'facts', 'type' => 'rows', 'title' => $title, 'open' => $open, 'rows' => $facts]],
                 // La description, une section à elle (décision 2026-11-22-fiche-sections-ordre).
                 'description' => $description === null ? [] : [['key' => 'description', 'type' => 'text', 'title' => $title, 'open' => $open, 'text' => $description, 'note' => null]],
@@ -347,6 +350,22 @@ class OfferDetailResource extends JsonResource
             $author->created_at === null ? null : ['label' => __('offer::offer.publisher.since', [], $locale), 'value' => (string) DisplayTime::date($author->created_at, 'll', $locale)],
             ['label' => __('offer::offer.publisher.identified', [], $locale), 'value' => __($author->isIdentified() ? 'offer::offer.publisher.yes' : 'offer::offer.publisher.no', [], $locale)],
         ]));
+    }
+
+    /**
+     * Le bouton de la section « Éditeur » (décision 2026-11-26-messages-editeur) : « Envoyer un message » et le formulaire
+     * `offer.message` lié à l'offre, pour tout lecteur sauf l'éditeur, visiteur non connecté compris (le formulaire
+     * demande la connexion, comme « Réserver ») ; `null` pour l'éditeur.
+     *
+     * @return array{label: string, link: string}|null
+     */
+    private function publisherAction(Offer $offer, bool $owner): ?array
+    {
+        if ($owner) {
+            return null;
+        }
+
+        return ['label' => (string) __('offer::message.action'), 'link' => '/profile/'.OfferMessageForm::name().'?record='.$offer->getKey()];
     }
 
     /**

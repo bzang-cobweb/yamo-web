@@ -11,6 +11,7 @@ use Modules\Offer\Http\Controllers\Api\MemberController;
 use Modules\Offer\Http\Controllers\Api\OfferCalendarController;
 use Modules\Offer\Http\Controllers\Api\OfferController;
 use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
+use Modules\Offer\Http\Controllers\Api\OfferMessageController;
 use Modules\Offer\Http\Controllers\Api\OfferReviewController;
 use Modules\Offer\Http\Middleware\RequireOfferDomain;
 use Modules\Offer\Models\Offer;
@@ -39,6 +40,10 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
 
     // Demander une réservation ou une visite (décision 2026-11-19-contrat-reservations).
     Route::post('{offer}/bookings', [BookingController::class, 'store'])->can('book', 'offer')->middleware('throttle:20,1')->name('bookings.store');
+
+    // Écrire à l'éditeur, ou lui répondre (décision 2026-11-26-messages-editeur) : les droits dépendent du membre à qui
+    // l'on répond, envoyé dans la requête ; `OfferMessageRequest` les vérifie par la policy (`message`).
+    Route::post('{offer}/messages', [OfferMessageController::class, 'store'])->middleware('throttle:20,1')->name('messages.store');
 
     // Le calendrier de son offre : un mois, un jour, bloquer et débloquer (décision 2026-11-19-contrat-calendrier-offre).
     Route::get('{offer}/calendar', [OfferCalendarController::class, 'month'])->can('update', 'offer')->name('calendar.month');

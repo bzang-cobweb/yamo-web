@@ -81,6 +81,10 @@ class OfferNotificationFilter implements NotificationFilter
      */
     public function forReader(DatabaseNotification $notification, User $reader): ?array
     {
+        if ($notification->getAttribute('type') === OfferMessageReceived::class) {
+            return $this->messageForReader($notification, $reader);
+        }
+
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
         if ($step === null) {
             return null;
@@ -94,6 +98,26 @@ class OfferNotificationFilter implements NotificationFilter
         }
 
         return BookingNotification::for($booking, $step, edited: (bool) ($data['edited'] ?? false))->toArray($reader);
+    }
+
+    /**
+     * Son propre message, lu par son expéditeur (décision 2026-11-26-messages-editeur) : rédigé dans sa langue, et
+     * « Répondre » rouvre le formulaire avec le `record` qui lui convient (l'éditeur répond au membre, le membre écrit à
+     * l'éditeur). `null` si l'offre n'existe plus.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function messageForReader(DatabaseNotification $notification, User $reader): ?array
+    {
+        $data = (array) $notification->data;
+        $offerId = $data['offer_id'] ?? null;
+        $memberId = $data['member_id'] ?? null;
+        $offer = is_int($offerId) ? Offer::query()->withTrashed()->find($offerId) : null;
+        if (! $offer instanceof Offer || ! is_int($memberId)) {
+            return null;
+        }
+
+        return OfferMessageReceived::data($offer, $memberId, (string) ($data['message'] ?? ''), (int) $reader->getKey() === (int) $offer->user_id);
     }
 
     public function tag(DatabaseNotification $notification): ?array
@@ -113,6 +137,11 @@ class OfferNotificationFilter implements NotificationFilter
     /** L'étape d'une demande dans son suivi (« Demande acceptée »), dans la langue du lecteur. */
     public function step(DatabaseNotification $notification, User $reader): ?string
     {
+        // Un message (décision 2026-11-26-messages-editeur) : sa bulle montre son texte, à défaut « Message ».
+        if ($notification->getAttribute('type') === OfferMessageReceived::class) {
+            return __('offer::message.notify.title');
+        }
+
         $step = BookingStepEnum::fromNotification($notification->getAttribute('type'));
 
         return $step === null ? null : __('offer::booking.history.'.$step->value);

@@ -21,6 +21,7 @@ use Modules\Offer\Forms\BookingInviteReviewForm;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
+use Modules\Offer\Forms\OfferMessageForm;
 use Modules\Offer\Forms\OfferReviewForm;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\OfferBrowseListing;
@@ -99,6 +100,8 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(FormRegistry::class)->register(OfferForm::class);
         // Son avis sur une offre, ouvert depuis la fiche (décision 2026-11-19-contrat-avis-offres).
         $this->app->make(FormRegistry::class)->register(OfferReviewForm::class);
+        // Écrire à l'éditeur d'une offre, ou lui répondre (décision 2026-11-26-messages-editeur).
+        $this->app->make(FormRegistry::class)->register(OfferMessageForm::class);
         $this->app->make(ListingRegistry::class)->register(OfferListing::class);
         // La vitrine de l'accueil, ouverte sans connexion (décision 2026-11-18-accueil-offres-du-pays).
         $this->app->make(ListingRegistry::class)->register(OfferBrowseListing::class);

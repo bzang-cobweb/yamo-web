@@ -4,6 +4,7 @@ namespace Modules\Offer\Policies;
 
 use Filament\Facades\Filament;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
@@ -13,6 +14,7 @@ use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Notifications\OfferMessageReceived;
 
 /**
  * Offres (décision 2026-11-18-offres-et-domaines). Back-office : permissions
@@ -30,7 +32,7 @@ class OfferPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        return in_array($ability, ['review', 'favorite', 'book'], true) ? null : $this->superAdminBefore($user, $ability);
+        return in_array($ability, ['review', 'favorite', 'book', 'message'], true) ? null : $this->superAdminBefore($user, $ability);
     }
 
     public function viewAny(User $user): bool
@@ -103,6 +105,39 @@ class OfferPolicy
         return (int) $offer->user_id === (int) $user->getKey()
             ? Response::deny(__('offer::booking.own_offer'))
             : Response::allow();
+    }
+
+    /**
+     * Écrire un message au sujet d'une offre (décision 2026-11-26-messages-editeur) : une offre visible des autres
+     * (sinon 404). Un membre écrit à l'éditeur (`$member` absent, ou lui-même) ; l'éditeur répond seulement à un membre
+     * qui lui a déjà écrit au sujet de cette offre ; personne ne s'écrit à soi-même ni dans la discussion d'un autre
+     * (403).
+     */
+    public function message(User $user, Offer $offer, ?User $member = null): Response
+    {
+        if (! $offer->isVisibleToOthers()) {
+            return Response::denyAsNotFound();
+        }
+
+        $publisher = (int) $offer->user_id;
+        if ((int) $user->getKey() !== $publisher) {
+            if ($member !== null && (int) $member->getKey() !== (int) $user->getKey()) {
+                return Response::deny(__('offer::message.not_yours'));
+            }
+
+            return Response::allow();
+        }
+
+        if ($member === null || (int) $member->getKey() === $publisher) {
+            return Response::deny(__('offer::message.own_offer'));
+        }
+
+        $started = DatabaseNotification::query()
+            ->where('thread', OfferMessageReceived::thread((int) $offer->getKey(), (int) $member->getKey()))
+            ->where('user_id', $member->getKey())
+            ->exists();
+
+        return $started ? Response::allow() : Response::deny(__('offer::message.not_started'));
     }
 
     /**
