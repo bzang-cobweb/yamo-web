@@ -66,7 +66,7 @@ class PartnerThreadTest extends AuthFilamentTestCase
         $team = User::factory()->create(['locale' => 'fr']);
         Setting::current()->update(['partner_notify_user_id' => $team->getKey()]);
         $author = $this->member();
-        $this->api($author, 'POST', '/partners', ['name' => 'Déménageurs du Wouri', 'description' => 'Texte.'])->assertNoContent();
+        $this->api($author, 'POST', '/partners', ['name' => 'Déménageurs du Wouri', 'slogan' => 'Vos meubles en sécurité.', 'description' => 'Texte.'])->assertNoContent();
         $partner = Partner::query()->where('name->fr', 'Déménageurs du Wouri')->sole();
         $helper = $this->member();
         $partner->users()->attach($helper->getKey(), ['is_admin' => false]);
@@ -74,14 +74,14 @@ class PartnerThreadTest extends AuthFilamentTestCase
 
         // Ajouté par l'auteur, modifié par l'autre compte, accepté, modifié de nouveau. Une minute entre les étapes.
         $this->travel(1)->minutes();
-        $this->api($helper, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'description' => 'Autre texte.'])->assertNoContent();
+        $this->api($helper, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'slogan' => 'Vos meubles en sécurité.', 'description' => 'Autre texte.'])->assertNoContent();
         // L'équipe valide au back-office (l'action « Valider » appelle `accept()`, testée dans PartnerResourceTest).
         $this->travel(1)->minutes();
         Filament::setServingStatus();
         $this->actingAsUserWith(PermissionEnum::VIEW_PARTNERS, PermissionEnum::UPDATE_PARTNERS);
         app(PartnerService::class)->accept($partner->fresh());
         $this->travel(1)->minutes();
-        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'description' => 'Encore.'])->assertNoContent();
+        $this->api($author, 'PATCH', "/partners/{$partner->getKey()}", ['name' => 'Déménageurs du Wouri', 'slogan' => 'Vos meubles en sécurité.', 'description' => 'Encore.'])->assertNoContent();
 
         // Une notification par action : trois au compte du back-office, la réponse à l'auteur de la dernière demande.
         $this->assertSame(3, $team->notifications()->count());
@@ -97,9 +97,12 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $this->assertCount(1, $cards);
             $page = $this->api($reader, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data');
             $this->assertSame($labels, array_column($page['history'], 'label'));
-            // Pas d'en-tête : la page montre le texte de la notification.
-            $this->assertArrayHasKey('heading', $page);
-            $this->assertNull($page['heading']);
+            // L'en-tête du partenaire : son nom vers sa page, son slogan dessous (décision 2026-11-26-entete-partenaire).
+            $this->assertSame([
+                'title' => (string) $partner->getTranslation('name', 'fr'),
+                'subtitle' => 'Vos meubles en sécurité.',
+                'link' => '/partners/'.$partner->getKey(),
+            ], $page['heading']);
         }
         // L'en-tête de l'auteur : l'étape de sa carte, sa dernière modification, dans ses mots (décision
         // 2026-11-24-entete-etape-ouverte).
