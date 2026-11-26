@@ -10,6 +10,7 @@ use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
+use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Notifications\OfferMessageReceived;
 use Tests\TestCase;
@@ -137,6 +138,13 @@ class OfferMessageApiTest extends TestCase
         $page = $this->api($this->member, 'GET', '/api/v1/notifications/'.$cards[0]['id'])->assertOk()->json('data');
         $this->assertSame('/profile/offer.message?record='.$this->offer->getKey(), $page['link']);
         $this->assertSame(['Le studio est-il libre en décembre ?'], array_column($page['history'], 'message'));
+        // L'en-tête de l'offre, comme pour une demande (décision 2026-11-26-booking-summary) : son titre vers sa fiche,
+        // son titre composé.
+        $this->assertSame([
+            'title' => 'Studio Bonapriso',
+            'subtitle' => OfferCardTitle::of($this->offer, 'fr')[1],
+            'link' => '/offers/'.$this->offer->getKey(),
+        ], $page['heading']);
 
         // L'éditeur répond : le membre reçoit la réponse dans le même fil, une seule carte.
         $this->travel(5)->minutes();

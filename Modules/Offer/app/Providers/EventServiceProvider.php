@@ -9,6 +9,7 @@ use Modules\Offer\Events\BookingCancelled;
 use Modules\Offer\Events\BookingRequested;
 use Modules\Offer\Events\BookingUpdated;
 use Modules\Offer\Listeners\AddBookingToNotificationThread;
+use Modules\Offer\Listeners\AddOfferToMessageThread;
 use Modules\Offer\Listeners\NotifyGuestOfBookingAnswer;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingCancellation;
 use Modules\Offer\Listeners\NotifyOwnerOfBookingRequest;
@@ -28,7 +29,7 @@ class EventServiceProvider extends ServiceProvider
         BookingCancelled::class => [NotifyOwnerOfBookingCancellation::class],
         BookingUpdated::class => [NotifyOwnerOfBookingRequest::class],
         // La page d'une notification du fil d'une demande : la demande (décision 2026-11-20-notification-generique).
-        NotificationThreadSerializing::class => [AddBookingToNotificationThread::class],
+        NotificationThreadSerializing::class => [AddBookingToNotificationThread::class, AddOfferToMessageThread::class],
     ];
 
     /**

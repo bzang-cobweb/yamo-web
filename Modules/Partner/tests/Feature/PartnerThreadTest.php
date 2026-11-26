@@ -97,6 +97,9 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $this->assertCount(1, $cards);
             $page = $this->api($reader, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data');
             $this->assertSame($labels, array_column($page['history'], 'label'));
+            // Pas d'en-tête : la page montre le texte de la notification.
+            $this->assertArrayHasKey('heading', $page);
+            $this->assertNull($page['heading']);
         }
         // L'en-tête de l'auteur : l'étape de sa carte, sa dernière modification, dans ses mots (décision
         // 2026-11-24-entete-etape-ouverte).

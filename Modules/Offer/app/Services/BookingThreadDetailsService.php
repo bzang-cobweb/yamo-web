@@ -9,6 +9,7 @@ use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Forms\BookingInviteReviewForm;
 use Modules\Offer\Http\Resources\BookingResource;
 use Modules\Offer\Support\BookingCache;
+use Modules\Offer\Support\OfferHeading;
 
 /**
  * Sur la page d'une notification du fil d'une demande (`booking:12`), la demande en
@@ -46,6 +47,13 @@ class BookingThreadDetailsService
         if ($booking !== null) {
             $owner = (string) $booking->offer?->user_id === $readerId;
             $data['title'] = $mine ? __('offer::booking.detail.mine') : ($owner ? __('offer::booking.detail.received') : __('offer::booking.detail_title.'.$booking->type->value));
+        }
+
+        // L'en-tête de la page : le nom du logement, en lien vers sa fiche, et son titre composé (« Location meublée ·
+        // Studio · Douala »), comme pour une discussion avec l'éditeur (`OfferHeading`) ; la demande n'apporte que ses lignes.
+        $heading = OfferHeading::of($booking?->offer, app()->getLocale());
+        if ($heading !== null) {
+            $data['heading'] = $heading;
         }
 
         // L'adresse masquée par le propriétaire : pas de ligne « Adresse » pour le demandeur, pas même la ville

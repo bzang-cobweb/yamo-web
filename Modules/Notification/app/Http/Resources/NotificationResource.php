@@ -122,6 +122,12 @@ class NotificationResource extends JsonResource
 
         /** Le suivi de son fil chez le lecteur, de la plus ancienne étape à la plus récente ; vide sans fil. */
         $item['history'] = $this->history($steps, $reader);
+        /**
+         * L'en-tête de la page, sous la pastille : un titre (en gras, en lien vers `link` s'il y en a un) et un
+         * sous-titre ; `null` : le texte de la notification à la place. Donné par le module du fil (une demande : le nom
+         * du logement et son titre composé).
+         */
+        $item['heading'] = null;
 
         // Le module du fil complète la réponse (une demande : `booking`).
         $thread = $notification->getAttribute('thread');
