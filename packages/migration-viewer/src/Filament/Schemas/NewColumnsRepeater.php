@@ -2,9 +2,11 @@
 
 namespace Bza\MigrationViewer\Filament\Schemas;
 
+use Bza\MigrationViewer\Data\TableSummary;
 use Bza\MigrationViewer\Generator\ColumnType;
 use Bza\MigrationViewer\Generator\NewColumn;
 use Bza\MigrationViewer\Generator\OnDelete;
+use Bza\MigrationViewer\MigrationInspector;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -215,9 +217,11 @@ final class NewColumnsRepeater
                     ->minValue(0)
                     ->placeholder('2')
                     ->visible(fn (Get $get): bool => self::type($get)?->hasPrecision() ?? false),
-                TextInput::make('references')
+                // The tables the migrations leave, pending ones included; empty lets Laravel guess it from the name.
+                Select::make('references')
                     ->label(__(self::KEY.'references'))
-                    ->regex(NewColumn::NAME_PATTERN)
+                    ->options(fn (): array => self::tables())
+                    ->searchable()
                     ->placeholder(__(self::KEY.'references_guessed'))
                     ->visible(fn (Get $get): bool => self::type($get)?->isForeign() ?? false),
                 Select::make('on_delete')
@@ -237,6 +241,16 @@ final class NewColumnsRepeater
                     ->visible(fn (Get $get): bool => ! (self::type($get)?->isForeign() ?? false)),
             ]),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function tables(): array
+    {
+        $names = array_keys(array_filter(app(MigrationInspector::class)->tables(), fn (TableSummary $table): bool => ! $table->dropped));
+
+        return array_combine($names, $names);
     }
 
     /**

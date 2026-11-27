@@ -157,7 +157,7 @@ Unsaved changes of the form are not part of either: generate the migration first
 
 - name, type, length (string, char), digits and decimals (decimal);
 - nullable, default, unique, index;
-- for a `foreignId`: the referenced table (guessed from the name when empty) and what happens on delete (cascade, set null, restrict).
+- for a `foreignId`: the referenced table, chosen among the tables the migrations leave (pending ones included) or guessed from the name when empty, and what happens on delete (cascade, set null, restrict).
 
 The types are Blueprint method names; `ColumnType` lists the ones offered.
 

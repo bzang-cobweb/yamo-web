@@ -177,12 +177,21 @@ class MigrationGeneratorPagesTest extends AuthFilamentTestCase
         $this->assertEquals(30, $added['length']);
         $this->assertTrue($added['nullable']);
 
+        // A foreign id points to an existing table; another value is refused.
+        $page->callAction(TestAction::make('add')->schemaComponent('columns', schema: 'form'), ['name' => 'manager_id', 'type' => 'foreignId', 'references' => 'not_a_table'])
+            ->assertHasFormComponentActionErrors(['references']);
+        $page->callAction(TestAction::make('add')->schemaComponent('columns', schema: 'form'), ['name' => 'manager_id', 'type' => 'foreignId', 'references' => 'users', 'nullable' => true, 'on_delete' => 'set null'])
+            ->assertHasNoFormComponentActionErrors();
+        $this->assertSame('users', collect($page->get('data.columns'))->firstWhere('name', 'manager_id')['references']);
+
         // A name already in the list is refused in the slide-over.
         $page->callAction(TestAction::make('add')->schemaComponent('columns', schema: 'form'), ['name' => 'email', 'type' => 'string'])
             ->assertHasFormComponentActionErrors(['name']);
 
         $page->call('save')->assertNotified('Migration générée');
-        $this->assertStringContainsString("\$table->string('nickname', 30)->nullable();", file_get_contents($this->files('*_alter_users_table')[0]));
+        $code = file_get_contents($this->files('*_alter_users_table')[0]);
+        $this->assertStringContainsString("\$table->string('nickname', 30)->nullable();", $code);
+        $this->assertStringContainsString("\$table->foreignId('manager_id')->nullable()->constrained('users')->nullOnDelete();", $code);
     }
 
     public function test_a_field_is_edited_from_a_slide_over(): void
