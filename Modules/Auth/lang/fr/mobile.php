@@ -39,6 +39,7 @@ return [
         'preferences' => 'Préférences',
         'addresses' => 'Mes adresses',
         'notifications' => 'Notifications',
+        'residence' => 'Adresse de résidence',
         'passwordSaved' => 'Mot de passe modifié.',
         'addEmail' => 'Ajouter une adresse e-mail',
         'changeEmail' => "Changer d'adresse e-mail",

@@ -39,6 +39,7 @@ return [
         'preferences' => 'Preferences',
         'addresses' => 'My addresses',
         'notifications' => 'Notifications',
+        'residence' => 'Residential address',
         'passwordSaved' => 'Password changed.',
         'addEmail' => 'Add an email address',
         'changeEmail' => 'Change email address',

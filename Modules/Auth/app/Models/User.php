@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -113,6 +114,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function addresses(): HasMany
     {
         return $this->hasMany(UserAddress::class)->orderBy('id');
+    }
+
+    /**
+     * Son adresse de résidence : une de ses adresses, marquée, une seule (décision 2026-11-27-adresse-de-residence).
+     *
+     * @return HasOne<UserAddress, $this>
+     */
+    public function residence(): HasOne
+    {
+        return $this->hasOne(UserAddress::class)->where('is_residence', true);
     }
 
     /**

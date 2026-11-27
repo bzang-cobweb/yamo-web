@@ -42,6 +42,7 @@ class ProfileMenuService
             ProfileMenuKey::EMAIL,
             ProfileMenuKey::PHONE,
             ProfileMenuKey::PASSWORD,
+            ProfileMenuKey::RESIDENCE,
             ProfileMenuKey::IDENTITY,
         ],
         'privacy' => [

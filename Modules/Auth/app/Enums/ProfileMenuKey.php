@@ -12,6 +12,7 @@ use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
+use Modules\Auth\Forms\ResidenceForm;
 use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
@@ -35,6 +36,8 @@ enum ProfileMenuKey: string
     case EMAIL = 'email';
     case PHONE = 'phone';
     case PASSWORD = 'password';
+    /** L'adresse de résidence (décision 2026-11-27-adresse-de-residence). */
+    case RESIDENCE = 'residence';
     /** « Confidentialité » : un sous-menu. */
     case PRIVACY = 'privacy';
     case DELETE_ACCOUNT = 'delete-account';
@@ -56,6 +59,7 @@ enum ProfileMenuKey: string
             self::EMAIL => EmailChangeForm::class,
             self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
+            self::RESIDENCE => ResidenceForm::class,
             self::DELETE_ACCOUNT => DeleteAccountForm::class,
             self::NOTIFICATIONS => NotificationSettingsForm::class,
             self::PREFERENCES => PreferencesForm::class,
@@ -136,6 +140,7 @@ enum ProfileMenuKey: string
             self::EMAIL => ['envelope', 'mail'],
             self::PHONE => ['phone', 'call'],
             self::PASSWORD => ['key', 'key'],
+            self::RESIDENCE => ['house', 'home'],
             self::PRIVACY => ['lock', 'lock'],
             self::DELETE_ACCOUNT => ['trash', 'delete'],
             self::NOTIFICATIONS => ['bell', 'notifications'],
@@ -170,6 +175,7 @@ enum ProfileMenuKey: string
             self::EMAIL => filled($user->email) ? 'changeEmail' : 'addEmail',
             self::PHONE => filled($user->phone) ? 'changePhone' : 'addPhone',
             self::PASSWORD => 'password',
+            self::RESIDENCE => 'residence',
             self::PRIVACY => 'privacy',
             self::DELETE_ACCOUNT => 'deleteAccount',
             self::NOTIFICATIONS => 'notifications',

@@ -61,8 +61,26 @@ class UserAddressService
     }
 
     /**
-     * Retire l'adresse du compte ; l'adresse reste dans son pays.
+     * L'adresse de résidence du compte (décision 2026-11-27-adresse-de-residence) : modifiée si elle existe, sinon
+     * ajoutée, marquée ; le destinataire est le compte lui-même.
+     *
+     * @param  array<string, mixed>  $data
      */
+    public function saveResidence(User $user, array $data): UserAddress
+    {
+        $data = [...$data, 'first_name' => (string) $user->first_name, 'last_name' => (string) $user->last_name];
+        $residence = $user->residence()->first();
+
+        if ($residence !== null) {
+            return $this->update($residence, $data);
+        }
+
+        $residence = $this->attach($user, $data);
+        $residence->forceFill(['is_residence' => true])->save();
+
+        return $residence;
+    }
+
     /**
      * L'adresse saisie : la région du formulaire de l'app (`region`) ou du back-office (`region_id`), qui donne le pays
      * (décision 2026-11-25-adresse-sans-pays).
@@ -75,6 +93,9 @@ class UserAddressService
         return [...$data, 'region_id' => $data['region_id'] ?? $data['region'] ?? null];
     }
 
+    /**
+     * Retire l'adresse du compte ; l'adresse reste dans son pays.
+     */
     public function detach(UserAddress $userAddress): void
     {
         $userAddress->delete();

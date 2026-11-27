@@ -40,7 +40,8 @@ class UserAddressForm extends Form
         $user = $this->user instanceof User ? $this->user : null;
         $country = CurrentCountry::require();
 
-        $this->userAddress = $user?->addresses()->with('address')
+        // L'adresse de résidence a son propre formulaire (décision 2026-11-27-adresse-de-residence).
+        $this->userAddress = $user?->addresses()->with('address')->where('is_residence', false)
             ->whereHas('address', fn ($query) => $query->inCountry($country->getKey()))
             ->whereKey($key)->first() ?? abort(404);
 
@@ -51,8 +52,6 @@ class UserAddressForm extends Form
     {
         $user = $this->user instanceof User ? $this->user : null;
         $recipient = $this->userAddress ?? $user;
-        $address = $this->userAddress?->address;
-        $country = CurrentCountry::require();
 
         return [
             Field::text('first_name')
@@ -65,6 +64,22 @@ class UserAddressForm extends Form
                 ->default($recipient?->last_name)
                 ->required()
                 ->maxLength(255),
+            ...self::addressFields($this->userAddress),
+        ];
+    }
+
+    /**
+     * Les champs de l'adresse elle-même, sans le destinataire : rue, NPA, région, ville, indications. Repris par
+     * l'adresse de résidence (`ResidenceForm`, décision 2026-11-27-adresse-de-residence).
+     *
+     * @return list<Field>
+     */
+    public static function addressFields(?UserAddress $userAddress): array
+    {
+        $address = $userAddress?->address;
+        $country = CurrentCountry::require();
+
+        return [
             // La rue propose les adresses connues du pays, comme pour une offre ; en choisir
             // une remplit le NPA et la ville (décision 2026-11-19-carnet-adresses-recherche).
             Field::text('street')
@@ -97,7 +112,7 @@ class UserAddressForm extends Form
             Field::textarea('indication')
                 ->label(__('auth::address.indication'))
                 ->placeholder(__('auth::address.indication_placeholder'))
-                ->default($this->userAddress?->indication),
+                ->default($userAddress?->indication),
         ];
     }
 

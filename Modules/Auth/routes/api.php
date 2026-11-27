@@ -15,6 +15,7 @@ use Modules\Auth\Http\Controllers\Api\PreferencesController;
 use Modules\Auth\Http\Controllers\Api\ProfileController;
 use Modules\Auth\Http\Controllers\Api\ProfileMenuController;
 use Modules\Auth\Http\Controllers\Api\RegisterController;
+use Modules\Auth\Http\Controllers\Api\ResidenceController;
 use Modules\Auth\Http\Controllers\Api\UserAddressController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
 use Modules\Auth\Models\User;
@@ -62,6 +63,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::post('me/identity', [IdentityController::class, 'update'])->can('updateMe', User::class)->name('me.identity.update');
         Route::patch('me/preferences', [PreferencesController::class, 'update'])->can('updateMe', User::class)->name('me.preferences.update');
         Route::patch('me/notifications', [NotificationSettingsController::class, 'update'])->can('updateMe', User::class)->name('me.notifications.update');
+        Route::put('me/residence', [ResidenceController::class, 'update'])->can('updateMe', User::class)->name('me.residence.update');
         Route::post('me/avatar', [ProfileController::class, 'updateAvatar'])->can('updateMe', User::class)->name('me.avatar.update');
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
         Route::post('me/email', [EmailChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.store');

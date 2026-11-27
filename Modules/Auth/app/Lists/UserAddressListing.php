@@ -60,7 +60,8 @@ class UserAddressListing extends Listing
         }
 
         // Celles du pays courant (décision 2026-11-18-espace-pays).
-        return $this->user->addresses()->with('address.country')
+        // Sans l'adresse de résidence, qui a son lien dans « Informations personnelles » (décision 2026-11-27-adresse-de-residence).
+        return $this->user->addresses()->with('address.country')->where('is_residence', false)
             ->whereHas('address', fn (Builder $query) => $query->inCountry(CurrentCountry::require()->getKey()));
     }
 

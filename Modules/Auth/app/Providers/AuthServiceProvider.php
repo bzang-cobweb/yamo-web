@@ -25,6 +25,7 @@ use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Forms\RegisterForm;
 use Modules\Auth\Forms\ResetPasswordForm;
+use Modules\Auth\Forms\ResidenceForm;
 use Modules\Auth\Forms\UserAddressForm;
 use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\Permission;
@@ -84,6 +85,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(ForgotPasswordForm::class);
         $registry->register(ResetPasswordForm::class);
         $registry->register(UserAddressForm::class);
+        $registry->register(ResidenceForm::class);
 
         // Listes servies à l'app : « Mes adresses » (décision 2026-11-18-useraddress-dans-auth).
         $this->app->make(ListingRegistry::class)->register(UserAddressListing::class);

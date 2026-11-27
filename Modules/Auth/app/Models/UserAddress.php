@@ -25,10 +25,11 @@ use Modules\Location\Models\Address;
  * @property string $first_name
  * @property string $last_name
  * @property string|null $indication
+ * @property bool $is_residence l'adresse de résidence du compte, une seule (décision 2026-11-27-adresse-de-residence)
  * @property-read Address $address
  */
 #[Table('user_addresses')]
-#[Fillable(['user_id', 'address_id', 'gender', 'first_name', 'last_name', 'indication'])]
+#[Fillable(['user_id', 'address_id', 'gender', 'first_name', 'last_name', 'indication', 'is_residence'])]
 #[UseFactory(UserAddressFactory::class)]
 class UserAddress extends Model
 {
@@ -42,6 +43,7 @@ class UserAddress extends Model
     {
         return [
             'gender' => GenderEnum::class,
+            'is_residence' => 'boolean',
         ];
     }
 

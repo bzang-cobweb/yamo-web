@@ -63,9 +63,9 @@ class ProfileMenuApiTest extends TestCase
         $submenu = $this->submenu($this->user(['email' => 'jeanne@example.test', 'phone' => null]), 'personal');
 
         $this->assertSame('Informations personnelles', $submenu['title']);
-        $this->assertSame(['details', 'email', 'phone', 'password', 'identity'], array_column($submenu['data'], 'key'));
+        $this->assertSame(['details', 'email', 'phone', 'password', 'residence', 'identity'], array_column($submenu['data'], 'key'));
         $this->assertSame(
-            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.identity'],
+            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.residence', 'auth.identity'],
             array_column($submenu['data'], 'form'),
         );
         $this->assertSame(['ios' => 'envelope', 'android' => 'mail'], $submenu['data'][1]['icon']);
@@ -93,7 +93,7 @@ class ProfileMenuApiTest extends TestCase
     {
         config(['auth.channels' => ['email' => false, 'phone' => true]]);
 
-        $this->assertSame(['details', 'phone', 'password', 'identity'], array_column($this->submenu($this->user(), 'personal')['data'], 'key'));
+        $this->assertSame(['details', 'phone', 'password', 'residence', 'identity'], array_column($this->submenu($this->user(), 'personal')['data'], 'key'));
     }
 
     public function test_labels_follow_the_account_language(): void
