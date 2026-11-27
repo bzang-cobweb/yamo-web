@@ -137,6 +137,12 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame('Mes favoris', $favorites['title']);
         $this->assertSame([(string) $offer->getKey()], array_column($favorites['items'], 'id'));
         $this->assertTrue($favorites['items'][0]['favorite']['active']);
+        // Les étoiles ouvrent ses avis en panneau, comme « Mes réservations » ; pas d'œil ni de lien sur le titre (décision
+        // 2026-11-27-favoris-etoiles-avis).
+        $this->assertArrayNotHasKey('view_link', $favorites['items'][0]);
+        $this->assertSame(['label' => 'Avis', 'panel' => ['name' => 'offer.reviews', 'record' => (string) $offer->getKey()]], $favorites['items'][0]['rating_panel']);
+        $this->assertArrayNotHasKey('title_link', $favorites['items'][0]);
+        $this->assertArrayNotHasKey('subtitle_link', $favorites['items'][0]);
         // Le nombre, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
         // « 1 favori » (décision 2026-11-25-nombre-favoris).
         $this->assertSame('1 favori', $favorites['heading']['title']);

@@ -403,6 +403,14 @@ class RentalDomain extends Domain
             Field::chips('rental_type')
                 ->label(__('offer::rental.rental_type'))
                 ->options(RentalTypeEnum::options()),
+            // Juste sous le type de location, dont il dépend (décision 2026-11-27-filtre-des-le-sous-type). Pas pour la
+            // location meublée, qui se réserve par dates : visible seulement une location ou une colocation
+            // choisie, plus sans type de location (décision 2026-11-27-filtre-des-le-location) ; plusieurs types choisis,
+            // tous non meublés (décision 2026-11-26-filtres-en-puces).
+            Field::date('available_from')
+                ->label(__('offer::rental.filters.available_from'))
+                ->help(__('offer::rental.filters.available_from_help'))
+                ->visibleWhen('rental_type', RentalTypeEnum::unfurnishedValues()),
             // Chambres et salles de bain en puces : les nombres choisis, le dernier « et plus » (décision
             // 2026-11-26-filtres-en-puces, remplace « au moins » de la décision 2026-11-21-salles-de-bain).
             Field::chips('bedrooms')
@@ -411,13 +419,6 @@ class RentalDomain extends Domain
             Field::chips('bathrooms')
                 ->label(__('offer::rental.filters.bathrooms'))
                 ->options(self::countOptions(self::BATHROOMS_FILTER_MAX)),
-            // Pas pour la location meublée, qui se réserve par dates : visible sans type de location choisi ou
-            // pour un non meublé (décision 2026-11-22-filtre-libre-des-sans-meuble) ; plusieurs types choisis, tous non
-            // meublés (décision 2026-11-26-filtres-en-puces).
-            Field::date('available_from')
-                ->label(__('offer::rental.filters.available_from'))
-                ->help(__('offer::rental.filters.available_from_help'))
-                ->visibleWhen('rental_type', ['', ...RentalTypeEnum::unfurnishedValues()]),
             // Les « Équipements » cherchés, par id de case (décision 2026-11-25-equipements-en-categories), en puces (décision
             // 2026-11-26-filtres-en-puces).
             Field::chips('feature_flags')

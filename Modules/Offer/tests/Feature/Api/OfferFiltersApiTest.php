@@ -155,12 +155,12 @@ class OfferFiltersApiTest extends TestCase
 
         // La région avant la ville (décision 2026-11-25-region-de-l-adresse).
         // Les équipements, puis les règles, en puces (décision 2026-11-26-filtres-en-puces).
-        $this->assertSame(['region', 'city', 'price', 'property_type', 'rental_type', 'bedrooms', 'bathrooms', 'available_from', 'feature_flags', 'rule_flags', 'identified'], array_keys($filters));
+        $this->assertSame(['region', 'city', 'price', 'property_type', 'rental_type', 'available_from', 'bedrooms', 'bathrooms', 'feature_flags', 'rule_flags', 'identified'], array_keys($filters));
         // « Prix », quel que soit le domaine (décision 2026-11-26-filtre-prix-membre-identifie).
         $this->assertSame('Prix', $filters['price']['label']);
         // « Libre dès le » : sans type de location choisi ou pour un non meublé, pas pour la location meublée
         // (décision 2026-11-22-filtre-libre-des-sans-meuble).
-        $this->assertSame(['field' => 'rental_type', 'value' => '', 'values' => ['', 'long_term', 'shared']], $filters['available_from']['visible_when']);
+        $this->assertSame(['field' => 'rental_type', 'value' => 'long_term', 'values' => ['long_term', 'shared']], $filters['available_from']['visible_when']);
         // Les villes des offres publiées seulement, dans l'ordre.
         $this->assertSame(['Douala', 'Yaoundé'], array_column($filters['city']['options'], 'value'));
         // Un seul intervalle pour le loyer ; le type et les équipements en puces.
@@ -237,10 +237,12 @@ class OfferFiltersApiTest extends TestCase
         $this->assertSame([(string) $house->getKey()], $this->ids('?filter[bathrooms][]=2'));
         $this->assertSame([(string) $tooExpensive->getKey()], $this->ids('?filter[price][]=150000&filter[price][]='));
         $this->assertSame([(string) $match->getKey()], $this->ids('?filter[price][]=50000&filter[price][]=90000&filter[property_type][]=studio&filter[city]=Douala'));
-        // Libre le 1er janvier : pas celui qui se libère le 15.
-        $this->assertNotContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
-        $this->assertContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-02-01'));
-        $this->assertContains((string) $furnished->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
+        // Libre le 1er janvier : pas celui qui se libère le 15 ; seulement une location ou une colocation choisie (décision
+        // 2026-11-27-filtre-des-le-location).
+        $this->assertNotContains((string) $house->getKey(), $this->ids('?filter[rental_type][]=long_term&filter[available_from]=2027-01-01'));
+        $this->assertContains((string) $house->getKey(), $this->ids('?filter[rental_type][]=long_term&filter[available_from]=2027-02-01'));
+        // Sans type de location, le filtre est caché : ignoré.
+        $this->assertContains((string) $house->getKey(), $this->ids('?filter[available_from]=2027-01-01'));
         // Avec la recherche.
         $this->assertSame([(string) $match->getKey()], $this->ids('?search=akwa&filter[city]=Douala'));
         $this->assertSame([], $this->ids('?search=akwa&filter[city]=Yaoundé'));

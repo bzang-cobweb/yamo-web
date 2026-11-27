@@ -128,6 +128,9 @@ class OfferFavoritesListing extends Listing
             ->rating($offer->reviews_avg_rating, (int) $offer->reviews_count)
             ->highlight(implode(' · ', array_filter([...$domain->itemDetails($offer), $domain->formattedPrice($offer, app()->getLocale())])) ?: null)
             ->link('/offers/'.$offer->getKey())
+            // Comme « Mes réservations », les étoiles ouvrent ses avis dans un panneau ; pas d'œil, la carte ouvre déjà la
+            // fiche (décision 2026-11-27-favoris-etoiles-avis).
+            ->ratingPanel((string) __('offer::offer.reviews'), 'offer.reviews', $offer->getKey())
             ->favorite(true, $offer->favoriteEndpoint());
     }
 }
