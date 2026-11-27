@@ -3,6 +3,10 @@ Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
 État : interrompue (en cours)
 
 ## Ce qui attend votre attention
+- **Visibilité du profil** : choix en boutons radio (et non interrupteurs : un seul choix possible) ; « contacts » =
+  une demande en commun ou un échange de messages ; un profil caché répond 404. Elle ne vaut que pour la page publique
+  d'un membre, pas pour son nom dans les avis, notifications ou partenaires.
+- **Mes données** : seulement les données du compte (module Auth), pas les offres, demandes, avis ni messages.
 - **Rien n'a été vu dans le simulateur** pour les favoris (panneau du cœur, menu ⋮, deux colonnes, bloc de l'accueil).
 - La table `offer_favorites` reste en base mais n'est plus lue (favoris copiés dans une liste « Favoris » par membre) :
   à supprimer plus tard, par vous.
@@ -28,6 +32,13 @@ Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
   par canal, offres, nouveautés ; « Activité du compte » appliquée à l'e-mail et au SMS de toutes les notifications),
   vérification d'identité (note, pays, type de pièce, photos), adresse de résidence, contact d'urgence. Web `653a97b`,
   `15d8185`, `6c15f5c`, `93c699c`. Preuves : suite web complète 972 tests verts, migrations jouées, Pint propre.
+- **Lot B — masquage, vérification, confidentialité** (sous-agent, rapport `B-confidentialite.md`) : e-mail et numéro
+  masqués à l'affichage (profil, formulaires, membres d'un partenaire, contact d'une demande ; le lien d'action garde la
+  vraie valeur ; back-office non masqué) ; « Vérifier mon adresse » / « Renvoyer le code » quand l'actuel n'est pas
+  vérifié (`Form::links()`, nouveau mécanisme du paquet form) ; « Confidentialité » : visibilité du profil (respectée
+  par la page publique d'un membre), lieu sous les avis, « Mes données » (JSON par e-mail), suppression avec raison et
+  code, puis déconnexion. Web `1097118`, `fc97d96`, `4782e7f` ; mobile `d0474c8`, `778d90a`, `c817da5`. Preuves : web
+  993 tests verts ; mobile tsc propre, 74 suites / 470 tests verts.
 
 ## Reste à faire
 - Demande `specs/todo/2026-11-27-yamo-visiteur-profil-favoris.md` (copie de `~/Downloads/yamo.rtf`).
