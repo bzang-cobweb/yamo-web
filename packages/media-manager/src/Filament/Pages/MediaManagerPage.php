@@ -11,26 +11,37 @@ use Bza\MediaManager\LinkedMedia;
 use Bza\MediaManager\MediaAccess;
 use Bza\MediaManager\MediaLibrary;
 use Bza\MediaManager\MediaManagerException;
+use Bza\MediaManager\MediaMetadata;
 use Bza\MediaManager\Models\FolderGrant;
 use Bza\MediaManager\Models\MediaFolder;
 use Bza\MediaManager\Target;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedTable;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Filament\Tables\Columns\Column;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -78,6 +89,8 @@ class MediaManagerPage extends Page implements HasTable
     public string $display = 'grid';
 
     private ?MediaFolder $currentFolder = null;
+
+    private ?bool $canAddSomewhere = null;
 
     public static function canAccess(): bool
     {
@@ -185,13 +198,18 @@ class MediaManagerPage extends Page implements HasTable
     {
         // The folder tree on the left, the content of the open location on the right.
         return $schema->components([
-            Grid::make(['default' => 1, 'lg' => 4])->schema([
+            // The tree keeps a fixed width and the listing takes the rest, so the
+            // panel's own menu leaves the tiles their room.
+            Flex::make([
                 View::make('media-manager::tree')
                     ->viewData(fn (): array => ['root' => $this->tree()])
-                    ->columnSpan(1),
-                EmbeddedTable::make()
-                    ->columnSpan(['default' => 1, 'lg' => 3]),
-            ]),
+                    ->grow(false),
+                EmbeddedTable::make(),
+            ])
+                // Side by side only on wide screens: below, beside the panel's
+                // menu, the listing would be too narrow for the tiles.
+                ->from('xl')
+                ->extraAttributes(['class' => 'mm-layout']),
         ]);
     }
 
@@ -199,40 +217,10 @@ class MediaManagerPage extends Page implements HasTable
     {
         return $table
             ->records(fn (?string $search, int|string $page, int|string $recordsPerPage): LengthAwarePaginator => $this->records($search, (int) $page, $recordsPerPage))
-            ->columns([
-                // Grid: one tile per item, a large icon or the image, then the name.
-                ViewColumn::make('tile')
-                    ->view('media-manager::tile')
-                    ->visible(fn (): bool => $this->isGrid()),
-                // List: one line per item, with its details.
-                ImageColumn::make('thumbnail')
-                    ->label(__('media-manager::media-manager.columns.preview'))
-                    ->imageSize(40)
-                    ->square()
-                    ->visible(fn (): bool => ! $this->isGrid()),
-                TextColumn::make('name')
-                    ->label(__('media-manager::media-manager.columns.name'))
-                    ->icon(fn (array $record): string => $record['icon'])
-                    ->description(fn (array $record): ?string => $record['description'])
-                    // The search runs on the records, in either display.
-                    ->searchable()
-                    ->wrap()
-                    ->visible(fn (): bool => ! $this->isGrid()),
-                TextColumn::make('type')
-                    ->label(__('media-manager::media-manager.columns.type'))
-                    ->badge()
-                    ->color(fn (array $record): string => $record['read_only'] ? 'gray' : 'primary')
-                    ->visible(fn (): bool => ! $this->isGrid()),
-                TextColumn::make('size')
-                    ->label(__('media-manager::media-manager.columns.size'))
-                    ->formatStateUsing(fn (?int $state): string => $state === null ? '' : Number::fileSize($state))
-                    ->visible(fn (): bool => ! $this->isGrid()),
-                TextColumn::make('updated_at')
-                    ->label(__('media-manager::media-manager.columns.updated_at'))
-                    ->dateTime()
-                    ->visible(fn (): bool => ! $this->isGrid()),
-            ])
-            ->contentGrid(fn (): ?array => $this->isGrid() ? ['default' => 2, 'sm' => 3, 'md' => 4, 'xl' => 6] : null)
+            // The display is set before the table is built: switching it reloads the page.
+            ->columns($this->isGrid() ? $this->gridColumns() : $this->listColumns())
+            // The grid's columns follow the listing's width, not the screen's (tree.blade.php).
+            ->contentGrid($this->isGrid() ? ['default' => 2] : null)
             // A click on a folder opens it in place; on an image, shows it.
             ->recordAction(fn (array $record): ?string => match (true) {
                 $record['kind'] !== 'file' => 'open',
@@ -243,10 +231,12 @@ class MediaManagerPage extends Page implements HasTable
                 ActionGroup::make([
                     $this->openAction(),
                     $this->previewAction(),
+                    $this->metadataAction(),
                     $this->downloadAction(),
                     $this->copyUrlAction(),
                     $this->renameAction(),
                     $this->moveAction(),
+                    $this->duplicateAction(),
                     $this->permissionsAction('permissions'),
                     $this->deleteAction(),
                 ]),
@@ -265,7 +255,13 @@ class MediaManagerPage extends Page implements HasTable
                 ->label(fn (): string => __('media-manager::media-manager.actions.'.($this->isGrid() ? 'list' : 'grid')))
                 ->icon(fn (): string => $this->isGrid() ? 'heroicon-o-list-bullet' : 'heroicon-o-squares-2x2')
                 ->color('gray')
-                ->action(fn () => $this->display = $this->isGrid() ? 'list' : 'grid'),
+                // The columns are built once per request: reload with the other display.
+                ->action(fn () => $this->redirect(static::getUrl(array_filter([
+                    'folder' => $this->folder,
+                    'linked' => $this->linked,
+                    'collection' => $this->collection,
+                    'display' => $this->isGrid() ? 'list' : null,
+                ], fn (mixed $value): bool => $value !== null)), navigate: true)),
             Action::make('newFolder')
                 ->label(__('media-manager::media-manager.actions.new_folder'))
                 ->icon('heroicon-o-folder-plus')
@@ -305,6 +301,55 @@ class MediaManagerPage extends Page implements HasTable
         ];
     }
 
+    /**
+     * Grid: one tile per item, a large icon or the image, then the name. The
+     * stack makes the table lay its records out as cards, several per line.
+     *
+     * @return array<Stack>
+     */
+    private function gridColumns(): array
+    {
+        return [
+            Stack::make([
+                // Named after the name, so the search box stays.
+                ViewColumn::make('name')
+                    ->view('media-manager::tile')
+                    ->searchable(),
+            ]),
+        ];
+    }
+
+    /**
+     * List: one line per item, with its details.
+     *
+     * @return array<Column>
+     */
+    private function listColumns(): array
+    {
+        return [
+            ImageColumn::make('thumbnail')
+                ->label(__('media-manager::media-manager.columns.preview'))
+                ->imageSize(40)
+                ->square(),
+            TextColumn::make('name')
+                ->label(__('media-manager::media-manager.columns.name'))
+                ->icon(fn (array $record): string => $record['icon'])
+                ->description(fn (array $record): ?string => $record['description'])
+                ->searchable()
+                ->wrap(),
+            TextColumn::make('type')
+                ->label(__('media-manager::media-manager.columns.type'))
+                ->badge()
+                ->color(fn (array $record): string => $record['read_only'] ? 'gray' : 'primary'),
+            TextColumn::make('size')
+                ->label(__('media-manager::media-manager.columns.size'))
+                ->formatStateUsing(fn (?int $state): string => $state === null ? '' : Number::fileSize($state)),
+            TextColumn::make('updated_at')
+                ->label(__('media-manager::media-manager.columns.updated_at'))
+                ->dateTime(),
+        ];
+    }
+
     private function openAction(): Action
     {
         return Action::make('open')
@@ -324,6 +369,96 @@ class MediaManagerPage extends Page implements HasTable
             ->modalContent(fn (array $record): HtmlString => new HtmlString('<img src="'.e($record['thumbnail']).'" alt="'.e($record['name']).'" style="max-width:100%;max-height:70vh;margin:auto">'))
             ->modalSubmitAction(false)
             ->modalWidth(Width::FiveExtraLarge);
+    }
+
+    /**
+     * The file's metadata: what the file tells (read-only), then the texts
+     * per locale, the credit and free pairs, editable on the manager's own
+     * files with the "edit" right.
+     */
+    private function metadataAction(): Action
+    {
+        return Action::make('metadata')
+            ->label(__('media-manager::media-manager.actions.metadata'))
+            ->icon('heroicon-o-information-circle')
+            ->visible(fn (array $record): bool => $record['kind'] === 'file' && $this->allowsOnFileOf($record, Ability::View))
+            ->modalHeading(fn (array $record): string => $record['name'])
+            ->modalWidth(Width::ThreeExtraLarge)
+            ->fillForm(fn (array $record): array => $this->metadata()->get($this->media($record, Ability::View)))
+            ->schema(fn (array $record): array => $this->metadataSchema($record))
+            // $action is the modal's own save button: kept when the user may edit, removed otherwise.
+            ->modalSubmitAction(fn (array $record, Action $action): Action|false => $this->canEditMetadata($record) ? $action : false)
+            ->modalSubmitActionLabel(__('media-manager::media-manager.actions.save'))
+            ->modalCancelActionLabel(fn (array $record): ?string => $this->canEditMetadata($record) ? null : __('media-manager::media-manager.actions.close'))
+            ->action(function (array $record, array $data, Action $action): void {
+                $this->attempt($action, fn () => $this->metadata()->update($this->media($record, Ability::Update), $data));
+                $this->notify('metadata_saved');
+            });
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     * @return array<Component|Field>
+     */
+    private function metadataSchema(array $record): array
+    {
+        $media = $this->media($record, Ability::View);
+        $technical = $this->metadata()->technical($media);
+        $readOnly = ! $this->canEditMetadata($record);
+        $label = fn (string $key): string => __('media-manager::media-manager.metadata.'.$key);
+
+        $file = [
+            TextEntry::make('technical.type')->label($label('type'))->state($technical['mime_type'] ?? '—'),
+            TextEntry::make('technical.size')->label($label('size'))->state(Number::fileSize($technical['size'])),
+            TextEntry::make('technical.dimensions')->label($label('dimensions'))
+                ->state($technical['width'] !== null ? $technical['width'].' × '.$technical['height'].' px' : '—'),
+            TextEntry::make('technical.created_at')->label($label('created_at'))->state($technical['created_at'])->dateTime(),
+            TextEntry::make('technical.updated_at')->label($label('updated_at'))->state($technical['updated_at'])->dateTime(),
+        ];
+
+        if ($record['read_only']) {
+            $file[] = TextEntry::make('technical.owner')->label($label('owner'))->state($this->ownerLabel($media));
+        }
+
+        return [
+            // One tab for the file, one per language, one for the credit and the free pairs.
+            Tabs::make('metadata')->contained(false)->tabs([
+                Tab::make($label('file'))
+                    ->icon('heroicon-o-document')
+                    ->schema($file)
+                    ->columns(3),
+                // The texts in one tab, a sub-tab per language.
+                Tab::make($label('texts_tab'))
+                    ->icon('heroicon-o-language')
+                    ->schema([
+                        Tabs::make('texts')->tabs(array_map(
+                            fn (string $locale): Tab => Tab::make(Str::upper($locale))->schema([
+                                TextInput::make('alt.'.$locale)->label($label('alt'))->helperText($label('alt_help'))->maxLength(1000)->disabled($readOnly),
+                                TextInput::make('title.'.$locale)->label($label('title'))->maxLength(1000)->disabled($readOnly),
+                                Textarea::make('caption.'.$locale)->label($label('caption'))->rows(2)->maxLength(1000)->disabled($readOnly),
+                            ]),
+                            $this->metadata()->locales(),
+                        )),
+                    ]),
+                Tab::make($label('credit_tab'))
+                    ->icon('heroicon-o-tag')
+                    ->schema([
+                        TextInput::make('credit')->label($label('credit'))->placeholder($label('credit_placeholder'))->maxLength(1000)->disabled($readOnly),
+                        KeyValue::make('extra')->label($label('extra'))->keyLabel($label('key'))->valueLabel($label('value'))
+                            ->addActionLabel($label('add_pair'))->disabled($readOnly)
+                            ->addable(! $readOnly)->deletable(! $readOnly)->editableKeys(! $readOnly)->editableValues(! $readOnly),
+                    ]),
+            ]),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     */
+    private function canEditMetadata(array $record): bool
+    {
+        // The contents media too: only their files are read-only, not their metadata.
+        return $this->allowsOnFileOf($record, Ability::Update);
     }
 
     private function downloadAction(): Action
@@ -402,6 +537,105 @@ class MediaManagerPage extends Page implements HasTable
                 });
                 $this->notify('moved');
             });
+    }
+
+    /**
+     * Copies a file (the contents media too) or a folder with its content,
+     * into a folder the user may add to; the same place by default.
+     */
+    private function duplicateAction(): Action
+    {
+        return Action::make('duplicate')
+            ->label(__('media-manager::media-manager.actions.duplicate'))
+            ->icon('heroicon-o-document-duplicate')
+            ->visible(fn (array $record): bool => $this->canDuplicate($record))
+            ->fillForm(fn (array $record): array => [
+                'name' => $record['kind'] === 'file' ? pathinfo($record['name'], PATHINFO_FILENAME) : $record['name'],
+                'destination' => $this->defaultDuplicateDestination($record),
+            ])
+            ->schema(fn (array $record): array => [
+                $this->nameInput()->helperText(__('media-manager::media-manager.help.duplicate_name')),
+                Select::make('destination')
+                    ->label(__('media-manager::media-manager.fields.destination'))
+                    ->options($this->destinations($record))
+                    ->searchable()
+                    ->required(),
+            ])
+            ->action(function (array $record, array $data, Action $action): void {
+                $to = $data['destination'] === 'root' ? null : MediaFolder::query()->findOrFail((int) $data['destination']);
+                $this->access()->authorize(auth()->user(), Ability::Create, Target::folder($to));
+
+                $this->attempt($action, function () use ($record, $data, $to): void {
+                    if ($record['kind'] === 'folder') {
+                        $folder = $this->folderRecord($record, Ability::View);
+                        $this->access()->authorize(auth()->user(), Ability::Download, Target::folder($folder));
+
+                        // Only the subfolders the user may see and download are copied.
+                        $this->library()->duplicateFolder($folder, $to, $data['name'], fn (MediaFolder $child): bool => $this->access()->allowsFolder(auth()->user(), Ability::View, $child)
+                            && $this->access()->allowsFolder(auth()->user(), Ability::Download, $child));
+
+                        return;
+                    }
+
+                    // A file needs a folder: the root holds folders only.
+                    if ($to === null) {
+                        throw MediaManagerException::because('forbidden');
+                    }
+
+                    $this->library()->duplicateFile($this->media($record, Ability::Download), $to, $data['name']);
+                });
+                $this->notify('duplicated');
+            });
+    }
+
+    /**
+     * @param  array<string, mixed>  $record
+     */
+    private function canDuplicate(array $record): bool
+    {
+        $allowed = match ($record['kind']) {
+            'file' => $this->allowsOnFileOf($record, Ability::Download),
+            'folder' => $this->access()->allows(auth()->user(), Ability::View, Target::folder($record['id']))
+                && $this->access()->allows(auth()->user(), Ability::Download, Target::folder($record['id'])),
+            default => false,
+        };
+
+        return $allowed && $this->canAddSomewhere();
+    }
+
+    /**
+     * Whether the user may add to at least one folder (or the root).
+     */
+    private function canAddSomewhere(): bool
+    {
+        $user = auth()->user();
+
+        if ($this->access()->allows($user, Ability::Create, Target::root())) {
+            return true;
+        }
+
+        return $this->canAddSomewhere ??= MediaFolder::query()->pluck('id')
+            ->contains(fn (int $id): bool => $this->access()->allows($user, Ability::Create, Target::folder($id)));
+    }
+
+    /**
+     * The same place as the original when the user may add there.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    private function defaultDuplicateDestination(array $record): ?string
+    {
+        $user = auth()->user();
+
+        if ($record['kind'] === 'folder') {
+            $parent = MediaFolder::query()->find($record['id'])?->parent_id;
+
+            return $this->access()->allows($user, Ability::Create, Target::folder($parent)) ? ($parent === null ? 'root' : (string) $parent) : null;
+        }
+
+        return $record['linked_type'] === null && $this->folder !== null && $this->access()->allows($user, Ability::Create, Target::folder($this->folder))
+            ? (string) $this->folder
+            : null;
     }
 
     private function deleteAction(): Action
@@ -953,6 +1187,11 @@ class MediaManagerPage extends Page implements HasTable
         $title = $resource !== null ? $resource::getRecordTitle($owner) : null;
 
         return filled($title) ? strip_tags((string) $title) : class_basename($owner).' #'.$owner->getKey();
+    }
+
+    private function metadata(): MediaMetadata
+    {
+        return app(MediaMetadata::class);
     }
 
     private function access(): MediaAccess

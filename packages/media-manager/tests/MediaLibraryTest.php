@@ -190,4 +190,62 @@ class MediaLibraryTest extends TestCase
         $this->library()->deleteFolder($folder);
         $this->assertSame(0, FolderGrant::query()->count());
     }
+
+    public function test_a_file_is_duplicated_with_its_metadata_under_a_free_name(): void
+    {
+        $from = $this->library()->createFolder(null, 'From');
+        $to = $this->library()->createFolder(null, 'To');
+        $file = $this->upload($from, 'plan.txt', 'the plan');
+        $file->setCustomProperty('metadata', ['credit' => 'Studio'])->setCustomProperty('other', 'x')->save();
+
+        $same = $this->library()->duplicateFile($file, $from);
+        $named = $this->library()->duplicateFile($file, $to, 'final plan');
+
+        $this->assertSame('plan-1.txt', $same->file_name);
+        $this->assertSame('final-plan.txt', $named->file_name);
+        $this->assertSame('the plan', Storage::disk('public')->get($named->getPathRelativeToRoot()));
+        $this->assertSame(['credit' => 'Studio'], $named->getCustomProperty('metadata'));
+        $this->assertFalse($named->hasCustomProperty('other'));
+        $this->assertModelExists($file);
+    }
+
+    public function test_the_media_of_other_models_are_duplicated_into_a_folder(): void
+    {
+        $folder = $this->library()->createFolder(null, 'Docs');
+        $photo = $this->upload($folder, 'photo.txt');
+        $from = $photo->getPathRelativeToRoot();
+        $photo->forceFill(['model_type' => 'offer', 'model_id' => 3, 'collection_name' => 'photos'])->save();
+        // Where the application's path generator expects an offer's photo.
+        Storage::disk('public')->move($from, $photo->fresh()->getPathRelativeToRoot());
+
+        $copy = $this->library()->duplicateFile($photo->fresh(), $folder);
+
+        $this->assertTrue($this->library()->isManaged($copy));
+        $this->assertSame(['offer', 3], [$photo->fresh()->model_type, (int) $photo->fresh()->model_id]);
+    }
+
+    public function test_a_folder_is_duplicated_with_its_content(): void
+    {
+        $photos = $this->library()->createFolder(null, 'Photos');
+        $summer = $this->library()->createFolder($photos, 'Summer');
+        $hidden = $this->library()->createFolder($photos, 'Hidden');
+        $this->upload($photos, 'cover.txt');
+        $this->upload($summer, 'beach.txt');
+
+        $copy = $this->library()->duplicateFolder($photos, null, include: fn (MediaFolder $folder): bool => ! $folder->is($hidden));
+
+        $this->assertSame('Photos (1)', $copy->name);
+        $this->assertSame(['cover.txt'], $this->library()->files($copy)->pluck('file_name')->all());
+        $this->assertSame(['Summer'], $this->library()->folders($copy)->pluck('name')->all());
+        $this->assertSame(['beach.txt'], $this->library()->files($this->library()->folders($copy)->first())->pluck('file_name')->all());
+    }
+
+    public function test_a_folder_cannot_be_duplicated_into_itself(): void
+    {
+        $photos = $this->library()->createFolder(null, 'Photos');
+        $summer = $this->library()->createFolder($photos, 'Summer');
+
+        $this->expectException(MediaManagerException::class);
+        $this->library()->duplicateFolder($photos, $summer);
+    }
 }

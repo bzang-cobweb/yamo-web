@@ -32,13 +32,13 @@ enum Ability: string
     }
 
     /**
-     * The abilities that mean something on the read-only folders of the
-     * media attached to other models.
+     * The abilities that mean something on the folders of the media attached
+     * to other models: their files are read-only, "update" edits their metadata.
      *
      * @return list<self>
      */
     public static function forLinkedMedia(): array
     {
-        return [self::View, self::Download, self::Manage];
+        return [self::View, self::Download, self::Update, self::Manage];
     }
 }

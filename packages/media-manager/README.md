@@ -4,9 +4,11 @@ A media manager browsed like a file system, built on [spatie/laravel-medialibrar
 A Filament adapter ships with it.
 
 - Folders: create, rename, move, delete (empty folders only).
-- Files: upload, rename, move, delete, download, preview images, copy their address.
+- Files: upload, rename, move, duplicate, delete, download, preview images, copy their address.
+- Folders and files can be duplicated, a folder with its subfolders and files; the media of the other models can be duplicated into a folder.
 - Rights per folder, given to roles or to users: view, download, add, edit, delete, manage rights.
-- The media already attached to the application's models (photos, avatars…) are listed read-only, one folder per model type, then one per collection.
+- Metadata per file: alternative text, title and caption per locale, credit, free key/value pairs; plus what the file tells (type, size, image dimensions, dates).
+- The media already attached to the application's models (photos, avatars…) are listed, one folder per model type, then one per collection: their files are read-only, their metadata can be edited.
 
 ## How it works
 
@@ -22,6 +24,8 @@ Files are stored under `media-manager/<uuid>/<file name>` by `FolderPathGenerato
 - renaming a file changes its `file_name`, and the media library renames it on the disk.
 
 The root holds folders only: a file always belongs to a folder.
+
+A duplicate keeps the extension and the metadata (not the other custom properties, which belong to the source's model). A folder is duplicated with its subfolders and files; its rights are not copied, so the copy inherits its new parent's. Duplicating needs `view` and `download` on the source and `create` on the destination; only the subfolders the user may view and download are copied.
 
 ### Rights
 
@@ -40,15 +44,33 @@ How a right is decided:
 
 - For each grantee of the user, the right comes from the nearest place that gives or refuses it. The search starts at the folder and goes up through its parents to the root. A subfolder therefore overrides its parents, for that ability only.
 - The user may act when at least one of its grantees may. A grantee is the user itself or one of its roles.
-- The read-only folders of the linked media inherit nothing, not even the root's rights. Only the rights given on them count, so giving rights at the root never exposes avatars.
+- The folders of the linked media inherit nothing, not even the root's rights. Only the rights given on them count (`view`, `download`, `update` for the metadata, `manage`), so giving rights at the root never exposes avatars.
 - A folder the user cannot view is still listed when it leads to a viewable subfolder. Its own files stay hidden.
 - The super user callback (super administrators, say) bypasses every right.
 
 `GranteeResolver` lists the grantees of a user. The default resolver, `UserAndRolesGranteeResolver`, returns the user and, when it has a `roles` relation (spatie/laravel-permission), its roles.
 
+### Metadata
+
+A file's metadata live in its custom properties, under `metadata`:
+
+```php
+[
+    'alt' => ['fr' => 'Une plage', 'en' => 'A beach'],
+    'title' => [...],
+    'caption' => [...],
+    'credit' => '© Studio',
+    'extra' => ['source' => 'Shooting 2026'],
+]
+```
+
+The alternative text, title and caption are written once per locale (`locales`, default `app.supported_locales`). Empty texts and pairs are not kept. `MediaMetadata::text($media, 'alt', 'en')` reads one text, falling back to the fallback locale, then to any filled one.
+
+They are edited with the `update` right: on a folder for the manager's files, on the model type's folder for the linked media. A linked media's file stays read-only; only its metadata change.
+
 ### Linked media
 
-The media of the other models are found in the `media` table, so no model has to be declared. They cannot be renamed, moved or deleted from the manager: they belong to their model, whose collections set their own rules.
+The media of the other models are found in the `media` table, so no model has to be declared. Their files cannot be renamed, moved or deleted from the manager: they belong to their model, whose collections set their own rules. Their metadata can be edited, with the `update` right on their model type's folder.
 
 ## Installation
 
@@ -110,6 +132,7 @@ php artisan vendor:publish --tag=media-manager-translations
 | `accepted_file_types` | `[]` | MIME types; empty accepts all |
 | `grantee_resolver` | `UserAndRolesGranteeResolver` | Lists a user's grantees |
 | `grantees` | `null` | Who rights can be given to: model class => attribute shown; null means spatie roles and the default guard's users |
+| `locales` | `null` | Locales of the alternative text, title and caption; null means `app.supported_locales` |
 | `linked_media` | `true` | List the media of the other models |
 
 Translations: French, English, German.
@@ -122,6 +145,7 @@ src/
 ├── MediaAccess.php             Who may do what: inheritance, overrides, super user
 ├── Grants.php                  Reads and replaces the rights of a target
 ├── LinkedMedia.php             The other models' media, read-only
+├── MediaMetadata.php           A file's metadata: texts per locale, credit, pairs
 ├── Ability.php, Target.php, Grantee.php
 ├── Contracts/GranteeResolver.php
 ├── Models/                     MediaFolder, FolderGrant

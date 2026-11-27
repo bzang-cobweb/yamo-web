@@ -12,7 +12,8 @@
     <style>
         .mm-tile { display: flex; width: 100%; flex-direction: column; align-items: center; gap: .5rem; padding: .5rem .25rem; text-align: center; }
         .mm-tile .mm-visual { position: relative; display: flex; width: 100%; height: 6.5rem; align-items: center; justify-content: center; }
-        .mm-tile .mm-visual img { width: 100%; height: 100%; object-fit: cover; border-radius: .5rem; background: var(--gray-100); }
+        /* A square thumbnail, the size of a folder icon, not the whole tile's width. */
+        .mm-tile .mm-visual img { width: 6.5rem; max-width: 100%; height: 6.5rem; object-fit: cover; border-radius: .5rem; background: var(--gray-100); }
         .mm-tile .mm-visual > svg { width: 5rem; height: 5rem; color: var(--gray-400); }
         .mm-tile .mm-visual.mm-folder > svg { color: var(--primary-400); }
         .mm-tile .mm-visual.mm-folder.mm-locked > svg { color: var(--gray-300); }

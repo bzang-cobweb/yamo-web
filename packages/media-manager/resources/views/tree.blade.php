@@ -5,6 +5,11 @@
 <nav class="mm-tree" aria-label="{{ __('media-manager::media-manager.tree') }}">
     <style>
         .mm-tree { font-size: .875rem; line-height: 1.25rem; }
+        /* Beside the listing: a fixed width, the listing taking the rest. */
+        @media (min-width: 1280px) { .mm-tree { width: 13rem; } }
+        /* Grid display: as many tiles as fit the listing's width, never narrower than 11rem. */
+        .mm-layout .fi-ta-content-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)) !important; }
+        .mm-layout > * { min-width: 0; }
         .mm-tree ul { list-style: none; margin: 0; padding: 0; }
         .mm-tree ul ul { padding-inline-start: .875rem; }
         .mm-tree .mm-row { display: flex; align-items: center; gap: .125rem; }

@@ -15,7 +15,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * caller asks MediaAccess first. Every refusal is a MediaManagerException
  * with a translated message.
  *
- * Names are unique within a folder, case-insensitively. A file is renamed or
+ * Names are unique within a folder, case-insensitively. Files and folders
+ * can be duplicated; the media of the other models only into a folder. A file is renamed or
  * moved without touching its address: only its name, or the folder it
  * belongs to, changes.
  */
@@ -144,6 +145,89 @@ class MediaLibrary
             throw MediaManagerException::because('too_large', ['size' => Number::fileSize($maxSize)]);
         }
 
+        return $this->addFile($folder, $path, $originalName);
+    }
+
+    /**
+     * Copies a file, the manager's or another model's, into a folder. The copy
+     * keeps the extension and the metadata; a name already taken gets a number.
+     * The size limit does not apply: the file is already stored.
+     */
+    public function duplicateFile(Media $media, MediaFolder $to, ?string $name = null): Media
+    {
+        $extension = Str::lower(pathinfo($media->file_name, PATHINFO_EXTENSION));
+        $base = filled($name) ? $this->validName((string) $name) : pathinfo($media->file_name, PATHINFO_FILENAME);
+
+        if ($extension !== '' && Str::endsWith(Str::lower($base), '.'.$extension)) {
+            $base = Str::beforeLast($base, '.');
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'media-manager');
+
+        try {
+            $source = $media->stream();
+
+            if (! is_resource($source)) {
+                throw MediaManagerException::because('file_missing');
+            }
+
+            $target = fopen($path, 'wb');
+            stream_copy_to_stream($source, $target);
+            fclose($target);
+            fclose($source);
+
+            $copy = $this->addFile($to, $path, $base.($extension !== '' ? '.'.$extension : ''));
+        } finally {
+            @unlink($path);
+        }
+
+        // Only the metadata: the other custom properties belong to the source's model.
+        if ($media->hasCustomProperty(MediaMetadata::PROPERTY)) {
+            $copy->setCustomProperty(MediaMetadata::PROPERTY, $media->getCustomProperty(MediaMetadata::PROPERTY))->save();
+        }
+
+        return $copy;
+    }
+
+    /**
+     * Copies a folder, its subfolders and their files, into another folder or
+     * the root. The rights are not copied: the copy inherits its new parent's.
+     * A name already taken gets a number: "Photos (1)".
+     *
+     * @param  (\Closure(MediaFolder): bool)|null  $include  Which subfolders to copy, with their files; all by default.
+     */
+    public function duplicateFolder(MediaFolder $folder, ?MediaFolder $to, ?string $name = null, ?\Closure $include = null): MediaFolder
+    {
+        foreach ($to?->ancestry() ?? [] as $ancestor) {
+            if ($ancestor->is($folder)) {
+                throw MediaManagerException::because('duplicate_into_itself');
+            }
+        }
+
+        $base = filled($name) ? $this->validName((string) $name) : $folder->name;
+        $name = $base;
+
+        for ($i = 1; ! $this->folderNameIsFree($to?->getKey(), $name); $i++) {
+            $name = $base.' ('.$i.')';
+        }
+
+        $copy = $this->createFolder($to, $name);
+
+        foreach ($this->files($folder)->orderBy('id')->get() as $file) {
+            $this->duplicateFile($file, $copy);
+        }
+
+        foreach ($this->folders($folder) as $child) {
+            if ($include === null || $include($child)) {
+                $this->duplicateFolder($child, $copy, include: $include);
+            }
+        }
+
+        return $copy;
+    }
+
+    private function addFile(MediaFolder $folder, string $path, string $originalName): Media
+    {
         $extension = Str::lower(pathinfo($originalName, PATHINFO_EXTENSION));
         $base = $this->validName(pathinfo($originalName, PATHINFO_FILENAME) ?: 'file');
         $name = $base;
@@ -238,15 +322,18 @@ class MediaLibrary
 
     private function ensureFolderNameIsFree(?int $parentId, string $name, ?int $except = null): void
     {
-        $taken = MediaFolder::query()
+        if (! $this->folderNameIsFree($parentId, $name, $except)) {
+            throw MediaManagerException::because('name_taken', ['name' => $name]);
+        }
+    }
+
+    private function folderNameIsFree(?int $parentId, string $name, ?int $except = null): bool
+    {
+        return ! MediaFolder::query()
             ->where('parent_id', $parentId)
             ->when($except !== null, fn (Builder $query) => $query->whereKeyNot($except))
             ->where(DB::raw('lower(name)'), mb_strtolower($name))
             ->exists();
-
-        if ($taken) {
-            throw MediaManagerException::because('name_taken', ['name' => $name]);
-        }
     }
 
     private function fileNameIsFree(?MediaFolder $folder, string $fileName, ?int $except = null): bool

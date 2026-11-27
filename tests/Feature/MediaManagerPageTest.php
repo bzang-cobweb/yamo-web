@@ -272,11 +272,150 @@ class MediaManagerPageTest extends AuthFilamentTestCase
             ->test(MediaManagerPage::class)
             ->assertSet('display', 'grid')
             ->assertSeeHtml('mm-tile')
+            // The tiles fill the listing's width, beside the tree.
+            ->assertSeeHtml('mm-layout')
+            ->assertSeeHtml('fi-ta-content-grid')
             ->assertSee('2 éléments')
             ->callAction('display')
-            ->assertSet('display', 'list')
+            ->assertRedirect(MediaManagerPage::getUrl(['display' => 'list']));
+
+        Livewire::withQueryParams(['display' => 'list'])
+            ->test(MediaManagerPage::class)
             ->assertDontSeeHtml('class="mm-tile"')
             ->assertSee(__('media-manager::media-manager.columns.size'))
             ->assertCanSeeTableRecords(['folder:'.$folder->id]);
+    }
+
+    public function test_a_super_admin_edits_the_metadata_of_a_file(): void
+    {
+        $this->actingAsSuperAdmin();
+        $folder = $this->library()->createFolder(null, 'Photos');
+        $file = $this->upload($folder, 'beach.txt');
+
+        Livewire::withQueryParams(['folder' => $folder->id])
+            ->test(MediaManagerPage::class)
+            ->mountAction(TestAction::make('metadata')->table('file:'.$file->id))
+            ->setActionData([
+                'alt' => ['fr' => 'Une plage au soleil', 'en' => 'A sunny beach'],
+                'credit' => '© Studio Yamo',
+                'extra' => ['source' => 'Shooting 2026'],
+            ])
+            ->callMountedAction()
+            ->assertHasNoActionErrors()
+            ->assertNotified(__('media-manager::media-manager.notifications.metadata_saved'));
+
+        $metadata = $file->fresh()->getCustomProperty('metadata');
+        $this->assertSame(['fr' => 'Une plage au soleil', 'en' => 'A sunny beach'], $metadata['alt']);
+        $this->assertSame(['© Studio Yamo', ['source' => 'Shooting 2026']], [$metadata['credit'], $metadata['extra']]);
+    }
+
+    public function test_the_metadata_are_read_only_without_the_edit_right(): void
+    {
+        $this->actingAsAdmin();
+        $folder = $this->library()->createFolder(null, 'Photos');
+        $file = $this->upload($folder, 'beach.txt');
+        $file->setCustomProperty('metadata', ['credit' => 'Original'])->save();
+        $this->grantAdmins(Target::folder($folder), ['view' => true]);
+
+        Livewire::withQueryParams(['folder' => $folder->id])
+            ->test(MediaManagerPage::class)
+            ->assertActionVisible(TestAction::make('metadata')->table('file:'.$file->id))
+            ->callAction(TestAction::make('metadata')->table('file:'.$file->id), ['credit' => 'Changed']);
+
+        $this->assertSame(['credit' => 'Original'], $file->fresh()->getCustomProperty('metadata'));
+    }
+
+    public function test_the_metadata_of_the_contents_media_are_edited_with_the_edit_right(): void
+    {
+        $this->actingAsAdmin();
+        $owner = User::factory()->create();
+        $folder = $this->library()->createFolder(null, 'Tmp');
+        $avatar = $this->upload($folder, 'avatar.txt');
+        $avatar->forceFill(['model_type' => $owner->getMorphClass(), 'model_id' => $owner->id, 'collection_name' => 'avatar'])->save();
+        $target = Target::linked($owner->getMorphClass());
+        $page = fn () => Livewire::withQueryParams(['linked' => $owner->getMorphClass(), 'collection' => 'avatar'])->test(MediaManagerPage::class);
+
+        // Viewing only: the window shows them, nothing is saved.
+        $this->grantAdmins($target, ['view' => true]);
+        $page()->callAction(TestAction::make('metadata')->table('file:'.$avatar->id), ['credit' => 'Changed']);
+        $this->assertFalse($avatar->fresh()->hasCustomProperty('metadata'));
+
+        // With "edit": saved, while the file itself stays read-only.
+        $this->grantAdmins($target, ['view' => true, 'update' => true]);
+        $page()
+            ->callAction(TestAction::make('metadata')->table('file:'.$avatar->id), ['credit' => '© Owner', 'alt' => ['fr' => 'Portrait']])
+            ->assertHasNoActionErrors()
+            ->assertActionHidden(TestAction::make('rename')->table('file:'.$avatar->id))
+            ->assertActionHidden(TestAction::make('delete')->table('file:'.$avatar->id));
+
+        $this->assertSame(['alt' => ['fr' => 'Portrait'], 'credit' => '© Owner'], $avatar->fresh()->getCustomProperty('metadata'));
+    }
+
+    public function test_the_metadata_window_has_a_save_button_only_for_who_may_edit(): void
+    {
+        $user = $this->actingAsSuperAdmin();
+        $folder = $this->library()->createFolder(null, 'Photos');
+        $file = $this->upload($folder, 'beach.txt');
+
+        $page = Livewire::withQueryParams(['folder' => $folder->id])
+            ->test(MediaManagerPage::class)
+            ->mountAction(TestAction::make('metadata')->table('file:'.$file->id));
+
+        $action = $page->instance()->getMountedAction();
+        $this->assertSame(__('media-manager::media-manager.actions.save'), $action->getModalSubmitAction()?->getLabel());
+
+        // A contents media has one too, for the super admin.
+        $file->forceFill(['model_type' => $user->getMorphClass(), 'model_id' => $user->id, 'collection_name' => 'avatar'])->save();
+        $page = Livewire::withQueryParams(['linked' => $user->getMorphClass(), 'collection' => 'avatar'])
+            ->test(MediaManagerPage::class)
+            ->mountAction(TestAction::make('metadata')->table('file:'.$file->id));
+        $this->assertNotNull($page->instance()->getMountedAction()->getModalSubmitAction());
+    }
+
+    public function test_a_contents_photo_and_a_folder_are_duplicated(): void
+    {
+        $user = $this->actingAsSuperAdmin();
+        $library = $this->library()->createFolder(null, 'Library');
+        $photo = $this->upload($library, 'avatar.txt');
+        $from = $photo->getPathRelativeToRoot();
+        $photo->forceFill(['model_type' => $user->getMorphClass(), 'model_id' => $user->id, 'collection_name' => 'avatar'])->save();
+        // Where the application's path generator expects an avatar.
+        Storage::disk('public')->move($from, $photo->fresh()->getPathRelativeToRoot());
+
+        Livewire::withQueryParams(['linked' => $user->getMorphClass(), 'collection' => 'avatar'])
+            ->test(MediaManagerPage::class)
+            ->assertActionHidden(TestAction::make('move')->table('file:'.$photo->id))
+            ->callAction(TestAction::make('duplicate')->table('file:'.$photo->id), ['name' => 'portrait', 'destination' => (string) $library->id])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(['portrait.txt'], $this->library()->files($library)->pluck('file_name')->all());
+
+        Livewire::withQueryParams([])
+            ->test(MediaManagerPage::class)
+            ->callAction(TestAction::make('duplicate')->table('folder:'.$library->id))
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(['Library', 'Library (1)'], MediaFolder::query()->whereNull('parent_id')->orderBy('name')->pluck('name')->all());
+    }
+
+    public function test_duplicating_needs_a_folder_to_add_to(): void
+    {
+        $this->actingAsAdmin();
+        $folder = $this->library()->createFolder(null, 'Shared');
+        $file = $this->upload($folder, 'guide.txt');
+        $this->grantAdmins(Target::folder($folder), ['view' => true, 'download' => true]);
+
+        Livewire::withQueryParams(['folder' => $folder->id])
+            ->test(MediaManagerPage::class)
+            ->assertActionHidden(TestAction::make('duplicate')->table('file:'.$file->id));
+
+        $this->grantAdmins(Target::folder($folder), ['view' => true, 'download' => true, 'create' => true]);
+
+        Livewire::withQueryParams(['folder' => $folder->id])
+            ->test(MediaManagerPage::class)
+            ->callAction(TestAction::make('duplicate')->table('file:'.$file->id))
+            ->assertHasNoActionErrors();
+
+        $this->assertSame(['guide-1.txt', 'guide.txt'], $this->library()->files($folder)->orderBy('file_name')->pluck('file_name')->all());
     }
 }

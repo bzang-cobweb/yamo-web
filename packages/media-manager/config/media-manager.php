@@ -53,6 +53,12 @@ return [
     'grantees' => null,
 
     /*
+    | The locales the alternative text, title and caption are written in.
+    | Null means app.supported_locales, else app.locale.
+    */
+    'locales' => null,
+
+    /*
     | Show the media attached to the other models (photos, avatars…) as
     | read-only folders, one per model type, then one per collection.
     */

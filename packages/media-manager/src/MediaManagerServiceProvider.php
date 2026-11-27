@@ -25,6 +25,7 @@ class MediaManagerServiceProvider extends ServiceProvider
         $this->app->scoped(MediaLibrary::class);
         $this->app->scoped(Grants::class);
         $this->app->scoped(LinkedMedia::class);
+        $this->app->scoped(MediaMetadata::class);
     }
 
     public function boot(): void

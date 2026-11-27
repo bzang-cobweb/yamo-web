@@ -41,12 +41,16 @@ return [
     'tree' => 'Dossiers',
 
     'actions' => [
+        'metadata' => 'Informations',
+        'save' => 'Enregistrer',
+        'close' => 'Fermer',
         'grid' => 'Grille',
         'list' => 'Liste',
         'open' => 'Ouvrir',
         'new_folder' => 'Nouveau dossier',
         'upload' => 'Téléverser',
         'rename' => 'Renommer',
+        'duplicate' => 'Dupliquer',
         'move' => 'Déplacer',
         'delete' => 'Supprimer',
         'download' => 'Télécharger',
@@ -55,6 +59,28 @@ return [
         'preview' => 'Aperçu',
         'permissions' => 'Droits',
         'root_permissions' => 'Droits de la racine',
+    ],
+
+    'metadata' => [
+        'file' => 'Fichier',
+        'type' => 'Type',
+        'size' => 'Taille',
+        'dimensions' => 'Dimensions',
+        'created_at' => 'Ajouté le',
+        'updated_at' => 'Modifié le',
+        'owner' => 'Rattaché à',
+        'alt' => 'Texte alternatif',
+        'alt_help' => 'Décrit l\'image pour qui ne la voit pas (lecteurs d\'écran, référencement).',
+        'title' => 'Titre',
+        'caption' => 'Légende',
+        'credit' => 'Crédit',
+        'texts_tab' => 'Textes',
+        'credit_tab' => 'Crédit et autres',
+        'credit_placeholder' => '© Auteur, source, licence',
+        'extra' => 'Autres informations',
+        'key' => 'Clé',
+        'value' => 'Valeur',
+        'add_pair' => 'Ajouter une information',
     ],
 
     'fields' => [
@@ -67,8 +93,9 @@ return [
     ],
 
     'help' => [
+        'duplicate_name' => 'Le nom de la copie ; un nom déjà pris reçoit un numéro.',
         'permissions' => 'Chaque droit vaut pour ce dossier et ses sous-dossiers. « Hérité » reprend le dossier parent ; un sous-dossier qui dit « Oui » ou « Non » l\'emporte sur ses parents pour ce droit. Il suffit qu\'un des rôles de l\'utilisateur ait le droit.',
-        'linked_permissions' => 'Les médias des contenus n\'héritent pas des droits de la racine : seuls les droits donnés ici comptent.',
+        'linked_permissions' => 'Les médias des contenus n\'héritent pas des droits de la racine : seuls les droits donnés ici comptent. « Modifier » y permet de modifier les informations (texte alternatif, crédit…), jamais les fichiers.',
     ],
 
     'confirm' => [
@@ -79,9 +106,11 @@ return [
     'notifications' => [
         'folder_created' => 'Dossier créé',
         'renamed' => 'Renommé',
+        'duplicated' => 'Dupliqué',
         'moved' => 'Déplacé',
         'deleted' => 'Supprimé',
         'uploaded' => '{1} 1 fichier téléversé|[2,*] :count fichiers téléversés',
+        'metadata_saved' => 'Informations enregistrées',
         'permissions_saved' => 'Droits enregistrés',
     ],
 
@@ -90,9 +119,12 @@ return [
         'name_required' => 'Le nom est obligatoire.',
         'name_invalid' => 'Ce nom n\'est pas valable : pas de « / » ni de « \\ », 200 caractères au plus.',
         'name_taken' => '« :name » existe déjà dans ce dossier.',
+        'duplicate_into_itself' => 'Un dossier ne peut pas être dupliqué dans lui-même ni dans un de ses sous-dossiers.',
+        'file_missing' => 'Le fichier est introuvable sur le disque.',
         'move_into_itself' => 'Un dossier ne peut pas être déplacé dans lui-même ni dans un de ses sous-dossiers.',
         'folder_not_empty' => 'Ce dossier n\'est pas vide : déplacez ou supprimez d\'abord son contenu.',
         'too_large' => 'Le fichier dépasse la taille maximale (:size).',
+        'metadata_key_invalid' => 'Une clé fait 100 caractères au plus.',
         'read_only' => 'Les médias des contenus sont en lecture seule.',
     ],
 ];
