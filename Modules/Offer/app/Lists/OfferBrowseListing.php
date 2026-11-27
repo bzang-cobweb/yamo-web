@@ -15,6 +15,8 @@ use Illuminate\Support\Collection;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\Wishlist;
+use Modules\Offer\Models\WishlistItem;
 use Modules\Offer\Services\OfferCounterService;
 
 /**
@@ -256,6 +258,31 @@ class OfferBrowseListing extends Listing
         app(OfferCounterService::class)->countViews($offers, $this->user);
 
         return $offers->map(fn (Offer $offer): array => $this->item($offer)->toArray())->values()->all();
+    }
+
+    /** Le nombre de cartes du bloc « Récemment consultés » de l'accueil. */
+    public const RECENT_ON_HOME = 10;
+
+    /**
+     * Le bloc « Récemment consultés » de l'accueil (décision 2026-11-27-listes-de-favoris) : ses dernières offres
+     * visibles de la liste `$recent`, la dernière ouverte d'abord, en cartes comme l'accueil. Pas de vue comptée : la
+     * fiche a déjà compté son clic.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function recentOffers(Wishlist $recent, int $limit = self::RECENT_ON_HOME): array
+    {
+        $this->photoConversion = 'home';
+
+        return $this->base()
+            ->whereIn('id', $recent->items()->select('offer_id'))
+            ->orderByDesc(WishlistItem::query()->select('updated_at')->where('wishlist_id', $recent->getKey())->whereColumn('wishlist_items.offer_id', 'offers.id')->limit(1))
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn (Offer $offer): array => $this->item($offer)->toArray())
+            ->values()
+            ->all();
     }
 
     /**

@@ -11,7 +11,9 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferFavorite;
+use Modules\Offer\Models\Wishlist;
+use Modules\Offer\Models\WishlistItem;
+use Modules\Offer\Services\WishlistService;
 use Tests\TestCase;
 
 /**
@@ -127,14 +129,18 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertSame(['active' => false, 'endpoint' => "/v1/offers/{$offer->getKey()}/favorite"], $item['favorite']);
         $this->assertSame("/offers/{$offer->getKey()}", $item['link']);
 
+        // Sans liste choisie (une app d'avant les listes) : dans sa liste « Favoris », créée au besoin (décision
+        // 2026-11-27-listes-de-favoris).
         $this->api($member, 'PUT', "/api/v1/offers/{$offer->getKey()}/favorite")->assertNoContent();
         $this->api($member, 'PUT', "/api/v1/offers/{$offer->getKey()}/favorite")->assertNoContent();
-        $this->assertSame(1, OfferFavorite::query()->count());
+        $this->assertSame(1, WishlistItem::query()->count());
+        $list = Wishlist::query()->sole();
+        $this->assertSame('Favoris', $list->name);
 
         $this->assertTrue($this->api($member, 'GET', '/api/v1/lists/offer.browse')->json('data.items.0.favorite.active'));
         $this->assertTrue($this->api($member, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.favorite.active'));
-        $favorites = $this->api($member, 'GET', '/api/v1/lists/offer.favorites')->assertOk()->json('data');
-        $this->assertSame('Mes favoris', $favorites['title']);
+        $favorites = $this->api($member, 'GET', '/api/v1/lists/offer.wishlist?filter[wishlist]='.$list->getKey())->assertOk()->json('data');
+        $this->assertSame('Favoris', $favorites['title']);
         $this->assertSame([(string) $offer->getKey()], array_column($favorites['items'], 'id'));
         $this->assertTrue($favorites['items'][0]['favorite']['active']);
         // Les étoiles ouvrent ses avis en panneau, comme « Mes réservations » ; pas d'œil ni de lien sur le titre (décision
@@ -144,14 +150,13 @@ class OfferFavoriteApiTest extends TestCase
         $this->assertArrayNotHasKey('title_link', $favorites['items'][0]);
         $this->assertArrayNotHasKey('subtitle_link', $favorites['items'][0]);
         // Le nombre, sous les filtres (décision 2026-11-22-listes-nombre-en-tete).
-        // « 1 favori » (décision 2026-11-25-nombre-favoris).
-        $this->assertSame('1 favori', $favorites['heading']['title']);
-        // Comme à l'accueil : le titre saisi, la ligne du type dessous (décision 2026-11-21-favoris-titre-saisi-ligne-type).
-        // En titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
+        $this->assertSame('1 offre', $favorites['heading']['title']);
+        // Comme à l'accueil : en titre, la ligne du type ; dessous, le titre saisi (décision 2026-11-21-cartes-titre-compose-en-tete).
         $this->assertSame(['Location', $offer->getTranslation('title', 'fr')], [$favorites['items'][0]['title'], $favorites['items'][0]['subtitle']]);
 
+        // Le cœur plein : retirée de toutes ses listes.
         $this->api($member, 'DELETE', "/api/v1/offers/{$offer->getKey()}/favorite")->assertNoContent();
-        $this->assertSame([], $this->api($member, 'GET', '/api/v1/lists/offer.favorites')->json('data.items'));
+        $this->assertSame([], $this->api($member, 'GET', '/api/v1/lists/offer.wishlist?filter[wishlist]='.$list->getKey())->json('data.items'));
         $this->assertFalse($this->api($member, 'GET', "/api/v1/offers/{$offer->getKey()}")->json('data.favorite.active'));
     }
 
@@ -178,8 +183,9 @@ class OfferFavoriteApiTest extends TestCase
         $this->api($owner, 'PUT', "/api/v1/offers/{$draft->getKey()}/favorite")->assertNotFound();
         $this->api($owner, 'PUT', "/api/v1/offers/{$elsewhere->getKey()}/favorite")->assertNotFound();
         $this->api(null, 'PUT', "/api/v1/offers/{$draft->getKey()}/favorite")->assertUnauthorized();
-        $this->api(null, 'GET', '/api/v1/lists/offer.favorites')->assertUnauthorized();
-        $this->assertSame(0, OfferFavorite::query()->count());
+        $this->api(null, 'GET', '/api/v1/lists/offer.wishlists')->assertUnauthorized();
+        $this->api(null, 'GET', '/api/v1/lists/offer.wishlist')->assertUnauthorized();
+        $this->assertSame(0, WishlistItem::query()->count());
     }
 
     public function test_an_archived_offer_leaves_my_favorites_and_comes_back_when_republished(): void
@@ -188,11 +194,13 @@ class OfferFavoriteApiTest extends TestCase
         $member = $this->member();
         $this->api($member, 'PUT', "/api/v1/offers/{$offer->getKey()}/favorite")->assertNoContent();
 
+        $uri = '/api/v1/lists/offer.wishlist?filter[wishlist]='.Wishlist::query()->sole()->getKey();
+
         $offer->update(['status' => 'archived']);
-        $this->assertSame([], $this->api($member, 'GET', '/api/v1/lists/offer.favorites')->json('data.items'));
+        $this->assertSame([], $this->api($member, 'GET', $uri)->json('data.items'));
 
         $offer->update(['status' => 'published']);
-        $this->assertSame([(string) $offer->getKey()], array_column($this->api($member, 'GET', '/api/v1/lists/offer.favorites')->json('data.items'), 'id'));
+        $this->assertSame([(string) $offer->getKey()], array_column($this->api($member, 'GET', $uri)->json('data.items'), 'id'));
     }
 
     public function test_my_favorites_have_the_home_search_and_filters_and_a_search_button(): void
@@ -205,11 +213,12 @@ class OfferFavoriteApiTest extends TestCase
             ->create(['status' => 'published', 'title' => ['fr' => 'Maison Bastos'], 'price' => '300000', 'details' => ['property_type' => 'house', 'rental_type' => 'long_term']]);
         $notMine = Offer::factory()->create(['status' => 'published']);
         foreach ([$douala, $yaounde] as $offer) {
-            OfferFavorite::query()->create(['user_id' => $user->getKey(), 'offer_id' => $offer->getKey()]);
+            $list = app(WishlistService::class)->add($user, $offer);
         }
-        $ids = fn (string $query = ''): array => array_column($this->api($user, 'GET', '/api/v1/lists/offer.favorites'.$query)->json('data.items'), 'id');
+        $base = '/api/v1/lists/offer.wishlist?filter[wishlist]='.$list->getKey();
+        $ids = fn (string $query = ''): array => array_column($this->api($user, 'GET', $base.str_replace('?', '&', $query))->json('data.items'), 'id');
 
-        $data = $this->api($user, 'GET', '/api/v1/lists/offer.favorites')->json('data');
+        $data = $this->api($user, 'GET', $base)->json('data');
         $this->assertNotNull($data['search']);
         $this->assertSame(['label' => 'Rechercher un logement', 'form' => null, 'link' => '/search'], $data['footer']);
         $filters = array_column($data['filters'], null, 'name');

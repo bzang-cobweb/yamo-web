@@ -23,21 +23,25 @@ use Modules\Offer\Forms\OfferBookingForm;
 use Modules\Offer\Forms\OfferForm;
 use Modules\Offer\Forms\OfferMessageForm;
 use Modules\Offer\Forms\OfferReviewForm;
+use Modules\Offer\Forms\WishlistForm;
 use Modules\Offer\Lists\BookingListing;
 use Modules\Offer\Lists\OfferBrowseListing;
-use Modules\Offer\Lists\OfferFavoritesListing;
 use Modules\Offer\Lists\OfferListing;
 use Modules\Offer\Lists\OfferReviewListing;
 use Modules\Offer\Lists\ReceivedBookingListing;
+use Modules\Offer\Lists\WishlistListing;
+use Modules\Offer\Lists\WishlistOffersListing;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;
 use Modules\Offer\Models\OfferReview;
+use Modules\Offer\Models\Wishlist;
 use Modules\Offer\Notifications\OfferNotificationFilter;
 use Modules\Offer\Policies\BookingPolicy;
 use Modules\Offer\Policies\OfferCategoryPolicy;
 use Modules\Offer\Policies\OfferPolicy;
 use Modules\Offer\Policies\OfferReviewPolicy;
+use Modules\Offer\Policies\WishlistPolicy;
 use Modules\Offer\Support\BookingCache;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
@@ -92,6 +96,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         Gate::policy(OfferCategory::class, OfferCategoryPolicy::class);
         Gate::policy(OfferReview::class, OfferReviewPolicy::class);
         Gate::policy(Booking::class, BookingPolicy::class);
+        Gate::policy(Wishlist::class, WishlistPolicy::class);
         // La page d'un membre : tout compte connecté (décision 2026-11-19-page-membre) ; la règle a son domicile
         // ici, la route porte sa garde (décision 2026-11-24-partenaires-policy-routes).
         Gate::define('viewMember', fn (User $viewer, User $member): bool => true);
@@ -105,8 +110,11 @@ class OfferServiceProvider extends ModuleServiceProvider
         $this->app->make(ListingRegistry::class)->register(OfferListing::class);
         // La vitrine de l'accueil, ouverte sans connexion (décision 2026-11-18-accueil-offres-du-pays).
         $this->app->make(ListingRegistry::class)->register(OfferBrowseListing::class);
-        // « Mes favoris » (décision 2026-11-19-contrat-vedette-favoris).
-        $this->app->make(ListingRegistry::class)->register(OfferFavoritesListing::class);
+        // « Mes favoris » : ses listes de favoris, les offres d'une liste, et renommer une liste (décision
+        // 2026-11-27-listes-de-favoris).
+        $this->app->make(ListingRegistry::class)->register(WishlistListing::class);
+        $this->app->make(ListingRegistry::class)->register(WishlistOffersListing::class);
+        $this->app->make(FormRegistry::class)->register(WishlistForm::class);
         // Réservations et visites (décision 2026-11-19-contrat-reservations) : la demande depuis
         // la fiche, la réponse du propriétaire, et les deux listes du profil.
         $this->app->make(FormRegistry::class)->register(OfferBookingForm::class);
@@ -137,7 +145,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         $links->addList(
             'favorites',
             fn (): string => __('offer::offer.favorites.title'),
-            fn (): ?string => OfferFavoritesListing::isAvailable() ? OfferFavoritesListing::name() : null,
+            fn (): ?string => WishlistListing::isAvailable() ? WishlistListing::name() : null,
             group: 'traveler',
         );
         // « Mes logements » (libellé du domaine).

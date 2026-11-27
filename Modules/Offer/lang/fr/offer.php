@@ -91,6 +91,28 @@ return [
         'empty' => "Aucun favori pour l'instant. Touchez le cœur d'une offre pour la retrouver ici.",
         'own_offer' => 'Vous ne pouvez pas mettre votre propre offre en favori.',
     ],
+    // Listes de favoris (décision 2026-11-27-listes-de-favoris).
+    'wishlists' => [
+        'default_name' => 'Favoris',
+        'recent' => 'Récemment consultés',
+        'count' => '{0} Aucune offre|{1} :count offre|[2,*] :count offres',
+        'empty' => "Aucune offre dans cette liste pour l'instant.",
+        'choose' => 'Enregistrer dans une liste',
+        'create' => 'Créer une liste',
+        'create_submit' => 'Créer',
+        'name' => 'Nom de la liste',
+        'list' => 'Liste',
+        'rename' => 'Renommer',
+        'rename_title' => 'Renommer la liste',
+        'save' => 'Enregistrer',
+        'renamed' => 'Liste renommée.',
+        'delete' => 'Supprimer',
+        'delete_confirm' => 'Supprimer la liste « :name » ?',
+        'deleted' => 'Liste supprimée.',
+        'remove' => 'Retirer',
+        'remove_confirm' => 'Retirer cette offre de la liste ?',
+        'removed' => 'Offre retirée de la liste.',
+    ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Accès',
     // Décision 2026-11-23-offre-paye-a-partir-du.

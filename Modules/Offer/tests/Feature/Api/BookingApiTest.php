@@ -27,6 +27,7 @@ use Modules\Offer\Notifications\BookingRequestAccepted;
 use Modules\Offer\Notifications\BookingRequestCancelled;
 use Modules\Offer\Notifications\BookingRequestReceived;
 use Modules\Offer\Notifications\BookingRequestRefused;
+use Modules\Offer\Services\WishlistService;
 use Tests\TestCase;
 
 /**
@@ -374,7 +375,8 @@ class BookingApiTest extends TestCase
         $this->assertFalse($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.menu'));
         $this->assertSame([], $items[(string) $pending->getKey()]['actions']);
         $this->assertFalse($items[(string) $pending->getKey()]['favorite']['active']);
-        $pending->offer->favorites()->create(['user_id' => $guest->getKey()]);
+        // Dans l'une de ses listes nommées (décision 2026-11-27-listes-de-favoris).
+        app(WishlistService::class)->add($guest, $pending->offer);
         $this->assertTrue(collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.items'))->keyBy('id')[(string) $pending->getKey()]['favorite']['active']);
         $this->assertNull($items[(string) $pending->getKey()]['delete']);
         // Sans notification dans son fil : la fiche du logement.

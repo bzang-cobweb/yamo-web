@@ -91,6 +91,28 @@ return [
         'empty' => 'No favorites yet. Tap the heart of an offer to find it here.',
         'own_offer' => 'You cannot add your own offer to your favorites.',
     ],
+    // Wishlists (décision 2026-11-27-listes-de-favoris).
+    'wishlists' => [
+        'default_name' => 'Favorites',
+        'recent' => 'Recently viewed',
+        'count' => '{0} No offers|{1} :count offer|[2,*] :count offers',
+        'empty' => 'No offers in this list yet.',
+        'choose' => 'Save to a list',
+        'create' => 'Create a list',
+        'create_submit' => 'Create',
+        'name' => 'List name',
+        'list' => 'List',
+        'rename' => 'Rename',
+        'rename_title' => 'Rename the list',
+        'save' => 'Save',
+        'renamed' => 'List renamed.',
+        'delete' => 'Delete',
+        'delete_confirm' => 'Delete the list “:name”?',
+        'deleted' => 'List deleted.',
+        'remove' => 'Remove',
+        'remove_confirm' => 'Remove this offer from the list?',
+        'removed' => 'Offer removed from the list.',
+    ],
     // Section « Accès » du back-office (décision 2026-11-19-acces-avis-backoffice).
     'access' => 'Access',
     // Décision 2026-11-23-offre-paye-a-partir-du.

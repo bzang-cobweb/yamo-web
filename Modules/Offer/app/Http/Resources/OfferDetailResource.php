@@ -193,7 +193,7 @@ class OfferDetailResource extends JsonResource
         }
 
         return [
-            'active' => $offer->favorites()->where('user_id', $user->getAuthIdentifier())->exists(),
+            'active' => $offer->isFavoriteOf($user->getAuthIdentifier()),
             'endpoint' => $offer->favoriteEndpoint(),
         ];
     }

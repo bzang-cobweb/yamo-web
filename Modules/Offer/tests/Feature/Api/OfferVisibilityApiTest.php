@@ -12,7 +12,7 @@ use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferFavorite;
+use Modules\Offer\Services\WishlistService;
 use Tests\TestCase;
 
 /**
@@ -105,8 +105,9 @@ class OfferVisibilityApiTest extends TestCase
         $paid = $this->home($owner, 'Douala', now()->addMonth());
         $expired = $this->home($owner, 'Kribi', now()->subDay());
         $never = $this->home($owner, 'Limbé', null);
-        OfferFavorite::query()->create(['user_id' => $visitor->getKey(), 'offer_id' => $paid->getKey()]);
-        OfferFavorite::query()->create(['user_id' => $visitor->getKey(), 'offer_id' => $expired->getKey()]);
+        // Dans sa liste de favoris (décision 2026-11-27-listes-de-favoris).
+        $list = app(WishlistService::class)->add($visitor, $paid);
+        $list->items()->create(['offer_id' => $expired->getKey()]);
 
         // Fiche : 404 pour un visiteur et un autre membre ; l'auteur la voit toujours.
         $this->api(null, 'GET', "/api/v1/offers/{$paid->getKey()}")->assertOk();
@@ -120,7 +121,7 @@ class OfferVisibilityApiTest extends TestCase
         $this->assertSame([(string) $paid->getKey()], $this->browse());
         $this->assertSame([(string) $paid->getKey()], $this->browse($owner));
         $this->assertSame(['Douala'], $this->cities());
-        $favorites = $this->api($visitor, 'GET', '/api/v1/lists/offer.favorites')->assertOk()->json('data.items');
+        $favorites = $this->api($visitor, 'GET', '/api/v1/lists/offer.wishlist?filter[wishlist]='.$list->getKey())->assertOk()->json('data.items');
         $this->assertSame([(string) $paid->getKey()], array_column($favorites, 'id'));
 
         // Avis et favori : 404 sur une offre expirée.

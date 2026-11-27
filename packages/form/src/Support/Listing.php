@@ -2,7 +2,6 @@
 
 namespace Bza\Form\Support;
 
-use Bza\Form\Support\ContainsSearch;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -318,6 +317,47 @@ abstract class Listing
     public function actionsMenu(): bool
     {
         return false;
+    }
+
+    /**
+     * The number of cards per row according to the chosen filters (« Récemment consultés », two per row: decision
+     * 2026-11-27-listes-de-favoris); 1 by default.
+     *
+     * @param  array<string, mixed>  $filters  validated filters
+     */
+    public function columnsFor(array $filters): int
+    {
+        return 1;
+    }
+
+    /**
+     * The actions of the « ⋮ » menu in the top bar of the list's screen, according to the chosen filters (« Renommer »,
+     * « Supprimer » a wishlist: decision 2026-11-27-listes-de-favoris), shaped like the buttons of a card
+     * (`ListItem::action()`); none by default.
+     *
+     * @param  array<string, mixed>  $filters  validated filters
+     * @return list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null}>
+     */
+    public function headerActionsFor(array $filters): array
+    {
+        return [];
+    }
+
+    /**
+     * An action of the top bar menu (`headerActionsFor()`): it opens the form `$form` bound to `$record`, or sends
+     * `$submission` after `$confirm`. Style: `primary`, `destructive` or `default`.
+     *
+     * @return array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null}
+     */
+    final protected function headerAction(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null): array
+    {
+        return [
+            'label' => $label,
+            'style' => $style,
+            'confirm' => $confirm,
+            'submission' => $submission,
+            'form' => $form === null ? null : ['form' => $form, 'record' => (string) $record],
+        ];
     }
 
     /**

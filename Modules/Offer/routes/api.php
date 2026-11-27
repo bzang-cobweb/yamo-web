@@ -13,8 +13,10 @@ use Modules\Offer\Http\Controllers\Api\OfferController;
 use Modules\Offer\Http\Controllers\Api\OfferFavoriteController;
 use Modules\Offer\Http\Controllers\Api\OfferMessageController;
 use Modules\Offer\Http\Controllers\Api\OfferReviewController;
+use Modules\Offer\Http\Controllers\Api\WishlistController;
 use Modules\Offer\Http\Middleware\RequireOfferDomain;
 use Modules\Offer\Models\Offer;
+use Modules\Offer\Models\Wishlist;
 
 // Fiche d'une offre, ouverte sans connexion (décision 2026-11-18-fiche-offre) :
 // l'autorisation (policy `show`, compte facultatif) est faite dans le contrôleur.
@@ -51,9 +53,20 @@ Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/offer
     Route::put('{offer}/blocked-dates/{date}', [OfferCalendarController::class, 'block'])->can('update', 'offer')->where('date', '\d{4}-\d{2}-\d{2}')->name('blocked-dates.save');
     Route::delete('{offer}/blocked-dates/{date}', [OfferCalendarController::class, 'unblock'])->can('update', 'offer')->where('date', '\d{4}-\d{2}-\d{2}')->name('blocked-dates.destroy');
 
-    // Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
+    // Ses favoris (décision 2026-11-19-contrat-vedette-favoris), rangés dans ses listes (décision
+    // 2026-11-27-listes-de-favoris) : GET sert ses listes au panneau du cœur.
+    Route::get('{offer}/favorite', [OfferFavoriteController::class, 'index'])->can('favorite', 'offer')->name('favorite.index');
     Route::put('{offer}/favorite', [OfferFavoriteController::class, 'save'])->can('favorite', 'offer')->name('favorite.save');
     Route::delete('{offer}/favorite', [OfferFavoriteController::class, 'destroy'])->can('favorite', 'offer')->name('favorite.destroy');
+});
+
+// Ses listes de favoris (décision 2026-11-27-listes-de-favoris) : le bloc « Récemment consultés » de l'accueil, renommer
+// et supprimer une liste, en retirer une offre. Une liste d'un autre répond 404 (`WishlistPolicy`).
+Route::middleware(['auth:sanctum', RequireOfferDomain::class])->prefix('v1/wishlists')->name('v1.wishlists.')->group(function () {
+    Route::get('recent', [WishlistController::class, 'recent'])->can('viewAny', Wishlist::class)->middleware('throttle:60,1')->name('recent');
+    Route::patch('{wishlist}', [WishlistController::class, 'update'])->can('update', 'wishlist')->whereNumber('wishlist')->name('update');
+    Route::delete('{wishlist}', [WishlistController::class, 'destroy'])->can('delete', 'wishlist')->whereNumber('wishlist')->name('destroy');
+    Route::delete('{wishlist}/offers/{offer}', [WishlistController::class, 'removeOffer'])->can('removeOffer', 'wishlist')->whereNumber(['wishlist', 'offer'])->name('offers.destroy');
 });
 
 // La page publique d'un membre, pour un compte connecté (décision 2026-11-19-page-membre).

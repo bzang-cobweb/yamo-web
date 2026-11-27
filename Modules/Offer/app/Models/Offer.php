@@ -25,6 +25,7 @@ use Modules\Auth\Models\User;
 use Modules\Location\Models\Address;
 use Modules\Offer\Database\Factories\OfferFactory;
 use Modules\Offer\Enums\OfferStatusEnum;
+use Modules\Offer\Enums\WishlistKindEnum;
 use Modules\Offer\Services\OfferPhotoService;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -286,7 +287,8 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Ses favoris (décision 2026-11-19-contrat-vedette-favoris).
+     * Ses favoris d'avant les listes (décision 2026-11-19-contrat-vedette-favoris) : la table n'est plus lue ni écrite,
+     * ses lignes ont été copiées dans les listes (décision 2026-11-27-listes-de-favoris).
      *
      * @return HasMany<OfferFavorite, $this>
      */
@@ -296,13 +298,36 @@ class Offer extends Model implements HasMedia
     }
 
     /**
-     * Est-elle en favori de `$userId` ? Chargé en `is_favorite`.
+     * Ses places dans les listes de favoris des membres (décision 2026-11-27-listes-de-favoris).
+     *
+     * @return HasMany<WishlistItem, $this>
+     */
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
+
+    /**
+     * Est-elle en favori de `$userId`, dans au moins une de ses listes nommées (pas « Récemment consultés », décision
+     * 2026-11-27-listes-de-favoris) ? Chargé en `is_favorite`. `favorites()` (la table `offer_favorites`) n'est plus lue.
      *
      * @param  Builder<Offer>  $query
      */
     public function scopeWithFavoriteOf(Builder $query, int|string|null $userId): void
     {
-        $query->withExists(['favorites as is_favorite' => fn (Builder $favorites) => $favorites->where('user_id', $userId)]);
+        $query->withExists(['wishlistItems as is_favorite' => fn (Builder $items) => $items->whereHas(
+            'wishlist',
+            fn (Builder $wishlist) => $wishlist->where('user_id', $userId)->where('kind', WishlistKindEnum::CUSTOM->value),
+        )]);
+    }
+
+    /** Est-elle dans au moins une liste nommée de `$userId` ? */
+    public function isFavoriteOf(int|string|null $userId): bool
+    {
+        return $this->wishlistItems()->whereHas(
+            'wishlist',
+            fn (Builder $wishlist) => $wishlist->where('user_id', $userId)->where('kind', WishlistKindEnum::CUSTOM->value),
+        )->exists();
     }
 
     /**

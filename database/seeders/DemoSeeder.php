@@ -20,10 +20,11 @@ use Modules\Offer\Enums\OfferStatusEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Booking;
 use Modules\Offer\Models\Offer;
-use Modules\Offer\Models\OfferFavorite;
 use Modules\Offer\Models\OfferReview;
+use Modules\Offer\Models\Wishlist;
 use Modules\Offer\Services\BookingService;
 use Modules\Offer\Services\OfferPhotoService;
+use Modules\Offer\Services\WishlistService;
 
 /**
  * Données de démonstration, en développement seulement : un membre camerounais
@@ -93,8 +94,8 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * Deux logements en vedette pour 30 jours, et trois favoris du premier visiteur
-     * (décision 2026-11-19-contrat-vedette-favoris). Rejouable.
+     * Deux logements en vedette pour 30 jours, et les listes de favoris du premier visiteur
+     * (décisions 2026-11-19-contrat-vedette-favoris et 2026-11-27-listes-de-favoris). Rejouable.
      */
     private function featuredAndFavorites(User $member): void
     {
@@ -104,11 +105,28 @@ class DemoSeeder extends Seeder
             $offers->get($index)?->update(['featured_until' => now()->addDays(30)]);
         }
 
+        // Ses listes de favoris (décision 2026-11-27-listes-de-favoris) : trois offres dans « Favoris », une dans
+        // « Vacances », et quatre fiches ouvertes dans « Récemment consultés ».
         $visitor = User::query()->where('email', 'demo-visiteur-1@example.test')->first();
-        foreach ($visitor === null ? [] : [0, 4, 10] as $index) {
+        if ($visitor === null) {
+            return;
+        }
+        $wishlists = app(WishlistService::class);
+        foreach ([0, 4, 10] as $index) {
             $offer = $offers->get($index);
             if ($offer instanceof Offer) {
-                OfferFavorite::query()->firstOrCreate(['user_id' => $visitor->getKey(), 'offer_id' => $offer->getKey()]);
+                $wishlists->add($visitor, $offer);
+            }
+        }
+        $holidays = Wishlist::query()->ownedBy($visitor->getKey())->custom()->where('name', 'Vacances')->first();
+        $offer = $offers->get(6);
+        if ($offer instanceof Offer) {
+            $wishlists->add($visitor, $offer, $holidays?->getKey(), $holidays === null ? 'Vacances' : null);
+        }
+        foreach ([1, 3, 5, 7] as $index) {
+            $offer = $offers->get($index);
+            if ($offer instanceof Offer) {
+                $wishlists->recordView($visitor, $offer);
             }
         }
     }

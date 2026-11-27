@@ -77,6 +77,9 @@ final class ListItem
 
     private ?Submission $deleteSubmission = null;
 
+    /** Removal as a cross on the photo, without confirmation (decision 2026-11-27-listes-de-favoris). */
+    private bool $deleteOnImage = false;
+
     /** @var list<array{label: string, style: string, confirm: string|null, submission: Submission|null, form: array{form: string, record: string}|null, link: string|null, list?: string|null, filter?: array<string, string>}> */
     private array $actions = [];
 
@@ -379,13 +382,16 @@ final class ListItem
     }
 
     /**
-     * Removal button: label, confirmation question, and submission.
+     * Removal button: label, confirmation question, and submission; with `$onImage`, a cross on the photo instead.
      */
-    public function delete(string $label, string $confirm, Submission $submission): self
+    public function delete(string $label, string $confirm, Submission $submission, bool $onImage = false): self
     {
         $this->deleteLabel = $label;
         $this->deleteConfirm = $confirm;
         $this->deleteSubmission = $submission;
+        // `$onImage`: a cross on the photo, top right, which removes at once (« Récemment consultés », decision
+        // 2026-11-27-listes-de-favoris).
+        $this->deleteOnImage = $onImage;
 
         return $this;
     }
@@ -451,6 +457,7 @@ final class ListItem
                 'label' => (string) $this->deleteLabel,
                 'confirm' => (string) $this->deleteConfirm,
                 ...$this->deleteSubmission->toArray(),
+                ...($this->deleteOnImage ? ['on_image' => true] : []),
             ],
         ];
     }

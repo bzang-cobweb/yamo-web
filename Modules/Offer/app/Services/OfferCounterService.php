@@ -10,7 +10,7 @@ use Modules\Offer\Models\Offer;
  * Les vues et les clics d'une offre, sur les mêmes critères que les partenaires (décision
  * 2026-11-25-compteurs-offres). Une vue : l'offre est servie dans un carrousel de l'accueil, le bloc « À la une » ou la
  * recherche. Un clic : sa fiche est ouverte, par n'importe quel lien (décision 2026-11-25-clic-a-l-ouverture). Rien pour
- * son propriétaire.
+ * son propriétaire. Le clic d'un membre connecté range aussi l'offre dans ses « Récemment consultés ».
  */
 class OfferCounterService
 {
@@ -50,6 +50,10 @@ class OfferCounterService
         }
 
         $offer->increment('clicks_count');
+        // Un membre connecté : l'offre entre en tête de ses « Récemment consultés » (décision 2026-11-27-listes-de-favoris).
+        if ($viewer !== null) {
+            app(WishlistService::class)->recordView($viewer, $offer);
+        }
 
         return true;
     }

@@ -2,11 +2,11 @@
 
 namespace Bza\Form\Http\Resources;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Listing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Bza\Form\Support\Field;
-use Bza\Form\Support\Listing;
 
 /**
  * A list, as the mobile app displays it (decision
@@ -25,6 +25,8 @@ class ListingResource extends JsonResource
         $search = $request->query('search');
         $rawFilters = $request->query('filter');
         $filters = $this->resource->validFilters(is_array($rawFilters) ? $rawFilters : []);
+        $columns = $this->resource->columnsFor($filters);
+        $headerActions = $this->resource->headerActionsFor($filters);
         $page = $this->resource->page(is_string($cursor) ? $cursor : null, is_string($search) ? $search : null, $filters);
 
         return [
@@ -39,6 +41,17 @@ class ListingResource extends JsonResource
             /** Button of the fixed bottom bar: label, form or app screen opened; `null`: none. */
             'footer' => $this->resource->footer(),
             'menu' => $this->resource->actionsMenu(),
+            /** Cards per row; absent: one (decision 2026-11-27-listes-de-favoris). */
+            ...($columns > 1 ? ['columns' => $columns] : []),
+            /** The « ⋮ » menu of the top bar: actions shaped like a card's buttons; absent: none. */
+            ...($headerActions === [] ? [] : ['header_actions' => array_map(fn (array $action): array => [
+                'label' => $action['label'],
+                'style' => $action['style'],
+                'confirm' => $action['confirm'],
+                'submission' => $action['submission']?->toArray(),
+                'form' => $action['form'],
+                'link' => null,
+            ], $headerActions)]),
             /** Help text of the search field; `null`: list not searchable, `?search=` ignored. */
             'search' => $this->resource->searchPlaceholder(),
             /** Filters offered, as form fields (`?filter[name]=value`); empty: list without filters. */
