@@ -115,8 +115,8 @@ class Partner extends Model implements HasMedia, NotifiableGroup
 
     /**
      * Les comptes qui lui sont rattachés : plusieurs, ajoutés au back-office ; `pivot.is_admin` : administrateur,
-     * vrai pour celui qui le propose (décision 2026-11-24-partenaires-par-les-membres). Tous le modifient ; seul un
-     * administrateur le retire.
+     * vrai pour celui qui le propose (décision 2026-11-24-partenaires-par-les-membres). Seul un administrateur le modifie
+     * et le retire (décision 2026-11-27-partenaire-modifier-admin).
      *
      * @return BelongsToMany<User, $this>
      */

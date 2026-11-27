@@ -81,10 +81,13 @@ class PartnerPolicyTest extends TestCase
         $this->api($superAdmin, 'PATCH', "/api/v1/partners/{$partner->getKey()}", ['name' => 'Pirate', 'description' => 'Texte.'])->assertNotFound();
         $this->api($superAdmin, 'DELETE', "/api/v1/partners/{$partner->getKey()}")->assertNotFound();
 
-        // Rattaché sans être administrateur : il modifie, il ne retire pas.
+        // Rattaché sans être administrateur : il ne modifie ni ne retire (décision 2026-11-27-partenaire-modifier-admin).
         $partner->users()->attach($superAdmin->getKey(), ['is_admin' => false]);
-        $this->api($superAdmin, 'PATCH', "/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertNoContent();
+        $this->api($superAdmin, 'PATCH', "/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertForbidden();
         $this->api($superAdmin, 'DELETE', "/api/v1/partners/{$partner->getKey()}")->assertForbidden();
+        // Administrateur : il modifie.
+        $partner->users()->updateExistingPivot($superAdmin->getKey(), ['is_admin' => true]);
+        $this->api($superAdmin, 'PATCH', "/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertNoContent();
         // Proposer : comme tout compte.
         $this->assertTrue(Gate::forUser($superAdmin)->allows('create', Partner::class));
     }

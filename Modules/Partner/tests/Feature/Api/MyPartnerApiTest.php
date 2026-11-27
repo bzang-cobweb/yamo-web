@@ -53,6 +53,70 @@ class MyPartnerApiTest extends TestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr');
     }
 
+    public function test_an_admin_makes_or_unmakes_another_admin_never_himself_and_others_may_not(): void
+    {
+        // Décision 2026-11-27-membre-administrateur.
+        $admin = $this->member();
+        $helper = $this->member();
+        $stranger = $this->member();
+        $partner = Partner::factory()->for($this->cameroon)->create();
+        $partner->users()->attach($admin->getKey(), ['is_admin' => true]);
+        $partner->users()->attach($helper->getKey(), ['is_admin' => false]);
+        $url = fn (User $user): string => "/api/v1/partners/{$partner->getKey()}/members/{$user->getKey()}";
+
+        // La fiche le dit, membre par membre : l'administrateur peut changer l'autre, pas lui-même ; l'autre compte, rien.
+        $page = $this->asUser($admin)->getJson("/api/v1/partners/{$partner->getKey()}")->json('data');
+        $this->assertSame([true, false], array_column($page['members'], 'is_admin'));
+        $this->assertSame([false, true], array_column($page['members'], 'can_change_admin'));
+        $this->assertSame([false, false], array_column($this->asUser($helper)->getJson("/api/v1/partners/{$partner->getKey()}")->json('data.members'), 'can_change_admin'));
+
+        // Un compte rattaché qui n'est pas administrateur : 403 ; un étranger : 404.
+        $this->asUser($helper)->patchJson($url($admin), ['is_admin' => false])->assertForbidden();
+        $this->asUser($stranger)->patchJson($url($helper), ['is_admin' => true])->assertNotFound();
+        // Un compte qui n'est pas rattaché : 404 ; une valeur manquante : 422.
+        $this->asUser($admin)->patchJson($url($stranger), ['is_admin' => true])->assertNotFound();
+        $this->asUser($admin)->patchJson($url($helper), [])->assertUnprocessable()->assertJsonValidationErrors('is_admin');
+
+        // Jamais son propre rôle.
+        $this->asUser($admin)->patchJson($url($admin), ['is_admin' => false])
+            ->assertUnprocessable()->assertJsonPath('errors.is_admin.0', "Vous ne pouvez pas changer votre propre rôle d'administrateur.");
+        $this->assertTrue($partner->hasAdmin($admin->getKey()));
+
+        // L'administrateur fait de l'autre un administrateur, puis le défait.
+        $this->asUser($admin)->patchJson($url($helper), ['is_admin' => true])->assertNoContent();
+        $this->assertTrue($partner->hasAdmin($helper->getKey()));
+        $this->asUser($admin)->patchJson($url($helper), ['is_admin' => false])->assertNoContent();
+        $this->assertFalse($partner->hasAdmin($helper->getKey()));
+    }
+
+    public function test_an_admin_removes_another_member_never_himself_and_others_may_not(): void
+    {
+        // Décision 2026-11-27-membre-retirer.
+        $admin = $this->member();
+        $helper = $this->member();
+        $stranger = $this->member();
+        $partner = Partner::factory()->for($this->cameroon)->create();
+        $partner->users()->attach($admin->getKey(), ['is_admin' => true]);
+        $partner->users()->attach($helper->getKey(), ['is_admin' => false]);
+        $url = fn (User $user): string => "/api/v1/partners/{$partner->getKey()}/members/{$user->getKey()}";
+
+        // La fiche le dit, membre par membre : l'administrateur peut retirer l'autre, pas lui-même ; l'autre compte, rien.
+        $this->assertSame([false, true], array_column($this->asUser($admin)->getJson("/api/v1/partners/{$partner->getKey()}")->json('data.members'), 'can_remove'));
+        $this->assertSame([false, false], array_column($this->asUser($helper)->getJson("/api/v1/partners/{$partner->getKey()}")->json('data.members'), 'can_remove'));
+
+        // Un compte rattaché qui n'est pas administrateur : 403 ; un étranger : 404 ; un compte pas rattaché : 404.
+        $this->asUser($helper)->deleteJson($url($admin))->assertForbidden();
+        $this->asUser($stranger)->deleteJson($url($helper))->assertNotFound();
+        $this->asUser($admin)->deleteJson($url($stranger))->assertNotFound();
+        // Jamais lui-même.
+        $this->asUser($admin)->deleteJson($url($admin))->assertUnprocessable()->assertJsonPath('errors.member.0', 'Vous ne pouvez pas vous retirer vous-même.');
+
+        // Retiré : il n'est plus rattaché ; l'administrateur, si.
+        $this->asUser($admin)->deleteJson($url($helper))->assertNoContent();
+        $this->assertFalse($partner->isAdministeredBy($helper->getKey()));
+        $this->assertTrue($partner->isAdministeredBy($admin->getKey()));
+    }
+
     public function test_the_menu_links_to_my_partners(): void
     {
         $menu = $this->asUser($this->member())->getJson('/api/v1/auth/me/menu')->assertOk()->json('data');
@@ -145,14 +209,18 @@ class MyPartnerApiTest extends TestCase
         $this->assertNotNull($item['delete']);
         // « Historique » dans le menu : la page de la dernière notification de son fil (décision
         // 2026-11-27-mes-partenaires-historique).
-        // Sans fil, pas de bouton.
-        $this->assertSame([], $item['actions']);
+        // Sans fil, pas de « Messages » ; « Membres » toujours, ses comptes dans un panneau (décision
+        // 2026-11-27-mes-partenaires-membres).
+        // « Statistiques » ensuite, un panneau de l'app (décision 2026-11-27-mes-partenaires-statistiques).
+        $this->assertSame([['label' => 'Membres', 'link' => null], ['label' => 'Statistiques', 'link' => null]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $item['actions']));
+        // « Membres » et « Statistiques » : deux panneaux de l'app (décision 2026-11-27-membres-en-panneau).
+        $this->assertSame([['name' => 'partner.members', 'record' => (string) $partner->getKey()], ['name' => 'partner.statistics', 'record' => (string) $partner->getKey()]], array_column($item['actions'], 'panel'));
         $latest = DatabaseNotification::query()->create([
             'id' => (string) Str::uuid(), 'type' => 'partner', 'notifiable_type' => $user->getMorphClass(), 'notifiable_id' => $user->getKey(),
             'thread' => 'partner:group:'.$partner->getKey(), 'data' => ['title' => 'Partenaire', 'body' => 'Texte'],
         ]);
         $actions = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.actions');
-        $this->assertSame([['label' => 'Messages', 'link' => '/notifications/'.$latest->getKey()]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $actions));
+        $this->assertSame([['label' => 'Messages', 'link' => '/notifications/'.$latest->getKey()], ['label' => 'Membres', 'link' => null], ['label' => 'Statistiques', 'link' => null]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $actions));
         // Sa page, pas encore publiée : pour ses comptes seulement.
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
@@ -226,7 +294,7 @@ class MyPartnerApiTest extends TestCase
         $this->assertSame(['Après', 'After', PartnerStatusEnum::PUBLISHED], [$partner->getTranslation('name', 'fr'), $partner->getTranslation('name', 'en'), $partner->status]);
     }
 
-    public function test_attached_accounts_edit_only_admins_remove_and_others_do_not_see_it(): void
+    public function test_only_admins_edit_and_remove_and_others_do_not_see_it(): void
     {
         $admin = $this->member();
         $helper = $this->member();
@@ -241,23 +309,35 @@ class MyPartnerApiTest extends TestCase
         $this->asUser($stranger)->deleteJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
         $this->assertSame([], $this->asUser($stranger)->getJson('/api/v1/lists/partner.mine')->json('data.items'));
 
-        // Un compte rattaché sans être administrateur : il modifie, il ne retire pas.
-        $this->asUser($helper)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertNoContent();
+        // Un compte rattaché sans être administrateur : il voit le partenaire, sans le modifier ni le retirer (décision
+        // 2026-11-27-partenaire-modifier-admin) ; ni « Modifier » ni « Retirer » sur sa carte.
+        $this->asUser($helper)->getJson("/api/v1/forms/partner.partner?record={$partner->getKey()}")->assertForbidden();
+        $this->asUser($helper)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertForbidden();
         $this->asUser($helper)->deleteJson("/api/v1/partners/{$partner->getKey()}")->assertForbidden();
-        $this->assertNull($this->asUser($helper)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.delete'));
+        $card = $this->asUser($helper)->getJson('/api/v1/lists/partner.mine')->json('data.items.0');
+        $this->assertNull($card['edit']);
+        $this->assertNull($card['delete']);
 
-        // L'administrateur retire.
+        // L'administrateur modifie, puis retire ; sa carte a les deux.
+        $card = $this->asUser($admin)->getJson('/api/v1/lists/partner.mine')->json('data.items.0');
+        $this->assertSame('partner.partner', $card['edit']['form']);
+        $this->assertNotNull($card['delete']);
+        $this->asUser($admin)->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Modifié', 'description' => 'Texte.'])->assertNoContent();
         $this->asUser($admin)->deleteJson("/api/v1/partners/{$partner->getKey()}")->assertNoContent();
         $this->assertNull(Partner::query()->find($partner->getKey()));
     }
 
-    public function test_my_partners_show_their_views(): void
+    public function test_my_partners_cards_have_no_views_or_members_tags(): void
     {
-        // Décision 2026-11-25-compteurs-offres.
+        // Décision 2026-11-27-mes-partenaires-statistiques : ni vues ni membres sur la carte, ni œil ni pastille ; ils sont
+        // dans « Statistiques » et « Membres » du menu.
         $user = $this->member();
-        Partner::factory()->for($this->cameroon)->create(['views_count' => 1])->users()->attach($user->getKey(), ['is_admin' => true]);
+        Partner::factory()->for($this->cameroon)->create(['views_count' => 12])->users()->attach($user->getKey(), ['is_admin' => true]);
 
-        $this->assertSame(['count' => 1, 'label' => '1 vue'], $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data.items.0.views'));
+        $item = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->assertOk()->json('data.items.0');
+        $this->assertSame([], $item['counters'] ?? []);
+        $this->assertNull($item['counter'] ?? null);
+        $this->assertNull($item['views'] ?? null);
     }
 
     public function test_my_partners_show_their_status(): void

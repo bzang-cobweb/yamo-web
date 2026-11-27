@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Support\CurrentCountry;
@@ -182,6 +183,37 @@ class PartnerService
         unset($values['description']);
 
         return [...$values, 'description' => $description];
+    }
+
+    /**
+     * Fait ou défait un administrateur du partenaire (décision 2026-11-27-membre-administrateur), par un autre
+     * administrateur : le compte doit lui être rattaché (404 sinon) et ne pas être celui qui agit (erreur de validation sur
+     * `is_admin`). Le partenaire garde ainsi toujours un administrateur : en défaire un demande d'en être un autre.
+     */
+    public function setAdmin(Partner $partner, User $member, bool $admin, User $actor): void
+    {
+        abort_unless($partner->isAdministeredBy($member->getKey()), 404);
+
+        if ($member->is($actor)) {
+            throw ValidationException::withMessages(['is_admin' => __('partner::partner.member.own_admin')]);
+        }
+
+        $partner->users()->updateExistingPivot($member->getKey(), ['is_admin' => $admin]);
+    }
+
+    /**
+     * Retire un compte du partenaire (décision 2026-11-27-membre-retirer), par un administrateur : le compte doit lui être
+     * rattaché (404 sinon) et ne pas être celui qui agit (erreur de validation). Il ne lit plus son fil ni ne le modifie.
+     */
+    public function removeMember(Partner $partner, User $member, User $actor): void
+    {
+        abort_unless($partner->isAdministeredBy($member->getKey()), 404);
+
+        if ($member->is($actor)) {
+            throw ValidationException::withMessages(['member' => __('partner::partner.member.own_remove')]);
+        }
+
+        $partner->users()->detach($member->getKey());
     }
 
     /**

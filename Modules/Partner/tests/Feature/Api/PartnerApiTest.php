@@ -260,17 +260,19 @@ class PartnerApiTest extends TestCase
         $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
         $other = User::factory()->create(['locale' => 'fr']);
         $other->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
-        $partner = Partner::factory()->for($this->cameroon)->create(['views_count' => 12]);
+        $partner = Partner::factory()->for($this->cameroon)->create(['views_count' => 12, 'clicks_count' => 3]);
         // Un compte rattaché, sans être administrateur.
         $partner->users()->attach($member->getKey(), ['is_admin' => false]);
 
         $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
-            ->assertOk()->assertJsonPath('data.views', ['count' => 12, 'label' => '12 vues']);
+            ->assertOk()->assertJsonPath('data.views', ['count' => 12, 'label' => '12 vues'])
+            // Ses clics aussi (décision 2026-11-27-fiche-statistiques).
+            ->assertJsonPath('data.clicks', ['count' => 3, 'label' => '3 clics']);
 
         // Un autre membre, un visiteur : rien.
         $this->app['auth']->forgetGuards();
         $this->withToken($other->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
-            ->assertOk()->assertJsonMissingPath('data.views');
+            ->assertOk()->assertJsonMissingPath('data.views')->assertJsonMissingPath('data.clicks');
         $this->app['auth']->forgetGuards();
         $this->withoutToken()->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonMissingPath('data.views');
         // La liste de l'accueil ne le donne pas.
@@ -301,6 +303,8 @@ class PartnerApiTest extends TestCase
         $this->assertArrayHasKey('phone', $data['members'][1]);
         $this->assertSame('/members/'.$member->getKey(), $data['members'][1]['link']);
         $this->assertSame($member->full_name, $data['members'][1]['name']);
+        // En ligne ou non : la bordure de sa photo (décision 2026-11-27-membres-photo-en-ligne).
+        $this->assertIsBool($data['members'][1]['online']);
 
         // Un autre membre, un visiteur : rien.
         $this->app['auth']->forgetGuards();

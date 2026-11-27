@@ -112,6 +112,8 @@ class PartnerStatusNotificationTest extends TestCase
         $team = $this->team();
         Notification::fake();
         [$partner, $admin, $helper] = $this->partner(PartnerStatusEnum::PUBLISHED);
+        // Seul un administrateur modifie (décision 2026-11-27-partenaire-modifier-admin) : l'autre compte le devient.
+        $partner->users()->updateExistingPivot($helper->getKey(), ['is_admin' => true]);
 
         $this->withToken($helper->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr')
             ->patchJson("/api/v1/partners/{$partner->getKey()}", ['name' => 'Wouri Express', 'description' => 'Texte.'])->assertNoContent();

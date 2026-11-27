@@ -59,7 +59,9 @@ return [
         'group' => 'Partner',
         'count' => '{0} Kein Partner|{1} :count Partner|[2,*] :count Partner',
         // Le nombre de vues, sur les cartes du propriétaire (décision 2026-11-25-compteurs-offres).
-        'views' => '{0} Keine Aufrufe|{1} :count Aufruf|[2,*] :count Aufrufe',
+        'views' => '{0} 0 Aufrufe|{1} :count Aufruf|[2,*] :count Aufrufe',
+        // Le nombre de clics, pour ses comptes (décision 2026-11-27-fiche-statistiques).
+        'clicks' => '{0} 0 Klicks|{1} :count Klick|[2,*] :count Klicks',
         'mine' => 'Meine Partner',
         'add' => 'Partner hinzufügen',
         'edit' => 'Partner bearbeiten',
@@ -85,6 +87,12 @@ return [
         // Le panneau « Membres » d'une notification de partenaire (décision 2026-11-27-partenaire-membres).
         'members' => 'Mitglieder',
         'members_count' => '{0} Keine Mitglieder|{1} :count Mitglied|[2,*] :count Mitglieder',
+        // Le menu d'une carte de « Mes partenaires » (décision 2026-11-27-mes-partenaires-statistiques).
+        'statistics' => 'Statistiken',
+        // Changer son propre rôle d'administrateur (décision 2026-11-27-membre-administrateur).
+        'own_admin' => 'Sie können Ihre eigene Administratorrolle nicht ändern.',
+        // Se retirer soi-même (décision 2026-11-27-membre-retirer).
+        'own_remove' => 'Sie können sich nicht selbst entfernen.',
         'remove_confirm' => 'Diesen Partner entfernen?',
         'removed' => 'Partner entfernt.',
         'status' => [

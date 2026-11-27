@@ -2,7 +2,6 @@
 
 namespace Bza\Form\Support;
 
-use Bza\Form\Support\DisplayTime;
 use Illuminate\Support\Str;
 
 /**
@@ -301,7 +300,7 @@ final class ListItem
      *
      * @param  array<string, string>|null  $filter
      */
-    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null, ?string $link = null, ?array $filter = null, ?string $list = null): self
+    public function action(string $label, string $style = 'default', ?string $confirm = null, ?Submission $submission = null, ?string $form = null, string|int|null $record = null, ?string $link = null, ?array $filter = null, ?string $list = null, ?string $panel = null): self
     {
         $this->actions[] = [
             'label' => $label,
@@ -311,6 +310,9 @@ final class ListItem
             'form' => $form === null ? null : ['form' => $form, 'record' => (string) ($record ?? $this->id)],
             'link' => $link,
             ...($filter === null ? [] : ['list' => $list, 'filter' => $filter]),
+            // A panel the app opens over the list, titled by the label (decision 2026-11-27-action-panneau): its name,
+            // known to the app (`partner.statistics`), and the record it shows.
+            ...($panel === null ? [] : ['panel' => ['name' => $panel, 'record' => (string) ($record ?? $this->id)]]),
         ];
 
         return $this;
@@ -407,6 +409,7 @@ final class ListItem
                 'link' => $action['link'],
                 // The already chosen filters of the opened screen, if it has any (decision 2026-11-21-lien-notifications).
                 ...(isset($action['filter']) ? ['list' => $action['list'], 'filter' => $action['filter']] : []),
+                ...(isset($action['panel']) ? ['panel' => $action['panel']] : []),
             ], $this->actions),
             /** Colored badge (a status): label and tone (`warning`, `success`, `danger`, `neutral`); `null`: none. */
             'tag' => $this->tag,

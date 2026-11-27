@@ -121,7 +121,8 @@ class PartnerThreadTest extends AuthFilamentTestCase
         $this->api($author, 'POST', '/partners', ['name' => 'Déménageurs du Wouri', 'slogan' => 'Vos meubles en sécurité.', 'description' => 'Texte.'])->assertNoContent();
         $partner = Partner::query()->where('name->fr', 'Déménageurs du Wouri')->sole();
         $helper = $this->member();
-        $partner->users()->attach($helper->getKey(), ['is_admin' => false]);
+        // Administrateur : seul un administrateur modifie (décision 2026-11-27-partenaire-modifier-admin).
+        $partner->users()->attach($helper->getKey(), ['is_admin' => true]);
         $stranger = $this->member();
 
         // Ajouté par l'auteur, modifié par l'autre compte, accepté, modifié de nouveau. Une minute entre les étapes.

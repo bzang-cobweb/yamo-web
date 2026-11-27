@@ -66,10 +66,13 @@ class PartnerPolicy
         return Filament::isServing() ? $user->hasPermissionTo(PermissionEnum::CREATE_PARTNERS) : true;
     }
 
-    /** Au back-office, `partners.update` ; dans l'app, un compte rattaché (404 sinon). */
+    /**
+     * Au back-office, `partners.update` ; dans l'app, un administrateur (`is_admin`) : 404 pour un étranger, 403 pour un
+     * rattaché (décision 2026-11-27-partenaire-modifier-admin).
+     */
     public function update(User $user, Partner $partner): bool|Response
     {
-        return Filament::isServing() ? $user->hasPermissionTo(PermissionEnum::UPDATE_PARTNERS) : $this->attached($user, $partner);
+        return Filament::isServing() ? $user->hasPermissionTo(PermissionEnum::UPDATE_PARTNERS) : $this->admin($user, $partner);
     }
 
     /** Au back-office, `partners.delete` ; dans l'app, un administrateur (`is_admin`) : 404 pour un étranger, 403 pour un rattaché. */
@@ -79,15 +82,16 @@ class PartnerPolicy
             return $user->hasPermissionTo(PermissionEnum::DELETE_PARTNERS);
         }
 
-        $attached = $this->attached($user, $partner);
-        if ($attached->denied()) {
-            return $attached;
-        }
-        if (! $partner->hasAdmin($user->getKey())) {
-            return Response::deny();
-        }
+        return $this->admin($user, $partner);
+    }
 
-        return Response::allow();
+    /**
+     * Gérer les membres depuis l'app — faire ou défaire un administrateur (décision 2026-11-27-membre-administrateur) :
+     * un administrateur (`is_admin`) ; 404 pour un étranger, 403 pour un rattaché.
+     */
+    public function manageMembers(User $user, Partner $partner): Response
+    {
+        return $this->admin($user, $partner);
     }
 
     public function deleteAny(User $user): bool
@@ -103,6 +107,17 @@ class PartnerPolicy
     public function message(User $user, Partner $partner): Response
     {
         return $this->attached($user, $partner);
+    }
+
+    /** Un administrateur (`is_admin`) du partenaire : 404 pour un étranger, comme `attached()` ; 403 pour un rattaché. */
+    private function admin(User $user, Partner $partner): Response
+    {
+        $attached = $this->attached($user, $partner);
+        if ($attached->denied()) {
+            return $attached;
+        }
+
+        return $partner->hasAdmin($user->getKey()) ? Response::allow() : Response::deny();
     }
 
     private function attached(User $user, Partner $partner): Response

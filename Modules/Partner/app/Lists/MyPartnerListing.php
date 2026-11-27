@@ -118,10 +118,12 @@ class MyPartnerListing extends Listing
             ->imageSide()
             ->tag($status, $tone)
             ->subtitleLines(1)
-            // Ses vues, pour ses comptes : un œil et le nombre (décisions 2026-11-25-compteurs-offres et 2026-11-25-vues-oeil).
-            ->views((int) $record->views_count, trans_choice('partner::partner.member.views', (int) $record->views_count, ['count' => (int) $record->views_count]))
-            ->link('/partners/'.$record->getKey())
-            ->edit(PartnerForm::name());
+            ->link('/partners/'.$record->getKey());
+        // « Modifier » : pour un administrateur seulement (décision 2026-11-27-partenaire-modifier-admin).
+        $admin = (bool) $record->users->firstWhere('id', $this->user?->getAuthIdentifier())?->pivot?->is_admin;
+        if ($admin) {
+            $item->edit(PartnerForm::name());
+        }
 
         // « Historique », dans le menu : la page de la dernière notification de son fil, où se lit tout ce qui lui est
         // arrivé (décision 2026-11-27-mes-partenaires-historique) ; aucun fil, pas de bouton.
@@ -129,9 +131,14 @@ class MyPartnerListing extends Listing
         if ($history !== null) {
             $item->action(__('partner::partner.member.history'), link: '/notifications/'.$history);
         }
+        // « Membres », dans le menu : ses comptes, dans un panneau (décisions 2026-11-27-mes-partenaires-membres et
+        // 2026-11-27-membres-en-panneau).
+        $item->action(__('partner::partner.member.members'), panel: 'partner.members');
+        // « Statistiques », dans le menu : ses vues et ses clics, dans un panneau (décision 2026-11-27-mes-partenaires-statistiques).
+        $item->action(__('partner::partner.member.statistics'), panel: 'partner.statistics');
 
         // « Retirer » : pour un administrateur seulement.
-        if (! (bool) $record->users->firstWhere('id', $this->user?->getAuthIdentifier())?->pivot?->is_admin) {
+        if (! $admin) {
             return $item;
         }
 

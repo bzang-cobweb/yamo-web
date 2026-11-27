@@ -6,6 +6,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Partner\Http\Controllers\Api\MyPartnerController;
 use Modules\Partner\Http\Controllers\Api\PartnerController;
+use Modules\Partner\Http\Controllers\Api\PartnerMemberController;
 use Modules\Partner\Http\Controllers\Api\PartnerMessageController;
 use Modules\Partner\Models\Partner;
 
@@ -23,5 +24,9 @@ Route::middleware('auth:sanctum')->prefix('v1/partners')->name('v1.partners.')->
     Route::patch('{partner}', [MyPartnerController::class, 'update'])->whereNumber('partner')->can('update', 'partner')->name('update');
     Route::delete('{partner}', [MyPartnerController::class, 'destroy'])->whereNumber('partner')->can('delete', 'partner')->name('destroy');
     // Écrire aux autres membres, dans son fil (décision 2026-11-27-partenaire-messages).
+    // Faire ou défaire un administrateur, par un administrateur (décision 2026-11-27-membre-administrateur).
+    Route::patch('{partner}/members/{user}', [PartnerMemberController::class, 'update'])->whereNumber(['partner', 'user'])->can('manageMembers', 'partner')->middleware('throttle:30,1')->name('members.update');
+    // Retirer un autre compte, par un administrateur (décision 2026-11-27-membre-retirer).
+    Route::delete('{partner}/members/{user}', [PartnerMemberController::class, 'destroy'])->whereNumber(['partner', 'user'])->can('manageMembers', 'partner')->middleware('throttle:30,1')->name('members.destroy');
     Route::post('{partner}/messages', [PartnerMessageController::class, 'store'])->whereNumber('partner')->can('message', 'partner')->middleware('throttle:20,1')->name('messages.store');
 });

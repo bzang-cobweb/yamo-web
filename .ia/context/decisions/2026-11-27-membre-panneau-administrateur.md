@@ -1,3 +1,5 @@
+Remplacée par : 2026-11-27-membre-panneau-sans-pastille.md
+
 # `2026-11-27` — Panneau d'un membre : « Administrateur » sous son nom
 
 - **Type** : décision
