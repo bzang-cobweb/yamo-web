@@ -19,6 +19,11 @@ class IdentityDocumentService
 
     public const COLLECTION = 'identity';
 
+    /** Le pays qui a délivré la pièce et son type (décision 2026-11-27-identite-pays-et-type-de-piece). */
+    public const COUNTRY_FIELD = 'identity_country_id';
+
+    public const TYPE_FIELD = 'identity_document_type';
+
     /** Le disque privé (`storage/app/private`). */
     public const DISK = 'local';
 
@@ -56,6 +61,21 @@ class IdentityDocumentService
         $path = URL::temporarySignedRoute('api.v1.auth.identity-documents.show', now()->addMinutes(self::LINK_MINUTES), ['uuid' => $media->uuid], absolute: false);
 
         return request()->getSchemeAndHttpHost().$path;
+    }
+
+    /**
+     * L'envoi du formulaire : le pays et le type de la pièce, puis ses photos.
+     *
+     * @param  array<string, mixed>  $data  données validées
+     */
+    public function submit(User $user, array $data): void
+    {
+        $user->forceFill([
+            self::COUNTRY_FIELD => (int) $data[self::COUNTRY_FIELD],
+            self::TYPE_FIELD => $data[self::TYPE_FIELD],
+        ])->save();
+
+        $this->sync($user, $data[self::FIELD] ?? []);
     }
 
     /**

@@ -16,7 +16,7 @@ class IdentityController
     {
         /** @var User $user */
         $user = $request->user();
-        $documents->sync($user, $request->validated(IdentityDocumentService::FIELD, []));
+        $documents->submit($user, $request->validated());
 
         return response()->noContent();
     }

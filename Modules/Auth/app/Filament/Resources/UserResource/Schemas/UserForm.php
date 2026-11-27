@@ -185,6 +185,15 @@ abstract class UserForm
                     ->label(__('auth::identity.admin.identified_at'))
                     ->dateTime('d.m.Y H:i')
                     ->placeholder('—'),
+                // Le pays et le type de la pièce saisis dans l'app (décision 2026-11-27-identite-pays-et-type-de-piece).
+                TextEntry::make('identity_country')
+                    ->label(__('auth::identity.admin.country'))
+                    ->state(fn (?User $record): ?string => $record?->identityCountry?->label())
+                    ->placeholder('—'),
+                TextEntry::make('identity_document_type')
+                    ->label(__('auth::identity.admin.document_type'))
+                    ->state(fn (?User $record): ?string => $record?->identity_document_type?->label())
+                    ->placeholder('—'),
                 TextEntry::make('identity_documents')
                     ->label(__('auth::identity.admin.documents'))
                     ->state(fn (?User $record): array => $record?->getMedia(IdentityDocumentService::COLLECTION)

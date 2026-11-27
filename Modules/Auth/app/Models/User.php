@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Database\Factories\UserFactory;
 use Modules\Auth\Enums\GenderEnum;
+use Modules\Auth\Enums\IdentityDocumentType;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Notifications\Channels\SmsChannel;
@@ -70,6 +71,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'phone_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'identified_at' => 'datetime',
+            'identity_document_type' => IdentityDocumentType::class,
             'notification_settings' => 'array',
         ];
     }
@@ -87,6 +89,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    /** Pays qui a délivré sa pièce d'identité (décision 2026-11-27-identite-pays-et-type-de-piece). @return BelongsTo<Country, $this> */
+    public function identityCountry(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'identity_country_id');
     }
 
     /** Pays de l'indicatif du téléphone. @return BelongsTo<Country, $this> */

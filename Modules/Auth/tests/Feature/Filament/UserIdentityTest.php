@@ -5,10 +5,12 @@ namespace Modules\Auth\Tests\Feature\Filament;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Modules\Auth\Enums\IdentityDocumentType;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\IdentityDocumentService;
+use Modules\Location\Models\Country;
 
 /**
  * L'identification au back-office (décision 2026-11-25-identification) : l'équipe ouvre les pièces d'identité par un
@@ -44,6 +46,20 @@ class UserIdentityTest extends AuthFilamentTestCase
             ->callAction('revokeIdentity');
 
         $this->assertFalse($user->fresh()->isIdentified());
+    }
+
+    public function test_the_team_sees_the_issuing_country_and_the_document_type(): void
+    {
+        $this->actingAsUserWith(PermissionEnum::VIEW_USERS, PermissionEnum::UPDATE_USERS);
+        $country = Country::factory()->create(['code' => 'CH', 'name' => ['fr' => 'Suisse', 'en' => 'Switzerland'], 'native_name' => 'Suisse']);
+        $user = User::factory()->create();
+        $user->forceFill(['identity_country_id' => $country->getKey(), 'identity_document_type' => IdentityDocumentType::PASSPORT])->save();
+
+        // Décision 2026-11-27-identite-pays-et-type-de-piece.
+        Livewire::test(EditUser::class, ['record' => $user->getKey()])
+            ->assertSee('Pays de délivrance')
+            ->assertSee('Suisse')
+            ->assertSee('Passeport');
     }
 
     public function test_without_the_update_permission_the_identity_cannot_be_validated(): void

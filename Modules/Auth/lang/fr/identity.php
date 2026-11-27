@@ -8,6 +8,14 @@ return [
     'add' => 'Ajouter des photos',
     'submit' => 'Envoyer',
     'sent' => "Merci ! L'équipe va vérifier votre pièce d'identité.",
+    'not_shared' => 'Nous ne partageons pas ces informations.',
+    'country' => 'Pays de délivrance',
+    'document_type' => 'Type de pièce',
+    'document_types' => [
+        'driving_licence' => 'Permis de conduire',
+        'passport' => 'Passeport',
+        'identity_card' => "Carte d'identité",
+    ],
     'notice' => [
         'missing' => "Envoyez une pièce d'identité : une fois vérifiée par l'équipe, votre profil sera affiché comme identifié.",
         'pending' => "Votre pièce d'identité est en cours de vérification par l'équipe.",
@@ -16,6 +24,8 @@ return [
     'admin' => [
         'section' => 'Identification',
         'identified_at' => "Date d'identification",
+        'country' => 'Pays de délivrance',
+        'document_type' => 'Type de pièce',
         'documents' => "Pièces d'identité",
         'no_documents' => 'Aucun document envoyé.',
         'validate' => "Valider l'identité",

@@ -8,6 +8,14 @@ return [
     'add' => 'Fotos hinzufügen',
     'submit' => 'Senden',
     'sent' => 'Danke! Das Team prüft Ihr Ausweisdokument.',
+    'not_shared' => 'Wir geben diese Informationen nicht weiter.',
+    'country' => 'Ausstellungsland',
+    'document_type' => 'Art des Ausweises',
+    'document_types' => [
+        'driving_licence' => 'Führerschein',
+        'passport' => 'Reisepass',
+        'identity_card' => 'Personalausweis',
+    ],
     'notice' => [
         'missing' => 'Senden Sie ein Ausweisdokument: Sobald das Team es geprüft hat, wird Ihr Profil als identifiziert angezeigt.',
         'pending' => 'Das Team prüft Ihr Ausweisdokument.',
@@ -16,6 +24,8 @@ return [
     'admin' => [
         'section' => 'Identifizierung',
         'identified_at' => 'Identifizierungsdatum',
+        'country' => 'Ausstellungsland',
+        'document_type' => 'Art des Ausweises',
         'documents' => 'Ausweisdokumente',
         'no_documents' => 'Kein Dokument gesendet.',
         'validate' => 'Identität bestätigen',

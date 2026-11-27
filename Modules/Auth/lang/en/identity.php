@@ -8,6 +8,14 @@ return [
     'add' => 'Add photos',
     'submit' => 'Send',
     'sent' => 'Thank you! The team will check your identity document.',
+    'not_shared' => "We won't share this information.",
+    'country' => 'Issuing country',
+    'document_type' => 'Document type',
+    'document_types' => [
+        'driving_licence' => 'Driving licence',
+        'passport' => 'Passport',
+        'identity_card' => 'Identity card',
+    ],
     'notice' => [
         'missing' => 'Send an identity document: once the team has checked it, your profile will show as verified.',
         'pending' => 'The team is checking your identity document.',
@@ -16,6 +24,8 @@ return [
     'admin' => [
         'section' => 'Identification',
         'identified_at' => 'Identification date',
+        'country' => 'Issuing country',
+        'document_type' => 'Document type',
         'documents' => 'Identity documents',
         'no_documents' => 'No document sent.',
         'validate' => 'Validate identity',
