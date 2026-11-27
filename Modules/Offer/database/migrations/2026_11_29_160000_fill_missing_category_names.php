@@ -19,12 +19,15 @@ return new class extends Migration
     public function down(): void {}
 
     /**
-     * @param  list<array{slug: string, name: array<string, string>, children?: list<mixed>}>  $categories
+     * @param  list<array{slug?: string, name: array<string, string>, children?: list<mixed>}>  $categories
      */
     private function fill(array $categories): void
     {
         foreach ($categories as $category) {
-            $row = DB::table('offer_categories')->where('slug', $category['slug'])->first();
+            // Les catégories d'un domaine n'ont plus de slug (tiré des noms par le seeder) : seules celles qui en
+            // donnent un sont retrouvées ; les autres sont sautées, leurs enfants restent parcourus.
+            $slug = $category['slug'] ?? null;
+            $row = $slug !== null ? DB::table('offer_categories')->where('slug', $slug)->first() : null;
 
             if ($row !== null) {
                 $names = (array) json_decode((string) $row->name, true);
