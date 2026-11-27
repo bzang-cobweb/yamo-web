@@ -21,6 +21,11 @@
             "Bza\\Form\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Bza\\Form\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "laravel": {
             "providers": [

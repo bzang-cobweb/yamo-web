@@ -55,7 +55,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Bza\\ConfigViewer\\Tests\\": "packages/config-viewer/tests/"
+            "Bza\\ConfigViewer\\Tests\\": "packages/config-viewer/tests/",
+            "Bza\\Form\\Tests\\": "packages/form/tests/"
         }
     },
     "scripts": {
