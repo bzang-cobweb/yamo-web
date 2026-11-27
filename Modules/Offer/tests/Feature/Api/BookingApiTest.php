@@ -490,7 +490,7 @@ class BookingApiTest extends TestCase
         $this->assertSame($items[(string) $offer->getKey()]['counter'], $items[(string) $offer->getKey()]['counters'][0]);
 
         // Ouvert depuis le compteur : les demandes de ce logement, titrées par lui.
-        $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=pending")->json('data');
+        $requests = $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status][]=pending")->json('data');
         // Titrée « Demandes » ; sous les filtres, le titre du logement et sa ligne du type ; sans logement, pas
         // d'intitulé ; sans recherche ; filtres : statut, période, logement caché (décisions
         // 2026-11-21-demandes-titre-sous-filtres et 2026-11-21-demandes-d-une-offre).
@@ -498,7 +498,7 @@ class BookingApiTest extends TestCase
         // filtres, le nombre de demandes, filtres compris, sans la ligne du type (décision 2026-11-21-demandes-nombre).
         $this->assertSame(OfferCardTitle::of($offer, 'fr')[0], $requests['title']);
         $this->assertSame(['title' => '2 demandes reçues', 'subtitle' => null], $requests['heading']);
-        $this->assertSame('Aucune demande reçue', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status]=refused")->json('data.heading.title'));
+        $this->assertSame('Aucune demande reçue', $this->asUser($owner)->getJson("/api/v1/lists/offer.bookings.received?filter[offer]={$offer->getKey()}&filter[status][]=refused")->json('data.heading.title'));
         $all = $this->asUser($owner)->getJson('/api/v1/lists/offer.bookings.received')->json('data');
         $this->assertSame(['Demandes', '3 demandes reçues'], [$all['title'], $all['heading']['title']]);
         // Une recherche sur le nom du membre seul, comptée dans le nombre (décision 2026-11-21-demandes-recherche-nom).
@@ -672,7 +672,7 @@ class BookingApiTest extends TestCase
         $card = collect($data['items'])->firstWhere('id', (string) $draft->getKey());
         $this->assertSame(['Location meublée · Studio', $draft->getTranslation('title', 'fr')], [$card['title'], $card['subtitle']]);
         $this->assertContains('price', array_column($data['filters'], 'name'));
-        $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status]=draft')->json('data.items'), 'id'));
+        $this->assertSame([(string) $draft->getKey()], array_column($this->asUser($owner)->getJson('/api/v1/lists/offer.mine?filter[status][]=draft')->json('data.items'), 'id'));
     }
 
     public function test_my_homes_are_filtered_by_the_status_of_their_requests(): void
@@ -690,10 +690,11 @@ class BookingApiTest extends TestCase
         // En attente mais passée : expirée, pas en attente.
         $late = $this->home(true, $owner);
         Booking::factory()->for($late)->create(['check_in' => today()->subDays(3), 'check_out' => today()->subDay()]);
-        $ids = fn (string $status): array => collect($this->asUser($owner)->getJson("/api/v1/lists/offer.mine?filter[booking_status]={$status}")->json('data.items'))->pluck('id')->sort()->values()->all();
+        $ids = fn (string $status): array => collect($this->asUser($owner)->getJson("/api/v1/lists/offer.mine?filter[booking_status][]={$status}")->json('data.items'))->pluck('id')->sort()->values()->all();
 
         $filter = collect($this->asUser($owner)->getJson('/api/v1/lists/offer.mine')->json('data.filters'))->firstWhere('name', 'booking_status');
-        $this->assertSame(['Demande', 'select'], [$filter['label'], $filter['type']]);
+        // En puces (décision 2026-11-27-statuts-en-puces).
+        $this->assertSame(['Demande', 'chips'], [$filter['label'], $filter['type']]);
         $this->assertSame(['pending', 'accepted', 'refused', 'cancelled', 'expired', 'completed'], array_column($filter['options'], 'value'));
         $this->assertSame(['En attente', 'Acceptée', 'Refusée', 'Annulée', 'Expirée', 'Terminée'], array_column($filter['options'], 'label'));
 
@@ -703,5 +704,10 @@ class BookingApiTest extends TestCase
         $this->assertSame(collect([$homes['expired'], $late])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(), $ids('expired'));
         $this->assertSame(collect([$homes['completed'], $over])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(), $ids('completed'));
         $this->assertCount(8, $ids(''));
+        // Plusieurs statuts : les logements qui ont une demande dans l'un d'eux (décision 2026-11-27-statuts-en-puces).
+        $this->assertSame(
+            collect([$homes['pending'], $homes['refused']])->map(fn ($home): string => (string) $home->getKey())->sort()->values()->all(),
+            $ids('pending&filter[booking_status][]=refused'),
+        );
     }
 }

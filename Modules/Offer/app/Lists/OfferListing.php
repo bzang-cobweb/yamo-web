@@ -100,12 +100,13 @@ class OfferListing extends Listing
     public function filters(): array
     {
         return [
-            Field::select('status')
+            // En puces, plusieurs à la fois (décision 2026-11-27-statuts-en-puces).
+            Field::chips('status')
                 ->label(__('offer::booking.profile.offer_status'))
                 ->options(OfferStatusEnum::options()),
             // Les logements qui ont au moins une demande dans ce statut : en attente, acceptée, refusée, annulée, expirée
             // (décision 2026-11-22-logements-filtre-statut-demande).
-            Field::select('booking_status')
+            Field::chips('booking_status')
                 ->label(__('offer::booking.profile.filter_booking_status'))
                 ->options(collect(self::BOOKING_STATUSES)->mapWithKeys(fn (BookingStatusEnum $status): array => [$status->value => $status->label()])->all()),
             ...$this->offerFilters($this->mine(), withIdentified: false),
@@ -114,19 +115,31 @@ class OfferListing extends Listing
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
+        // Un statut d'annonce ou plusieurs (puces).
+        $statuses = array_values(array_filter(array_map('strval', (array) ($filters['status'] ?? [])), fn (string $status): bool => $status !== ''));
+        if ($statuses !== []) {
+            $query->whereIn('status', $statuses);
         }
-        $status = BookingStatusEnum::tryFrom(is_string($filters['booking_status'] ?? null) ? $filters['booking_status'] : '');
-        if ($status !== null && in_array($status, self::BOOKING_STATUSES, true)) {
-            // En attente : sans les expirées ; expirée : enregistrée ou en attente et passée ; acceptée : pas encore
-            // terminée ; terminée : enregistrée ou acceptée et passée (décision 2026-11-22-logements-filtre-terminee).
-            $query->whereHas('bookings', fn (Builder $bookings) => match ($status) {
-                BookingStatusEnum::PENDING => $bookings->awaitingAnswer(),
-                BookingStatusEnum::EXPIRED => $bookings->expired(),
-                BookingStatusEnum::ACCEPTED => $bookings->where('status', BookingStatusEnum::ACCEPTED)->whereNot(fn (Builder $past) => $past->completed()),
-                BookingStatusEnum::COMPLETED => $bookings->completed(),
-                default => $bookings->where('status', $status),
+        // Les logements qui ont une demande dans l'un des statuts choisis. En attente : sans les expirées ; expirée :
+        // enregistrée ou en attente et passée ; acceptée : pas encore terminée ; terminée : enregistrée ou acceptée et
+        // passée (décision 2026-11-22-logements-filtre-terminee).
+        $bookingStatuses = array_values(array_filter(
+            array_map(fn (mixed $status): ?BookingStatusEnum => BookingStatusEnum::tryFrom((string) $status), (array) ($filters['booking_status'] ?? [])),
+            fn (?BookingStatusEnum $status): bool => $status !== null && in_array($status, self::BOOKING_STATUSES, true),
+        ));
+        if ($bookingStatuses !== []) {
+            $query->whereHas('bookings', function (Builder $bookings) use ($bookingStatuses): void {
+                $bookings->where(function (Builder $any) use ($bookingStatuses): void {
+                    foreach ($bookingStatuses as $status) {
+                        $any->orWhere(fn (Builder $one) => match ($status) {
+                            BookingStatusEnum::PENDING => $one->awaitingAnswer(),
+                            BookingStatusEnum::EXPIRED => $one->expired(),
+                            BookingStatusEnum::ACCEPTED => $one->where('status', BookingStatusEnum::ACCEPTED)->whereNot(fn (Builder $past) => $past->completed()),
+                            BookingStatusEnum::COMPLETED => $one->completed(),
+                            default => $one->where('status', $status),
+                        });
+                    }
+                });
             });
         }
         $this->applyOfferFilters($query, $filters);

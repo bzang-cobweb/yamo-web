@@ -29,5 +29,11 @@ final class AddOfferToMessageThread
         if ($heading !== null) {
             $event->data['heading'] = $heading;
         }
+
+        // Le libellé du bouton, lu à l'affichage dans la langue du lecteur : « Écrire », messages déjà reçus compris
+        // (décision 2026-11-27-bouton-ecrire).
+        if (($event->data['link'] ?? null) !== null) {
+            $event->data['link_label'] = (string) __('offer::message.notify.reply');
+        }
     }
 }

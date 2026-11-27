@@ -8,7 +8,6 @@ use Modules\Form\Support\Field;
 use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Lists\BookingFilters;
 use Modules\Offer\Lists\OfferCardTitle;
 use Modules\Offer\Lists\OfferRegions;
@@ -40,9 +39,7 @@ trait FiltersBookings
     public function filters(): array
     {
         return [
-            Field::chips('status')
-                ->label(__('offer::booking.profile.filter_status'))
-                ->options(BookingStatusEnum::options()),
+            BookingFilters::statuses(),
             BookingFilters::period(chips: true),
             // Les types de l'offre, puis la région, la ville et le logement à la fin (décision
             // 2026-11-26-reservations-lieu-en-dernier).
@@ -79,18 +76,7 @@ trait FiltersBookings
      */
     protected function applyFilters(Builder $query, array $filters): void
     {
-        // Un statut ou plusieurs (puces) : les demandes de l'un d'eux ; une valeur inconnue est ignorée.
-        $statuses = array_values(array_filter(array_map(fn (mixed $status): ?BookingStatusEnum => BookingStatusEnum::tryFrom((string) $status), (array) ($filters['status'] ?? []))));
-        if ($statuses !== []) {
-            $query->where(function (Builder $any) use ($statuses): void {
-                foreach ($statuses as $status) {
-                    // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
-                    $status === BookingStatusEnum::PENDING
-                        ? $any->orWhere(fn (Builder $one) => $one->awaitingAnswer())
-                        : $any->orWhere('status', $status);
-                }
-            });
-        }
+        BookingFilters::applyStatuses($query, $filters);
         BookingFilters::applyPeriod($query, $filters);
         if (($filters['region'] ?? []) !== [] && ($filters['region'] ?? '') !== '') {
             $query->whereHas('offer', fn (Builder $offer) => OfferRegions::apply($offer->withTrashed(), $filters['region']));

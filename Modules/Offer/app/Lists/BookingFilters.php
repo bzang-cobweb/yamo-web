@@ -4,6 +4,7 @@ namespace Modules\Offer\Lists;
 
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Form\Support\Field;
+use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Models\Booking;
 
 /**
@@ -55,6 +56,39 @@ final class BookingFilters
                 }
             });
         }
+    }
+
+    /**
+     * Le filtre du statut réel d'une liste de demandes, en puces (décision 2026-11-27-statuts-en-puces).
+     */
+    public static function statuses(string $name = 'status'): Field
+    {
+        return Field::chips($name)
+            ->label(__('offer::booking.profile.filter_status'))
+            ->options(BookingStatusEnum::options());
+    }
+
+    /**
+     * Les demandes de l'un des statuts choisis (une valeur ou plusieurs) ; une valeur inconnue est ignorée. « En
+     * attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
+     *
+     * @param  Builder<Booking>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    public static function applyStatuses(Builder $query, array $filters, string $name = 'status'): void
+    {
+        $statuses = array_values(array_filter(array_map(fn (mixed $status): ?BookingStatusEnum => BookingStatusEnum::tryFrom((string) $status), (array) ($filters[$name] ?? []))));
+        if ($statuses === []) {
+            return;
+        }
+
+        $query->where(function (Builder $any) use ($statuses): void {
+            foreach ($statuses as $status) {
+                $status === BookingStatusEnum::PENDING
+                    ? $any->orWhere(fn (Builder $one) => $one->awaitingAnswer())
+                    : $any->orWhere('status', $status);
+            }
+        });
     }
 
     /**

@@ -16,7 +16,7 @@ return [
         // Le type « Message » du filtre des notifications (décision 2026-11-26-filtre-type-en-puces).
         'filter_type' => 'Message',
         'title' => 'Message',
-        'reply' => 'Répondre',
+        'reply' => 'Écrire',
         'subject' => 'Nouveau message au sujet de « :offer »',
         'intro' => ':name vous a écrit au sujet de « :offer ».',
         'open_app' => 'Répondez depuis l\'onglet Notifications de :app.',

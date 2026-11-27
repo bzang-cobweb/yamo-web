@@ -13,7 +13,6 @@ use Modules\Form\Support\Listing;
 use Modules\Form\Support\ListItem;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
-use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Forms\BookingAcceptForm;
 use Modules\Offer\Forms\BookingRefuseForm;
 use Modules\Offer\Models\Booking;
@@ -77,23 +76,16 @@ class ReceivedBookingListing extends Listing
     public function filters(): array
     {
         return [
-            Field::select('status')
-                ->label(__('offer::booking.profile.filter_status'))
-                ->options(BookingStatusEnum::options()),
-            BookingFilters::period(),
+            // Statut et période en puces, comme dans « Mes réservations » (décision 2026-11-27-statuts-en-puces).
+            BookingFilters::statuses(),
+            BookingFilters::period(chips: true),
             Field::hidden('offer'),
         ];
     }
 
     protected function applyFilters(Builder $query, array $filters): void
     {
-        $status = BookingStatusEnum::tryFrom(is_string($filters['status'] ?? null) ? $filters['status'] : '');
-        // « En attente » : sans les expirées (décision 2026-11-22-statuts-terminee-expiree).
-        if ($status === BookingStatusEnum::PENDING) {
-            $query->awaitingAnswer();
-        } elseif ($status !== null) {
-            $query->where('status', $status);
-        }
+        BookingFilters::applyStatuses($query, $filters);
         BookingFilters::applyPeriod($query, $filters);
         if (isset($filters['offer']) && is_scalar($filters['offer'])) {
             $query->where('offer_id', (string) $filters['offer']);

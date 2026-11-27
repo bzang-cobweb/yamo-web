@@ -75,12 +75,12 @@ class OfferMessageForm extends Form
     }
 
     /**
-     * Sans le titre de l'offre (décision 2026-11-26-message-sans-titre-offre) : pour une réponse, le prénom du membre à
-     * qui elle va ; sinon rien.
+     * Ni le titre de l'offre (décision 2026-11-26-message-sans-titre-offre) ni, pour une réponse, le prénom du membre :
+     * rien au-dessus du champ (décision 2026-11-27-message-sans-prenom).
      */
     public function subtitle(): ?string
     {
-        return $this->member === null || blank($this->member->first_name) ? null : (string) $this->member->first_name;
+        return null;
     }
 
     /** Sans offre (`?record=` absent), le formulaire n'a nulle part où aller : aucun envoi. */

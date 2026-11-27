@@ -130,7 +130,8 @@ class OfferMessageApiTest extends TestCase
         $this->send($this->member, 'Bonjour')->assertNoContent();
 
         $form = $this->api($this->publisher, 'GET', $reply)->assertOk()->json('data');
-        $this->assertSame('Awa', $form['subtitle']);
+        // Sans prénom au-dessus du champ (décision 2026-11-27-message-sans-prenom).
+        $this->assertNull($form['subtitle']);
         $this->assertSame((string) $this->member->getKey(), $form['fields'][1]['default']);
         // Sa propre offre, sans membre : il s'écrirait à lui-même.
         $this->api($this->publisher, 'GET', '/api/v1/forms/offer.message?record='.$this->offer->getKey())->assertForbidden();
@@ -148,7 +149,10 @@ class OfferMessageApiTest extends TestCase
         $this->assertSame('Le studio est-il libre en décembre ?', $received->data['body']);
         $this->assertSame('Le studio est-il libre en décembre ?', $received->data['message']);
         $this->assertSame('Message', $received->data['title']);
-        $this->assertSame('Répondre', $received->data['link_label']);
+        $this->assertSame('Écrire', $received->data['link_label']);
+        // Un message reçu avant le renommage (« Répondre ») : « Écrire » sur sa page (décision 2026-11-27-bouton-ecrire).
+        $received->forceFill(['data' => [...$received->data, 'link_label' => 'Répondre']])->save();
+        $this->assertSame('Écrire', $this->api($this->publisher, 'GET', '/api/v1/notifications/'.$received->getKey())->assertOk()->json('data.link_label'));
         // L'éditeur répond à ce membre.
         $this->assertSame('/profile/offer.message?record='.$this->offer->getKey().'.'.$this->member->getKey(), $received->data['link']);
         // La carte montre le message lui-même (décision 2026-11-26-carte-message-texte) ; l'offre est l'en-tête de la page.
