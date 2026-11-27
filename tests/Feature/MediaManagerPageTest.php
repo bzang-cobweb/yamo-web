@@ -260,4 +260,23 @@ class MediaManagerPageTest extends AuthFilamentTestCase
             ->call('navigate', $secret->id)
             ->assertForbidden();
     }
+
+    public function test_items_show_as_a_grid_of_icons_or_as_a_list(): void
+    {
+        $this->actingAsSuperAdmin();
+        $folder = $this->library()->createFolder(null, 'Photos');
+        $this->upload($folder, 'a.txt');
+        $this->library()->createFolder($folder, 'Old');
+
+        Livewire::withQueryParams([])
+            ->test(MediaManagerPage::class)
+            ->assertSet('display', 'grid')
+            ->assertSeeHtml('mm-tile')
+            ->assertSee('2 éléments')
+            ->callAction('display')
+            ->assertSet('display', 'list')
+            ->assertDontSeeHtml('class="mm-tile"')
+            ->assertSee(__('media-manager::media-manager.columns.size'))
+            ->assertCanSeeTableRecords(['folder:'.$folder->id]);
+    }
 }

@@ -41,6 +41,8 @@ return [
     'tree' => 'Dossiers',
 
     'actions' => [
+        'grid' => 'Grille',
+        'list' => 'Liste',
         'open' => 'Ouvrir',
         'new_folder' => 'Nouveau dossier',
         'upload' => 'Téléverser',

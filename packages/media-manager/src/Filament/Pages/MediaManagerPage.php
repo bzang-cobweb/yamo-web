@@ -32,6 +32,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -71,6 +72,10 @@ class MediaManagerPage extends Page implements HasTable
     /** The collection of the linked media being browsed. */
     #[Url]
     public ?string $collection = null;
+
+    /** "grid" (tiles with large icons) or "list" (lines with details). */
+    #[Url]
+    public string $display = 'grid';
 
     private ?MediaFolder $currentFolder = null;
 
@@ -195,27 +200,39 @@ class MediaManagerPage extends Page implements HasTable
         return $table
             ->records(fn (?string $search, int|string $page, int|string $recordsPerPage): LengthAwarePaginator => $this->records($search, (int) $page, $recordsPerPage))
             ->columns([
+                // Grid: one tile per item, a large icon or the image, then the name.
+                ViewColumn::make('tile')
+                    ->view('media-manager::tile')
+                    ->visible(fn (): bool => $this->isGrid()),
+                // List: one line per item, with its details.
                 ImageColumn::make('thumbnail')
                     ->label(__('media-manager::media-manager.columns.preview'))
                     ->imageSize(40)
-                    ->square(),
+                    ->square()
+                    ->visible(fn (): bool => ! $this->isGrid()),
                 TextColumn::make('name')
                     ->label(__('media-manager::media-manager.columns.name'))
                     ->icon(fn (array $record): string => $record['icon'])
                     ->description(fn (array $record): ?string => $record['description'])
+                    // The search runs on the records, in either display.
                     ->searchable()
-                    ->wrap(),
+                    ->wrap()
+                    ->visible(fn (): bool => ! $this->isGrid()),
                 TextColumn::make('type')
                     ->label(__('media-manager::media-manager.columns.type'))
                     ->badge()
-                    ->color(fn (array $record): string => $record['read_only'] ? 'gray' : 'primary'),
+                    ->color(fn (array $record): string => $record['read_only'] ? 'gray' : 'primary')
+                    ->visible(fn (): bool => ! $this->isGrid()),
                 TextColumn::make('size')
                     ->label(__('media-manager::media-manager.columns.size'))
-                    ->formatStateUsing(fn (?int $state): string => $state === null ? '' : Number::fileSize($state)),
+                    ->formatStateUsing(fn (?int $state): string => $state === null ? '' : Number::fileSize($state))
+                    ->visible(fn (): bool => ! $this->isGrid()),
                 TextColumn::make('updated_at')
                     ->label(__('media-manager::media-manager.columns.updated_at'))
-                    ->dateTime(),
+                    ->dateTime()
+                    ->visible(fn (): bool => ! $this->isGrid()),
             ])
+            ->contentGrid(fn (): ?array => $this->isGrid() ? ['default' => 2, 'sm' => 3, 'md' => 4, 'xl' => 6] : null)
             // A click on a folder opens it in place; on an image, shows it.
             ->recordAction(fn (array $record): ?string => match (true) {
                 $record['kind'] !== 'file' => 'open',
@@ -244,6 +261,11 @@ class MediaManagerPage extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('display')
+                ->label(fn (): string => __('media-manager::media-manager.actions.'.($this->isGrid() ? 'list' : 'grid')))
+                ->icon(fn (): string => $this->isGrid() ? 'heroicon-o-list-bullet' : 'heroicon-o-squares-2x2')
+                ->color('gray')
+                ->action(fn () => $this->display = $this->isGrid() ? 'list' : 'grid'),
             Action::make('newFolder')
                 ->label(__('media-manager::media-manager.actions.new_folder'))
                 ->icon('heroicon-o-folder-plus')
@@ -541,11 +563,16 @@ class MediaManagerPage extends Page implements HasTable
         $folder = $this->currentFolder();
         $rows = [];
 
-        foreach ($this->library()->folders($folder) as $child) {
+        $children = $this->library()->folders($folder);
+        $counts = $this->library()->itemCounts($children->modelKeys());
+
+        foreach ($children as $child) {
             if ($this->access()->canBrowse($user, $child)) {
+                $count = $counts[$child->getKey()] ?? 0;
                 $rows[] = $this->row('folder:'.$child->getKey(), 'folder', $child->name, [
                     'id' => $child->getKey(),
                     'icon' => 'heroicon-o-folder',
+                    'description' => trans_choice('media-manager::media-manager.items_count', $count, ['count' => $count]),
                     'type' => __('media-manager::media-manager.kinds.folder'),
                     'updated_at' => $child->updated_at,
                 ]);
@@ -728,6 +755,11 @@ class MediaManagerPage extends Page implements HasTable
             'linked' => Target::linked($record['linked_type']),
             default => null,
         };
+    }
+
+    public function isGrid(): bool
+    {
+        return $this->display !== 'list';
     }
 
     private function currentTarget(): Target

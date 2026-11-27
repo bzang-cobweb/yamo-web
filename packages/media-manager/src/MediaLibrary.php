@@ -53,6 +53,29 @@ class MediaLibrary
             ->where('collection_name', MediaFolder::collectionName());
     }
 
+    /**
+     * How many subfolders and files each folder holds.
+     *
+     * @param  list<int>  $folderIds
+     * @return array<int, int> Folder id => number of items.
+     */
+    public function itemCounts(array $folderIds): array
+    {
+        if ($folderIds === []) {
+            return [];
+        }
+
+        $counts = [];
+        $subfolders = MediaFolder::query()->whereIn('parent_id', $folderIds)->toBase()->selectRaw('parent_id as id, count(*) as aggregate')->groupBy('parent_id')->get();
+        $files = $this->managedMedia()->whereIn('model_id', $folderIds)->toBase()->selectRaw('model_id as id, count(*) as aggregate')->groupBy('model_id')->get();
+
+        foreach ([...$subfolders, ...$files] as $row) {
+            $counts[(int) $row->id] = ($counts[(int) $row->id] ?? 0) + (int) $row->aggregate;
+        }
+
+        return $counts;
+    }
+
     public function isManaged(Media $media): bool
     {
         return $media->model_type === (new MediaFolder)->getMorphClass()

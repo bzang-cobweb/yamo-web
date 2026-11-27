@@ -41,6 +41,8 @@ return [
     'tree' => 'Folders',
 
     'actions' => [
+        'grid' => 'Grid',
+        'list' => 'List',
         'open' => 'Open',
         'new_folder' => 'New folder',
         'upload' => 'Upload',

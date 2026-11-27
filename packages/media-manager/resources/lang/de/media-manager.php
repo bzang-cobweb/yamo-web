@@ -41,6 +41,8 @@ return [
     'tree' => 'Ordner',
 
     'actions' => [
+        'grid' => 'Raster',
+        'list' => 'Liste',
         'open' => 'Öffnen',
         'new_folder' => 'Neuer Ordner',
         'upload' => 'Hochladen',
