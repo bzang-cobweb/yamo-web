@@ -24,6 +24,10 @@ Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
   « Récemment consultés » (remplie à l'ouverture d'une fiche, 50 au plus, bloc à l'accueil avant « À la une », deux
   cartes par ligne avec une croix), menu ⋮ « Renommer » / « Supprimer ». Web `1b859a3`, `65a98ab` ; mobile `e12e372`,
   `e218784`. Preuves : web Offer + form 396 tests verts ; mobile tsc propre, 72 suites / 462 tests verts.
+- **Lot B — formulaires** (sous-agent, rapport `B-formulaires.md`) : « Notifications » (activité du compte et rappels
+  par canal, offres, nouveautés ; « Activité du compte » appliquée à l'e-mail et au SMS de toutes les notifications),
+  vérification d'identité (note, pays, type de pièce, photos), adresse de résidence, contact d'urgence. Web `653a97b`,
+  `15d8185`, `6c15f5c`, `93c699c`. Preuves : suite web complète 972 tests verts, migrations jouées, Pint propre.
 
 ## Reste à faire
 - Demande `specs/todo/2026-11-27-yamo-visiteur-profil-favoris.md` (copie de `~/Downloads/yamo.rtf`).
@@ -32,3 +36,6 @@ Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
 - La demande vient d'un fichier RTF hors du dépôt : copiée telle quelle en texte dans `specs/todo/` pour en garder la trace.
 
 ## Défauts trouvés
+- Contact d'urgence : le champ « Langue » reprend la liste de « Préférences » (`config('form.locales')`), qui refuse
+  l'allemand en test alors que l'app le propose ; noté, pas creusé.
+- « Rappels », « Offres », « Nouveautés » et le push sont enregistrés mais aucun envoi ne les lit encore.
