@@ -55,6 +55,20 @@ class ConfigInspector
     }
 
     /**
+     * The modules contributing to at least one visible group, sorted by name.
+     *
+     * @return list<string>
+     */
+    public function modules(): array
+    {
+        $modules = array_merge([], ...array_map(fn (ConfigGroup $group): array => $group->modules(), array_values($this->groups())));
+        $modules = array_values(array_unique($modules));
+        sort($modules, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $modules;
+    }
+
+    /**
      * The entries matching the query, in key order.
      *
      * @return list<ConfigEntry>
@@ -138,6 +152,10 @@ class ConfigInspector
         }
 
         if ($query->origin !== null && ! $group->hasOrigin($query->origin)) {
+            return false;
+        }
+
+        if ($query->module !== null && ! in_array($query->module, $group->modules(), true)) {
             return false;
         }
 

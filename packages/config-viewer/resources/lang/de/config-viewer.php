@@ -11,6 +11,7 @@ return [
     'filters' => [
         'group' => 'Gruppe',
         'origin' => 'Herkunft',
+        'module' => 'Modul',
     ],
     'origins' => [
         'application' => 'Anwendung',

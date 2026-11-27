@@ -94,6 +94,15 @@ class ConfigInspectorTest extends TestCase
         $this->assertSame(['shop.currency', 'shop.name', 'shop.payment.provider', 'shop.payment.api_key'], $this->keys($inspector->entries(new ConfigQuery(origin: Origin::Module))));
     }
 
+    public function test_entries_can_be_narrowed_to_a_module(): void
+    {
+        $inspector = $this->inspector();
+
+        $this->assertSame(['Shop'], $inspector->modules());
+        $this->assertSame(['shop.currency', 'shop.name', 'shop.payment.provider', 'shop.payment.api_key'], $this->keys($inspector->entries(new ConfigQuery(module: 'Shop'))));
+        $this->assertSame([], $inspector->entries(new ConfigQuery(module: 'Unknown')));
+    }
+
     public function test_hidden_patterns_remove_keys_or_whole_groups(): void
     {
         $inspector = $this->inspector(['cors', 'shop.payment']);

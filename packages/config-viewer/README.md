@@ -50,7 +50,9 @@ Resolve the inspector and map its DTOs:
 use Bza\ConfigViewer\ConfigInspector;
 use Bza\ConfigViewer\Data\ConfigQuery;
 
-$entries = app(ConfigInspector::class)->entries(new ConfigQuery(group: 'mail', search: 'smtp'));
+$inspector = app(ConfigInspector::class);
+$entries = $inspector->entries(new ConfigQuery(group: 'mail', search: 'smtp'));
+$partner = $inspector->entries(new ConfigQuery(module: 'Partner')); // $inspector->modules() lists the names
 
 return array_map(fn ($entry) => $entry->toArray(), $entries); // JSON API, Inertia, CLI…
 ```

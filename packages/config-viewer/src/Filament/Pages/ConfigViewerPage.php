@@ -110,6 +110,12 @@ class ConfigViewerPage extends Page implements HasTable
                 SelectFilter::make('origin')
                     ->label(__('config-viewer::config-viewer.filters.origin'))
                     ->options(fn (): array => collect(Origin::cases())->mapWithKeys(fn (Origin $origin): array => [$origin->value => $origin->label()])->all()),
+                SelectFilter::make('module')
+                    ->label(__('config-viewer::config-viewer.filters.module'))
+                    ->options(fn (): array => array_combine($this->inspector()->modules(), $this->inspector()->modules()))
+                    ->searchable()
+                    // Only offered once the "Module" origin is selected, and when some module feeds the configuration.
+                    ->visible(fn (): bool => $this->isModuleOriginSelected($this->tableFilters ?? []) && $this->inspector()->modules() !== []),
             ], layout: FiltersLayout::AboveContent)
             ->deferFilters(false)
             ->description(fn (): ?string => $this->selectedGroupDescription())
@@ -127,6 +133,8 @@ class ConfigViewerPage extends Page implements HasTable
         $entries = $this->inspector()->entries(new ConfigQuery(
             group: ($filters['group']['value'] ?? null) ?: null,
             origin: Origin::tryFrom((string) ($filters['origin']['value'] ?? '')),
+            // A hidden filter keeps its state: ignore the module unless the "Module" origin is selected.
+            module: $this->isModuleOriginSelected($filters) ? (($filters['module']['value'] ?? null) ?: null) : null,
             search: $search,
         ));
 
@@ -144,6 +152,14 @@ class ConfigViewerPage extends Page implements HasTable
         }
 
         return new LengthAwarePaginator($rows, $total, $perPage, $page);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function isModuleOriginSelected(array $filters): bool
+    {
+        return ($filters['origin']['value'] ?? null) === Origin::Module->value;
     }
 
     /**

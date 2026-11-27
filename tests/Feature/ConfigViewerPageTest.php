@@ -26,6 +26,32 @@ class ConfigViewerPageTest extends AuthFilamentTestCase
             ->assertSee('Modules/Partner/config/config.php');
     }
 
+    public function test_the_configuration_can_be_filtered_by_module(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Livewire::test(ConfigViewerPage::class)
+            ->filterTable('origin', 'module')
+            ->assertTableFilterVisible('module')
+            ->filterTable('module', 'Partner')
+            ->assertCanSeeTableRecords(['partner.logo.quality'])
+            ->assertCanNotSeeTableRecords(['app.name', 'offer.name']);
+    }
+
+    public function test_the_module_filter_only_shows_with_the_module_origin(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $page = Livewire::test(ConfigViewerPage::class)->assertTableFilterHidden('module');
+
+        // Once hidden again, the chosen module no longer narrows the table.
+        $page->filterTable('origin', 'module')
+            ->filterTable('module', 'Partner')
+            ->filterTable('origin', 'application')
+            ->assertTableFilterHidden('module')
+            ->assertCanSeeTableRecords(['app.name']);
+    }
+
     public function test_sensitive_values_are_masked(): void
     {
         $this->actingAsSuperAdmin();

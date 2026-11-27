@@ -14,6 +14,8 @@ final readonly class ConfigQuery
         public ?string $group = null,
         /** Only groups with this origin. */
         public ?Origin $origin = null,
+        /** Only groups fed by this module (its name, e.g. "Partner"). */
+        public ?string $module = null,
         /** Only entries whose key or (unmasked) value contains this text. */
         public ?string $search = null,
     ) {}
