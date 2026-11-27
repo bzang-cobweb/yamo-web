@@ -3,8 +3,10 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
@@ -377,10 +379,14 @@ class BookingApiTest extends TestCase
         $this->assertNull($items[(string) $pending->getKey()]['delete']);
         // Sans notification dans son fil : la fiche du logement.
         $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['link']);
-        // Le titre saisi de l'offre, en sous-titre, en lien vers sa fiche (décision 2026-11-22-reservations-lien-offre).
-        $this->assertSame('/offers/'.$pending->offer_id, $items[(string) $pending->getKey()]['subtitle_link']);
-        $this->assertSame((string) $pending->offer->getTranslation('title', 'fr'), $items[(string) $pending->getKey()]['subtitle']);
-        $this->assertArrayNotHasKey('title_link', $items[(string) $pending->getKey()]);
+        // À droite des étoiles, un œil vers la fiche de l'offre ; les étoiles ouvrent ses avis dans un panneau ; le titre de
+        // l'offre n'est plus un lien (décision 2026-11-27-reservations-oeil-voir).
+        $card = $items[(string) $pending->getKey()];
+        $this->assertSame('/offers/'.$pending->offer_id, $card['view_link']);
+        $this->assertSame(['label' => 'Avis', 'panel' => ['name' => 'offer.reviews', 'record' => (string) $pending->offer_id]], $card['rating_panel']);
+        $this->assertSame((string) $pending->offer->getTranslation('title', 'fr'), $card['subtitle']);
+        $this->assertArrayNotHasKey('subtitle_link', $card);
+        $this->assertArrayNotHasKey('title_link', $card);
         // Sa demande, reçue par le propriétaire et pas encore répondue : la page de la demande, par cette notification
         // dont il est l'auteur (décision 2026-11-24-reservations-lien-demande-envoyee).
         $sent = $pending->offer->user->notifications()->create(['id' => (string) Str::uuid(), 'type' => BookingRequestReceived::class, 'thread' => $pending->thread(), 'user_id' => $guest->getKey(),
@@ -589,6 +595,14 @@ class BookingApiTest extends TestCase
         // Décision 2026-11-21-reservations-filtre-logement : les logements qu'il a demandés, par leur titre.
         $this->assertSame(['Logement', 'select', true], [$filters['offer']['label'], $filters['offer']['type'], $filters['offer']['searchable']]);
         $this->assertSame(array_map('strval', [$pending->offer_id, $upcoming->offer_id, $refused->offer_id]), array_column($filters['offer']['options'], 'value'));
+        // Chaque logement avec sa photo devant son titre ; sans photo, pas d'image (décision 2026-11-27-select-images).
+        $this->assertArrayNotHasKey('image', $filters['offer']['options'][0]);
+        Storage::fake('public');
+        $pending->offer->addMedia(UploadedFile::fake()->image('salon.jpg'))->toMediaCollection(Offer::PHOTOS);
+        $photos = collect($this->asUser($guest)->getJson('/api/v1/lists/offer.bookings')->json('data.filters'))->keyBy('name')['offer']['options'];
+        $this->assertStringContainsString('salon', (string) collect($photos)->firstWhere('value', (string) $pending->offer_id)['image']);
+        $this->assertArrayNotHasKey('image', $filters['status']['options'][0]);
+        $this->assertArrayNotHasKey('image', $filters['status']['options'][0]);
         // Le logement se choisit une région choisie (décision 2026-11-26-ville-et-logement-apres-region) : sans région,
         // il est masqué et ignoré.
         $this->assertCount(4, $ids('?filter[offer]='.$upcoming->offer_id));

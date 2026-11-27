@@ -39,6 +39,8 @@ final class Field
     /** Dropdown list: a search box above the options, whatever their number. */
     private bool $searchable = false;
 
+    private ?int $searchLimit = null;
+
     /** A list filter without the « Tous » option (decision 2026-11-25-region-sans-tous). */
     private bool $withoutAllOption = false;
 
@@ -540,10 +542,13 @@ final class Field
     /**
      * A search box above the dropdown list options, even a short one (a
      * member, a property). Without it: the search only appears beyond 12 options.
+     * `$limit`: at most this many options shown, the search finds the others; without it, the app's default (decision
+     * 2026-11-27-select-limite).
      */
-    public function searchable(bool $searchable = true): self
+    public function searchable(bool $searchable = true, ?int $limit = null): self
     {
         $this->searchable = $searchable;
+        $this->searchLimit = $limit;
 
         return $this;
     }
@@ -1227,6 +1232,8 @@ final class Field
             'readonly' => $this->readonly,
             /** Dropdown list: a search box above the options, whatever their number. */
             'searchable' => $this->searchable,
+            /** At most this many options shown, the search finds the others; absent: the app's default. */
+            ...($this->searchLimit === null ? [] : ['search_limit' => $this->searchLimit]),
             /** A filter without the « Tous » option; absent: with it (decision 2026-11-25-region-sans-tous). */
             ...($this->withoutAllOption ? ['all_option' => false] : []),
             /** A country-specific filter, reset when the country changes; absent: no. */
@@ -1281,6 +1288,8 @@ final class Field
                     'label' => is_array($option) ? $option['label'] : $option,
                     'hint' => is_array($option) ? ($option['hint'] ?? null) : null,
                     'parent' => is_array($option) && isset($option['parent']) ? (string) $option['parent'] : null,
+                    // An image before the label (an offer's photo, decision 2026-11-27-select-images); absent: none.
+                    ...(is_array($option) && isset($option['image']) && is_string($option['image']) ? ['image' => $option['image']] : []),
                 ])
                 ->values()
                 ->all(),

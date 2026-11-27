@@ -211,8 +211,8 @@ class OfferFavoriteApiTest extends TestCase
 
         // La ville se choisit dans une région (décision 2026-11-26-region-ville-en-puces) : sans région, elle est
         // masquée et ignorée.
-        $this->assertCount(2, $ids('?filter[city][]=Douala'));
-        $this->assertSame([(string) $douala->getKey()], $ids('?filter[region][]='.$douala->address->region_id.'&filter[city][]=Douala'));
+        $this->assertCount(2, $ids('?filter[city]=Douala'));
+        $this->assertSame([(string) $douala->getKey()], $ids('?filter[region][]='.$douala->address->region_id.'&filter[city]=Douala'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?filter[rental_type][]=long_term'));
         $this->assertSame([(string) $douala->getKey()], $ids('?filter[price][]=&filter[price][]=100000'));
         $this->assertSame([(string) $yaounde->getKey()], $ids('?search=bastos'));

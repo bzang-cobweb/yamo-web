@@ -35,6 +35,11 @@ final class ListItem
     /** @var array{count: int, label: string}|null */
     private ?array $views = null;
 
+    private ?string $viewLink = null;
+
+    /** @var array{label: string, panel: array{name: string, record: string}}|null */
+    private ?array $ratingPanel = null;
+
     /** A date (ISO 8601) below the message, on the right (« il y a 2 h »); `null`: none. */
     private ?string $date = null;
 
@@ -186,6 +191,28 @@ final class ListItem
     public function views(int $count, string $label): self
     {
         $this->views = ['count' => $count, 'label' => $label];
+
+        return $this;
+    }
+
+    /**
+     * An eye to the right of the stars, which opens `$link` (decision 2026-11-27-reservations-oeil-voir): the app reads it
+     * as « Voir ».
+     */
+    public function viewLink(string $link): self
+    {
+        $this->viewLink = $link;
+
+        return $this;
+    }
+
+    /**
+     * The stars open a panel of the app (decision 2026-11-27-action-panneau), titled `$label`: its name and the record it
+     * shows (the reviews of an offer, decision 2026-11-27-reservations-oeil-voir).
+     */
+    public function ratingPanel(string $label, string $panel, string|int $record): self
+    {
+        $this->ratingPanel = ['label' => $label, 'panel' => ['name' => $panel, 'record' => (string) $record]];
 
         return $this;
     }
@@ -376,6 +403,10 @@ final class ListItem
             ...($this->detail === null ? [] : ['detail' => $this->detail]),
             /** The views: an eye followed by the number; `label` for screen readers; absent: nothing. */
             ...($this->views === null ? [] : ['views' => $this->views]),
+            /** An eye to the right of the stars, which opens this app screen; absent: none. */
+            ...($this->viewLink === null ? [] : ['view_link' => $this->viewLink]),
+            /** The stars open this panel, titled `label`; absent: the stars open nothing. */
+            ...($this->ratingPanel === null ? [] : ['rating_panel' => $this->ratingPanel]),
             /** ISO 8601 date below the message, on the right; absent: none. */
             ...($this->date === null ? [] : ['date' => $this->date, 'date_text' => DisplayTime::relative($this->date)]),
             /** Unread notifications, as a badge to the right of the message; absent: none. */

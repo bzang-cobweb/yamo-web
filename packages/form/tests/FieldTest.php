@@ -48,6 +48,13 @@ class FieldTest extends TestCase
         $this->assertFalse($this->passes([$field], ['colors' => ['green']]));
     }
 
+    public function test_a_searchable_list_serves_its_limit_only_when_given(): void
+    {
+        // Decision 2026-11-27-select-limite: without a limit, the app's default.
+        $this->assertArrayNotHasKey('search_limit', Field::select('city')->searchable()->toArray());
+        $this->assertSame([true, 25], [Field::select('city')->searchable(limit: 25)->toArray()['searchable'], Field::select('city')->searchable(limit: 25)->toArray()['search_limit']]);
+    }
+
     public function test_a_field_hidden_by_its_condition_is_not_validated(): void
     {
         $kind = Field::select('kind')->options(['person' => 'Person', 'company' => 'Company'])->required();

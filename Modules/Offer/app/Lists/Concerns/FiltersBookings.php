@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Lists\Concerns;
 
+use App\Support\MediaUrl;
 use Bza\Form\Support\Field;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Auth\Models\User;
@@ -50,9 +51,10 @@ trait FiltersBookings
                 ->label(CurrentCountry::require()->regionLabel())
                 ->options($regions = OfferRegions::options($this->bookedOffers()))
                 ->countryScoped(),
-            // En puces, comme la région (décision 2026-11-26-region-ville-en-puces).
-            Field::chips('city')
+            // En liste déroulante, dans le panneau de choix, comme le logement (décision 2026-11-27-ville-liste-deroulante).
+            Field::select('city')
                 ->label(__('offer::booking.profile.filter_city'))
+                ->searchable()
                 // Les villes de la région choisie (décision 2026-11-25-ville-selon-region).
                 ->dependsOn('region')
                 // Visible seulement une région choisie (décision 2026-11-26-ville-et-logement-apres-region).
@@ -96,19 +98,22 @@ trait FiltersBookings
     }
 
     /**
-     * Les logements, par leur titre de carte.
+     * Les logements, par leur titre de carte, chacun avec sa photo devant (décision 2026-11-27-select-images).
      *
-     * @return array<string, string>
+     * @return array<string, array{label: string, image: string|null}>
      */
     protected function bookedOfferOptions(): array
     {
         $locale = $this->user instanceof User ? $this->user->preferredLocale() : app()->getLocale();
 
         return $this->bookedOffers()
-            ->with('address')
+            ->with(['address', 'media'])
             ->orderBy('offers.id')
             ->get()
-            ->mapWithKeys(fn (Offer $offer): array => [(string) $offer->getKey() => OfferCardTitle::of($offer, $locale)[0]])
+            ->mapWithKeys(fn (Offer $offer): array => [(string) $offer->getKey() => [
+                'label' => OfferCardTitle::of($offer, $locale)[0],
+                'image' => MediaUrl::onRequestHost($offer->photoUrl('list')),
+            ]])
             ->all();
     }
 

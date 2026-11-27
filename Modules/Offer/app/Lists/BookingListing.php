@@ -127,14 +127,14 @@ class BookingListing extends Listing
         // (décision 2026-11-21-reservation-comme-notification).
         $notification = $record->getAttribute('thread_notification_id');
         $item = BookingItem::make($record, $locale, mine: true)
-            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id);
+            ->link(is_string($notification) && $notification !== '' ? '/notifications/'.$notification : '/offers/'.$record->offer_id)
+            // À droite des étoiles, un œil vers la fiche de l'offre ; les étoiles ouvrent ses avis dans un panneau (décision
+            // 2026-11-27-reservations-oeil-voir).
+            ->viewLink('/offers/'.$record->offer_id)
+            ->ratingPanel((string) __('offer::offer.reviews'), 'offer.reviews', $record->offer_id);
         // Le statut sur la photo, en haut à gauche, le cœur à droite (décision 2026-11-21-reservations-statut-coeur).
         $item->tag(...[...$record->statusTag(), 'onImage' => true]);
-        // Le titre saisi de l'offre en lien vers sa fiche : le sous-titre, sous la ligne du type ; sans ligne du type,
-        // le titre lui-même. Le reste de la carte ouvre la page de la demande (décision 2026-11-22-reservations-lien-offre).
-        OfferCardTitle::of($record->offer, $locale)[1] === null
-            ? $item->titleLink('/offers/'.$record->offer_id)
-            : $item->subtitleLink('/offers/'.$record->offer_id);
+        // Le titre de l'offre n'est plus un lien : l'œil ouvre sa fiche (décision 2026-11-27-reservations-oeil-voir).
         // Le cœur des favoris à la place du menu trois points : « Modifier » et « Annuler » sont sur la page de la
         // demande (décision 2026-11-22-reservations-coeur).
         $item->favorite((bool) $record->offer->is_favorite, $record->offer->favoriteEndpoint());

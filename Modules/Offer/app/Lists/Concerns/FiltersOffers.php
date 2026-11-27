@@ -47,8 +47,10 @@ trait FiltersOffers
                 // Une chaîne, comme les valeurs des options (PHP fait des clés numériques des entiers).
                 ->default($regionRequired && $regions !== [] ? (string) array_key_first($regions) : null)
                 ->countryScoped(),
-            ! $domain->hasAddress() ? null : Field::chips('city')
+            // En liste déroulante, dans le panneau de choix, comme le logement (décision 2026-11-27-ville-liste-deroulante).
+            ! $domain->hasAddress() ? null : Field::select('city')
                 ->label(__('offer::offer.filters.city'))
+                ->searchable()
                 // Les villes des régions choisies (décision 2026-11-25-ville-selon-region).
                 ->dependsOn('region')
                 // Visible dès qu'une région est choisie (décision 2026-11-26-region-ville-en-puces).
