@@ -100,9 +100,9 @@ class OfferApiTest extends TestCase
         // plus de « Réservations reçues » (décision 2026-11-19-contrat-reservations-logements-profil).
         $traveler = ['key' => 'traveler', 'label' => 'Voyageur'];
         $this->assertSame([
-            ['key' => 'bookings', 'label' => 'Mes réservations', 'list' => 'offer.bookings', 'group' => $traveler],
-            ['key' => 'favorites', 'label' => 'Mes favoris', 'list' => 'offer.wishlists', 'group' => $traveler],
-            ['key' => 'offers', 'label' => 'Mes logements', 'list' => 'offer.mine', 'group' => ['key' => 'host', 'label' => 'Hôte']],
+            ['key' => 'bookings', 'label' => 'Mes réservations', 'icon' => ['ios' => 'calendar', 'android' => 'event'], 'list' => 'offer.bookings', 'group' => $traveler],
+            ['key' => 'favorites', 'label' => 'Mes favoris', 'icon' => ['ios' => 'heart', 'android' => 'favorite'], 'list' => 'offer.wishlists', 'group' => $traveler],
+            ['key' => 'offers', 'label' => 'Mes logements', 'icon' => ['ios' => 'building.2', 'android' => 'apartment'], 'list' => 'offer.mine', 'group' => ['key' => 'host', 'label' => 'Hôte']],
         ], array_slice($menu, -4, 3));
         // Puis « Partenaire » (décision 2026-11-24-partenaires-par-les-membres).
         $this->assertSame('partners', $menu[count($menu) - 1]['key']);

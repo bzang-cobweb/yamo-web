@@ -130,6 +130,7 @@ class OfferServiceProvider extends ModuleServiceProvider
         // Tous les avis d'une offre, avec la recherche (décision 2026-11-25-liste-avis-generique).
         $this->app->make(ListingRegistry::class)->register(OfferReviewListing::class);
 
+        // Une icône devant chaque lien (décision 2026-11-27-menu-profil-icones-sous-menus).
         // Le menu du profil en groupes (décision 2026-11-19-contrat-reservations-logements-profil) :
         // « Voyageur » (ses réservations, ses favoris), puis « Hôte » (ses logements). Les demandes
         // reçues ne sont plus un lien du menu : elles s'ouvrent depuis chaque logement.
@@ -141,12 +142,14 @@ class OfferServiceProvider extends ModuleServiceProvider
             fn (): string => __('offer::booking.list.mine'),
             fn (): ?string => BookingListing::isAvailable() ? BookingListing::name() : null,
             group: 'traveler',
+            icon: ['ios' => 'calendar', 'android' => 'event'],
         );
         $links->addList(
             'favorites',
             fn (): string => __('offer::offer.favorites.title'),
             fn (): ?string => WishlistListing::isAvailable() ? WishlistListing::name() : null,
             group: 'traveler',
+            icon: ['ios' => 'heart', 'android' => 'favorite'],
         );
         // « Mes logements » (libellé du domaine).
         $links->addList(
@@ -154,6 +157,7 @@ class OfferServiceProvider extends ModuleServiceProvider
             fn (): string => $domains->require()->mineLabel(),
             fn (): ?string => OfferListing::isAvailable() ? OfferListing::name() : null,
             group: 'host',
+            icon: ['ios' => 'building.2', 'android' => 'apartment'],
         );
     }
 }
