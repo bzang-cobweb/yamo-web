@@ -32,6 +32,8 @@ return [
     ],
     'profile' => [
         'personalInfo' => 'Informations personnelles',
+        'details' => 'Mes informations',
+        'privacy' => 'Confidentialité',
         'identity' => "S'identifier",
         'password' => 'Changer le mot de passe',
         'preferences' => 'Préférences',

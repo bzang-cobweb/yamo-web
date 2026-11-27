@@ -47,7 +47,7 @@ class PartnerServiceProvider extends ModuleServiceProvider
         $this->app->make(ListingRegistry::class)->register(MyPartnerListing::class);
         $links = $this->app->make(ProfileMenuLinks::class);
         $links->addGroup('partner', fn (): string => __('partner::partner.member.group'), 40);
-        $links->addList('partners', fn (): string => __('partner::partner.member.mine'), fn (): string => MyPartnerListing::name(), group: 'partner');
+        $links->addList('partners', fn (): string => __('partner::partner.member.mine'), fn (): string => MyPartnerListing::name(), group: 'partner', icon: ['ios' => 'person.3', 'android' => 'groups']);
     }
 
     /**

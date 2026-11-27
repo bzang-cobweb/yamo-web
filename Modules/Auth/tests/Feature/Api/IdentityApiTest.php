@@ -32,13 +32,13 @@ class IdentityApiTest extends TestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr');
     }
 
-    public function test_the_menu_links_to_identity_after_personal_info(): void
+    public function test_the_personal_submenu_links_to_identity(): void
     {
         $user = User::factory()->create(['locale' => 'fr']);
-        $menu = $this->asUser($user)->getJson('/api/v1/auth/me/menu')->assertOk()->json('data');
+        // Dans « Informations personnelles » (décision 2026-11-27-menu-profil-icones-sous-menus).
+        $menu = $this->asUser($user)->getJson('/api/v1/auth/me/menu/personal')->assertOk()->json('data');
         $keys = array_column($menu, 'key');
 
-        $this->assertSame(array_search('personal', $keys, true) + 1, array_search('identity', $keys, true));
         $this->assertSame("S'identifier", $menu[array_search('identity', $keys, true)]['label']);
         $this->assertSame('auth.identity', $menu[array_search('identity', $keys, true)]['form']);
     }

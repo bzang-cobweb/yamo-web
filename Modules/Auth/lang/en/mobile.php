@@ -32,6 +32,8 @@ return [
     ],
     'profile' => [
         'personalInfo' => 'Personal information',
+        'details' => 'My details',
+        'privacy' => 'Privacy',
         'identity' => 'Verify my identity',
         'password' => 'Change password',
         'preferences' => 'Preferences',

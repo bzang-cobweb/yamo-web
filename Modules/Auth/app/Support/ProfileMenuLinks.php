@@ -24,7 +24,7 @@ final class ProfileMenuLinks
     /** @var array<string, array{label: Closure(): string, order: int}> */
     private array $groups = [];
 
-    /** @var array<string, array{label: Closure(User): string, list: Closure(): ?string, available: Closure(User): bool, group: string}> */
+    /** @var array<string, array{label: Closure(User): string, list: Closure(): ?string, available: Closure(User): bool, group: string, icon: array{ios: string, android: string}|null}> */
     private array $links = [];
 
     /**
@@ -44,10 +44,12 @@ final class ProfileMenuLinks
      * @param  Closure(User): string  $label
      * @param  Closure(): ?string  $list
      * @param  (Closure(User): bool)|null  $available  proposé à ce compte ?
+     * @param  array{ios: string, android: string}|null  $icon  le symbole devant le libellé : SF Symbols (iOS), Material
+     *                                                          (Android) — décision 2026-11-27-menu-profil-icones-sous-menus
      */
-    public function addList(string $key, Closure $label, Closure $list, ?Closure $available = null, string $group = self::ACCOUNT): void
+    public function addList(string $key, Closure $label, Closure $list, ?Closure $available = null, string $group = self::ACCOUNT, ?array $icon = null): void
     {
-        $this->links[$key] = ['label' => $label, 'list' => $list, 'available' => $available ?? fn (): bool => true, 'group' => $group];
+        $this->links[$key] = ['label' => $label, 'list' => $list, 'available' => $available ?? fn (): bool => true, 'group' => $group, 'icon' => $icon];
     }
 
     /**
@@ -72,7 +74,7 @@ final class ProfileMenuLinks
     /**
      * Les liens proposés au compte, dans l'ordre d'inscription.
      *
-     * @return list<array{key: string, label: string, list: string, group: array{key: string, label: string}}>
+     * @return list<array{key: string, label: string, icon: array{ios: string, android: string}|null, list: string, group: array{key: string, label: string}}>
      */
     public function for(User $user): array
     {
@@ -82,7 +84,7 @@ final class ProfileMenuLinks
             $list = ($link['list'])();
 
             if ($list !== null && ($link['available'])($user)) {
-                $links[] = ['key' => $key, 'label' => ($link['label'])($user), 'list' => $list, 'group' => $this->group($link['group'])];
+                $links[] = ['key' => $key, 'label' => ($link['label'])($user), 'icon' => $link['icon'], 'list' => $list, 'group' => $this->group($link['group'])];
             }
         }
 

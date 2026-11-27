@@ -32,6 +32,8 @@ return [
     ],
     'profile' => [
         'personalInfo' => 'Persönliche Angaben',
+        'details' => 'Meine Angaben',
+        'privacy' => 'Datenschutz',
         'identity' => 'Identität bestätigen',
         'password' => 'Passwort ändern',
         'preferences' => 'Einstellungen',

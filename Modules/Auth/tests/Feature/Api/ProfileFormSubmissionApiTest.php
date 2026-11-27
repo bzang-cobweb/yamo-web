@@ -61,6 +61,13 @@ class ProfileFormSubmissionApiTest extends TestCase
         $registry = app(FormRegistry::class);
 
         foreach (ProfileMenuKey::cases() as $key) {
+            // Un sous-menu n'ouvre ni formulaire ni liste (décision 2026-11-27-menu-profil-icones-sous-menus).
+            if ($key->menu() !== null) {
+                $this->assertNull($key->form(), "{$key->value} : un sous-menu n'ouvre pas de formulaire.");
+
+                continue;
+            }
+
             if ($key->list() !== null) {
                 $this->assertNull($key->form(), "{$key->value} : un lien ouvre un formulaire ou une liste, pas les deux.");
                 $this->assertTrue(app(ListingRegistry::class)->has($key->list()), "{$key->value} : liste inconnue.");
