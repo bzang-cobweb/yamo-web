@@ -139,11 +139,13 @@ class NotificationResource extends JsonResource
 
         /**
          * Le menu ⋮ de la page (décision 2026-11-27-menu-notification-serveur), dans l'ordre : chaque entrée a une clé, un
-         * libellé et un écran de l'app à ouvrir (`link`) ; sans `link`, l'app ouvre le panneau que nomme la clé (`info` : la
-         * pastille, l'en-tête et les lignes). Le module du fil peut en ajouter.
+         * libellé, un écran de l'app à ouvrir (`link`), l'enregistrement qu'elle désigne (`record`) et le texte de son
+         * panneau quand il n'a rien à montrer (`empty`, décision 2026-11-27-menu-entrees-vides) ; sans `link`, l'app
+         * ouvre le panneau que nomme la clé (`info` : la pastille, l'en-tête et les lignes ; `partner` : la fiche du
+         * partenaire `record`). Le module du fil peut en ajouter ou en remplacer.
          */
         $item['menu'] = [
-            ['key' => 'info', 'label' => (string) __('notification::notification.menu.info'), 'link' => null],
+            ['key' => 'info', 'label' => (string) __('notification::notification.menu.info'), 'link' => null, 'record' => null, 'empty' => null],
         ];
 
         // Le module du fil complète la réponse (une demande : `booking`).

@@ -84,6 +84,9 @@ return [
         'remove' => 'Retirer',
         // Le menu ⋮ de « Mes partenaires » : la page de son fil de notifications (décision 2026-11-27-mes-partenaires-historique).
         'history' => 'Messages',
+        // Le panneau « Membres » d'une notification de partenaire (décision 2026-11-27-partenaire-membres).
+        'members' => 'Membres',
+        'members_count' => '{0} Aucun membre|{1} :count membre|[2,*] :count membres',
         'remove_confirm' => 'Retirer ce partenaire ?',
         'removed' => 'Partenaire retiré.',
         'status' => [
@@ -117,7 +120,7 @@ return [
     ],
     'notify' => [
         // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
-        'changes' => ['line' => ':field : :value', 'empty' => '(vide)', 'before' => ':field (avant)', 'after' => ':field (après)', 'at' => 'Dernière modification', 'by' => 'Modifié par', 'title' => 'Modifications'],
+        'changes' => ['line' => ':field : :value', 'empty' => '(vide)', 'before' => ':field (avant)', 'after' => ':field (après)', 'at' => 'Dernière modification', 'by' => 'Modifié par', 'menu' => 'Dernières modifications', 'none' => 'Aucune modification enregistrée.'],
         // La liste « Notifications » : le type « Partenaire », puis un type par statut, ses statuts dans le filtre « Statut » (décision 2026-11-24-notifications-types-groupes-statut).
         'filter_type' => 'Partenaire',
         'greeting' => 'Bonjour :name,',

@@ -91,6 +91,11 @@ class PartnerMessageTest extends AuthFilamentTestCase
         $this->assertSame(['Écrire', '/profile/partner.message?record='.$partner->getKey()], [$page['link_label'], $page['link']]);
         $step = collect($page['history'])->firstWhere('id', (string) $sent[0]->getKey());
         $this->assertSame(['Partenaire message', 'On repeint jeudi ?'], [$step['label'], $step['message']]);
+        // Sans modification enregistrée : pas de lignes, mais « Dernières modifications » reste au menu, avec son texte vide
+        // (décision 2026-11-27-menu-entrees-vides).
+        $this->assertNull($page['lines']);
+        $this->assertSame(['partner', 'members', 'lines'], array_column($page['menu'], 'key'));
+        $this->assertSame('Aucune modification enregistrée.', $page['menu'][2]['empty']);
     }
 
     public function test_only_the_recipient_is_notified_other_members_get_no_email_or_sms(): void

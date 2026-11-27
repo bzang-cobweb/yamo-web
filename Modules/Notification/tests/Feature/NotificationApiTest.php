@@ -132,7 +132,7 @@ class NotificationApiTest extends TestCase
             ->assertJsonPath('data.text_links', [['text' => 'Paul', 'link' => '/members/3']])
             ->assertJsonPath('data.read', false)
             // Le menu ⋮ de la page, servi avec elle : « Info » ouvre le panneau de l'app (décision 2026-11-27-menu-notification-serveur).
-            ->assertJsonPath('data.menu', [['key' => 'info', 'label' => 'Info', 'link' => null]]);
+            ->assertJsonPath('data.menu', [['key' => 'info', 'label' => 'Info', 'link' => null, 'record' => null, 'empty' => null]]);
         $this->asUser($user)->getJson("/api/v1/notifications/{$other->getKey()}")->assertNotFound();
     }
 

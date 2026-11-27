@@ -277,6 +277,39 @@ class PartnerApiTest extends TestCase
         $this->assertArrayNotHasKey('views', $this->withHeaders($headers)->getJson('/api/v1/partners')->json('data.0'));
     }
 
+    public function test_the_page_lists_the_members_to_the_partner_accounts_only_admins_first(): void
+    {
+        // Décision 2026-11-27-partenaire-membres.
+        $headers = ['Accept-Language' => 'fr', 'X-Country' => 'CM'];
+        $member = User::factory()->create(['locale' => 'fr', 'first_name' => 'Zoé', 'last_name' => 'Membre']);
+        $member->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $admin = User::factory()->create(['locale' => 'fr', 'first_name' => 'Yves', 'last_name' => 'Admin']);
+        $other = User::factory()->create(['locale' => 'fr']);
+        $other->assignRole(Role::findOrCreate(RoleEnum::MEMBER->value, 'web'));
+        $partner = Partner::factory()->for($this->cameroon)->create();
+        $partner->users()->attach($member->getKey(), ['is_admin' => false]);
+        $partner->users()->attach($admin->getKey(), ['is_admin' => true]);
+
+        $data = $this->withToken($member->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
+            ->assertOk()->json('data');
+        $this->assertSame('2 membres', $data['members_label']);
+        // L'administrateur d'abord, avec sa pastille ; chacun mène à sa page.
+        $this->assertSame([(string) $admin->getKey(), (string) $member->getKey()], array_column($data['members'], 'id'));
+        $this->assertSame([['label' => 'Administrateur', 'tone' => 'success'], null], array_column($data['members'], 'tag'));
+        // Ses coordonnées, pour le panneau d'un membre (décision 2026-11-27-partenaire-membre-panneau).
+        $this->assertSame($member->email, $data['members'][1]['email']);
+        $this->assertArrayHasKey('phone', $data['members'][1]);
+        $this->assertSame('/members/'.$member->getKey(), $data['members'][1]['link']);
+        $this->assertSame($member->full_name, $data['members'][1]['name']);
+
+        // Un autre membre, un visiteur : rien.
+        $this->app['auth']->forgetGuards();
+        $this->withToken($other->createToken('iPhone')->plainTextToken)->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")
+            ->assertOk()->assertJsonMissingPath('data.members')->assertJsonMissingPath('data.members_label');
+        $this->app['auth']->forgetGuards();
+        $this->withoutToken()->withHeaders($headers)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonMissingPath('data.members');
+    }
+
     public function test_the_list_is_searched_by_name_or_description_in_every_language(): void
     {
         // Décision 2026-11-23-partenaires-recherche : sans casse, accents compris.

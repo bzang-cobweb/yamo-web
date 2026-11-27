@@ -82,6 +82,9 @@ return [
         'empty' => 'Noch kein Partner.',
         'remove' => 'Entfernen',
         'history' => 'Nachrichten',
+        // Le panneau « Membres » d'une notification de partenaire (décision 2026-11-27-partenaire-membres).
+        'members' => 'Mitglieder',
+        'members_count' => '{0} Keine Mitglieder|{1} :count Mitglied|[2,*] :count Mitglieder',
         'remove_confirm' => 'Diesen Partner entfernen?',
         'removed' => 'Partner entfernt.',
         'status' => [
@@ -113,7 +116,7 @@ return [
     ],
     'notify' => [
         // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
-        'changes' => ['line' => ':field: :value', 'empty' => '(leer)', 'before' => ':field (vorher)', 'after' => ':field (nachher)', 'at' => 'Zuletzt geändert', 'by' => 'Geändert von', 'title' => 'Änderungen'],
+        'changes' => ['line' => ':field: :value', 'empty' => '(leer)', 'before' => ':field (vorher)', 'after' => ':field (nachher)', 'at' => 'Zuletzt geändert', 'by' => 'Geändert von', 'menu' => 'Letzte Änderungen', 'none' => 'Keine Änderungen gespeichert.'],
         // La liste « Notifications » : le type « Partenaire », puis un type par statut, ses statuts dans le filtre « Statut » (décision 2026-11-24-notifications-types-groupes-statut).
         'filter_type' => 'Partner',
         'greeting' => 'Hallo :name,',

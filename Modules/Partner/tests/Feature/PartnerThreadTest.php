@@ -155,7 +155,15 @@ class PartnerThreadTest extends AuthFilamentTestCase
             // Sous l'en-tête, la dernière modification du partenaire, gardée sur lui (décision
             // 2026-11-26-partenaire-dernieres-modifications) ; les étapes du suivi gardent leur libellé.
             $this->assertSame(['changed_at', 'changed_by', 'description_before', 'description_after'], array_column($page['lines'], 'key'));
-            $this->assertSame('Modifications', $page['lines_title']);
+            // Une entrée du menu ⋮ les ouvre, après « Info » (décision 2026-11-27-menu-dernieres-modifications).
+            $this->assertSame([
+                // « Info » : la fiche du partenaire (décision 2026-11-27-info-partenaire-en-panneau).
+                ['key' => 'partner', 'label' => 'Info', 'link' => null, 'record' => (string) $partner->getKey(), 'empty' => null],
+                // Le fil d'un groupe : ses membres (décision 2026-11-27-partenaire-membres).
+                ['key' => 'members', 'label' => 'Membres', 'link' => null, 'record' => (string) $partner->getKey(), 'empty' => null],
+                ['key' => 'lines', 'label' => 'Dernières modifications', 'link' => null, 'record' => null, 'empty' => 'Aucune modification enregistrée.'],
+            ], $page['menu']);
+            $this->assertNull($page['lines_title']);
             $this->assertSame($author->full_name, $page['lines'][1]['value']);
             $this->assertSame([
                 ['key' => 'description_before', 'label' => 'Description (avant)', 'value' => 'Autre texte.'],

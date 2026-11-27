@@ -47,6 +47,15 @@ final class AddPartnerToNotificationThread
             $event->data['link_label'] = (string) __('partner::partner.message.write');
         }
 
+        // « Info » ouvre la fiche du partenaire dans un panneau, à la place de la fiche de la notification (décision
+        // 2026-11-27-info-partenaire-en-panneau).
+        $event->data['menu'] = array_map(
+            fn (array $entry): array => $entry['key'] === 'info' ? [...$entry, 'key' => 'partner', 'record' => (string) $partner->getKey()] : $entry,
+            $event->data['menu'] ?? [],
+        );
+        // Le fil d'un groupe : « Membres », ses comptes (décision 2026-11-27-partenaire-membres), après « Info ».
+        $event->data['menu'][] = ['key' => 'members', 'label' => (string) __('partner::partner.member.members'), 'link' => null, 'record' => (string) $partner->getKey(), 'empty' => null];
+
         // Son nom seul, sans slogan (décision 2026-11-26-entete-partenaire-sans-slogan).
         $event->data['heading'] = [
             'title' => $name,
@@ -67,12 +76,19 @@ final class AddPartnerToNotificationThread
             array_push($lines, ...PartnerNotification::changeLines($change['field'], (string) ($change['old'] ?? ''), (string) ($change['new'] ?? '')));
         }
         if ($lines !== []) {
-            // En tête, quand et par qui (décision 2026-11-26-modifications-date-auteur) : les deux lignes ouvertes ; les
-            // champs changés derrière « Voir plus ».
+            // En tête, quand et par qui (décision 2026-11-26-modifications-date-auteur), puis les champs changés.
             $event->data['lines'] = [...$this->when($last), ...$this->who($last), ...$lines];
-            // Le titre du panneau de « Voir plus » (décision 2026-11-26-lignes-en-panneau).
-            $event->data['lines_title'] = (string) __('partner::partner.notify.changes.title');
         }
+        // Une entrée du menu ⋮ les ouvre dans un panneau, titré de son libellé (décision
+        // 2026-11-27-menu-dernieres-modifications) ; toujours là, même sans modification : le panneau dit alors `empty`
+        // (décision 2026-11-27-menu-entrees-vides).
+        $event->data['menu'][] = [
+            'key' => 'lines',
+            'label' => (string) __('partner::partner.notify.changes.menu'),
+            'link' => null,
+            'record' => null,
+            'empty' => (string) __('partner::partner.notify.changes.none'),
+        ];
     }
 
     /**
