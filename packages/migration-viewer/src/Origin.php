@@ -13,6 +13,9 @@ enum Origin: string
     /** A file in a module's migrations directory. */
     case Module = 'module';
 
+    /** A file in the generator's directory (written from the back-office). */
+    case Generated = 'generated';
+
     /** A file registered by a package (loadMigrationsFrom). */
     case Package = 'package';
 

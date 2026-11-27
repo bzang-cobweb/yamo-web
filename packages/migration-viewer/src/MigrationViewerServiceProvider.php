@@ -3,6 +3,7 @@
 namespace Bza\MigrationViewer;
 
 use Bza\MigrationViewer\Console\SyncMigrationTablesCommand;
+use Bza\MigrationViewer\Generator\MigrationGenerator;
 use Bza\MigrationViewer\Replay\BlueprintCollector;
 use Bza\MigrationViewer\Replay\BlueprintReader;
 use Bza\MigrationViewer\Replay\MigrationReplayer;
@@ -36,6 +37,11 @@ class MigrationViewerServiceProvider extends ServiceProvider
             connections: $app['config']->get('migration-viewer.connections') ?? array_keys($app['config']->get('database.connections', [])),
         ));
 
+        $this->app->bind(MigrationGenerator::class, fn (Application $app): MigrationGenerator => new MigrationGenerator(
+            directory: (string) $app['config']->get('migration-viewer.generator.path'),
+            inspector: $app->make(MigrationInspector::class),
+        ));
+
         // Scoped, not singleton: the replays are memoized for one request only,
         // so long-running workers (Octane, queues) see new migrations.
         $this->app->scoped(MigrationInspector::class, fn (Application $app): MigrationInspector => new MigrationInspector(
@@ -55,6 +61,11 @@ class MigrationViewerServiceProvider extends ServiceProvider
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'migration-viewer');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        // "migrate" runs the generated files too.
+        if (($generated = $this->app['config']->get('migration-viewer.generator.path')) !== null) {
+            $this->loadMigrationsFrom($generated);
+        }
 
         if ($this->app['config']->get('migration-viewer.sync_after_migrate', true)) {
             Event::listen(MigrationsEnded::class, fn (MigrationsEnded $event) => $this->syncAfterMigrate($event));

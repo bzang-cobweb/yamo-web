@@ -17,6 +17,14 @@ final readonly class ChangeDetail
         public string $definition = '',
         /** The new name, for a renamed column. */
         public ?string $target = null,
+        /**
+         * Structured facts, for tools that rebuild the schema: a column's
+         * attributes (type, length, nullable, default…), an index's type and
+         * columns, a foreign key's columns, table and on-delete rule.
+         *
+         * @var array<string, mixed>
+         */
+        public array $attributes = [],
     ) {}
 
     public function __toString(): string

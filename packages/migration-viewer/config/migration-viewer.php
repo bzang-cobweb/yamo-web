@@ -1,6 +1,7 @@
 <?php
 
 use Bza\MigrationViewer\Sources\ApplicationMigrationSource;
+use Bza\MigrationViewer\Sources\GeneratedMigrationSource;
 use Bza\MigrationViewer\Sources\ModuleMigrationSource;
 use Bza\MigrationViewer\Sources\RegisteredMigrationSource;
 
@@ -14,6 +15,7 @@ return [
     'sources' => [
         ApplicationMigrationSource::class,
         ModuleMigrationSource::class,
+        GeneratedMigrationSource::class,
         RegisteredMigrationSource::class,
     ],
 
@@ -29,5 +31,17 @@ return [
     | Otherwise run "php artisan migration-viewer:sync" or use the page's button.
     */
     'sync_after_migrate' => env('MIGRATION_VIEWER_SYNC_AFTER_MIGRATE', true),
+
+    /*
+    | The generator writes new migration files ("Nouvelle table", "Ajouter des
+    | champs") in this directory, never runs them. The directory is registered
+    | on the migrator, so "php artisan migrate" runs its files, and listed by
+    | GeneratedMigrationSource. Writing files from a web page is only enabled
+    | in the local environment by default.
+    */
+    'generator' => [
+        'enabled' => (bool) env('MIGRATION_VIEWER_GENERATOR_ENABLED', env('APP_ENV', 'production') === 'local'),
+        'path' => env('MIGRATION_VIEWER_GENERATOR_PATH', database_path('migrations/generated')),
+    ],
 
 ];

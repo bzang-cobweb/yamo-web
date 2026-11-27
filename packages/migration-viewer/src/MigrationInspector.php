@@ -114,8 +114,9 @@ class MigrationInspector
             return $this->tables;
         }
 
-        /** @var array<string, array{columns: array<string, string>, changes: list<TableChange>, dropped: bool}> $tables */
+        /** @var array<string, array{columns: array<string, string>, attributes: array<string, array<string, mixed>>, indexes: array<string, array<string, mixed>>, foreignKeys: array<string, array<string, mixed>>, changes: list<TableChange>, dropped: bool}> $tables */
         $tables = [];
+        $empty = ['columns' => [], 'attributes' => [], 'indexes' => [], 'foreignKeys' => [], 'changes' => [], 'dropped' => false];
 
         foreach ($this->replays() as $replay) {
             foreach ($replay->changes as $change) {
@@ -123,20 +124,18 @@ class MigrationInspector
                     continue;
                 }
 
-                $table = $tables[$change->table] ?? ['columns' => [], 'changes' => [], 'dropped' => false];
+                $table = $tables[$change->table] ?? $empty;
                 $table['changes'][] = $change;
 
                 if ($change->operation === Operation::Create || $change->operation === Operation::Drop) {
-                    $table['columns'] = [];
-                    $table['dropped'] = $change->operation === Operation::Drop;
+                    $table = [...$empty, 'changes' => $table['changes'], 'dropped' => $change->operation === Operation::Drop];
                 }
 
-                $table['columns'] = $this->applyColumns($table['columns'], $change->details);
+                $table = $this->apply($table, $change->details);
 
                 if ($change->operation === Operation::Rename && $change->renamedTo !== null) {
-                    $tables[$change->renamedTo] = ['columns' => $table['columns'], 'changes' => $tables[$change->renamedTo]['changes'] ?? [], 'dropped' => false];
-                    $table['columns'] = [];
-                    $table['dropped'] = true;
+                    $tables[$change->renamedTo] = [...$table, 'changes' => $tables[$change->renamedTo]['changes'] ?? [], 'dropped' => false];
+                    $table = [...$empty, 'changes' => $table['changes'], 'dropped' => true];
                 }
 
                 $tables[$change->table] = $table;
@@ -148,7 +147,15 @@ class MigrationInspector
         $summaries = [];
 
         foreach ($tables as $name => $table) {
-            $summaries[$name] = new TableSummary($name, $table['columns'], $table['changes'], $table['dropped']);
+            $summaries[$name] = new TableSummary(
+                name: $name,
+                columns: $table['columns'],
+                changes: $table['changes'],
+                dropped: $table['dropped'],
+                columnAttributes: $table['attributes'],
+                indexes: $table['indexes'],
+                foreignKeys: $table['foreignKeys'],
+            );
         }
 
         return $this->tables = $summaries;
@@ -183,48 +190,73 @@ class MigrationInspector
     }
 
     /**
-     * @param  array<string, string>  $columns
+     * Applies one change's details to a table's state.
+     *
+     * @param  array<string, mixed>  $table
      * @param  list<ChangeDetail>  $details
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
-    private function applyColumns(array $columns, array $details): array
+    private function apply(array $table, array $details): array
     {
         foreach ($details as $detail) {
             switch ($detail->kind) {
                 case ChangeKind::AddColumn:
                 case ChangeKind::ChangeColumn:
-                    $columns[$detail->subject] = $detail->definition;
+                    $table['columns'][$detail->subject] = $detail->definition;
+                    $table['attributes'][$detail->subject] = $detail->attributes;
                     break;
                 case ChangeKind::DropColumn:
-                    unset($columns[$detail->subject]);
+                    unset($table['columns'][$detail->subject], $table['attributes'][$detail->subject]);
+                    // The database drops the indexes and keys of a dropped column with it.
+                    $table['indexes'] = array_filter($table['indexes'], fn (array $index): bool => ! in_array($detail->subject, $index['columns'], true));
+                    $table['foreignKeys'] = array_filter($table['foreignKeys'], fn (array $key): bool => ! in_array($detail->subject, $key['columns'], true));
                     break;
                 case ChangeKind::RenameColumn:
-                    $columns = $this->renameKey($columns, $detail->subject, (string) $detail->target);
+                    $to = (string) $detail->target;
+                    $table['columns'] = $this->renameKey($table['columns'], $detail->subject, $to);
+                    $table['attributes'] = $this->renameKey($table['attributes'], $detail->subject, $to);
+                    $rename = fn (array $entry): array => [...$entry, 'columns' => array_map(fn (string $column): string => $column === $detail->subject ? $to : $column, $entry['columns'])];
+                    $table['indexes'] = array_map($rename, $table['indexes']);
+                    $table['foreignKeys'] = array_map($rename, $table['foreignKeys']);
+                    break;
+                case ChangeKind::AddIndex:
+                    $table['indexes'][$detail->subject] = $detail->attributes;
+                    break;
+                case ChangeKind::DropIndex:
+                    unset($table['indexes'][$detail->subject]);
+                    break;
+                case ChangeKind::AddForeign:
+                    $table['foreignKeys'][$detail->subject] = $detail->attributes;
+                    break;
+                case ChangeKind::DropForeign:
+                    unset($table['foreignKeys'][$detail->subject]);
                     break;
                 default:
                     break;
             }
         }
 
-        return $columns;
+        return $table;
     }
 
     /**
-     * Renames a key in place, keeping the column order.
+     * Renames a key in place, keeping the order.
      *
-     * @param  array<string, string>  $columns
-     * @return array<string, string>
+     * @template T
+     *
+     * @param  array<string, T>  $entries
+     * @return array<string, T>
      */
-    private function renameKey(array $columns, string $from, string $to): array
+    private function renameKey(array $entries, string $from, string $to): array
     {
-        if (! array_key_exists($from, $columns)) {
-            return $columns;
+        if (! array_key_exists($from, $entries)) {
+            return $entries;
         }
 
         $renamed = [];
 
-        foreach ($columns as $name => $definition) {
-            $renamed[$name === $from ? $to : $name] = $definition;
+        foreach ($entries as $name => $entry) {
+            $renamed[$name === $from ? $to : $name] = $entry;
         }
 
         return $renamed;

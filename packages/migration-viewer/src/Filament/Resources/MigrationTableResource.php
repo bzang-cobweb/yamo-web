@@ -4,6 +4,8 @@ namespace Bza\MigrationViewer\Filament\Resources;
 
 use BackedEnum;
 use Bza\MigrationViewer\Filament\MigrationViewerPlugin;
+use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\CreateMigrationTable;
+use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\EditMigrationTable;
 use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\ListMigrationTables;
 use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\ViewMigrationTable;
 use Bza\MigrationViewer\Models\MigrationTable;
@@ -27,8 +29,9 @@ use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
- * The tables stored in migration_tables: a list, then a detail page per table
- * (its state, its migration files, its current columns). Read-only.
+ * The tables stored in migration_tables: a list, a detail page per table (its
+ * state, its migration files, its current columns), and, when the generator is
+ * enabled, pages that write a migration to create or edit a table.
  */
 class MigrationTableResource extends Resource
 {
@@ -42,7 +45,9 @@ class MigrationTableResource extends Resource
     }
 
     /**
-     * Read-only, and only for the users the plugin authorizes: no policy needed.
+     * Records are only read, and only by the users the plugin authorizes: no
+     * policy needed. The create and edit pages write files, not records, and
+     * check the generator themselves.
      */
     public static function getAuthorizationResponse(string|UnitEnum $action, ?Model $record = null): Response
     {
@@ -215,7 +220,9 @@ class MigrationTableResource extends Resource
     {
         return [
             'index' => ListMigrationTables::route('/'),
+            'create' => CreateMigrationTable::route('/create'),
             'view' => ViewMigrationTable::route('/{record}'),
+            'edit' => EditMigrationTable::route('/{record}/edit'),
         ];
     }
 

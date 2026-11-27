@@ -13,10 +13,12 @@ For each migration and each table it touches, the viewer shows:
   - `~ name → title`
   - `+ users_email_unique unique (email)`
   - `+ users_country_id_foreign (country_id) → countries(id), on delete set null`
-- the origin of the file: application, module (with its name), or package;
+- the origin of the file: application, module (with its name), generated, or package;
 - whether the migration has run.
 
 Each table also gets a summary of its columns as the migrations leave it, or a mention that a later migration dropped it.
+
+![The Migrations page in Filament: migration files grouped by table, with their operation and changes](docs/migrations.png)
 
 ## How it works
 
@@ -37,9 +39,10 @@ Replaying instead of parsing means that table names computed in code, such as `c
 src/
 ├── MigrationInspector.php      Entry point: files, replays, changes by table, table summaries
 ├── Contracts/MigrationSource   Lists migration files with their origin
-├── Sources/                    Application, Module (nwidart) and Registered (loadMigrationsFrom) sources
+├── Sources/                    Application, Module (nwidart), Generated and Registered (loadMigrationsFrom) sources
 ├── Replay/                     Pretend replay, blueprint collector and reader, column describer
 ├── Data/                       Immutable value objects (MigrationFile, TableChange, ChangeDetail, TableSummary…)
+├── Generator/                  Create / edit a table → one migration file (current columns, diff, code writer)
 ├── MigrationTableSynchronizer  Stores the table summaries in migration_tables
 ├── Models/MigrationTable       Eloquent model of migration_tables
 ├── Console/                    migration-viewer:sync
@@ -105,6 +108,78 @@ The Filament plugin also registers the `MigrationTableResource` resource. It is 
 
 The `migration_tables` model is `Bza\MigrationViewer\Models\MigrationTable`, addressed by its name in URLs.
 
+## Generating migrations
+
+The « Tables » list has a « Nouvelle table » button and each table's detail page a « Modifier la table » button. Each opens a page whose form is written as **one** migration file in the generator's directory, in the style of `make:migration`. The file is never run: it shows as pending until you run `php artisan migrate`.
+
+**Create page** (`/migration-tables/create`): the table's name, whether to add an `id` primary key, timestamps and soft deletes, then its columns. The form writes `create_<table>_table`.
+
+**Edit page** (`/migration-tables/{name}/edit`): the form starts from the table as the migrations leave it, with every current column as an item. You can:
+
+- rename the table;
+- rename a column or change its definition;
+- remove an item to drop the column;
+- add items for new columns.
+
+All the changes go into one `alter_<table>_table` file:
+
+- the table rename;
+- then, in one `Schema::table()`: dropped keys and columns, renamed columns, changed definitions (`->change()`, with every attribute restated) with their keys, and new columns.
+
+Its `down()` undoes the changes in reverse order. Keys are dropped by their real names, which they keep after a table rename, and by their columns, which SQLite needs.
+
+The generator only rewrites what it can write itself. A column it cannot rewrite shows as kept as is and can only be kept or dropped. That covers:
+
+- an auto-increment key;
+- a computed column;
+- an expression default or `useCurrent`;
+- an enum;
+- an unsigned small integer;
+- a foreign key on another column than `id`.
+
+Such a column cannot be restored by `down()` once dropped; the file says so in a comment.
+
+**Fields of a column:**
+
+- name, type, length (string, char), digits and decimals (decimal);
+- nullable, default, unique, index;
+- for a `foreignId`: the referenced table (guessed from the name when empty) and what happens on delete (cascade, set null, restrict).
+
+The types are Blueprint method names; `ColumnType` lists the ones offered.
+
+**What the generator refuses:**
+
+- an existing table;
+- a name that is not lower case, digits and `_`;
+- two columns with the same name;
+- a column the table options already add;
+- `set null` on a column that is not nullable;
+- an edit that changes nothing.
+
+The file is dated now, or one second after the last existing migration when one is dated later, so it always runs after the migrations it builds on.
+
+The directory (`generator.path`, `database/migrations/generated` by default) is registered on the migrator, so `migrate` runs its files. The viewer lists them with the « Generated » origin. Writing files from a web page is only enabled in the `local` environment unless `generator.enabled` says otherwise.
+
+The core can be used without Filament:
+
+```php
+use Bza\MigrationViewer\Generator\{ColumnEdit, ColumnType, MigrationGenerator, NewColumn, NewTable, OnDelete};
+
+$generator = app(MigrationGenerator::class);
+
+$generator->createTable(new NewTable('invoices', [
+    new NewColumn('number', ColumnType::String, length: 20, unique: true),
+    new NewColumn('user_id', ColumnType::ForeignId, nullable: true, onDelete: OnDelete::SetNull),
+]));
+
+// Every column to keep, by its current name; the others are dropped.
+$generator->alterTable('invoices', 'invoices', [
+    new ColumnEdit('id', null),                                             // kept as is
+    new ColumnEdit('number', new NewColumn('reference', ColumnType::String)), // renamed and changed
+    new ColumnEdit(null, new NewColumn('paid_at', ColumnType::DateTime, nullable: true)), // new
+]);
+```
+
 ## Configuration
 
 ```bash
@@ -115,6 +190,8 @@ php artisan vendor:publish --tag=migration-viewer-config
 | --- | --- | --- |
 | `sources` | application, module, registered | Classes implementing `MigrationSource`; a file listed twice keeps the first source. |
 | `connections` | `null` (all) | Connections put in pretend mode during a replay. |
+| `generator.enabled` | `true` in `local` only (`MIGRATION_VIEWER_GENERATOR_ENABLED`) | Open the create and edit pages. |
+| `generator.path` | `database/migrations/generated` (`MIGRATION_VIEWER_GENERATOR_PATH`) | Where generated files are written; read by `migrate` and the viewer. |
 | `sync_after_migrate` | `true` (`MIGRATION_VIEWER_SYNC_AFTER_MIGRATE`) | Refresh `migration_tables` after each migrate or rollback. |
 
 Translations (en, fr, de) can be published with the `migration-viewer-translations` tag.

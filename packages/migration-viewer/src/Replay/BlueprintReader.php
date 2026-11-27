@@ -2,12 +2,14 @@
 
 namespace Bza\MigrationViewer\Replay;
 
+use BackedEnum;
 use Bza\MigrationViewer\ChangeKind;
 use Bza\MigrationViewer\Data\ChangeDetail;
 use Bza\MigrationViewer\Data\MigrationFile;
 use Bza\MigrationViewer\Data\TableChange;
 use Bza\MigrationViewer\Operation;
 use Illuminate\Database\Grammar;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Fluent;
 
@@ -48,6 +50,7 @@ class BlueprintReader
                     $column->change ? ChangeKind::ChangeColumn : ChangeKind::AddColumn,
                     (string) $column->name,
                     $this->describer->describe($column, $grammar),
+                    attributes: $this->columnAttributes($column, $grammar),
                 );
             }
 
@@ -117,7 +120,12 @@ class BlueprintReader
         }
 
         if (in_array($name, self::INDEXES, true)) {
-            return [new ChangeDetail(ChangeKind::AddIndex, (string) $command->index, $name.' ('.implode(', ', (array) $command->columns).')')];
+            return [new ChangeDetail(
+                ChangeKind::AddIndex,
+                (string) $command->index,
+                $name.' ('.implode(', ', (array) $command->columns).')',
+                attributes: ['type' => $name, 'columns' => array_values((array) $command->columns)],
+            )];
         }
 
         if (in_array($name, self::DROPPED_INDEXES, true)) {
@@ -125,12 +133,43 @@ class BlueprintReader
         }
 
         return match ($name) {
-            'foreign' => [new ChangeDetail(ChangeKind::AddForeign, (string) $command->index, $this->foreign($command))],
+            'foreign' => [new ChangeDetail(ChangeKind::AddForeign, (string) $command->index, $this->foreign($command), attributes: [
+                'columns' => array_values((array) $command->columns),
+                'on' => (string) $command->on,
+                'references' => array_values((array) $command->references),
+                'onDelete' => $command->onDelete,
+            ])],
             'dropForeign' => [new ChangeDetail(ChangeKind::DropForeign, $this->list($command->index))],
             'dropColumn' => array_map(fn (string $column): ChangeDetail => new ChangeDetail(ChangeKind::DropColumn, $column), (array) $command->columns),
             'renameColumn' => [new ChangeDetail(ChangeKind::RenameColumn, (string) $command->from, '→ '.$command->to, (string) $command->to)],
             default => [new ChangeDetail(ChangeKind::Other, $name)],
         };
+    }
+
+    /**
+     * The column's attributes, with its default made plain: an expression
+     * becomes its SQL text, flagged as such.
+     *
+     * @return array<string, mixed>
+     */
+    private function columnAttributes(Fluent $column, Grammar $grammar): array
+    {
+        $attributes = $column->getAttributes();
+        unset($attributes['change']);
+
+        if (array_key_exists('default', $attributes)) {
+            $default = $attributes['default'];
+            $attributes['defaultIsExpression'] = $default instanceof Expression;
+            $attributes['default'] = match (true) {
+                $default instanceof Expression => (string) $default->getValue($grammar),
+                $default instanceof BackedEnum => $default->value,
+                is_scalar($default) || $default === null => $default,
+                default => json_encode($default),
+            };
+        }
+
+        // Objects (enums of allowed values aside) are not kept.
+        return array_filter($attributes, fn (mixed $value): bool => ! is_object($value));
     }
 
     /**
