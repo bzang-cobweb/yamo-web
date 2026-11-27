@@ -14,4 +14,8 @@ return [
     'pruned' => ':count Benachrichtigung(en) älter als :days Tage gelöscht.',
     // Le nombre de cartes de la liste (décision 2026-11-22-notifications-nombre).
     'count' => '{0} Keine Benachrichtigungen|{1} :count Benachrichtigung|[2,*] :count Benachrichtigungen',
+    // Le menu ⋮ de la page d'une notification, servi avec elle (décision 2026-11-27-menu-notification-serveur).
+    'menu' => [
+        'info' => 'Info',
+    ],
 ];

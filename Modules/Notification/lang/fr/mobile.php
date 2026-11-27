@@ -19,9 +19,8 @@ return [
         'you' => 'Toi',
         // Près de la date d'une étape modifiée (décision 2026-11-21-etape-modifiee-date).
         'edited' => 'Modifié',
-        'more' => 'Voir plus',
-        // Le titre du panneau de « Voir plus », sans titre donné par le module (décision 2026-11-26-lignes-en-panneau).
-        'details' => 'Détails',
+        // Ce que lit l'accessibilité sur le bouton du menu « ⋮ » de la page d'une notification (décision 2026-11-27-notification-menu-info).
+        'actions' => 'Actions',
         // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
         'delivery' => ['sent' => 'Envoyée', 'delivered' => 'Reçue', 'read' => 'Lue'],
         'open' => 'Ouvrir',

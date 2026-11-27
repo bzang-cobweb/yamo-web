@@ -63,6 +63,26 @@ class NotificationThreads
         return $this->groupThreads[$key];
     }
 
+    /**
+     * Une notification du fil d'un groupe (`partner:group:5`) : lue par tous les membres du groupe, pas par un seul
+     * destinataire (décision 2026-11-27-notification-group).
+     */
+    public function isGroup(DatabaseNotification $notification): bool
+    {
+        $thread = $notification->getAttribute('thread');
+        if (! is_string($thread)) {
+            return false;
+        }
+
+        foreach ($this->groups as $group) {
+            if (str_starts_with($thread, $group::groupThreadPrefix())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Une autre requête HTTP (un test en enchaîne plusieurs) : on oublie les fils lus. */
     private function fresh(): void
     {

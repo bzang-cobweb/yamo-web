@@ -149,6 +149,9 @@ class PartnerThreadTest extends AuthFilamentTestCase
             $this->assertCount(1, $cards);
             $page = $this->api($reader, 'GET', '/notifications/'.$cards[0]['id'])->assertOk()->json('data');
             $this->assertSame($labels, array_column($page['history'], 'label'));
+            // Le fil d'un groupe, sur la carte et sur la page (décision 2026-11-27-notification-group).
+            $this->assertTrue($cards[0]['group']);
+            $this->assertTrue($page['group']);
             // Sous l'en-tête, la dernière modification du partenaire, gardée sur lui (décision
             // 2026-11-26-partenaire-dernieres-modifications) ; les étapes du suivi gardent leur libellé.
             $this->assertSame(['changed_at', 'changed_by', 'description_before', 'description_after'], array_column($page['lines'], 'key'));

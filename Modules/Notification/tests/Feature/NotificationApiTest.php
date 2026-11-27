@@ -50,6 +50,10 @@ class NotificationApiTest extends TestCase
 
         $this->assertSame(['Récente', 'Ancienne'], array_column($items, 'title'));
         $this->assertSame([false, true], array_column($items, 'read'));
+        // D'un destinataire seul, pas du fil d'un groupe (décision 2026-11-27-notification-group).
+        $this->assertSame([false, false], array_column($items, 'group'));
+        // Le menu est sur la page seulement, pas sur les cartes.
+        $this->assertArrayNotHasKey('menu', $items[0]);
         $this->assertSame('Texte de Récente', $items[0]['body']);
         $this->assertSame('/profile/lists/offer.bookings', $items[0]['link']);
         $this->assertSame(['label' => 'En attente', 'tone' => 'warning'], $items[0]['tag']);
@@ -126,7 +130,9 @@ class NotificationApiTest extends TestCase
             ->assertJsonPath('data.title', 'La mienne')
             ->assertJsonPath('data.link_label', 'Mes réservations')
             ->assertJsonPath('data.text_links', [['text' => 'Paul', 'link' => '/members/3']])
-            ->assertJsonPath('data.read', false);
+            ->assertJsonPath('data.read', false)
+            // Le menu ⋮ de la page, servi avec elle : « Info » ouvre le panneau de l'app (décision 2026-11-27-menu-notification-serveur).
+            ->assertJsonPath('data.menu', [['key' => 'info', 'label' => 'Info', 'link' => null]]);
         $this->asUser($user)->getJson("/api/v1/notifications/{$other->getKey()}")->assertNotFound();
     }
 

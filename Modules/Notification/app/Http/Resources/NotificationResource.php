@@ -66,7 +66,7 @@ class NotificationResource extends JsonResource
     }
 
     /**
-     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, read: bool, created_at: string|null}
+     * @return array{id: string, title: string, tag: array{label: string, tone: string}|null, body: string, actor: array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string}|null, summary: string|null, message: string|null, link: string|null, links: list<array{label: string, link: string}>, text_links: list<array{text: string, link: string}>, link_label: string|null, group: bool, read: bool, created_at: string|null}
      */
     public function toArray(Request $request): array
     {
@@ -105,6 +105,8 @@ class NotificationResource extends JsonResource
             'text_links' => $this->textLinks($data),
             /** Libellé du bouton qui ouvre `link` (« Réservations reçues »), ou `null`. */
             'link_label' => $this->linkLabel($data),
+            /** Du fil d'un groupe, lu par tous ses membres (un partenaire) ; faux : d'un destinataire seul (décision 2026-11-27-notification-group). */
+            'group' => $threads->isGroup($notification),
             /** Lue : pour la carte d'une demande, toutes ses étapes le sont. */
             'read' => $this->read ?? $this->isRead($notification, $reader),
             /** Date ISO 8601. */
@@ -132,8 +134,17 @@ class NotificationResource extends JsonResource
          * Données par le module du fil (décision 2026-11-26-partenaire-dernieres-modifications).
          */
         $item['lines'] = null;
-        /** Le titre du panneau qui montre toutes les lignes (« Voir plus ») ; `null` : un titre générique (décision 2026-11-26-lignes-en-panneau). */
+        /** Le titre des lignes dans le panneau « Info » de l'app ; `null` : aucun (décision 2026-11-27-detail-sans-zone-fixe). */
         $item['lines_title'] = null;
+
+        /**
+         * Le menu ⋮ de la page (décision 2026-11-27-menu-notification-serveur), dans l'ordre : chaque entrée a une clé, un
+         * libellé et un écran de l'app à ouvrir (`link`) ; sans `link`, l'app ouvre le panneau que nomme la clé (`info` : la
+         * pastille, l'en-tête et les lignes). Le module du fil peut en ajouter.
+         */
+        $item['menu'] = [
+            ['key' => 'info', 'label' => (string) __('notification::notification.menu.info'), 'link' => null],
+        ];
 
         // Le module du fil complète la réponse (une demande : `booking`).
         $thread = $notification->getAttribute('thread');

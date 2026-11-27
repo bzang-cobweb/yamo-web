@@ -19,9 +19,7 @@ return [
         'you' => 'You',
         // Près de la date d'une étape modifiée (décision 2026-11-21-etape-modifiee-date).
         'edited' => 'Edited',
-        'more' => 'See more',
-        // Le titre du panneau de « Voir plus », sans titre donné par le module (décision 2026-11-26-lignes-en-panneau).
-        'details' => 'Details',
+        'actions' => 'Actions',
         // Ce qu'est devenue sa notification (décision 2026-11-20-coches-lecture).
         'delivery' => ['sent' => 'Sent', 'delivered' => 'Delivered', 'read' => 'Read'],
         'open' => 'Open',
