@@ -1,0 +1,35 @@
+{
+    "name": "bza/laravel-media-manager",
+    "description": "File-system-like media manager built on spatie/laravel-medialibrary: folders, per-folder rights for roles and users, read-only view of the media attached to other models, with a Filament adapter.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "spatie/laravel-medialibrary": "^11.0"
+    },
+    "suggest": {
+        "filament/filament": "Required for the Filament page (^5.0).",
+        "spatie/laravel-permission": "Lets rights be granted to roles."
+    },
+    "autoload": {
+        "psr-4": {
+            "Bza\\MediaManager\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bza\\MediaManager\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bza\\MediaManager\\MediaManagerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable"
+}

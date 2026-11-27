@@ -1,0 +1,23 @@
+# `2026-11-27` — Gestionnaire de médias : paquet bza/laravel-media-manager, dossiers en table, droits par dossier
+
+- **Type** : décision
+- **Question posée** : comment gérer les médias (spatie/laravel-medialibrary) comme un système de fichiers dans le back-office : stockage des dossiers, périmètre, accès, opérations.
+- **Réponse** :
+  - paquet local `packages/media-manager` (`Bza\MediaManager`, `bza/laravel-media-manager`) ; cœur sans Filament, plugin Filament mince (page « Médias », menu de premier niveau, tri 50) ;
+  - dossiers en table propre `media_folders` (parent, nom) ; chaque dossier est un modèle `HasMedia` qui porte ses fichiers (collection `files`) ;
+  - opérations : dossiers créer, renommer, déplacer, supprimer (vide seulement) ; fichiers téléverser, renommer, déplacer, supprimer ; télécharger, aperçu des images, copier l'adresse ;
+  - médias déjà rattachés aux modèles (offres, avatars, partenaires…) montrés **en lecture seule**, un dossier par type de modèle puis un par collection, trouvés dans la table `media` sans déclaration ;
+  - droits par dossier donnés **aux rôles et aux utilisateurs** (`media_folder_grants`) : Voir, Télécharger, Ajouter, Modifier, Supprimer, Gérer les droits ; chaque droit est « Oui », « Non » ou hérité ; un sous-dossier hérite de ses parents et, pour un même droit, le sous-dossier l'emporte ; la gestion des droits est elle-même un droit (« Gérer les droits ») donnable à un rôle ou un utilisateur ;
+  - le super administrateur a tous les droits.
+- **Motif** : les médias des modèles appartiennent à leur modèle (collection à fichier unique, ordre des photos, chemin `<module>/<champ>/<uuid>`) : les renommer, déplacer ou supprimer depuis un gestionnaire casserait leurs écrans ; d'où la lecture seule. La table propre permet les dossiers vides et un renommage/déplacement d'une seule ligne.
+- **Portée** : back-office. Ne touche pas aux écrans qui gèrent les médias des modèles ni à l'API de l'app.
+- **Corollaires** (arbitrés par l'orchestrateur, à valider) :
+  - un utilisateur a un droit si **un** de ses rôles (ou lui-même) l'a ; un « Non » ne retire que le droit hérité par ce rôle-là, pas celui qu'un autre rôle donne ;
+  - les dossiers des médias des contenus **n'héritent pas** des droits de la racine (sinon donner « Voir » à la racine exposerait les avatars) : seuls leurs propres droits comptent (Voir, Télécharger, Gérer) ;
+  - les droits posés à la racine valent pour tous les dossiers ; créer un dossier de premier niveau demande « Ajouter » à la racine ;
+  - la racine ne contient que des dossiers, pas de fichiers ;
+  - un dossier non visible qui mène à un sous-dossier visible reste listé et ouvrable, ses propres fichiers cachés ;
+  - le menu « Médias » n'apparaît qu'à qui a quelque chose à y voir ou y faire ;
+  - noms uniques dans un dossier sans tenir compte de la casse ; un fichier téléversé sous un nom pris reçoit un numéro (`plan-1.pdf`) ; un renommage garde l'extension ;
+  - fichiers rangés sous `media-manager/<uuid>/` (générateur de chemin propre aux dossiers) : déplacer un fichier ne change que son dossier en base, son adresse reste la même.
+- **Tranché par** : humain (stockage, périmètre, bénéficiaires, niveaux et héritage, gestion des droits) ; orchestrateur (corollaires)

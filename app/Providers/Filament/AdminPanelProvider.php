@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\NavigationGroup;
 use App\Support\Brand;
 use Bza\ConfigViewer\Filament\ConfigViewerPlugin;
+use Bza\MediaManager\Filament\MediaManagerPlugin;
 use Bza\MigrationViewer\Filament\MigrationViewerPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -70,6 +71,11 @@ class AdminPanelProvider extends PanelProvider
                 ->navigationGroup(fn (): string => NavigationGroup::DataModels->label())
                 ->navigationSort(10)
                 ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
+            // Gestionnaire de médias : dossiers et fichiers, droits par dossier donnés aux rôles et aux
+            // utilisateurs, médias des contenus en lecture seule ; le super administrateur a tous les droits.
+            ->plugin(MediaManagerPlugin::make()
+                ->navigationSort(50)
+                ->superUser(fn ($user): bool => (bool) $user?->isSuperAdmin()))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

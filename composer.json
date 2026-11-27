@@ -22,6 +22,7 @@
         "ext-intl": "*",
         "bza/laravel-config-viewer": "@dev",
         "bza/laravel-form": "@dev",
+        "bza/laravel-media-manager": "@dev",
         "bza/laravel-migration-viewer": "@dev",
         "filament/filament": "^5.11",
         "filament/spatie-laravel-media-library-plugin": "^5.11",
@@ -58,6 +59,7 @@
             "Tests\\": "tests/",
             "Bza\\ConfigViewer\\Tests\\": "packages/config-viewer/tests/",
             "Bza\\Form\\Tests\\": "packages/form/tests/",
+            "Bza\\MediaManager\\Tests\\": "packages/media-manager/tests/",
             "Bza\\MigrationViewer\\Tests\\": "packages/migration-viewer/tests/"
         }
     },

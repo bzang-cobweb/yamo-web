@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2f1ce8eced059a5028c1285cd8b1bbfd",
+    "content-hash": "e067ecbe522408984d2cb00cf0e323bd",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -368,6 +368,52 @@
                 "MIT"
             ],
             "description": "Server-described forms and lists for Laravel: fields, steps, uploads and listings served as JSON to a client app, with a Filament adapter.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "bza/laravel-media-manager",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/media-manager",
+                "reference": "40b25eba2ba12ddd524ad76ecb1755c550756ee4"
+            },
+            "require": {
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/database": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.3",
+                "spatie/laravel-medialibrary": "^11.0"
+            },
+            "suggest": {
+                "filament/filament": "Required for the Filament page (^5.0).",
+                "spatie/laravel-permission": "Lets rights be granted to roles."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Bza\\MediaManager\\MediaManagerServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bza\\MediaManager\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Bza\\MediaManager\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "File-system-like media manager built on spatie/laravel-medialibrary: folders, per-folder rights for roles and users, read-only view of the media attached to other models, with a Filament adapter.",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -13762,6 +13808,7 @@
     "stability-flags": {
         "bza/laravel-config-viewer": 20,
         "bza/laravel-form": 20,
+        "bza/laravel-media-manager": 20,
         "bza/laravel-migration-viewer": 20
     },
     "prefer-stable": true,
