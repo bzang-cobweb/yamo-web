@@ -180,6 +180,20 @@ class MigrationInspector
     }
 
     /**
+     * The migrations that have not run yet, in run order. Empty when the
+     * migrations table cannot be read.
+     *
+     * @return list<MigrationFile>
+     */
+    public function pending(): array
+    {
+        return array_values(array_map(
+            fn (MigrationReplay $replay): MigrationFile => $replay->migration,
+            array_filter($this->replays(), fn (MigrationReplay $replay): bool => ($replay->changes[0]->ran ?? null) === false),
+        ));
+    }
+
+    /**
      * The migrations whose replay threw: their changes may be incomplete.
      *
      * @return list<MigrationReplay>

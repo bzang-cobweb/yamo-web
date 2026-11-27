@@ -139,6 +139,20 @@ The generator only rewrites what it can write itself. A column it cannot rewrite
 
 Such a column cannot be restored by `down()` once dropped; the file says so in a comment.
 
+Each item of the list shows its column in one line (`string(30), nullable, unique`). The fields of a column are edited in a slide-over on the right:
+
+- « Ajouter un champ » opens it empty; the column joins the list once its fields are valid;
+- the pencil of an item opens it filled with that column; « Appliquer » replaces the item.
+
+A name another column already uses is refused. A column the generator cannot rewrite has no pencil: it can only be kept or removed.
+
+The edit page also has two buttons that run migrations, each after a confirmation that lists them:
+
+- **« Migrer la table »** runs only the pending files that touch this table (`migrate --path=… --realpath`). The other pending migrations stay pending and run at the next `migrate`, even if they are dated earlier. A file that depends on another pending migration (a foreign key to a table not created yet) fails: migrate that one first, or use « Tout migrer ».
+- **« Tout migrer »** runs `php artisan migrate`: every pending migration of the application, the generated files included.
+
+Unsaved changes of the form are not part of either: generate the migration first. `migration_tables` is then refreshed by the after-migrate sync. Each button is disabled when it has nothing to run, and only shows where the generator is enabled.
+
 **Fields of a column:**
 
 - name, type, length (string, char), digits and decimals (decimal);
@@ -158,7 +172,7 @@ The types are Blueprint method names; `ColumnType` lists the ones offered.
 
 The file is dated now, or one second after the last existing migration when one is dated later, so it always runs after the migrations it builds on.
 
-The directory (`generator.path`, `database/migrations/generated` by default) is registered on the migrator, so `migrate` runs its files. The viewer lists them with the « Generated » origin. Writing files from a web page is only enabled in the `local` environment unless `generator.enabled` says otherwise.
+The directory (`generator.path`, `database/migrations/migration-viewer` by default) is registered on the migrator, so `migrate` runs its files. The viewer lists them with the « Generated » origin. Writing files from a web page is only enabled in the `local` environment unless `generator.enabled` says otherwise.
 
 The core can be used without Filament:
 
@@ -191,7 +205,7 @@ php artisan vendor:publish --tag=migration-viewer-config
 | `sources` | application, module, registered | Classes implementing `MigrationSource`; a file listed twice keeps the first source. |
 | `connections` | `null` (all) | Connections put in pretend mode during a replay. |
 | `generator.enabled` | `true` in `local` only (`MIGRATION_VIEWER_GENERATOR_ENABLED`) | Open the create and edit pages. |
-| `generator.path` | `database/migrations/generated` (`MIGRATION_VIEWER_GENERATOR_PATH`) | Where generated files are written; read by `migrate` and the viewer. |
+| `generator.path` | `database/migrations/migration-viewer` (`MIGRATION_VIEWER_GENERATOR_PATH`) | Where generated files are written; read by `migrate` and the viewer. |
 | `sync_after_migrate` | `true` (`MIGRATION_VIEWER_SYNC_AFTER_MIGRATE`) | Refresh `migration_tables` after each migrate or rollback. |
 
 Translations (en, fr, de) can be published with the `migration-viewer-translations` tag.

@@ -7,7 +7,13 @@ use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\CreateMi
 use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\EditMigrationTable;
 use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\ListMigrationTables;
 use Bza\MigrationViewer\Filament\Resources\MigrationTableResource\Pages\ViewMigrationTable;
+use Bza\MigrationViewer\Generator\ColumnType;
+use Bza\MigrationViewer\Generator\MigrationGenerator;
+use Bza\MigrationViewer\Generator\NewColumn;
+use Bza\MigrationViewer\Generator\NewTable;
+use Bza\MigrationViewer\MigrationInspector;
 use Bza\MigrationViewer\Models\MigrationTable;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
@@ -154,6 +160,95 @@ class MigrationGeneratorPagesTest extends AuthFilamentTestCase
         $this->assertContains('sex', $names);
         $this->assertSame('nickname', end($names));
         $this->assertSame(1, $users->pending_count);
+    }
+
+    public function test_a_field_is_added_from_a_slide_over(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $page = Livewire::test(EditMigrationTable::class, ['record' => 'users'])
+            ->callAction(TestAction::make('add')->schemaComponent('columns', schema: 'form'), ['name' => 'nickname', 'type' => 'string', 'length' => '30', 'nullable' => true])
+            ->assertHasNoFormComponentActionErrors();
+
+        $added = collect($page->get('data.columns'))->firstWhere('name', 'nickname');
+        $this->assertNull($added['original']);
+        $this->assertFalse($added['locked']);
+        $this->assertSame('string', $added['type']);
+        $this->assertEquals(30, $added['length']);
+        $this->assertTrue($added['nullable']);
+
+        // A name already in the list is refused in the slide-over.
+        $page->callAction(TestAction::make('add')->schemaComponent('columns', schema: 'form'), ['name' => 'email', 'type' => 'string'])
+            ->assertHasFormComponentActionErrors(['name']);
+
+        $page->call('save')->assertNotified('Migration générée');
+        $this->assertStringContainsString("\$table->string('nickname', 30)->nullable();", file_get_contents($this->files('*_alter_users_table')[0]));
+    }
+
+    public function test_a_field_is_edited_from_a_slide_over(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $page = Livewire::test(EditMigrationTable::class, ['record' => 'users']);
+        $key = collect($page->get('data.columns'))->search(fn (array $item): bool => $item['original'] === 'gender');
+        $edit = fn (): TestAction => TestAction::make('editColumn')->schemaComponent('columns', schema: 'form')->arguments(['item' => $key]);
+
+        // Starts from the column; another column's name is refused.
+        $page->mountAction($edit())
+            ->assertSchemaStateSet(['name' => 'gender', 'type' => 'string', 'length' => 16, 'nullable' => true], 'mountedActionSchema0')
+            ->callMountedAction()
+            ->assertHasNoFormComponentActionErrors();
+        $page->callAction($edit(), ['name' => 'email', 'type' => 'string'])->assertHasFormComponentActionErrors(['name']);
+
+        $page->callAction($edit(), ['name' => 'sex', 'type' => 'string', 'length' => '8', 'nullable' => true])
+            ->assertHasNoFormComponentActionErrors();
+
+        $item = $page->get('data.columns')[$key];
+        $this->assertSame(['gender', 'sex'], [$item['original'], $item['name']]);
+        $this->assertEquals(8, $item['length']);
+
+        // The id cannot be edited: kept or dropped only.
+        $id = collect($page->get('data.columns'))->search(fn (array $item): bool => $item['original'] === 'id');
+        $page->assertActionHidden(TestAction::make('editColumn')->schemaComponent('columns', schema: 'form')->arguments(['item' => $id]));
+
+        $page->call('save')->assertNotified('Migration générée');
+        $code = file_get_contents($this->files('*_alter_users_table')[0]);
+        $this->assertStringContainsString("\$table->renameColumn('gender', 'sex');", $code);
+        $this->assertStringContainsString("\$table->string('sex', 8)->nullable()->change();", $code);
+    }
+
+    public function test_migrate_the_table_runs_only_its_pending_files_then_migrate_all_runs_the_rest(): void
+    {
+        $this->actingAsSuperAdmin();
+        $generator = app(MigrationGenerator::class);
+        $generator->createTable(new NewTable('invoices', [new NewColumn('number', ColumnType::String)]));
+        $generator->addColumns('users', [new NewColumn('nickname', ColumnType::String, nullable: true)]);
+        // A new request in real life: the replays memoized before the files were written are gone.
+        app()->forgetInstance(MigrationInspector::class);
+
+        Livewire::test(EditMigrationTable::class, ['record' => 'users'])
+            ->assertActionEnabled('migrateTable')
+            ->callAction('migrateTable')
+            ->assertNotified('Migrations exécutées')
+            ->assertRedirect(MigrationTableResource::getUrl('edit', ['record' => 'users']));
+
+        $this->assertTrue(Schema::hasColumn('users', 'nickname'));
+        $this->assertFalse(Schema::hasTable('invoices'));
+        $this->assertSame(0, MigrationTable::query()->where('name', 'users')->value('pending_count'));
+        $this->assertSame(1, MigrationTable::query()->where('name', 'invoices')->value('pending_count'));
+
+        app()->forgetInstance(MigrationInspector::class);
+
+        Livewire::test(EditMigrationTable::class, ['record' => 'users'])
+            ->assertActionDisabled('migrateTable')
+            ->assertActionEnabled('migrateAll')
+            ->callAction('migrateAll')
+            ->assertNotified('Migrations exécutées');
+
+        $this->assertSame(['id', 'number', 'created_at', 'updated_at'], Schema::getColumnListing('invoices'));
+
+        app()->forgetInstance(MigrationInspector::class);
+        Livewire::test(EditMigrationTable::class, ['record' => 'users'])->assertActionDisabled('migrateAll');
     }
 
     public function test_an_edit_that_changes_nothing_writes_nothing(): void

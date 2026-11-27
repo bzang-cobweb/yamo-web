@@ -41,7 +41,7 @@ return [
     */
     'generator' => [
         'enabled' => (bool) env('MIGRATION_VIEWER_GENERATOR_ENABLED', env('APP_ENV', 'production') === 'local'),
-        'path' => env('MIGRATION_VIEWER_GENERATOR_PATH', database_path('migrations/generated')),
+        'path' => env('MIGRATION_VIEWER_GENERATOR_PATH', database_path('migrations/migration-viewer')),
     ],
 
 ];
