@@ -81,7 +81,7 @@ return [
         'cta_help' => 'Der Text der Schaltfläche zu Ihrem Link. Leer: « Website besuchen ».',
         'empty' => 'Noch kein Partner.',
         'remove' => 'Entfernen',
-        'history' => 'Verlauf',
+        'history' => 'Nachrichten',
         'remove_confirm' => 'Diesen Partner entfernen?',
         'removed' => 'Partner entfernt.',
         'status' => [
@@ -100,7 +100,7 @@ return [
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'message' => [
-        'title' => 'Nachricht',
+        'title' => 'Partner-Nachricht',
         'write' => 'Schreiben',
         'field' => 'Nachricht',
         'placeholder' => 'Ihre Nachricht',

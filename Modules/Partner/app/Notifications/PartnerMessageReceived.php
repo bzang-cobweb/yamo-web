@@ -15,7 +15,8 @@ use Modules\Partner\Models\Partner;
 /**
  * Un message d'un membre d'un partenaire aux autres membres, dans le fil du partenaire (décision
  * 2026-11-27-partenaire-messages) : comme ses autres notifications, une seule dans l'onglet, à un membre qui n'est pas
- * l'auteur ; ses autres administrateurs par e-mail et SMS (`$inTab` faux). L'auteur (`user_id`) et tous les membres le
+ * l'auteur, qui l'a aussi par ses canaux ; les autres membres n'ont ni e-mail ni SMS (décision
+ * 2026-11-27-partenaire-message-sans-relais). L'auteur (`user_id`) et tous les membres le
  * lisent dans le fil, en bulles (`message`) ; « Écrire » rouvre le formulaire `partner.message`.
  */
 class PartnerMessageReceived extends Notification implements HasNotificationThread, HasNotificationUser, ShouldQueue
@@ -26,7 +27,9 @@ class PartnerMessageReceived extends Notification implements HasNotificationThre
         public readonly Partner $partner,
         public readonly User $sender,
         public readonly string $text,
-        public readonly bool $inTab = true,
+        // Gardé chez son auteur, faute d'autre membre : dans l'onglet seulement, sans e-mail ni SMS (décision
+        // 2026-11-27-partenaire-message-seul).
+        public readonly bool $ownCopy = false,
     ) {
         $this->afterCommit();
     }
@@ -77,9 +80,11 @@ class PartnerMessageReceived extends Notification implements HasNotificationThre
             return [];
         }
 
-        $channels = $notifiable->notificationChannels();
+        if ($this->ownCopy) {
+            return ['database'];
+        }
 
-        return $this->inTab ? ['database', ...$channels] : $channels;
+        return ['database', ...$notifiable->notificationChannels()];
     }
 
     /**

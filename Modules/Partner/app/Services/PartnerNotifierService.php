@@ -66,8 +66,9 @@ class PartnerNotifierService
     /**
      * Un message de `$sender` dans le fil du partenaire (décision 2026-11-27-partenaire-messages) : comme ses autres
      * notifications, une seule dans l'onglet, à un membre qui n'est pas l'auteur (l'auteur de la dernière action depuis
-     * l'app s'il est membre et n'écrit pas, sinon le premier membre rattaché, administrateurs d'abord) ; ses autres
-     * administrateurs par e-mail et SMS. Sans autre membre, rien (la politique l'empêche).
+     * l'app s'il est membre et n'écrit pas, sinon le premier membre rattaché, administrateurs d'abord) ; les autres
+     * membres n'ont ni e-mail ni SMS, ils le lisent dans le fil (décision 2026-11-27-partenaire-message-sans-relais). Sans autre membre, le message est gardé chez son auteur, déjà lu, pour rester
+     * dans le fil (décision 2026-11-27-partenaire-message-seul).
      */
     public function message(Partner $partner, User $sender, string $text): void
     {
@@ -77,10 +78,16 @@ class PartnerNotifierService
             ? $author
             : $members->first();
         if ($recipient === null) {
+            $sender->notify(new PartnerMessageReceived($partner, $sender, $text, ownCopy: true));
+            // Sa propre bulle : déjà lue, pas de pastille.
+            $sender->notifications()->where('type', PartnerMessageReceived::class)->where('thread', $partner->groupThread())->whereNull('read_at')->update(['read_at' => now()]);
+
             return;
         }
 
-        $this->send($partner, $recipient, $sender->getKey(), fn (bool $inTab): PartnerMessageReceived => new PartnerMessageReceived($partner, $sender, $text, $inTab));
+        // Au destinataire seulement : ni e-mail ni SMS aux autres membres (décision 2026-11-27-partenaire-message-sans-relais) ;
+        // ils le lisent dans le fil.
+        $recipient->notify(new PartnerMessageReceived($partner, $sender, $text));
     }
 
     /**
@@ -88,7 +95,7 @@ class PartnerNotifierService
      * e-mail et SMS seulement. Ni l'un ni l'autre s'il est celui qui agit ; un administrateur déjà destinataire ne la
      * reçoit pas deux fois.
      *
-     * @param  callable(bool): (PartnerNotification|PartnerMessageReceived)  $notification  la notification, dans l'onglet ou non
+     * @param  callable(bool): PartnerNotification  $notification  la notification, dans l'onglet ou non
      */
     private function send(Partner $partner, ?User $recipient, int|string|null $actorId, callable $notification): void
     {
@@ -103,7 +110,7 @@ class PartnerNotifierService
     }
 
     /** `$recipient` reçoit `$notification`, sauf s'il n'y en a pas ou s'il est celui qui agit. */
-    private function notifyRecipient(?User $recipient, int|string|null $actorId, PartnerNotification|PartnerMessageReceived $notification): void
+    private function notifyRecipient(?User $recipient, int|string|null $actorId, PartnerNotification $notification): void
     {
         if ($recipient === null) {
             return;

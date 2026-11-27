@@ -152,7 +152,7 @@ class MyPartnerApiTest extends TestCase
             'thread' => 'partner:group:'.$partner->getKey(), 'data' => ['title' => 'Partenaire', 'body' => 'Texte'],
         ]);
         $actions = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.actions');
-        $this->assertSame([['label' => 'Historique', 'link' => '/notifications/'.$latest->getKey()]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $actions));
+        $this->assertSame([['label' => 'Messages', 'link' => '/notifications/'.$latest->getKey()]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $actions));
         // Sa page, pas encore publiée : pour ses comptes seulement.
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();

@@ -83,7 +83,7 @@ return [
         'empty' => "Aucun partenaire pour l'instant.",
         'remove' => 'Retirer',
         // Le menu ⋮ de « Mes partenaires » : la page de son fil de notifications (décision 2026-11-27-mes-partenaires-historique).
-        'history' => 'Historique',
+        'history' => 'Messages',
         'remove_confirm' => 'Retirer ce partenaire ?',
         'removed' => 'Partenaire retiré.',
         'status' => [
@@ -103,7 +103,8 @@ return [
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     // Écrire aux autres membres d'un partenaire, dans son fil (décision 2026-11-27-partenaire-messages).
     'message' => [
-        'title' => 'Message',
+        // Le titre de la notification et son étape dans le fil, comme « Partenaire modifié » (décision 2026-11-27-partenaire-message-etape).
+        'title' => 'Partenaire message',
         'write' => 'Écrire',
         'field' => 'Message',
         'placeholder' => 'Votre message',

@@ -81,7 +81,7 @@ return [
         'cta_help' => 'The text of the button leading to your link. Empty: « Visit the website ».',
         'empty' => 'No partner yet.',
         'remove' => 'Remove',
-        'history' => 'History',
+        'history' => 'Messages',
         'remove_confirm' => 'Remove this partner?',
         'removed' => 'Partner removed.',
         'status' => [
@@ -100,7 +100,7 @@ return [
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
     'message' => [
-        'title' => 'Message',
+        'title' => 'Partner message',
         'write' => 'Write',
         'field' => 'Message',
         'placeholder' => 'Your message',
