@@ -5,15 +5,17 @@ namespace Modules\Auth\Forms;
 use Bza\Form\Enums\SuccessAction;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormLink;
 use Bza\Form\Support\Submission;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Location\Support\CurrentCountry;
 
 /**
- * Ajouter ou changer son numéro : l'actuel (indicatif et numéro) en lecture seule
+ * Ajouter ou changer son numéro : l'actuel, masqué, en lecture seule
  * s'il y en a un, le nouveau à saisir (pays + numéro). Un code part vers le nouveau
  * numéro ; rien ne change avant sa validation.
  */
@@ -32,10 +34,11 @@ class PhoneChangeForm extends Form
         $defaultCountry = CurrentCountry::get()?->code ?? $user?->phoneCountry?->code ?? $user?->country?->code;
 
         return array_values(array_filter([
-            $user?->phone === null ? null : Field::phone('current_phone')
+            // Le numéro actuel, masqué (décision 2026-11-27-email-telephone-masques).
+            $user?->phone === null ? null : Field::text('current_phone')
                 ->label(__('auth::user.current_phone'))
-                ->options($options)
-                ->default(['country' => $user->phoneCountry?->code, 'number' => PhoneNumbers::national($user->phone)])
+                ->default(Masks::phone($user->phone))
+                ->help($user->phone_verified_at === null ? __('auth::form.phone.not_verified') : null)
                 ->readonly(),
             Field::phone('phone')
                 ->label(__('auth::user.new_phone'))
@@ -43,6 +46,18 @@ class PhoneChangeForm extends Form
                 ->default(['country' => $defaultCountry, 'number' => null])
                 ->required(),
         ]));
+    }
+
+    /**
+     * Le numéro actuel non vérifié : « Renvoyer le code » (décision 2026-11-27-verifier-email-telephone).
+     */
+    public function links(): array
+    {
+        if (! $this->user instanceof User || $this->user->phone === null || $this->user->phone_verified_at !== null) {
+            return [];
+        }
+
+        return [FormLink::make(__('auth::form.phone.verify_link'), PhoneVerifyForm::name())];
     }
 
     public function title(): string

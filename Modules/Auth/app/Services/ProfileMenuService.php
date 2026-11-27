@@ -46,7 +46,11 @@ class ProfileMenuService
             ProfileMenuKey::EMERGENCY_CONTACT,
             ProfileMenuKey::IDENTITY,
         ],
+        // « Confidentialité » : visibilité, avis, données, suppression (décision 2026-11-27-confidentialite).
         'privacy' => [
+            ProfileMenuKey::PROFILE_VISIBILITY,
+            ProfileMenuKey::REVIEW_PRIVACY,
+            ProfileMenuKey::PERSONAL_DATA,
             ProfileMenuKey::DELETE_ACCOUNT,
         ],
     ];

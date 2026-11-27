@@ -4,6 +4,7 @@ namespace Modules\Offer\Providers;
 
 use Bza\Form\Support\FormRegistry;
 use Bza\Form\Support\ListingRegistry;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
@@ -43,6 +44,7 @@ use Modules\Offer\Policies\OfferPolicy;
 use Modules\Offer\Policies\OfferReviewPolicy;
 use Modules\Offer\Policies\WishlistPolicy;
 use Modules\Offer\Support\BookingCache;
+use Modules\Offer\Support\MemberVisibility;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 /**
@@ -97,9 +99,12 @@ class OfferServiceProvider extends ModuleServiceProvider
         Gate::policy(OfferReview::class, OfferReviewPolicy::class);
         Gate::policy(Booking::class, BookingPolicy::class);
         Gate::policy(Wishlist::class, WishlistPolicy::class);
-        // La page d'un membre : tout compte connecté (décision 2026-11-19-page-membre) ; la règle a son domicile
-        // ici, la route porte sa garde (décision 2026-11-24-partenaires-policy-routes).
-        Gate::define('viewMember', fn (User $viewer, User $member): bool => true);
+        // La page d'un membre : un compte connecté que sa « Visibilité du profil » admet, sinon 404 (décisions
+        // 2026-11-19-page-membre et 2026-11-27-confidentialite) ; la règle a son domicile ici, la route porte sa garde
+        // (décision 2026-11-24-partenaires-policy-routes).
+        Gate::define('viewMember', fn (User $viewer, User $member): Response => MemberVisibility::allows($viewer, $member)
+            ? Response::allow()
+            : Response::denyAsNotFound());
 
         // Formulaire et liste servis à l'app : indisponibles (404) sans domaine choisi.
         $this->app->make(FormRegistry::class)->register(OfferForm::class);

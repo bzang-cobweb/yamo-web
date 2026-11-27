@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\Api\AccountController;
 use Modules\Auth\Http\Controllers\Api\EmailChangeController;
+use Modules\Auth\Http\Controllers\Api\EmailVerificationController;
 use Modules\Auth\Http\Controllers\Api\EmergencyContactController;
 use Modules\Auth\Http\Controllers\Api\IdentityController;
 use Modules\Auth\Http\Controllers\Api\LoginController;
@@ -10,13 +11,17 @@ use Modules\Auth\Http\Controllers\Api\LogoutController;
 use Modules\Auth\Http\Controllers\Api\NotificationSettingsController;
 use Modules\Auth\Http\Controllers\Api\PasswordController;
 use Modules\Auth\Http\Controllers\Api\PasswordResetController;
+use Modules\Auth\Http\Controllers\Api\PersonalDataController;
 use Modules\Auth\Http\Controllers\Api\PersonalInfoController;
 use Modules\Auth\Http\Controllers\Api\PhoneChangeController;
+use Modules\Auth\Http\Controllers\Api\PhoneVerificationController;
 use Modules\Auth\Http\Controllers\Api\PreferencesController;
 use Modules\Auth\Http\Controllers\Api\ProfileController;
 use Modules\Auth\Http\Controllers\Api\ProfileMenuController;
+use Modules\Auth\Http\Controllers\Api\ProfileVisibilityController;
 use Modules\Auth\Http\Controllers\Api\RegisterController;
 use Modules\Auth\Http\Controllers\Api\ResidenceController;
+use Modules\Auth\Http\Controllers\Api\ReviewPrivacyController;
 use Modules\Auth\Http\Controllers\Api\UserAddressController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
 use Modules\Auth\Models\User;
@@ -58,7 +63,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::get('me', [ProfileController::class, 'show'])->can('me', User::class)->name('me');
         Route::get('me/menu', [ProfileMenuController::class, 'index'])->can('me', User::class)->name('me.menu');
         Route::get('me/menu/{menu}', [ProfileMenuController::class, 'show'])->can('me', User::class)->name('me.menu.show');
-        Route::delete('me', [AccountController::class, 'destroy'])->can('deleteMe', User::class)->name('me.destroy');
+        Route::delete('me', [AccountController::class, 'destroy'])->can('deleteMe', User::class)->middleware('throttle:auth-codes')->name('me.destroy');
         Route::patch('me/personal-info', [PersonalInfoController::class, 'update'])->can('updateMe', User::class)->name('me.personal-info.update');
         Route::put('me/password', [PasswordController::class, 'update'])->can('updateMe', User::class)->name('me.password.update');
         Route::post('me/identity', [IdentityController::class, 'update'])->can('updateMe', User::class)->name('me.identity.update');
@@ -70,6 +75,13 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
         Route::post('me/email', [EmailChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.store');
         Route::post('me/phone', [PhoneChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phone.store');
+        // Vérifier l'e-mail ou le numéro actuel (décision 2026-11-27-verifier-email-telephone).
+        Route::post('me/email/verify', [EmailVerificationController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.verify');
+        Route::post('me/phone/verify', [PhoneVerificationController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phone.verify');
+        // Confidentialité (décision 2026-11-27-confidentialite).
+        Route::patch('me/privacy/visibility', [ProfileVisibilityController::class, 'update'])->can('updateMe', User::class)->name('me.privacy.visibility.update');
+        Route::patch('me/privacy/reviews', [ReviewPrivacyController::class, 'update'])->can('updateMe', User::class)->name('me.privacy.reviews.update');
+        Route::post('me/personal-data', [PersonalDataController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:3,60')->name('me.personal-data.store');
 
         // Adresses du compte (décisions 2026-11-18-adresse-du-compte-modele et
         // 2026-11-18-useraddress-dans-auth). Celle d'un autre compte répond 404

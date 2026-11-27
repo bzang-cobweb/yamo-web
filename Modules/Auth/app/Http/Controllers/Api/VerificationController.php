@@ -10,6 +10,8 @@ use Modules\Auth\Http\Requests\ResendCodeRequest;
 use Modules\Auth\Http\Requests\VerifyCodeRequest;
 use Modules\Auth\Http\Resources\UserResource;
 use Modules\Auth\Models\User;
+use Modules\Auth\Services\AccountDeletionService;
+use Modules\Auth\Services\ContactVerificationService;
 use Modules\Auth\Services\EmailChangeService;
 use Modules\Auth\Services\LoginService;
 use Modules\Auth\Services\PasswordResetService;
@@ -19,7 +21,7 @@ use Modules\Auth\Services\VerificationCodeService;
 
 /**
  * Codes de vérification (formulaire `auth.code`) : connexion, inscription,
- * changement d'e-mail ou de téléphone.
+ * changement ou vérification d'e-mail ou de téléphone, suppression du compte.
  */
 class VerificationController
 {
@@ -29,6 +31,8 @@ class VerificationController
      * - inscription dont tous les codes sont validés : 201, le compte créé et son jeton ;
      * - inscription avec un autre code attendu : 202 et le prochain code à saisir ;
      * - changement d'e-mail ou de téléphone (connecté) : l'utilisateur à jour ;
+     * - vérification de l'e-mail ou du téléphone actuel (connecté) : l'utilisateur à jour ;
+     * - suppression du compte (connecté) : le compte supprimé (l'app déconnecte) ;
      * - mot de passe oublié : `{next: "password", challenge}`, puis
      *   `POST /auth/password/reset`.
      *
@@ -42,6 +46,8 @@ class VerificationController
         EmailChangeService $emailChange,
         PhoneChangeService $phoneChange,
         PasswordResetService $passwordReset,
+        ContactVerificationService $contactVerification,
+        AccountDeletionService $accountDeletion,
     ): UserResource|JsonResponse {
         /** @var User|null $actingUser */
         $actingUser = $request->user('sanctum');
@@ -56,6 +62,8 @@ class VerificationController
             VerificationPurpose::CHANGE_EMAIL => $emailChange->complete($verified),
             VerificationPurpose::CHANGE_PHONE => $phoneChange->complete($verified),
             VerificationPurpose::RESET_PASSWORD => $passwordReset->confirm($verified),
+            VerificationPurpose::VERIFY_EMAIL, VerificationPurpose::VERIFY_PHONE => $contactVerification->complete($verified),
+            VerificationPurpose::DELETE_ACCOUNT => $accountDeletion->complete($verified),
         };
 
         if ($result instanceof User) {

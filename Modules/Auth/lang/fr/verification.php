@@ -15,5 +15,7 @@ return [
         'exhausted' => 'Trop d\'essais. Demandez un nouveau code.',
         'wrong' => 'Code incorrect.',
         'too_soon' => 'Patientez une minute avant de demander un nouveau code.',
+        'already_verified' => 'Déjà vérifié.',
+        'missing' => 'Rien à vérifier : ajoutez-le d\'abord.',
     ],
 ];

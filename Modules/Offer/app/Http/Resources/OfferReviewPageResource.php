@@ -27,7 +27,7 @@ class OfferReviewPageResource extends JsonResource
     }
 
     /**
-     * @return array{items: list<array{id: string, author: string, rating: int, comment: string, created_at: string|null}>, next_cursor: string|null, title: string|null, heading: string|null}
+     * @return array{items: list<array{id: string, author: string, author_location: string|null, rating: int, comment: string, created_at: string|null}>, next_cursor: string|null, title: string|null, heading: string|null}
      */
     public function toArray(Request $request): array
     {

@@ -31,6 +31,7 @@ use Modules\Auth\Services\AvatarService;
 use Modules\Auth\Services\IdentityDocumentService;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\NotificationSettings;
+use Modules\Auth\Support\PrivacySettings;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Spatie\Image\Enums\Fit;
@@ -74,6 +75,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'identified_at' => 'datetime',
             'identity_document_type' => IdentityDocumentType::class,
             'notification_settings' => 'array',
+            'privacy_settings' => 'array',
         ];
     }
 
@@ -276,6 +278,35 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     public function notificationSettings(): array
     {
         return NotificationSettings::resolve($this->notification_settings);
+    }
+
+    /**
+     * Ses réglages de confidentialité, complétés par les défauts (décision 2026-11-27-confidentialite).
+     *
+     * @return array{profile_visibility: string, review_location: bool}
+     */
+    public function privacySettings(): array
+    {
+        return PrivacySettings::resolve($this->privacy_settings);
+    }
+
+    /**
+     * Son lieu sous ses avis, « Ville, Région, Pays » (ce qui est connu), s'il l'autorise ; `null` sinon (décision
+     * 2026-11-27-confidentialite). La ville : celle de sa première adresse, comme sur sa page publique.
+     */
+    public function reviewLocation(?string $locale = null): ?string
+    {
+        if (! $this->privacySettings()[PrivacySettings::REVIEW_LOCATION]) {
+            return null;
+        }
+
+        $parts = array_filter([
+            trim((string) $this->addresses()->with('address')->first()?->address?->city),
+            trim((string) $this->region?->getTranslation('name', $locale ?? app()->getLocale())),
+            trim((string) $this->country?->getTranslation('name', $locale ?? app()->getLocale())),
+        ], fn (string $part): bool => $part !== '');
+
+        return $parts === [] ? null : implode(', ', array_unique($parts));
     }
 
     /**

@@ -26,10 +26,21 @@ return [
     'email' => [
         'add' => 'E-Mail-Adresse hinzufügen',
         'change' => 'E-Mail-Adresse ändern',
+        // Vérifier l'adresse actuelle (décision 2026-11-27-verifier-email-telephone).
+        'verify_link' => 'Meine Adresse bestätigen',
+        'verify_title' => 'Meine E-Mail-Adresse bestätigen',
+        'verify_subtitle' => 'An diese Adresse wird ein Code gesendet.',
+        'verified' => 'E-Mail-Adresse bestätigt.',
+        'not_verified' => 'Diese Adresse ist noch nicht bestätigt.',
     ],
     'phone' => [
         'add' => 'Telefonnummer hinzufügen',
         'change' => 'Telefonnummer ändern',
+        'verify_link' => 'Code erneut senden',
+        'verify_title' => 'Meine Nummer bestätigen',
+        'verify_subtitle' => 'An diese Nummer wird ein Code per SMS gesendet.',
+        'verified' => 'Telefonnummer bestätigt.',
+        'not_verified' => 'Diese Nummer ist noch nicht bestätigt.',
     ],
     'password_forgot' => [
         'title' => 'Passwort vergessen',
@@ -56,7 +67,10 @@ return [
     ],
     'delete_account' => [
         'title' => 'Mein Konto löschen',
-        'warning' => 'Ihr Konto wird deaktiviert und Ihre Geräte werden abgemeldet. Es wird in :days Tagen endgültig gelöscht, mit Ihren Daten und Ihrem Foto; bis dahin können Sie uns kontaktieren, um es wiederherzustellen. Bestätigen Sie mit Ihrem Passwort.',
+        'warning' => 'Ihr Konto wird deaktiviert und Ihre Geräte werden abgemeldet. Es wird in :days Tagen endgültig gelöscht, mit Ihren Daten und Ihrem Foto; bis dahin melden Sie sich erneut an, um es wiederherzustellen. Sagen Sie uns, warum Sie gehen: Danach erhalten Sie einen Code zur Bestätigung.',
+        'reason' => 'Warum gehen Sie?',
+        'reason_help' => 'Ihre Antwort wird von unserem Team gelesen und hilft uns, yamo zu verbessern.',
+        'no_destination' => 'Fügen Sie eine E-Mail-Adresse oder eine Telefonnummer hinzu, um den Bestätigungscode zu erhalten.',
         'submit' => 'Mein Konto löschen',
         'last_super_admin' => 'Sie sind der letzte Super-Administrator: Ernennen Sie einen anderen, bevor Sie Ihr Konto löschen.',
         'purged' => ':count Konto/Konten endgültig gelöscht.',

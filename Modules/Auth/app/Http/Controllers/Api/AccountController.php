@@ -2,7 +2,7 @@
 
 namespace Modules\Auth\Http\Controllers\Api;
 
-use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 use Modules\Auth\Http\Requests\DeleteAccountRequest;
 use Modules\Auth\Http\Requests\RestoreAccountRequest;
 use Modules\Auth\Http\Resources\UserResource;
@@ -16,19 +16,19 @@ use Modules\Auth\Services\AccountDeletionService;
 class AccountController
 {
     /**
-     * Supprimer son compte, après confirmation par le mot de passe. Le compte
-     * est désactivé et tous ses appareils déconnectés ; il est purgé après le
-     * délai réglé (`AUTH_ACCOUNT_DELETION_GRACE_DAYS`). Le dernier super
+     * Demander la suppression de son compte, avec sa raison (obligatoire) : un code part à l'e-mail vérifié, sinon au
+     * numéro vérifié (202). Sa validation par `POST /auth/codes/verify` désactive le compte et déconnecte tous ses
+     * appareils ; il est purgé après le délai réglé (`AUTH_ACCOUNT_DELETION_GRACE_DAYS`). Le dernier super
      * administrateur est refusé (422).
+     *
+     * @response 202 array{challenge: string, channel: 'email'|'sms', destination: string}
      */
-    public function destroy(DeleteAccountRequest $request, AccountDeletionService $service): Response
+    public function destroy(DeleteAccountRequest $request, AccountDeletionService $service): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $service->delete($user);
-
-        return response()->noContent();
+        return response()->json($service->start($user, (string) $request->validated('reason')), 202);
     }
 
     /**

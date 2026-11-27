@@ -118,7 +118,8 @@ class OfferReviewListing extends Listing
         /** @var OfferReview $record */
         // La date formatée par le serveur, comme sur la fiche (décision 2026-11-25-dates-formatees-serveur).
         return ListItem::make($record->getKey(), (string) ($record->user?->first_name ?: $record->user?->name ?? ''), $record->comment)
-            ->detail(DisplayTime::date($record->created_at, 'll', $this->locale()))
+            // Le lieu de l'auteur, s'il l'autorise, avant la date (décision 2026-11-27-confidentialite).
+            ->detail(implode(' · ', array_filter([$record->user?->reviewLocation($this->locale()), DisplayTime::date($record->created_at, 'll', $this->locale())])))
             ->rating($record->rating, 1)
             // Comme sur la fiche : le prénom, « ★★★★★ · 18 nov. 2026 », le commentaire.
             ->reviewLayout();

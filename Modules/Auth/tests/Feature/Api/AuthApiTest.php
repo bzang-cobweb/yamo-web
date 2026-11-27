@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Tests\TestCase;
 
@@ -81,6 +82,12 @@ class AuthApiTest extends TestCase
                 'phone' => null,
                 'phone_international' => null,
                 'phone_country' => null,
+                // Masqués pour l'affichage (décision 2026-11-27-email-telephone-masques) ; le code reçu par e-mail
+                // vérifie l'adresse (décision 2026-11-27-verifier-email-telephone).
+                'email_masked' => Masks::email($user->email),
+                'phone_masked' => null,
+                'email_verified' => true,
+                'phone_verified' => false,
                 'last_seen_at' => null,
                 'is_online' => false,
                 'locale' => 'en',

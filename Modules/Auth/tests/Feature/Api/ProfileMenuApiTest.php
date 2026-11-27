@@ -71,12 +71,19 @@ class ProfileMenuApiTest extends TestCase
         $this->assertSame(['ios' => 'envelope', 'android' => 'mail'], $submenu['data'][1]['icon']);
     }
 
-    public function test_the_privacy_submenu_holds_the_account_deletion(): void
+    public function test_the_privacy_submenu_holds_visibility_reviews_data_and_the_account_deletion(): void
     {
         $submenu = $this->submenu($this->user(), 'privacy');
 
+        // Décision 2026-11-27-confidentialite.
         $this->assertSame('Confidentialité', $submenu['title']);
-        $this->assertContains('auth.profile.delete-account', array_column($submenu['data'], 'form'));
+        $this->assertSame(['profile-visibility', 'review-privacy', 'personal-data', 'delete-account'], array_column($submenu['data'], 'key'));
+        $this->assertSame(['Visibilité du profil', 'Avis', 'Mes données', 'Supprimer mon compte'], array_column($submenu['data'], 'label'));
+        $this->assertSame(
+            ['auth.profile.privacy.visibility', 'auth.profile.privacy.reviews', 'auth.profile.privacy.data', 'auth.profile.delete-account'],
+            array_column($submenu['data'], 'form'),
+        );
+        $this->assertSame(['ios' => 'eye', 'android' => 'visibility'], $submenu['data'][0]['icon']);
     }
 
     public function test_an_unknown_submenu_or_a_link_that_is_not_one_is_not_found(): void

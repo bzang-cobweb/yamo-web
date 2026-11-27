@@ -15,5 +15,7 @@ return [
         'exhausted' => 'Too many attempts. Request a new code.',
         'wrong' => 'Incorrect code.',
         'too_soon' => 'Wait a minute before requesting a new code.',
+        'already_verified' => 'Already verified.',
+        'missing' => 'Nothing to verify: add it first.',
     ],
 ];

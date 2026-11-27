@@ -80,6 +80,11 @@ final class LoginService
             $user->forceFill(['phone_verified_at' => now()])->save();
         }
 
+        // De même, le code reçu par e-mail prouve l'adresse (décision 2026-11-27-verifier-email-telephone).
+        if ($verified->channel === VerificationChannel::EMAIL && $user->email_verified_at === null && $user->email === $verified->destination) {
+            $user->forceFill(['email_verified_at' => now()])->save();
+        }
+
         $this->codeService->close($verified->challenge);
 
         return ['user' => $user, 'token' => Challenges::token($user, $deviceName)];

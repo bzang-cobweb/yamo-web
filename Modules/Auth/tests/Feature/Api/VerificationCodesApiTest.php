@@ -9,6 +9,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Auth\Mail\VerificationCodeMail;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Modules\Location\Models\Country;
 use Tests\TestCase;
@@ -488,14 +489,15 @@ class VerificationCodesApiTest extends TestCase
             ->assertJsonPath('data.title', "Changer d'adresse e-mail")
             ->assertJsonPath('data.fields.0.name', 'current_email')
             ->assertJsonPath('data.fields.0.readonly', true)
-            ->assertJsonPath('data.fields.0.default', 'jeanne@example.com')
+            ->assertJsonPath('data.fields.0.default', Masks::email($user->email))
             ->assertJsonPath('data.fields.1.name', 'email');
 
         $this->withToken($token)->getJson('/api/v1/forms/auth.profile.phone')->assertOk()
             ->assertJsonPath('data.fields.0.name', 'current_phone')
-            ->assertJsonPath('data.fields.0.type', 'phone')
+            // Masqué (décision 2026-11-27-email-telephone-masques).
+            ->assertJsonPath('data.fields.0.type', 'text')
             ->assertJsonPath('data.fields.0.readonly', true)
-            ->assertJsonPath('data.fields.0.default.country', 'CH');
+            ->assertJsonPath('data.fields.0.default', Masks::phone($user->phone));
 
         $newcomer = User::factory()->create(['email' => null, 'phone' => '+41791234500', 'locale' => 'fr']);
         $this->app['auth']->forgetGuards();

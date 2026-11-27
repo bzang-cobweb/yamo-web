@@ -5,13 +5,15 @@ namespace Modules\Auth\Forms;
 use Bza\Form\Enums\SuccessAction;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormLink;
 use Bza\Form\Support\Submission;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
+use Modules\Auth\Support\Masks;
 
 /**
- * Ajouter ou changer son adresse e-mail : l'actuelle en lecture seule (s'il y en
+ * Ajouter ou changer son adresse e-mail : l'actuelle, masquée, en lecture seule (s'il y en
  * a une), la nouvelle à saisir. Un code part vers la nouvelle adresse ; rien ne
  * change avant sa validation.
  */
@@ -27,9 +29,24 @@ class EmailChangeForm extends Form
         $current = $this->user instanceof User ? $this->user->email : null;
 
         return array_values(array_filter([
-            $current === null ? null : Field::email('current_email')->label(__('auth::user.current_email'))->default($current)->readonly(),
+            // L'adresse actuelle, masquée (décision 2026-11-27-email-telephone-masques).
+            $current === null ? null : Field::text('current_email')->label(__('auth::user.current_email'))->default(Masks::email($current))
+                ->help($this->user instanceof User && $this->user->email_verified_at === null ? __('auth::form.email.not_verified') : null)
+                ->readonly(),
             Field::email('email')->label(__('auth::user.new_email'))->required()->rules(['max:255']),
         ]));
+    }
+
+    /**
+     * L'adresse actuelle non vérifiée : « Vérifier mon adresse » (décision 2026-11-27-verifier-email-telephone).
+     */
+    public function links(): array
+    {
+        if (! $this->user instanceof User || $this->user->email === null || $this->user->email_verified_at !== null) {
+            return [];
+        }
+
+        return [FormLink::make(__('auth::form.email.verify_link'), EmailVerifyForm::name())];
     }
 
     public function title(): string

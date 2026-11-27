@@ -10,10 +10,13 @@ use Modules\Auth\Forms\EmergencyContactForm;
 use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\NotificationSettingsForm;
 use Modules\Auth\Forms\PasswordForm;
+use Modules\Auth\Forms\PersonalDataForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
+use Modules\Auth\Forms\ProfileVisibilityForm;
 use Modules\Auth\Forms\ResidenceForm;
+use Modules\Auth\Forms\ReviewPrivacyForm;
 use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
@@ -43,6 +46,10 @@ enum ProfileMenuKey: string
     case EMERGENCY_CONTACT = 'emergency-contact';
     /** « Confidentialité » : un sous-menu. */
     case PRIVACY = 'privacy';
+    /** Dans « Confidentialité » : qui voit le profil, le lieu sous les avis, demander ses données (décision 2026-11-27-confidentialite). */
+    case PROFILE_VISIBILITY = 'profile-visibility';
+    case REVIEW_PRIVACY = 'review-privacy';
+    case PERSONAL_DATA = 'personal-data';
     case DELETE_ACCOUNT = 'delete-account';
     /** Les choix de notifications (décision 2026-11-27-notifications-du-profil). */
     case NOTIFICATIONS = 'notifications';
@@ -64,6 +71,9 @@ enum ProfileMenuKey: string
             self::PASSWORD => PasswordForm::class,
             self::RESIDENCE => ResidenceForm::class,
             self::EMERGENCY_CONTACT => EmergencyContactForm::class,
+            self::PROFILE_VISIBILITY => ProfileVisibilityForm::class,
+            self::REVIEW_PRIVACY => ReviewPrivacyForm::class,
+            self::PERSONAL_DATA => PersonalDataForm::class,
             self::DELETE_ACCOUNT => DeleteAccountForm::class,
             self::NOTIFICATIONS => NotificationSettingsForm::class,
             self::PREFERENCES => PreferencesForm::class,
@@ -147,6 +157,9 @@ enum ProfileMenuKey: string
             self::RESIDENCE => ['house', 'home'],
             self::EMERGENCY_CONTACT => ['cross.case', 'emergency'],
             self::PRIVACY => ['lock', 'lock'],
+            self::PROFILE_VISIBILITY => ['eye', 'visibility'],
+            self::REVIEW_PRIVACY => ['star.bubble', 'reviews'],
+            self::PERSONAL_DATA => ['square.and.arrow.down', 'download'],
             self::DELETE_ACCOUNT => ['trash', 'delete'],
             self::NOTIFICATIONS => ['bell', 'notifications'],
             self::PREFERENCES => ['gearshape', 'settings'],
@@ -183,6 +196,9 @@ enum ProfileMenuKey: string
             self::RESIDENCE => 'residence',
             self::EMERGENCY_CONTACT => 'emergencyContact',
             self::PRIVACY => 'privacy',
+            self::PROFILE_VISIBILITY => 'profileVisibility',
+            self::REVIEW_PRIVACY => 'reviewPrivacy',
+            self::PERSONAL_DATA => 'personalData',
             self::DELETE_ACCOUNT => 'deleteAccount',
             self::NOTIFICATIONS => 'notifications',
             self::PREFERENCES => 'preferences',

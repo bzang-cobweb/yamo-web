@@ -15,5 +15,7 @@ return [
         'exhausted' => 'Zu viele Versuche. Fordern Sie einen neuen Code an.',
         'wrong' => 'Falscher Code.',
         'too_soon' => 'Warten Sie eine Minute, bevor Sie einen neuen Code anfordern.',
+        'already_verified' => 'Bereits bestätigt.',
+        'missing' => 'Nichts zu bestätigen: Fügen Sie es zuerst hinzu.',
     ],
 ];

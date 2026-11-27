@@ -41,7 +41,7 @@ class OfferDetailResource extends JsonResource
     private array $sections = [];
 
     /**
-     * @return array{id: string, title: string, composed_title: string|null, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string, tone: string}|null, favorite: array{active: bool, endpoint: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: float, comment: string, created_at: string|null}>, mine: array{rating: float, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
+     * @return array{id: string, title: string, composed_title: string|null, price: array{label: string, value: string}|null, location: string|null, address: string|null, indication: string|null, photos: list<string>, description: string|null, facts: list<array{label: string, value: string}>, rules: list<array{label: string, value: string}>, informations: list<array{id: string, title: string, description: string}>, sections: list<array{key: string, open: bool}>, published_at: string|null, status: array{value: string, label: string, tone: string}|null, favorite: array{active: bool, endpoint: string}|null, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null, reviews: array{average: float|null, count: int, latest: list<array{id: string, author: string, author_location: string|null, rating: float, comment: string, created_at: string|null}>, mine: array{rating: float, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null}
      */
     public function toArray(Request $request): array
     {
@@ -146,7 +146,7 @@ class OfferDetailResource extends JsonResource
     }
 
     /**
-     * @return array{average: float|null, count: int, latest: list<array{id: string, author: string, rating: float, comment: string, created_at: string|null}>, mine: array{rating: float, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null
+     * @return array{average: float|null, count: int, latest: list<array{id: string, author: string, author_location: string|null, rating: float, comment: string, created_at: string|null}>, mine: array{rating: float, comment: string}|null, can_review: bool, delete: array{label: string, confirm: string, method: string, endpoint: string, destructive: bool, success: array{action: string, message: string}}|null}|null
      */
     private function reviews(Offer $offer, Request $request): ?array
     {

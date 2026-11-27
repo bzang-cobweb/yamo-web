@@ -26,10 +26,21 @@ return [
     'email' => [
         'add' => 'Add an email address',
         'change' => 'Change email address',
+        // Vérifier l'adresse actuelle (décision 2026-11-27-verifier-email-telephone).
+        'verify_link' => 'Verify my address',
+        'verify_title' => 'Verify my email address',
+        'verify_subtitle' => 'A code will be sent to this address.',
+        'verified' => 'Email address verified.',
+        'not_verified' => 'This address is not verified yet.',
     ],
     'phone' => [
         'add' => 'Add a phone number',
         'change' => 'Change phone number',
+        'verify_link' => 'Resend the code',
+        'verify_title' => 'Verify my number',
+        'verify_subtitle' => 'A code will be sent by SMS to this number.',
+        'verified' => 'Phone number verified.',
+        'not_verified' => 'This number is not verified yet.',
     ],
     'password_forgot' => [
         'title' => 'Forgot password',
@@ -56,7 +67,10 @@ return [
     ],
     'delete_account' => [
         'title' => 'Delete my account',
-        'warning' => 'Your account will be deactivated and your devices signed out. It will be permanently deleted, with your data and photo, in :days days; until then, contact us to recover it. Confirm with your password.',
+        'warning' => 'Your account will be deactivated and your devices signed out. It will be permanently deleted, with your data and photo, in :days days; until then, sign in again to recover it. Tell us why you are leaving: a code will then be sent to you to confirm.',
+        'reason' => 'Why are you leaving?',
+        'reason_help' => 'Your answer is read by our team and helps us improve yamo.',
+        'no_destination' => 'Add an email address or a phone number to receive the confirmation code.',
         'submit' => 'Delete my account',
         'last_super_admin' => 'You are the last super administrator: appoint another one before deleting your account.',
         'purged' => ':count account(s) purged.',

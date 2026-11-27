@@ -9,7 +9,8 @@ use Bza\Form\Support\Submission;
 
 /**
  * Supprimer son compte, depuis le profil de l'app mobile
- * (`DELETE /api/v1/auth/me`) : un avertissement, puis le mot de passe actuel.
+ * (`DELETE /api/v1/auth/me`) : un avertissement, puis la raison (obligatoire) ; un code part ensuite à l'e-mail
+ * vérifié, sinon au numéro vérifié, et sa validation supprime le compte (décision 2026-11-27-confidentialite).
  */
 class DeleteAccountForm extends Form
 {
@@ -21,11 +22,11 @@ class DeleteAccountForm extends Form
     public function fields(): array
     {
         return [
-            // `current_password` vise le garde de la requête : sanctum sur l'API.
-            Field::password('current_password')
-                ->label(__('auth::user.current_password'))
-                ->required()
-                ->rules(['current_password']),
+            // La raison, obligatoire, gardée pour l'équipe (décision 2026-11-27-confidentialite).
+            Field::textarea('reason')
+                ->label(__('auth::form.delete_account.reason'))
+                ->help(__('auth::form.delete_account.reason_help'))
+                ->required(),
         ];
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Modules\Auth\Database\Seeders\AuthDatabaseSeeder;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
 use Modules\Location\Models\Country;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -16,7 +17,7 @@ use Tests\TestCase;
 
 /**
  * Suppression de son compte depuis l'app (`DELETE /api/v1/auth/me`) :
- * confirmée par le mot de passe, récupérable pendant le délai réglé, puis purgée
+ * une raison, puis un code (décision 2026-11-27-confidentialite), récupérable pendant le délai réglé, puis purgée
  * (décision 2026-11-20-suppression-de-son-compte).
  */
 class AccountDeletionApiTest extends TestCase
@@ -36,40 +37,98 @@ class AccountDeletionApiTest extends TestCase
         return User::factory()->create(['email' => 'jeanne@example.com', 'password' => 'secret-password', 'locale' => 'fr', ...$attributes]);
     }
 
-    public function test_the_form_warns_with_the_configured_delay_and_asks_for_the_password(): void
+    public function test_the_form_warns_with_the_configured_delay_and_asks_for_a_reason(): void
     {
         config(['auth.account_deletion.grace_days' => 14]);
         $user = $this->user();
 
+        // Une raison obligatoire, plus de mot de passe (décision 2026-11-27-confidentialite).
         $this->withToken($user->createToken('test')->plainTextToken)
             ->withHeader('Accept-Language', 'fr')
             ->getJson('/api/v1/forms/auth.profile.delete-account')
             ->assertOk()
             ->assertJsonPath('data.title', 'Supprimer mon compte')
-            ->assertJsonPath('data.fields.0.name', 'current_password')
-            ->assertJsonPath('data.fields.0.type', 'password')
+            ->assertJsonCount(1, 'data.fields')
+            ->assertJsonPath('data.fields.0.name', 'reason')
+            ->assertJsonPath('data.fields.0.type', 'textarea')
+            ->assertJsonPath('data.fields.0.required', true)
+            ->assertJsonPath('data.submit.success.action', 'sign-out')
             ->assertJson(fn ($json) => $json->where('data.subtitle', fn (string $subtitle) => str_contains($subtitle, '14 jours'))->etc());
     }
 
-    public function test_deleting_with_the_password_deactivates_the_account_and_signs_out_every_device(): void
+    public function test_deleting_with_a_reason_and_the_code_deactivates_the_account_and_signs_out_every_device(): void
     {
-        $user = $this->user();
+        $user = $this->user(['email_verified_at' => now()]);
         $token = $user->createToken('phone')->plainTextToken;
         $user->createToken('tablet');
 
-        $this->withToken($token)->deleteJson('/api/v1/auth/me', ['current_password' => 'secret-password'])->assertNoContent();
+        // La raison, puis un code à l'e-mail vérifié : rien n'est supprimé avant sa validation.
+        $challenge = $this->withToken($token)->deleteJson('/api/v1/auth/me', ['reason' => 'Je pars en voyage.'])
+            ->assertAccepted()
+            ->assertJsonPath('channel', 'email')
+            ->assertJsonPath('destination', Masks::email($user->email))
+            ->json('challenge');
+        $this->assertNotSoftDeleted($user);
+
+        $this->withToken($token)->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode($user->email)])
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->getKey())
+            ->assertJsonMissingPath('token');
 
         $this->assertSoftDeleted($user);
         $this->assertSame(0, $user->tokens()->count());
+        // La raison, gardée pour l'équipe.
+        $this->assertDatabaseHas('account_deletion_reasons', ['user_id' => $user->getKey(), 'reason' => 'Je pars en voyage.']);
 
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
         // Se reconnecter ne rouvre pas la session : l'app propose de récupérer le compte.
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])
             ->assertAccepted()->json('challenge');
-        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])
+        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode($user->email)])
             ->assertOk()->assertJsonPath('next', 'restore')->assertJsonMissingPath('token');
         $this->assertSoftDeleted($user);
+    }
+
+    public function test_the_code_goes_to_the_verified_phone_when_the_email_is_not_verified(): void
+    {
+        $country = Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
+        $user = $this->user(['phone' => '+41791234567', 'phone_country_id' => $country->getKey(), 'phone_verified_at' => now(), 'email_verified_at' => null]);
+
+        $this->withToken($user->createToken('test')->plainTextToken)->deleteJson('/api/v1/auth/me', ['reason' => 'Plus besoin.'])
+            ->assertAccepted()
+            ->assertJsonPath('channel', 'sms')
+            ->assertJsonPath('destination', Masks::phone('+41791234567'));
+    }
+
+    public function test_the_reason_is_required_and_the_code_must_be_right(): void
+    {
+        $user = $this->user(['email_verified_at' => now()]);
+        $token = $user->createToken('test')->plainTextToken;
+
+        $this->withToken($token)->deleteJson('/api/v1/auth/me', ['reason' => ''])
+            ->assertUnprocessable()->assertJsonValidationErrors('reason');
+
+        $challenge = $this->withToken($token)->deleteJson('/api/v1/auth/me', ['reason' => 'Trop de messages.'])->assertAccepted()->json('challenge');
+        $this->withToken($token)->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode($user->email) === '000000' ? '111111' : '000000'])
+            ->assertUnprocessable()->assertJsonValidationErrors('code');
+
+        $this->assertNotSoftDeleted($user);
+        $this->assertDatabaseCount('account_deletion_reasons', 0);
+    }
+
+    public function test_another_account_cannot_validate_the_deletion_code(): void
+    {
+        $user = $this->user(['email_verified_at' => now()]);
+        $other = User::factory()->create();
+
+        $challenge = $this->withToken($user->createToken('test')->plainTextToken)->deleteJson('/api/v1/auth/me', ['reason' => 'Au revoir.'])->json('challenge');
+        $this->app['auth']->forgetGuards();
+        $this->withToken($other->createToken('test')->plainTextToken)
+            ->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode($user->email)])
+            ->assertUnprocessable()->assertJsonValidationErrors('code');
+
+        $this->assertNotSoftDeleted($user);
     }
 
     public function test_the_owner_recovers_the_account_after_signing_in(): void
@@ -127,46 +186,34 @@ class AccountDeletionApiTest extends TestCase
             ->assertOk()->assertJsonPath('next', 'register');
     }
 
-    public function test_a_wrong_password_is_refused_and_the_account_stays(): void
-    {
-        $user = $this->user();
-
-        $this->withToken($user->createToken('test')->plainTextToken)
-            ->deleteJson('/api/v1/auth/me', ['current_password' => 'wrong'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('current_password');
-
-        $this->assertNotSoftDeleted($user);
-    }
-
     public function test_a_guest_cannot_delete_an_account(): void
     {
-        $this->deleteJson('/api/v1/auth/me', ['current_password' => 'x'])->assertUnauthorized();
+        $this->deleteJson('/api/v1/auth/me', ['reason' => 'x'])->assertUnauthorized();
     }
 
     public function test_the_last_super_admin_cannot_delete_their_account(): void
     {
-        $admin = $this->user();
+        $admin = $this->user(['email_verified_at' => now()]);
         $admin->assignRole(RoleEnum::SUPER_ADMIN);
 
         $this->withToken($admin->createToken('test')->plainTextToken)
             ->withHeader('Accept-Language', 'fr')
-            ->deleteJson('/api/v1/auth/me', ['current_password' => 'secret-password'])
+            ->deleteJson('/api/v1/auth/me', ['reason' => 'Je pars.'])
             ->assertUnprocessable()
-            ->assertJsonPath('errors.current_password.0', 'Vous êtes le dernier super administrateur : nommez-en un autre avant de supprimer votre compte.');
+            ->assertJsonPath('errors.reason.0', 'Vous êtes le dernier super administrateur : nommez-en un autre avant de supprimer votre compte.');
 
         $this->assertNotSoftDeleted($admin);
     }
 
     public function test_a_super_admin_can_delete_their_account_when_another_remains(): void
     {
-        $admin = $this->user();
+        $admin = $this->user(['email_verified_at' => now()]);
         $admin->assignRole(RoleEnum::SUPER_ADMIN);
         User::factory()->create()->assignRole(RoleEnum::SUPER_ADMIN);
+        $token = $admin->createToken('test')->plainTextToken;
 
-        $this->withToken($admin->createToken('test')->plainTextToken)
-            ->deleteJson('/api/v1/auth/me', ['current_password' => 'secret-password'])
-            ->assertNoContent();
+        $challenge = $this->withToken($token)->deleteJson('/api/v1/auth/me', ['reason' => 'Je pars.'])->assertAccepted()->json('challenge');
+        $this->withToken($token)->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode($admin->email)])->assertOk();
 
         $this->assertSoftDeleted($admin);
     }
