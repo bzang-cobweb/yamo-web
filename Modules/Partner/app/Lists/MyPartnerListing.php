@@ -10,8 +10,11 @@ use Bza\Form\Support\ListItem;
 use Bza\Form\Support\Submission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Auth\Models\User;
+use Modules\Notification\Support\NotificationThreads;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerNotificationFilter;
 use Modules\Partner\Services\PartnerService;
 
 /**
@@ -24,6 +27,14 @@ use Modules\Partner\Services\PartnerService;
 class MyPartnerListing extends Listing
 {
     private ?bool $paymentRequired = null;
+
+    /**
+     * La dernière notification que le compte voit dans le fil de chaque partenaire, par fil (`partner:group:5`) ;
+     * chargée une fois pour la page (décision 2026-11-27-mes-partenaires-historique).
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $histories = null;
 
     public static function name(): string
     {
@@ -112,6 +123,13 @@ class MyPartnerListing extends Listing
             ->link('/partners/'.$record->getKey())
             ->edit(PartnerForm::name());
 
+        // « Historique », dans le menu : la page de la dernière notification de son fil, où se lit tout ce qui lui est
+        // arrivé (décision 2026-11-27-mes-partenaires-historique) ; aucun fil, pas de bouton.
+        $history = $this->histories()[PartnerNotificationFilter::partnerThreadPrefix().$record->getKey()] ?? null;
+        if ($history !== null) {
+            $item->action(__('partner::partner.member.history'), link: '/notifications/'.$history);
+        }
+
         // « Retirer » : pour un administrateur seulement.
         if (! (bool) $record->users->firstWhere('id', $this->user?->getAuthIdentifier())?->pivot?->is_admin) {
             return $item;
@@ -122,5 +140,31 @@ class MyPartnerListing extends Listing
             __('partner::partner.member.remove_confirm'),
             Submission::toRoute('api.v1.partners.destroy', SuccessAction::BACK, __('partner::partner.member.removed'), destructive: true, parameters: ['partner' => $record->getKey()]),
         );
+    }
+
+    /**
+     * La dernière notification visible par le compte de chaque fil de partenaire, par fil.
+     *
+     * @return array<string, string>
+     */
+    private function histories(): array
+    {
+        if ($this->histories !== null) {
+            return $this->histories;
+        }
+        if (! $this->user instanceof User) {
+            return $this->histories = [];
+        }
+
+        $this->histories = [];
+        $notifications = app(NotificationThreads::class)->visibleTo($this->user)
+            ->where('thread', 'like', PartnerNotificationFilter::partnerThreadPrefix().'%')
+            ->latest()
+            ->get(['id', 'thread']);
+        foreach ($notifications as $notification) {
+            $this->histories[(string) $notification->getAttribute('thread')] ??= (string) $notification->getKey();
+        }
+
+        return $this->histories;
     }
 }

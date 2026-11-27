@@ -2,15 +2,16 @@
 
 namespace Bza\Form\Http\Controllers\Api;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
 use Bza\Form\Enums\FieldType;
 use Bza\Form\Http\Resources\FormUploadResource;
 use Bza\Form\Models\FormUpload;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormAuth;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 class FormUploadController
 {
@@ -18,7 +19,7 @@ class FormUploadController
      * Upload a file for field `{field}` (of type `upload`), before
      * saving the form (decision 2026-11-19-contrat-champ-upload-photos).
      * The file (`file`, multipart) is validated against the field's rules: types,
-     * size. It is kept 24 h under the account's name; its identifier goes into the
+     * size. It is kept 24 h under the account's name (no account for a visitor, when allowed); its identifier goes into the
      * field's value. 404 if the field does not exist or is not a file field.
      */
     public function store(Request $request, Form $form, string $field): JsonResponse
@@ -34,7 +35,8 @@ class FormUploadController
 
         $upload = FormUpload::query()->create([
             'uuid' => $uuid,
-            'user_id' => $request->user()?->getAuthIdentifier(),
+            // The requesting account (guard `form.guard`); `null` for a visitor when guests may upload.
+            'user_id' => FormAuth::id(),
             'form' => $form->key(),
             'field' => $field,
             'path' => (string) $file->storeAs('form-uploads', $uuid, FormUpload::DISK),

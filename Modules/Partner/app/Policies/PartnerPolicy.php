@@ -96,6 +96,20 @@ class PartnerPolicy
     }
 
     /** Rattaché au partenaire (`partner_user`), dans le pays courant ; sinon 404, comme un partenaire qui n'existe pas. */
+    /**
+     * Écrire dans le fil d'un partenaire (décision 2026-11-27-partenaire-messages) : un compte rattaché (404 sinon), s'il
+     * y a un autre membre pour le lire (403 sinon).
+     */
+    public function message(User $user, Partner $partner): Response
+    {
+        $attached = $this->attached($user, $partner);
+        if ($attached->denied()) {
+            return $attached;
+        }
+
+        return $partner->users()->whereKeyNot($user->getKey())->exists() ? Response::allow() : Response::deny();
+    }
+
     private function attached(User $user, Partner $partner): Response
     {
         if ((int) $partner->country_id !== (int) CurrentCountry::require()->getKey()) {

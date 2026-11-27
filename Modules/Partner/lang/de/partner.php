@@ -81,6 +81,7 @@ return [
         'cta_help' => 'Der Text der Schaltfläche zu Ihrem Link. Leer: « Website besuchen ».',
         'empty' => 'Noch kein Partner.',
         'remove' => 'Entfernen',
+        'history' => 'Verlauf',
         'remove_confirm' => 'Diesen Partner entfernen?',
         'removed' => 'Partner entfernt.',
         'status' => [
@@ -98,6 +99,18 @@ return [
         'done' => 'Partner angenommen.',
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
+    'message' => [
+        'title' => 'Nachricht',
+        'write' => 'Schreiben',
+        'field' => 'Nachricht',
+        'placeholder' => 'Ihre Nachricht',
+        'submit' => 'Senden',
+        'sent' => 'Nachricht gesendet.',
+        'subject' => 'Neue Nachricht zu „:partner“',
+        'intro' => ':name hat zu „:partner“ geschrieben:',
+        'open_app' => 'Antworten Sie in der App :app.',
+        'sms' => ':app: :name hat zu „:partner“ geschrieben. Öffnen Sie die App, um die Nachricht zu lesen.',
+    ],
     'notify' => [
         // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
         'changes' => ['line' => ':field: :value', 'empty' => '(leer)', 'before' => ':field (vorher)', 'after' => ':field (nachher)', 'at' => 'Zuletzt geändert', 'by' => 'Geändert von', 'title' => 'Änderungen'],

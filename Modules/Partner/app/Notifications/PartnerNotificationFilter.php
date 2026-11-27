@@ -65,6 +65,11 @@ class PartnerNotificationFilter implements NotificationFilter
     /** « Partenaire accepté », « Partenaire modifié »…, dans la langue du lecteur ; `null` pour une autre notification. */
     public function title(DatabaseNotification $notification, User $reader): ?string
     {
+        // Un message dans son fil (décision 2026-11-27-partenaire-messages).
+        if ($notification->getAttribute('type') === PartnerMessageReceived::class) {
+            return (string) __('partner::partner.message.title');
+        }
+
         $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
         if ($status === null) {
             return null;
@@ -87,14 +92,19 @@ class PartnerNotificationFilter implements NotificationFilter
      */
     public function forReader(DatabaseNotification $notification, User $reader): ?array
     {
-        $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
-        if ($status === null) {
-            return null;
-        }
-
         $data = (array) $notification->data;
         $partner = Partner::query()->find($data['partner_id'] ?? null);
         if ($partner === null) {
+            return null;
+        }
+
+        // Un message : le même pour tous, dans la langue du lecteur (décision 2026-11-27-partenaire-messages).
+        if ($notification->getAttribute('type') === PartnerMessageReceived::class) {
+            return PartnerMessageReceived::data($partner, (string) ($data['message'] ?? ''));
+        }
+
+        $status = PartnerStatusEnum::fromNotification($notification->getAttribute('type'));
+        if ($status === null) {
             return null;
         }
 

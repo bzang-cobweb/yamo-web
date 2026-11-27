@@ -3,10 +3,12 @@
 namespace Modules\Partner\Listeners;
 
 use Bza\Form\Support\DisplayTime;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Notification\Events\NotificationThreadSerializing;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerMessageReceived;
 use Modules\Partner\Notifications\PartnerNotification;
 use Modules\Partner\Notifications\PartnerNotificationFilter;
 
@@ -35,6 +37,14 @@ final class AddPartnerToNotificationThread
         $name = (string) $partner->getTranslation('name', $locale);
         if ($name === '') {
             return;
+        }
+
+        // « Écrire » à la place de « Mes partenaires », pour un membre qui peut écrire aux autres (décision
+        // 2026-11-27-partenaire-messages) : le formulaire de message, dans un panneau de l'app.
+        $reader = request()->user();
+        if ($reader instanceof User && Gate::forUser($reader)->allows('message', $partner)) {
+            $event->data['link'] = PartnerMessageReceived::writeLink((int) $partner->getKey());
+            $event->data['link_label'] = (string) __('partner::partner.message.write');
         }
 
         // Son nom seul, sans slogan (décision 2026-11-26-entete-partenaire-sans-slogan).

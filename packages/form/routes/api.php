@@ -1,10 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Bza\Form\Http\Controllers\Api\FormController;
 use Bza\Form\Http\Controllers\Api\FormStepController;
 use Bza\Form\Http\Controllers\Api\FormUploadController;
 use Bza\Form\Http\Controllers\Api\ListingController;
+use Bza\Form\Support\FormAuth;
+use Illuminate\Support\Facades\Route;
 
 // API routes of the form package (`api` prefix, `api.` names). `{form}` is resolved
 // by the registry (404 if unknown); access is decided by the form
@@ -21,9 +22,10 @@ Route::post('v1/forms/{form}/steps/{step}', [FormStepController::class, 'validat
     ->name('v1.forms.steps.validate');
 
 // Files of an `upload` field, sent one by one before saving (decision
-// 2026-11-19-contrat-champ-upload-photos): restricted to a signed-in account.
+// 2026-11-19-contrat-champ-upload-photos): a signed-in account of `form.guard`, or anyone when
+// `form.uploads.guests` is on (decision 2026-11-27-paquet-form-acces).
 Route::post('v1/forms/{form}/uploads/{field}', [FormUploadController::class, 'store'])
-    ->middleware(['auth:sanctum', 'throttle:60,1'])
+    ->middleware(FormAuth::uploadMiddleware())
     ->can('viewForm', 'form')
     ->name('v1.forms.uploads.store');
 

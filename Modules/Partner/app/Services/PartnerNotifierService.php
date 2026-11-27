@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Notification;
 use Modules\Auth\Models\User;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
+use Modules\Partner\Notifications\PartnerMessageReceived;
 use Modules\Partner\Notifications\PartnerNotification;
 
 /**
@@ -63,11 +64,31 @@ class PartnerNotifierService
     }
 
     /**
+     * Un message de `$sender` dans le fil du partenaire (décision 2026-11-27-partenaire-messages) : comme ses autres
+     * notifications, une seule dans l'onglet, à un membre qui n'est pas l'auteur (l'auteur de la dernière action depuis
+     * l'app s'il est membre et n'écrit pas, sinon le premier membre rattaché, administrateurs d'abord) ; ses autres
+     * administrateurs par e-mail et SMS. Sans autre membre, rien (la politique l'empêche).
+     */
+    public function message(Partner $partner, User $sender, string $text): void
+    {
+        $members = $partner->users()->whereKeyNot($sender->getKey())->orderByPivot('is_admin', 'desc')->orderBy('users.id')->get();
+        $author = $this->author($partner);
+        $recipient = $author !== null && $members->contains(fn (User $member): bool => (string) $member->getKey() === (string) $author->getKey())
+            ? $author
+            : $members->first();
+        if ($recipient === null) {
+            return;
+        }
+
+        $this->send($partner, $recipient, $sender->getKey(), fn (bool $inTab): PartnerMessageReceived => new PartnerMessageReceived($partner, $sender, $text, $inTab));
+    }
+
+    /**
      * `$recipient` reçoit la notification, dans l'onglet et par ses canaux ; chaque administrateur du partenaire, par
      * e-mail et SMS seulement. Ni l'un ni l'autre s'il est celui qui agit ; un administrateur déjà destinataire ne la
      * reçoit pas deux fois.
      *
-     * @param  callable(bool): PartnerNotification  $notification  la notification, dans l'onglet ou non
+     * @param  callable(bool): (PartnerNotification|PartnerMessageReceived)  $notification  la notification, dans l'onglet ou non
      */
     private function send(Partner $partner, ?User $recipient, int|string|null $actorId, callable $notification): void
     {
@@ -82,7 +103,7 @@ class PartnerNotifierService
     }
 
     /** `$recipient` reçoit `$notification`, sauf s'il n'y en a pas ou s'il est celui qui agit. */
-    private function notifyRecipient(?User $recipient, int|string|null $actorId, PartnerNotification $notification): void
+    private function notifyRecipient(?User $recipient, int|string|null $actorId, PartnerNotification|PartnerMessageReceived $notification): void
     {
         if ($recipient === null) {
             return;

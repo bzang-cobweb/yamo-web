@@ -3,6 +3,7 @@
 namespace Bza\Form;
 
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormAuth;
 use Bza\Form\Support\FormRegistry;
 use Bza\Form\Support\Listing;
 use Bza\Form\Support\ListingRegistry;
@@ -35,10 +36,10 @@ class FormServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([__DIR__.'/../config/form.php' => config_path('form.php')], 'form-config');
 
-        // `{form}`: the registry's form, built for the token's account when there is one (current values);
-        // unknown → 404.
+        // `{form}`: the registry's form, built for the requesting account when there is one (current values; guard
+        // `form.guard`); unknown → 404.
         Route::bind('form', fn (string $name): Form => $this->app->make(FormRegistry::class)
-            ->make($name, request()->user('sanctum')) ?? abort(404));
+            ->make($name, FormAuth::user()) ?? abort(404));
 
         Gate::define('viewForm', fn (?Authenticatable $user, Form $form): Response => match (true) {
             $form->canBeViewedBy($user) => Response::allow(),
@@ -46,9 +47,9 @@ class FormServiceProvider extends ServiceProvider
             default => Response::deny(),
         });
 
-        // `{list}`: the registry's list, built for the token's account; unknown → 404.
+        // `{list}`: the registry's list, built for the requesting account; unknown → 404.
         Route::bind('list', fn (string $name): Listing => $this->app->make(ListingRegistry::class)
-            ->make($name, request()->user('sanctum')) ?? abort(404));
+            ->make($name, FormAuth::user()) ?? abort(404));
 
         Gate::define('viewList', fn (?Authenticatable $user, Listing $list): Response => match (true) {
             $list->canBeViewedBy($user) => Response::allow(),
@@ -56,7 +57,12 @@ class FormServiceProvider extends ServiceProvider
             default => Response::deny(),
         });
 
-        // The API routes: `api` prefix and `api.` names, unchanged for the app.
-        Route::middleware('api')->prefix('api')->name('api.')->group(__DIR__.'/../routes/api.php');
+        // The API routes, as configured (`form.routes`): this app keeps the `api` prefix and `api.` names.
+        if (config('form.routes.enabled', true)) {
+            Route::middleware((array) config('form.routes.middleware', ['api']))
+                ->prefix((string) config('form.routes.prefix', 'api'))
+                ->name((string) config('form.routes.name', 'api.'))
+                ->group(__DIR__.'/../routes/api.php');
+        }
     }
 }

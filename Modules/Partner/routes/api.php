@@ -6,6 +6,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Partner\Http\Controllers\Api\MyPartnerController;
 use Modules\Partner\Http\Controllers\Api\PartnerController;
+use Modules\Partner\Http\Controllers\Api\PartnerMessageController;
 use Modules\Partner\Models\Partner;
 
 // Publiques, visiteur compris : la policy `PartnerPolicy` décide (décision 2026-11-24-partenaires-policy-routes) ; la page
@@ -21,4 +22,6 @@ Route::middleware('auth:sanctum')->prefix('v1/partners')->name('v1.partners.')->
     Route::post('/', [MyPartnerController::class, 'store'])->can('create', Partner::class)->middleware('throttle:10,1')->name('store');
     Route::patch('{partner}', [MyPartnerController::class, 'update'])->whereNumber('partner')->can('update', 'partner')->name('update');
     Route::delete('{partner}', [MyPartnerController::class, 'destroy'])->whereNumber('partner')->can('delete', 'partner')->name('destroy');
+    // Écrire aux autres membres, dans son fil (décision 2026-11-27-partenaire-messages).
+    Route::post('{partner}/messages', [PartnerMessageController::class, 'store'])->whereNumber('partner')->can('message', 'partner')->middleware('throttle:20,1')->name('messages.store');
 });

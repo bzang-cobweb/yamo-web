@@ -2,18 +2,16 @@
 
 namespace Bza\Form\Support;
 
-use Bza\Form\Support\Locales;
-use Closure;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Number;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
-use LogicException;
 use Bza\Form\Enums\FieldType;
 use Bza\Form\Models\FormUpload;
 use Bza\Form\Rules\NoContactDetails;
 use Bza\Form\Rules\OptionBelongsToParent;
+use Closure;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Number;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use LogicException;
 
 /**
  * A form field: what the app displays (label, type, options…) and
@@ -979,7 +977,7 @@ final class Field
                 $this->name => [...$presence, 'array', 'max:'.$this->maxFiles, ...$this->rules],
                 // A file already saved, or uploaded for this field by the request's account.
                 $this->name.'.*' => ['string', 'distinct', function (string $attribute, mixed $value, Closure $fail) use ($known, $field): void {
-                    if (! in_array($value, $known, true) && ! FormUpload::isPendingFor((string) $value, Auth::id(), $field)) {
+                    if (! in_array($value, $known, true) && ! FormUpload::isPendingFor((string) $value, FormAuth::id(), $field)) {
                         $fail('form::validation.upload_unknown')->translate();
                     }
                 }],

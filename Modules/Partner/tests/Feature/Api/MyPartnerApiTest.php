@@ -6,7 +6,9 @@ use App\Models\Setting;
 use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
@@ -141,6 +143,16 @@ class MyPartnerApiTest extends TestCase
         $this->assertSame('Déménagement clés en main.', $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.subtitle'));
         $this->assertSame('partner.partner', $item['edit']['form']);
         $this->assertNotNull($item['delete']);
+        // « Historique » dans le menu : la page de la dernière notification de son fil (décision
+        // 2026-11-27-mes-partenaires-historique).
+        // Sans fil, pas de bouton.
+        $this->assertSame([], $item['actions']);
+        $latest = DatabaseNotification::query()->create([
+            'id' => (string) Str::uuid(), 'type' => 'partner', 'notifiable_type' => $user->getMorphClass(), 'notifiable_id' => $user->getKey(),
+            'thread' => 'partner:group:'.$partner->getKey(), 'data' => ['title' => 'Partenaire', 'body' => 'Texte'],
+        ]);
+        $actions = $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.items.0.actions');
+        $this->assertSame([['label' => 'Historique', 'link' => '/notifications/'.$latest->getKey()]], array_map(fn (array $action): array => ['label' => $action['label'], 'link' => $action['link']], $actions));
         // Sa page, pas encore publiée : pour ses comptes seulement.
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();

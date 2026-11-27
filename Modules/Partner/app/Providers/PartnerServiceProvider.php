@@ -12,6 +12,7 @@ use Modules\Notification\Support\NotificationFilters;
 use Modules\Notification\Support\NotificationThreads;
 use Modules\Partner\Console\AwaitPartnerPaymentsCommand;
 use Modules\Partner\Forms\PartnerForm;
+use Modules\Partner\Forms\PartnerMessageForm;
 use Modules\Partner\Lists\MyPartnerListing;
 use Modules\Partner\Lists\PartnerListing;
 use Modules\Partner\Models\Partner;
@@ -42,6 +43,7 @@ class PartnerServiceProvider extends ModuleServiceProvider
 
         // « Mes partenaires » : un membre propose et gère ses partenaires (décision 2026-11-24-partenaires-par-les-membres).
         $this->app->make(FormRegistry::class)->register(PartnerForm::class);
+        $this->app->make(FormRegistry::class)->register(PartnerMessageForm::class);
         $this->app->make(ListingRegistry::class)->register(MyPartnerListing::class);
         $links = $this->app->make(ProfileMenuLinks::class);
         $links->addGroup('partner', fn (): string => __('partner::partner.member.group'), 40);

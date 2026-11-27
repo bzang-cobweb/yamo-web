@@ -82,6 +82,8 @@ return [
         'cta_help' => 'Le texte du bouton qui mène à votre lien. Vide : « Visiter le site ».',
         'empty' => "Aucun partenaire pour l'instant.",
         'remove' => 'Retirer',
+        // Le menu ⋮ de « Mes partenaires » : la page de son fil de notifications (décision 2026-11-27-mes-partenaires-historique).
+        'history' => 'Historique',
         'remove_confirm' => 'Retirer ce partenaire ?',
         'removed' => 'Partenaire retiré.',
         'status' => [
@@ -99,6 +101,19 @@ return [
         'done' => 'Partenaire accepté.',
     ],
     // Un changement de statut, aux comptes du partenaire (décision 2026-11-24-partenaires-notifications).
+    // Écrire aux autres membres d'un partenaire, dans son fil (décision 2026-11-27-partenaire-messages).
+    'message' => [
+        'title' => 'Message',
+        'write' => 'Écrire',
+        'field' => 'Message',
+        'placeholder' => 'Votre message',
+        'submit' => 'Envoyer',
+        'sent' => 'Message envoyé.',
+        'subject' => 'Nouveau message au sujet de « :partner »',
+        'intro' => ':name a écrit au sujet de « :partner » :',
+        'open_app' => "Répondez depuis l'application :app.",
+        'sms' => ":app : :name a écrit au sujet de « :partner ». Ouvrez l'application pour lire le message.",
+    ],
     'notify' => [
         // Les champs changés d'une modification (décision 2026-11-26-partenaire-modifications).
         'changes' => ['line' => ':field : :value', 'empty' => '(vide)', 'before' => ':field (avant)', 'after' => ':field (après)', 'at' => 'Dernière modification', 'by' => 'Modifié par', 'title' => 'Modifications'],

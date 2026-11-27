@@ -2,6 +2,7 @@
 
 namespace Bza\Form\Models;
 
+use Bza\Form\Support\FormAuth;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
  *
  * @property int $id
  * @property string $uuid
- * @property int $user_id
+ * @property int|string|null $user_id the uploading account; `null` for a visitor (decision 2026-11-27-paquet-form-acces)
  * @property string $form
  * @property string $field
  * @property string $path
@@ -34,22 +35,27 @@ class FormUpload extends Model
     protected $fillable = ['uuid', 'user_id', 'form', 'field', 'path', 'mime_type', 'size'];
 
     /**
-     * Does the identifier `$uuid` designate a pending file of account `$userId` for field `$field`?
+     * Does the identifier `$uuid` designate a pending file of account `$userId` for field `$field`? A visitor
+     * (`$userId` `null`) only when visitors may upload: then holding the random identifier is the proof.
      */
     public static function isPendingFor(string $uuid, int|string|null $userId, string $field): bool
     {
-        return $userId !== null && self::pending($userId, $field)->where('uuid', $uuid)->exists();
+        if ($userId === null && ! FormAuth::guestsMayUpload()) {
+            return false;
+        }
+
+        return self::pending($userId, $field)->where('uuid', $uuid)->exists();
     }
 
     /**
-     * The account's still valid files for field `$field`.
+     * The still valid files of account `$userId` (a visitor's, without account, for `null`) for field `$field`.
      *
      * @return Builder<self>
      */
-    public static function pending(int|string $userId, string $field): Builder
+    public static function pending(int|string|null $userId, string $field): Builder
     {
         return self::query()
-            ->where('user_id', $userId)
+            ->when($userId === null, fn (Builder $query) => $query->whereNull('user_id'), fn (Builder $query) => $query->where('user_id', $userId))
             ->where('field', $field)
             ->where('created_at', '>', now()->subHours(self::LIFETIME_HOURS));
     }
