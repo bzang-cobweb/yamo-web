@@ -1,0 +1,33 @@
+{
+    "name": "bza/laravel-config-viewer",
+    "description": "Read-only viewer for the effective Laravel configuration, module configuration included, with a Filament adapter.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "suggest": {
+        "filament/filament": "Required for the Filament page (^5.0).",
+        "nwidart/laravel-modules": "Lets the viewer attribute configuration files to their module."
+    },
+    "autoload": {
+        "psr-4": {
+            "Bza\\ConfigViewer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bza\\ConfigViewer\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bza\\ConfigViewer\\ConfigViewerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable"
+}

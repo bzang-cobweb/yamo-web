@@ -2,7 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\NavigationGroup;
 use App\Support\Brand;
+use Bza\ConfigViewer\Filament\ConfigViewerPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -56,6 +58,11 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+            // La configuration effective, modules compris, en lecture seule ; réservée aux super administrateurs.
+            ->plugin(ConfigViewerPlugin::make()
+                ->navigationGroup(fn (): string => NavigationGroup::Settings->label())
+                ->navigationSort(110)
+                ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

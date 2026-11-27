@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "26f0673c11d26f4de7e435d5f398ddbd",
+    "content-hash": "3366b74ed2bc53718fb16951a4871072",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -280,6 +280,50 @@
                 }
             ],
             "time": "2026-09-12T10:28:18+00:00"
+        },
+        {
+            "name": "bza/laravel-config-viewer",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/config-viewer",
+                "reference": "7a3e9527373328f05f2db961f00ac53e01125588"
+            },
+            "require": {
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.3"
+            },
+            "suggest": {
+                "filament/filament": "Required for the Filament page (^5.0).",
+                "nwidart/laravel-modules": "Lets the viewer attribute configuration files to their module."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Bza\\ConfigViewer\\ConfigViewerServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bza\\ConfigViewer\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Bza\\ConfigViewer\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Read-only viewer for the effective Laravel configuration, module configuration included, with a Filament adapter.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -13622,7 +13666,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "bza/laravel-config-viewer": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
