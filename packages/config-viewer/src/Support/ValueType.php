@@ -20,6 +20,11 @@ enum ValueType: string
     case Closure = 'closure';
     case Object = 'object';
 
+    public function label(): string
+    {
+        return __('config-viewer::config-viewer.types.'.$this->value);
+    }
+
     public static function of(mixed $value): self
     {
         return match (true) {

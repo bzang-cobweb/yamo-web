@@ -9,6 +9,7 @@ use Bza\ConfigViewer\Origin;
 use Bza\ConfigViewer\Sources\ApplicationConfigSource;
 use Bza\ConfigViewer\Support\KeyPatternMasker;
 use Bza\ConfigViewer\Support\PhpFileFinder;
+use Bza\ConfigViewer\Support\ValueType;
 use Illuminate\Config\Repository;
 use PHPUnit\Framework\TestCase;
 
@@ -101,6 +102,16 @@ class ConfigInspectorTest extends TestCase
         $this->assertSame(['Shop'], $inspector->modules());
         $this->assertSame(['shop.currency', 'shop.name', 'shop.payment.provider', 'shop.payment.api_key'], $this->keys($inspector->entries(new ConfigQuery(module: 'Shop'))));
         $this->assertSame([], $inspector->entries(new ConfigQuery(module: 'Unknown')));
+    }
+
+    public function test_entries_can_be_narrowed_to_a_value_type(): void
+    {
+        $inspector = $this->inspector();
+
+        $this->assertSame(['app.debug', 'nested.deep.enabled'], $this->keys($inspector->entries(new ConfigQuery(types: [ValueType::Boolean]))));
+        $this->assertSame(['cors.paths'], $this->keys($inspector->entries(new ConfigQuery(types: [ValueType::Array, ValueType::Null]))));
+        // A masked value keeps its type, not its content.
+        $this->assertContains('app.key', $this->keys($inspector->entries(new ConfigQuery(types: [ValueType::String]))));
     }
 
     public function test_hidden_patterns_remove_keys_or_whole_groups(): void

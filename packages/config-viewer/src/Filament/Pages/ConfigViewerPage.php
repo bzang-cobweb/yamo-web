@@ -10,6 +10,7 @@ use Bza\ConfigViewer\Data\ConfigGroup;
 use Bza\ConfigViewer\Data\ConfigQuery;
 use Bza\ConfigViewer\Filament\ConfigViewerPlugin;
 use Bza\ConfigViewer\Origin;
+use Bza\ConfigViewer\Support\ValueType;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Schemas\Components\EmbeddedTable;
@@ -20,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
@@ -32,7 +34,12 @@ use UnitEnum;
  */
 class ConfigViewerPage extends Page implements HasTable
 {
-    use InteractsWithTable;
+    /** The type filter's option that keeps every value type. */
+    private const ALL_TYPES = 'all';
+
+    use InteractsWithTable {
+        updatedTableFilters as baseUpdatedTableFilters;
+    }
 
     public static function canAccess(): bool
     {
@@ -96,6 +103,7 @@ class ConfigViewerPage extends Page implements HasTable
                     ->wrap(),
                 TextColumn::make('type')
                     ->label(__('config-viewer::config-viewer.columns.type'))
+                    ->formatStateUsing(fn (string $state): string => ValueType::tryFrom($state)?->label() ?? $state)
                     ->badge()
                     ->color('gray'),
                 TextColumn::make('origin')
@@ -113,10 +121,22 @@ class ConfigViewerPage extends Page implements HasTable
                 SelectFilter::make('module')
                     ->label(__('config-viewer::config-viewer.filters.module'))
                     ->options(fn (): array => array_combine($this->inspector()->modules(), $this->inspector()->modules()))
-                    ->searchable()
-                    // Only offered once the "Module" origin is selected, and when some module feeds the configuration.
-                    ->visible(fn (): bool => $this->isModuleOriginSelected($this->tableFilters ?? []) && $this->inspector()->modules() !== []),
+                    ->searchable(),
+                // A single choice, "All" by default, instead of an empty placeholder.
+                SelectFilter::make('type')
+                    ->label(__('config-viewer::config-viewer.filters.type'))
+                    ->options(fn (): array => [self::ALL_TYPES => __('config-viewer::config-viewer.all'), ...$this->typeOptions()])
+                    ->default(self::ALL_TYPES)
+                    ->selectablePlaceholder(false)
+                    ->indicateUsing(fn (array $state): array => $this->typeIndicators($state['value'] ?? null)),
             ], layout: FiltersLayout::AboveContent)
+            // The module field is hidden here rather than with the filter's visible(): the filters form is built
+            // before the new origin is applied, so a hidden filter would only appear on the next request.
+            ->filtersFormSchema(function (array $filters): array {
+                $filters['module']->visible(fn (): bool => $this->isModuleOriginSelected($this->tableFilters ?? []) && $this->inspector()->modules() !== []);
+
+                return array_values($filters);
+            })
             ->deferFilters(false)
             ->description(fn (): ?string => $this->selectedGroupDescription())
             ->defaultSort('key')
@@ -133,8 +153,10 @@ class ConfigViewerPage extends Page implements HasTable
         $entries = $this->inspector()->entries(new ConfigQuery(
             group: ($filters['group']['value'] ?? null) ?: null,
             origin: Origin::tryFrom((string) ($filters['origin']['value'] ?? '')),
-            // A hidden filter keeps its state: ignore the module unless the "Module" origin is selected.
+            // A hidden filter is ignored: the module only counts with the "Module" origin.
             module: $this->isModuleOriginSelected($filters) ? (($filters['module']['value'] ?? null) ?: null) : null,
+            // "All" is no value type: tryFrom() gives null, hence no constraint.
+            types: array_values(array_filter([ValueType::tryFrom((string) ($filters['type']['value'] ?? ''))])),
             search: $search,
         ));
 
@@ -152,6 +174,43 @@ class ConfigViewerPage extends Page implements HasTable
         }
 
         return new LengthAwarePaginator($rows, $total, $perPage, $page);
+    }
+
+    /**
+     * Clears the module when the "Module" origin is unselected, so that no
+     * indicator is left for a filter that is no longer shown.
+     */
+    public function updatedTableFilters(): void
+    {
+        if (! $this->isModuleOriginSelected($this->tableFilters ?? [])) {
+            $this->tableFilters['module']['value'] = null;
+        }
+
+        $this->baseUpdatedTableFilters();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function typeOptions(): array
+    {
+        return collect(ValueType::cases())->mapWithKeys(fn (ValueType $type): array => [$type->value => $type->label()])->all();
+    }
+
+    /**
+     * No indicator for "All": the filter then narrows nothing.
+     *
+     * @return array<Indicator>
+     */
+    private function typeIndicators(?string $value): array
+    {
+        $type = ValueType::tryFrom((string) $value);
+
+        if ($type === null) {
+            return [];
+        }
+
+        return [Indicator::make(__('config-viewer::config-viewer.filters.type').': '.$type->label())];
     }
 
     /**

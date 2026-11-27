@@ -89,6 +89,10 @@ class ConfigInspector
 
                 $entry = $this->makeEntry($key, $group->key, $value);
 
+                if ($query->types !== [] && ! in_array($entry->type, $query->types, true)) {
+                    continue;
+                }
+
                 if ($query->search !== null && $query->search !== '' && ! $entry->matches($query->search)) {
                     continue;
                 }

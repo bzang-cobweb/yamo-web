@@ -32,7 +32,6 @@ class ConfigViewerPageTest extends AuthFilamentTestCase
 
         Livewire::test(ConfigViewerPage::class)
             ->filterTable('origin', 'module')
-            ->assertTableFilterVisible('module')
             ->filterTable('module', 'Partner')
             ->assertCanSeeTableRecords(['partner.logo.quality'])
             ->assertCanNotSeeTableRecords(['app.name', 'offer.name']);
@@ -42,14 +41,39 @@ class ConfigViewerPageTest extends AuthFilamentTestCase
     {
         $this->actingAsSuperAdmin();
 
-        $page = Livewire::test(ConfigViewerPage::class)->assertTableFilterHidden('module');
+        // The field appears in the same request that selects the origin.
+        $page = Livewire::test(ConfigViewerPage::class)->assertDontSeeHtml('tableFilters.module.value');
+        $page->set('tableFilters.origin.value', 'module')->assertSeeHtml('tableFilters.module.value');
 
-        // Once hidden again, the chosen module no longer narrows the table.
-        $page->filterTable('origin', 'module')
-            ->filterTable('module', 'Partner')
-            ->filterTable('origin', 'application')
-            ->assertTableFilterHidden('module')
+        // Unselecting the origin hides the field and clears the module.
+        $page->set('tableFilters.module.value', 'Partner')
+            ->set('tableFilters.origin.value', 'application')
+            ->assertDontSeeHtml('tableFilters.module.value')
+            ->assertSet('tableFilters.module.value', null)
             ->assertCanSeeTableRecords(['app.name']);
+    }
+
+    public function test_the_configuration_can_be_filtered_by_value_type(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Livewire::test(ConfigViewerPage::class)
+            ->filterTable('group', 'app')
+            ->filterTable('type', 'boolean')
+            ->assertCanSeeTableRecords(['app.debug'])
+            ->assertCanNotSeeTableRecords(['app.name'])
+            ->assertSee('Booléen');
+    }
+
+    public function test_the_type_filter_shows_all_types_by_default(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        Livewire::test(ConfigViewerPage::class)
+            ->assertSet('tableFilters.type.value', 'all')
+            ->assertSee('Tout')
+            ->filterTable('group', 'app')
+            ->assertCanSeeTableRecords(['app.debug', 'app.name']);
     }
 
     public function test_sensitive_values_are_masked(): void
