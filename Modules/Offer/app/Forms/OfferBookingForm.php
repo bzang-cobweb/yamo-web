@@ -218,7 +218,7 @@ class OfferBookingForm extends Form
         };
     }
 
-    public function title(): string
+    public function title(): ?string
     {
         return __('offer::booking.form.'.$this->type()->value.'_title');
     }

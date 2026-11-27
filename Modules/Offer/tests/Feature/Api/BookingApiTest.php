@@ -229,17 +229,9 @@ class BookingApiTest extends TestCase
 
         // Le formulaire, rempli de la demande.
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->assertOk()->json('data');
-        // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
-        $this->assertSame(['Modifier la demande de séjour', $pending->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
-        // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
-        $this->assertSame([OfferCardTitle::of($pending->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
-        $this->assertNotNull($form['subtitle']);
-        // Sans titre saisi, la ligne du type devient le titre et n'est pas répétée en sous-titre ; le détail de la
-        // demande de même (règle commune `OfferCardTitle`, décision 2026-11-24-titre-compose-regle-commune).
+        // L'action dans la barre du haut ; ni titre ni sous-titre dans le formulaire (décision 2026-11-27-modifier-annuler-sans-titre).
+        $this->assertSame(['Modifier la demande de séjour', null, null], [$form['navigation_title'], $form['title'], $form['subtitle']]);
         $pending->offer->setTranslations('title', [])->save();
-        $untitled = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.edit?record={$pending->getKey()}")->json('data');
-        $this->assertSame([OfferCardTitle::of($pending->offer->fresh(), 'fr')[0], null], [$untitled['title'], $untitled['subtitle']]);
-        $this->assertStringContainsString('Location meublée', $untitled['title']);
         $this->assertNull((new BookingResource($pending->fresh()))->resolve(request())['composed_title']);
         $this->assertSame('Enregistrer', $form['submit']['label']);
         $this->assertSame(['method' => 'PUT', 'endpoint' => '/v1/bookings/'.$pending->getKey()], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
@@ -266,11 +258,8 @@ class BookingApiTest extends TestCase
         $accepted = Booking::factory()->for($offer)->for($guest)->status(BookingStatusEnum::ACCEPTED)->create(['check_in' => today()->addDays(5), 'check_out' => today()->addDays(8), 'guests' => 2, 'message' => 'Bonjour !']);
 
         $form = $this->asUser($guest)->getJson("/api/v1/forms/offer.booking.cancel?record={$accepted->getKey()}")->assertOk()->json('data');
-        // Comme « Accepter la demande » (décision 2026-11-23-modifier-annuler-comme-accepter) : l'action dans la barre du haut, le titre du logement en tête.
-        $this->assertSame(['Annuler la demande de séjour', $accepted->offer->getTranslation('title', 'fr')], [$form['navigation_title'], $form['title']]);
-        // Le titre composé en sous-titre, le tout centré (décision 2026-11-23-modifier-annuler-titre-compose).
-        $this->assertSame([OfferCardTitle::of($accepted->offer, 'fr')[1] ?? null, 'center'], [$form['subtitle'], $form['title_align']]);
-        $this->assertNotNull($form['subtitle']);
+        // L'action dans la barre du haut ; ni titre ni sous-titre (décision 2026-11-27-modifier-annuler-sans-titre).
+        $this->assertSame(['Annuler la demande de séjour', null, null], [$form['navigation_title'], $form['title'], $form['subtitle']]);
         $this->assertSame('Confirmer', $form['submit']['label']);
         $this->assertSame(['method' => 'POST', 'endpoint' => '/v1/bookings/'.$accepted->getKey().'/cancel'], array_intersect_key($form['submit'], ['method' => 1, 'endpoint' => 1]));
         // Le message de réussite dit le type de la demande (décision 2026-11-26-titres-type-de-demande).
