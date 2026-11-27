@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Modules\Auth\Models\User;
 use Modules\Auth\Sms\SmsSender;
-use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Tests\Concerns\FakeSmsSender;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
@@ -182,7 +182,7 @@ class BookingThreadTest extends TestCase
 
     public function test_the_member_sees_the_offer_contact_or_else_the_owner_one(): void
     {
-        // Décision 2026-11-21-contact-offre.
+        // Décision 2026-11-21-contact-offre ; masqués à l'affichage (décision 2026-11-27-email-telephone-masques).
         $this->owner->forceFill(['email' => 'hote@example.test', 'phone' => '+237670000001'])->save();
         $this->request(3);
         $contact = fn (): array => array_column(array_filter(
@@ -190,9 +190,9 @@ class BookingThreadTest extends TestCase
             fn (array $line): bool => in_array($line['key'], ['phone', 'email'], true),
         ), 'value', 'key');
 
-        $this->assertSame(['phone' => PhoneNumbers::international('+237670000001'), 'email' => 'hote@example.test'], $contact());
+        $this->assertSame(['phone' => Masks::phone('+237670000001'), 'email' => Masks::email('hote@example.test')], $contact());
         $this->offer->update(['phone' => '+237690000002', 'email' => 'logement@example.test']);
-        $this->assertSame(['phone' => PhoneNumbers::international('+237690000002'), 'email' => 'logement@example.test'], $contact());
+        $this->assertSame(['phone' => Masks::phone('+237690000002'), 'email' => Masks::email('logement@example.test')], $contact());
     }
 
     public function test_the_owner_shows_or_hides_the_address_to_the_requester(): void
@@ -238,13 +238,13 @@ class BookingThreadTest extends TestCase
         // l'offre, sans le nom de l'hôte (décision 2026-11-21-detail-reservation-contact-ordre).
         $host = $contact($this->guest);
         $this->assertSame([
-            ['key' => 'phone', 'label' => 'Téléphone', 'value' => PhoneNumbers::international('+237690000001')],
-            ['key' => 'email', 'label' => 'E-mail', 'value' => 'hote@example.test'],
+            ['key' => 'phone', 'label' => 'Téléphone', 'value' => Masks::phone('+237690000001'), 'link' => 'tel:+237690000001'],
+            ['key' => 'email', 'label' => 'E-mail', 'value' => Masks::email('hote@example.test'), 'link' => 'mailto:hote@example.test'],
         ], $host);
         // Sans téléphone : pas de ligne.
         $this->assertSame([
             ['key' => 'member', 'label' => 'Membre', 'value' => 'Léa Membre', 'link' => '/members/'.$this->guest->getKey()],
-            ['key' => 'email', 'label' => 'E-mail', 'value' => 'membre@example.test'],
+            ['key' => 'email', 'label' => 'E-mail', 'value' => Masks::email('membre@example.test'), 'link' => 'mailto:membre@example.test'],
         ], $contact($this->owner));
         // Après l'adresse ; sans adresse, après le titre composé et les dates (décision 2026-11-22-detail-lignes-titre-dates-adresse).
         $lines = $this->api($this->guest, 'GET', '/'.$this->cards($this->guest)[0]['id'])->json('data.booking.lines');

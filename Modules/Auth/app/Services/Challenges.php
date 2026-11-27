@@ -7,6 +7,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Support\PhoneOwnership;
 
 /**
@@ -25,7 +26,7 @@ final class Challenges
         return [
             'challenge' => $challenge,
             'channel' => $next?->channel->value ?? '',
-            'destination' => $next === null ? '' : VerificationCodeService::mask($next),
+            'destination' => $next === null ? '' : Masks::destination($next->channel, $next->destination),
         ];
     }
 

@@ -5,10 +5,8 @@ namespace Modules\Auth\Support;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Mail\PhoneReleasedMail;
 use Modules\Auth\Models\User;
-use Modules\Auth\Services\VerificationCodeService;
 
 /**
  * À qui appartient un numéro, face aux numéros recyclés par les opérateurs
@@ -67,7 +65,7 @@ final class PhoneOwnership
             return;
         }
 
-        $masked = VerificationCodeService::maskDestination(VerificationChannel::SMS, $phone);
+        $masked = Masks::phone($phone);
 
         DB::afterCommit(fn () => Mail::to($holder)->send(new PhoneReleasedMail($masked)));
     }

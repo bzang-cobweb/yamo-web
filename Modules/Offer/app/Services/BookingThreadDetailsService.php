@@ -3,7 +3,7 @@
 namespace Modules\Offer\Services;
 
 use Modules\Auth\Models\User;
-use Modules\Auth\Support\PhoneNumbers;
+use Modules\Auth\Support\Masks;
 use Modules\Offer\Forms\BookingCancelForm;
 use Modules\Offer\Forms\BookingEditForm;
 use Modules\Offer\Forms\BookingInviteReviewForm;
@@ -120,7 +120,8 @@ class BookingThreadDetailsService
 
     /**
      * Le nom (avec le lien de sa page, si `$role` est donné), le téléphone et l'e-mail ; une ligne sans valeur
-     * est omise.
+     * est omise. Le téléphone et l'e-mail sont affichés masqués, leur lien (`tel:`, `mailto:`) garde la vraie valeur
+     * pour appeler ou écrire (décision 2026-11-27-email-telephone-masques).
      *
      * @return list<array{key: string, label: string, value: string, link?: string}>
      */
@@ -132,8 +133,8 @@ class BookingThreadDetailsService
 
         return array_values(array_filter([
             $role === null || $person === null ? null : $line($role, (string) $person->full_name, '/members/'.$person->getKey()),
-            $phone === null || $phone === '' ? null : $line('phone', PhoneNumbers::international($phone)),
-            $line('email', $email),
+            $phone === null || $phone === '' ? null : $line('phone', Masks::phone($phone), 'tel:'.$phone),
+            $email === null || $email === '' ? null : $line('email', Masks::email($email), 'mailto:'.$email),
         ]));
     }
 

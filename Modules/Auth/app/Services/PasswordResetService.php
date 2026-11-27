@@ -8,6 +8,7 @@ use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\Identifiers;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Support\PhoneOwnership;
 
 /**
@@ -41,7 +42,7 @@ final class PasswordResetService
             return [
                 'challenge' => (string) Str::uuid(),
                 'channel' => $channel->value,
-                'destination' => VerificationCodeService::maskDestination($channel, $destination),
+                'destination' => Masks::destination($channel, $destination),
             ];
         }
 

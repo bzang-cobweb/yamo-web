@@ -7,6 +7,7 @@ use App\Support\MediaUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\Masks;
 use Modules\Auth\Support\PhoneNumbers;
 use Modules\Notification\Support\ActorData;
 use Modules\Partner\Models\Partner;
@@ -107,7 +108,7 @@ class PartnerResource extends JsonResource
      * Ses comptes : photo, nom, sa page, e-mail et téléphone, et la pastille « Administrateur » pour un administrateur ;
      * les administrateurs d'abord, puis par nom.
      *
-     * @return list<array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null, is_admin: bool, can_change_admin: bool, can_remove: bool, tag: array{label: string, tone: string}|null}>
+     * @return list<array{id: string, name: string, initials: string, photo: string|null, online: bool, link: string, email: string|null, phone: string|null, email_masked: string|null, phone_masked: string|null, is_admin: bool, can_change_admin: bool, can_remove: bool, tag: array{label: string, tone: string}|null}>
      */
     private function members(int|string|null $readerId): array
     {
@@ -124,6 +125,10 @@ class PartnerResource extends JsonResource
             // 2026-11-27-partenaire-membre-panneau).
             'email' => $user->email,
             'phone' => $user->phone === null || $user->phone === '' ? null : PhoneNumbers::international($user->phone),
+            // Affichés masqués ; les vrais restent pour les liens « écrire » et « appeler » (décision
+            // 2026-11-27-email-telephone-masques).
+            'email_masked' => Masks::email($user->email),
+            'phone_masked' => $user->phone === null || $user->phone === '' ? null : Masks::phone($user->phone),
             'is_admin' => (bool) $user->pivot->getAttribute('is_admin'),
             // Les mêmes, pour le retirer (décision 2026-11-27-membre-retirer).
             'can_change_admin' => $manager && (string) $user->getKey() !== (string) $readerId,

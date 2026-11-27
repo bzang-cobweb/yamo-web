@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
+use Modules\Auth\Support\Masks;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Forms\PartnerForm;
@@ -300,6 +301,10 @@ class PartnerApiTest extends TestCase
         $this->assertSame([['label' => 'Administrateur', 'tone' => 'success'], null], array_column($data['members'], 'tag'));
         // Ses coordonnées, pour le panneau d'un membre (décision 2026-11-27-partenaire-membre-panneau).
         $this->assertSame($member->email, $data['members'][1]['email']);
+        // Affichés masqués, les vrais pour les liens (décision 2026-11-27-email-telephone-masques).
+        $this->assertSame(Masks::email($member->email), $data['members'][1]['email_masked']);
+        $this->assertStringContainsString('•••', $data['members'][1]['email_masked']);
+        $this->assertArrayHasKey('phone_masked', $data['members'][1]);
         $this->assertArrayHasKey('phone', $data['members'][1]);
         $this->assertSame('/members/'.$member->getKey(), $data['members'][1]['link']);
         $this->assertSame($member->full_name, $data['members'][1]['name']);

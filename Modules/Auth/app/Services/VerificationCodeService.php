@@ -138,28 +138,6 @@ final class VerificationCodeService
     }
 
     /**
-     * Destination montrée à l'utilisateur, en partie masquée.
-     */
-    public static function mask(VerificationCode $code): string
-    {
-        return self::maskDestination($code->channel, $code->destination);
-    }
-
-    /**
-     * E-mail → « j•••@example.com » ; téléphone → « +41 ••• 67 ».
-     */
-    public static function maskDestination(VerificationChannel $channel, string $destination): string
-    {
-        if ($channel === VerificationChannel::EMAIL && str_contains($destination, '@')) {
-            [$name, $domain] = explode('@', $destination, 2);
-
-            return mb_substr($name, 0, 1).'•••@'.$domain;
-        }
-
-        return mb_substr($destination, 0, 3).' ••• '.mb_substr($destination, -2);
-    }
-
-    /**
      * Nouveau code : haché, remis à zéro, envoyé.
      */
     private function issue(VerificationCode $verification): void
