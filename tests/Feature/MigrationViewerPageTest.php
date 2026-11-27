@@ -9,7 +9,7 @@ use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
 
 /**
- * Page « Migrations » du back-office (paquet bza/laravel-migration-viewer) :
+ * Page « Migrations » du back-office (paquet bza/laravel-migration-viewer, menu « Modèles de données ») :
  * fichiers de migration regroupés par table, modules compris, réservée aux
  * super administrateurs.
  */
@@ -82,11 +82,13 @@ class MigrationViewerPageTest extends AuthFilamentTestCase
         $this->get(MigrationViewerPage::getUrl())->assertForbidden();
     }
 
-    public function test_the_page_is_in_the_settings_group(): void
+    public function test_the_migrations_and_tables_are_in_the_data_models_menu(): void
     {
         $this->actingAsSuperAdmin();
 
-        $this->assertSame('Paramètres', MigrationViewerPage::getNavigationGroup());
-        $this->get(MigrationViewerPage::getUrl())->assertOk()->assertSee('Migrations');
+        $this->assertSame('Modèles de données', MigrationViewerPage::getNavigationGroup());
+        $this->assertSame('Modèles de données', MigrationTableResource::getNavigationGroup());
+        $this->assertLessThan(MigrationTableResource::getNavigationSort(), MigrationViewerPage::getNavigationSort());
+        $this->get(MigrationViewerPage::getUrl())->assertOk()->assertSeeInOrder(['Modèles de données', 'Migrations', 'Tables']);
     }
 }

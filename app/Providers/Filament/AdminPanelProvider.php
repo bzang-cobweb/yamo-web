@@ -64,10 +64,11 @@ class AdminPanelProvider extends PanelProvider
                 ->navigationGroup(fn (): string => NavigationGroup::Settings->label())
                 ->navigationSort(110)
                 ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
-            // Les fichiers de migration, regroupés par table, modules compris ; réservés aux super administrateurs.
+            // Menu « Modèles de données » : les fichiers de migration regroupés par table, modules compris,
+            // puis les tables enregistrées ; réservés aux super administrateurs.
             ->plugin(MigrationViewerPlugin::make()
-                ->navigationGroup(fn (): string => NavigationGroup::Settings->label())
-                ->navigationSort(120)
+                ->navigationGroup(fn (): string => NavigationGroup::DataModels->label())
+                ->navigationSort(10)
                 ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
             ->middleware([
                 EncryptCookies::class,
