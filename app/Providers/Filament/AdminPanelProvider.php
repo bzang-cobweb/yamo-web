@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\NavigationGroup;
 use App\Support\Brand;
 use Bza\ConfigViewer\Filament\ConfigViewerPlugin;
+use Bza\MigrationViewer\Filament\MigrationViewerPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -62,6 +63,11 @@ class AdminPanelProvider extends PanelProvider
             ->plugin(ConfigViewerPlugin::make()
                 ->navigationGroup(fn (): string => NavigationGroup::Settings->label())
                 ->navigationSort(110)
+                ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
+            // Les fichiers de migration, regroupés par table, modules compris ; réservés aux super administrateurs.
+            ->plugin(MigrationViewerPlugin::make()
+                ->navigationGroup(fn (): string => NavigationGroup::Settings->label())
+                ->navigationSort(120)
                 ->authorize(fn (): bool => (bool) auth()->user()?->isSuperAdmin()))
             ->middleware([
                 EncryptCookies::class,

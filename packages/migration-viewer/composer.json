@@ -1,0 +1,34 @@
+{
+    "name": "bza/laravel-migration-viewer",
+    "description": "Read-only viewer of the Laravel migration files, grouped by table, module migrations included, with a Filament adapter.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "suggest": {
+        "filament/filament": "Required for the Filament page (^5.0).",
+        "nwidart/laravel-modules": "Lets the viewer attribute migration files to their module."
+    },
+    "autoload": {
+        "psr-4": {
+            "Bza\\MigrationViewer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bza\\MigrationViewer\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bza\\MigrationViewer\\MigrationViewerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable"
+}
