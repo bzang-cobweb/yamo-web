@@ -38,7 +38,10 @@ return [
         'deny' => 'Nein',
     ],
 
+    'tree' => 'Ordner',
+
     'actions' => [
+        'open' => 'Öffnen',
         'new_folder' => 'Neuer Ordner',
         'upload' => 'Hochladen',
         'rename' => 'Umbenennen',

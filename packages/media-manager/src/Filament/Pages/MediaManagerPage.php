@@ -27,6 +27,7 @@ use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\ImageColumn;
@@ -71,6 +72,8 @@ class MediaManagerPage extends Page implements HasTable
     #[Url]
     public ?string $collection = null;
 
+    private ?MediaFolder $currentFolder = null;
+
     public static function canAccess(): bool
     {
         return MediaManagerPlugin::get()->isAuthorized();
@@ -103,9 +106,33 @@ class MediaManagerPage extends Page implements HasTable
 
     public function mount(): void
     {
+        $this->ensureCanOpenLocation();
+    }
+
+    /**
+     * Opens a location without reloading the page: from the tree, or a
+     * folder row. The address follows, so it can be shared or reloaded.
+     */
+    public function navigate(?int $folder = null, ?string $linked = null, ?string $collection = null): void
+    {
+        $this->folder = $linked === null ? $folder : null;
+        $this->linked = $linked;
+        $this->collection = $linked !== null ? $collection : null;
+        $this->currentFolder = null;
+
+        $this->ensureCanOpenLocation();
+
+        $this->tableSearch = '';
+        $this->resetPage($this->getTablePaginationPageName());
+        $this->flushCachedTableRecords();
+    }
+
+    private function ensureCanOpenLocation(): void
+    {
         if ($this->linked !== null) {
             abort_unless(array_key_exists($this->linked, $this->linkedMedia()->types()), 404);
             abort_unless($this->access()->allows(auth()->user(), Ability::View, Target::linked($this->linked)), 403);
+            abort_unless($this->collection === null || array_key_exists($this->collection, $this->linkedMedia()->collections($this->linked)), 404);
 
             return;
         }
@@ -151,7 +178,16 @@ class MediaManagerPage extends Page implements HasTable
 
     public function content(Schema $schema): Schema
     {
-        return $schema->components([EmbeddedTable::make()]);
+        // The folder tree on the left, the content of the open location on the right.
+        return $schema->components([
+            Grid::make(['default' => 1, 'lg' => 4])->schema([
+                View::make('media-manager::tree')
+                    ->viewData(fn (): array => ['root' => $this->tree()])
+                    ->columnSpan(1),
+                EmbeddedTable::make()
+                    ->columnSpan(['default' => 1, 'lg' => 3]),
+            ]),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -180,9 +216,15 @@ class MediaManagerPage extends Page implements HasTable
                     ->label(__('media-manager::media-manager.columns.updated_at'))
                     ->dateTime(),
             ])
-            ->recordUrl(fn (array $record): ?string => $record['url'])
+            // A click on a folder opens it in place; on an image, shows it.
+            ->recordAction(fn (array $record): ?string => match (true) {
+                $record['kind'] !== 'file' => 'open',
+                $record['thumbnail'] !== null => 'preview',
+                default => null,
+            })
             ->recordActions([
                 ActionGroup::make([
+                    $this->openAction(),
                     $this->previewAction(),
                     $this->downloadAction(),
                     $this->copyUrlAction(),
@@ -239,6 +281,15 @@ class MediaManagerPage extends Page implements HasTable
                 }),
             $this->permissionsAction('currentPermissions', current: true),
         ];
+    }
+
+    private function openAction(): Action
+    {
+        return Action::make('open')
+            ->label(__('media-manager::media-manager.actions.open'))
+            ->icon('heroicon-o-folder-open')
+            ->visible(fn (array $record): bool => $record['kind'] !== 'file')
+            ->action(fn (array $record) => $this->navigate($record['kind'] === 'folder' ? $record['id'] : null, $record['linked_type'], $record['collection']));
     }
 
     private function previewAction(): Action
@@ -475,11 +526,12 @@ class MediaManagerPage extends Page implements HasTable
 
             foreach ($this->linkedMedia()->collections($this->linked) as $collection => $count) {
                 $rows[] = $this->row('collection:'.$collection, 'collection', $this->collectionLabel($collection), [
+                    'linked_type' => $this->linked,
+                    'collection' => $collection,
                     'icon' => 'heroicon-o-folder',
                     'description' => trans_choice('media-manager::media-manager.files_count', $count, ['count' => $count]),
                     'type' => __('media-manager::media-manager.read_only'),
                     'read_only' => true,
-                    'url' => static::getUrl(['linked' => $this->linked, 'collection' => $collection]),
                 ]);
             }
 
@@ -496,7 +548,6 @@ class MediaManagerPage extends Page implements HasTable
                     'icon' => 'heroicon-o-folder',
                     'type' => __('media-manager::media-manager.kinds.folder'),
                     'updated_at' => $child->updated_at,
-                    'url' => static::getUrl(['folder' => $child->getKey()]),
                 ]);
             }
         }
@@ -510,7 +561,6 @@ class MediaManagerPage extends Page implements HasTable
                         'description' => trans_choice('media-manager::media-manager.files_count', $count, ['count' => $count]),
                         'type' => __('media-manager::media-manager.kinds.linked'),
                         'read_only' => true,
-                        'url' => static::getUrl(['linked' => $type]),
                     ]);
                 }
             }
@@ -534,6 +584,7 @@ class MediaManagerPage extends Page implements HasTable
             'kind' => $kind,
             'id' => null,
             'linked_type' => null,
+            'collection' => null,
             'name' => $name,
             'icon' => 'heroicon-o-document',
             'description' => null,
@@ -543,7 +594,6 @@ class MediaManagerPage extends Page implements HasTable
             'size' => null,
             'updated_at' => null,
             'read_only' => false,
-            'url' => null,
             ...$values,
         ];
     }
@@ -750,7 +800,93 @@ class MediaManagerPage extends Page implements HasTable
             return null;
         }
 
-        return once(fn (): MediaFolder => MediaFolder::query()->findOrFail($this->folder));
+        return $this->currentFolder ??= MediaFolder::query()->findOrFail($this->folder);
+    }
+
+    /**
+     * The tree of the locations the user can open: the root, its folders,
+     * then the read-only folders of the linked media and their collections.
+     * The branch leading to the open location is expanded.
+     *
+     * @return array<string, mixed>
+     */
+    private function tree(): array
+    {
+        $user = auth()->user();
+        $folders = MediaFolder::query()->orderBy('name')->get();
+        $byParent = $folders->groupBy(fn (MediaFolder $folder): string => (string) $folder->parent_id);
+        $open = collect($this->currentFolder()?->ancestry() ?? [])->map->getKey()->all();
+
+        $branch = function (?int $parent) use (&$branch, $byParent, $user, $open): array {
+            $nodes = [];
+
+            foreach ($byParent->get((string) $parent, []) as $folder) {
+                if ($this->access()->canBrowse($user, $folder)) {
+                    $nodes[] = $this->node('folder:'.$folder->getKey(), $folder->name, 'heroicon-o-folder', [
+                        'folder' => $folder->getKey(),
+                        'active' => $this->linked === null && $this->folder === $folder->getKey(),
+                        'expanded' => in_array($folder->getKey(), $open, true),
+                        'children' => $branch((int) $folder->getKey()),
+                    ]);
+                }
+            }
+
+            return $nodes;
+        };
+
+        $children = $branch(null);
+
+        foreach ($this->linkedMedia()->types() as $type => $count) {
+            if (! $this->access()->allows($user, Ability::View, Target::linked($type))) {
+                continue;
+            }
+
+            $collections = [];
+
+            foreach (array_keys($this->linkedMedia()->collections($type)) as $collection) {
+                $collections[] = $this->node('collection:'.$type.':'.$collection, $this->collectionLabel($collection), 'heroicon-o-folder', [
+                    'linked' => $type,
+                    'collection' => $collection,
+                    'read_only' => true,
+                    'active' => $this->linked === $type && $this->collection === $collection,
+                ]);
+            }
+
+            $children[] = $this->node('linked:'.$type, $this->linkedLabel($type), 'heroicon-o-lock-closed', [
+                'linked' => $type,
+                'read_only' => true,
+                'active' => $this->linked === $type && $this->collection === null,
+                'expanded' => $this->linked === $type,
+                'children' => $collections,
+            ]);
+        }
+
+        return $this->node('root', __('media-manager::media-manager.root'), 'heroicon-o-home', [
+            'active' => $this->folder === null && $this->linked === null,
+            'expanded' => true,
+            'children' => $children,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    private function node(string $key, string $label, string $icon, array $values): array
+    {
+        return [
+            'key' => $key,
+            'label' => $label,
+            'icon' => $icon,
+            'folder' => null,
+            'linked' => null,
+            'collection' => null,
+            'read_only' => false,
+            'active' => false,
+            'expanded' => false,
+            'children' => [],
+            ...$values,
+        ];
     }
 
     private function linkedLabel(string $type): string

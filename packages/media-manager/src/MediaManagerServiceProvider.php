@@ -30,6 +30,7 @@ class MediaManagerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'media-manager');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'media-manager');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // The folders' files get their own path generator; the other models keep theirs.

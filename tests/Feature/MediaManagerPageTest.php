@@ -222,4 +222,42 @@ class MediaManagerPageTest extends AuthFilamentTestCase
 
         $this->get(MediaManagerPage::getUrl(['linked' => $other->getMorphClass()]))->assertOk();
     }
+
+    public function test_folders_open_in_place_from_the_list_and_the_tree(): void
+    {
+        $this->actingAsSuperAdmin();
+        $projects = $this->library()->createFolder(null, 'Projects');
+        $site = $this->library()->createFolder($projects, 'Website');
+        $file = $this->upload($site, 'mockup.txt');
+
+        Livewire::withQueryParams([])
+            ->test(MediaManagerPage::class)
+            // The tree lists every folder, the listing only the root's.
+            ->assertSee('Website')
+            ->assertCanNotSeeTableRecords(['folder:'.$site->id])
+            ->callAction(TestAction::make('open')->table('folder:'.$projects->id))
+            ->assertSet('folder', $projects->id)
+            ->assertCanSeeTableRecords(['folder:'.$site->id])
+            ->call('navigate', $site->id)
+            ->assertSet('folder', $site->id)
+            ->assertCanSeeTableRecords(['file:'.$file->id])
+            ->call('navigate')
+            ->assertSet('folder', null)
+            ->assertCanSeeTableRecords(['folder:'.$projects->id]);
+    }
+
+    public function test_the_tree_only_shows_and_opens_what_the_rights_give(): void
+    {
+        $this->actingAsAdmin();
+        $shared = $this->library()->createFolder(null, 'Shared');
+        $secret = $this->library()->createFolder(null, 'Secret plans');
+        $this->grantAdmins(Target::folder($shared), ['view' => true]);
+
+        Livewire::withQueryParams([])
+            ->test(MediaManagerPage::class)
+            ->assertSee('Shared')
+            ->assertDontSee('Secret plans')
+            ->call('navigate', $secret->id)
+            ->assertForbidden();
+    }
 }
