@@ -4,6 +4,7 @@ namespace Bza\MigrationViewer\Filament;
 
 use BackedEnum;
 use Bza\MigrationViewer\Filament\Pages\MigrationViewerPage;
+use Bza\MigrationViewer\Filament\Resources\MigrationTableResource;
 use Closure;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -11,7 +12,8 @@ use Filament\Support\Concerns\EvaluatesClosures;
 use UnitEnum;
 
 /**
- * Filament adapter: adds the migrations page to a panel.
+ * Filament adapter: adds the migrations page and the stored tables' resource
+ * (list and detail pages) to a panel.
  *
  *     $panel->plugin(MigrationViewerPlugin::make()
  *         ->navigationGroup('Settings')
@@ -36,6 +38,8 @@ class MigrationViewerPlugin implements Plugin
 
     protected string $slug = 'migrations';
 
+    protected string $tablesSlug = 'migration-tables';
+
     public static function make(): static
     {
         return app(static::class);
@@ -55,6 +59,7 @@ class MigrationViewerPlugin implements Plugin
     public function register(Panel $panel): void
     {
         $panel->pages([MigrationViewerPage::class]);
+        $panel->resources([MigrationTableResource::class]);
     }
 
     public function boot(Panel $panel): void {}
@@ -132,5 +137,20 @@ class MigrationViewerPlugin implements Plugin
     public function getSlug(): string
     {
         return $this->slug;
+    }
+
+    /**
+     * The URL segment of the stored tables' list and detail pages.
+     */
+    public function tablesSlug(string $slug): static
+    {
+        $this->tablesSlug = $slug;
+
+        return $this;
+    }
+
+    public function getTablesSlug(): string
+    {
+        return $this->tablesSlug;
     }
 }

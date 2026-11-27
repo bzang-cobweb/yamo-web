@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Bza\MigrationViewer\Filament\Pages\MigrationViewerPage;
+use Bza\MigrationViewer\Filament\Resources\MigrationTableResource;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
@@ -65,41 +66,13 @@ class MigrationViewerPageTest extends AuthFilamentTestCase
             ->assertSee('Supprimée par une migration ultérieure');
     }
 
-    public function test_a_click_on_a_row_shows_its_table_with_its_files_and_current_columns(): void
+    public function test_a_row_links_to_its_table_detail_page(): void
     {
         $this->actingAsSuperAdmin();
 
         Livewire::test(MigrationViewerPage::class)
             ->filterTable('table', 'users')
-            ->mountTableAction('table', '2026_11_22_090000_add_soft_deletes_to_users#users')
-            ->assertMountedActionModalSee('Fichiers de migration')
-            ->assertMountedActionModalSee('0001_01_01_000000_create_users_table')
-            ->assertMountedActionModalSee('2026_12_07_200000_add_identified_at_to_users')
-            ->assertMountedActionModalSee('Présente')
-            ->assertMountedActionModalSee('Champs actuels')
-            ->assertMountedActionModalSee('remember_token')
-            ->assertMountedActionModalSee('identified_at')
-            ->assertMountedActionModalSee('dateTime, nullable');
-    }
-
-    public function test_a_dropped_table_has_no_current_column(): void
-    {
-        $this->actingAsSuperAdmin();
-
-        Livewire::test(MigrationViewerPage::class)
-            ->filterTable('table', 'profile_menu_links')
-            ->mountTableAction('table', '2026_11_22_100000_create_profile_menu_links_table#profile_menu_links')
-            ->assertMountedActionModalSee('Supprimée')
-            ->assertMountedActionModalSee('Aucun champ');
-    }
-
-    public function test_a_migration_touching_no_table_has_no_detail(): void
-    {
-        $this->actingAsSuperAdmin();
-
-        Livewire::test(MigrationViewerPage::class)
-            ->filterTable('operation', 'data')
-            ->assertTableActionHidden('table', '2026_11_21_090000_remove_settings_logo_media#');
+            ->assertSeeHtml(MigrationTableResource::getUrl('view', ['record' => 'users']));
     }
 
     public function test_an_admin_without_the_super_admin_role_is_refused(): void

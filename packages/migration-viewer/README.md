@@ -40,7 +40,10 @@ src/
 ├── Sources/                    Application, Module (nwidart) and Registered (loadMigrationsFrom) sources
 ├── Replay/                     Pretend replay, blueprint collector and reader, column describer
 ├── Data/                       Immutable value objects (MigrationFile, TableChange, ChangeDetail, TableSummary…)
-└── Filament/                   Thin adapter: plugin + page
+├── MigrationTableSynchronizer  Stores the table summaries in migration_tables
+├── Models/MigrationTable       Eloquent model of migration_tables
+├── Console/                    migration-viewer:sync
+└── Filament/                   Thin adapter: plugin, migrations page, stored tables' resource
 ```
 
 The core knows nothing of Filament. Another adapter, such as a Blade page, an Artisan command or a JSON endpoint, only needs `MigrationInspector`:
@@ -78,7 +81,29 @@ Every option accepts a closure. The page lists:
 - filters: table, origin, module (shown only when the origin is « Module »), operation, status;
 - a search on table, migration and column or index names.
 
-A click on a row opens its table in a slide-over: the table's name, its state (present or dropped), its migration files with their operation and status, then its current columns with their definitions. Migrations that touch no table have no detail.
+A click on a row opens its table's detail page. Migrations that touch no table have no detail.
+
+## Stored tables
+
+The package's migration creates a `migration_tables` table with one row per table the migrations touch. The table name is unique. Each row holds:
+
+- `dropped`;
+- the current `columns` (name and definition);
+- the `migrations` that touch the table (name, path, operation, origin, module, status, changes);
+- `columns_count`, `migrations_count`, `pending_count`, `last_migration`, `synced_at`.
+
+`MigrationTableSynchronizer::sync()` fills the table and removes rows for tables no migration touches any more. It runs:
+
+- after each `migrate` or `migrate:rollback`, unless `sync_after_migrate` is false;
+- with `php artisan migration-viewer:sync`;
+- from the « Synchronize » button of the list page.
+
+The Filament plugin also registers the `MigrationTableResource` resource. It is read-only and shares the plugin's `authorize()`:
+
+- the list (`/migration-tables`) offers a search on the name and filters for dropped tables and tables with pending migrations;
+- the detail page (`/migration-tables/{name}`) shows the table's state, its migration files with their operation, changes, origin and status, then its current columns.
+
+The `migration_tables` model is `Bza\MigrationViewer\Models\MigrationTable`, addressed by its name in URLs.
 
 ## Configuration
 
@@ -90,6 +115,7 @@ php artisan vendor:publish --tag=migration-viewer-config
 | --- | --- | --- |
 | `sources` | application, module, registered | Classes implementing `MigrationSource`; a file listed twice keeps the first source. |
 | `connections` | `null` (all) | Connections put in pretend mode during a replay. |
+| `sync_after_migrate` | `true` (`MIGRATION_VIEWER_SYNC_AFTER_MIGRATE`) | Refresh `migration_tables` after each migrate or rollback. |
 
 Translations (en, fr, de) can be published with the `migration-viewer-translations` tag.
 

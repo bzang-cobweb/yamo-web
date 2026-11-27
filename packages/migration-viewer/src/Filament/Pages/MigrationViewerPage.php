@@ -9,20 +9,15 @@ use Bza\MigrationViewer\Data\MigrationReplay;
 use Bza\MigrationViewer\Data\TableChange;
 use Bza\MigrationViewer\Data\TableSummary;
 use Bza\MigrationViewer\Filament\MigrationViewerPlugin;
+use Bza\MigrationViewer\Filament\Resources\MigrationTableResource;
 use Bza\MigrationViewer\MigrationInspector;
 use Bza\MigrationViewer\Operation;
 use Bza\MigrationViewer\Origin;
-use Filament\Actions\Action;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\RepeatableEntry\TableColumn;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Pages\Page;
 use Filament\Panel;
-use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontFamily;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -102,7 +97,7 @@ class MigrationViewerPage extends Page implements HasTable
                 TextColumn::make('operation')
                     ->label(__('migration-viewer::migration-viewer.columns.operation'))
                     ->formatStateUsing(fn (string $state): string => Operation::from($state)->label())
-                    ->color(fn (string $state): string => $this->operationColor(Operation::from($state)))
+                    ->color(fn (string $state): string => Operation::from($state)->color())
                     ->badge(),
                 TextColumn::make('details')
                     ->label(__('migration-viewer::migration-viewer.columns.details'))
@@ -128,9 +123,10 @@ class MigrationViewerPage extends Page implements HasTable
             ])
             ->defaultGroup('group')
             ->groupingSettingsHidden()
-            // A click on a row opens its table: name, migrations, state and current columns.
-            ->recordActions([$this->tableAction()])
-            ->recordAction('table')
+            // A click on a row opens its table's detail page (migration_tables). Rows touching no table have none.
+            ->recordUrl(fn (array $record): ?string => $record['table'] !== null
+                ? MigrationTableResource::getUrl('view', ['record' => $record['table']])
+                : null)
             ->filters([
                 SelectFilter::make('table')
                     ->label(__('migration-viewer::migration-viewer.filters.table'))
@@ -165,97 +161,6 @@ class MigrationViewerPage extends Page implements HasTable
             ->paginated([25, 50, 100, 'all'])
             ->defaultPaginationPageOption(100)
             ->emptyStateHeading(__('migration-viewer::migration-viewer.empty'));
-    }
-
-    /**
-     * The detail of a row's table, in a slide-over. Rows touching no table have none.
-     */
-    private function tableAction(): Action
-    {
-        return Action::make('table')
-            ->label(__('migration-viewer::migration-viewer.detail.open'))
-            ->icon(Heroicon::OutlinedTableCells)
-            ->iconButton()
-            ->color('gray')
-            ->visible(fn (array $record): bool => $record['table'] !== null)
-            ->slideOver()
-            ->modalHeading(fn (array $record): string => (string) $record['table'])
-            ->modalDescription(fn (array $record): ?string => $this->tableDescription($record['table']))
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel(__('migration-viewer::migration-viewer.detail.close'))
-            ->schema(fn (array $record): array => $this->tableDetail((string) $record['table']));
-    }
-
-    /**
-     * @return array<Component>
-     */
-    private function tableDetail(string $table): array
-    {
-        $summary = $this->inspector()->table($table);
-
-        if ($summary === null) {
-            return [];
-        }
-
-        $migrations = array_map(fn (TableChange $change): array => $this->row($change), $summary->changes);
-        $columns = array_map(
-            fn (string $name, string $definition): array => ['name' => $name, 'definition' => $definition],
-            array_keys($summary->columns),
-            array_values($summary->columns),
-        );
-
-        return [
-            TextEntry::make('state')
-                ->label(__('migration-viewer::migration-viewer.detail.state'))
-                ->state($summary->dropped ? __('migration-viewer::migration-viewer.detail.dropped') : __('migration-viewer::migration-viewer.detail.present'))
-                ->color($summary->dropped ? 'danger' : 'success')
-                ->badge(),
-            RepeatableEntry::make('migrations')
-                ->label(__('migration-viewer::migration-viewer.detail.migrations'))
-                ->state($migrations)
-                ->table([
-                    TableColumn::make(__('migration-viewer::migration-viewer.columns.migration')),
-                    TableColumn::make(__('migration-viewer::migration-viewer.columns.operation')),
-                    TableColumn::make(__('migration-viewer::migration-viewer.columns.status')),
-                ])
-                ->schema([
-                    TextEntry::make('migration')
-                        ->fontFamily(FontFamily::Mono)
-                        ->size('xs')
-                        ->copyable(),
-                    TextEntry::make('operation')
-                        ->formatStateUsing(fn (string $state): string => Operation::from($state)->label())
-                        ->color(fn (string $state): string => $this->operationColor(Operation::from($state)))
-                        ->badge(),
-                    TextEntry::make('status')
-                        ->formatStateUsing(fn (string $state): string => __('migration-viewer::migration-viewer.statuses.'.$state))
-                        ->color(fn (string $state): string => $this->statusColor($state))
-                        ->badge(),
-                ]),
-            RepeatableEntry::make('columns')
-                ->label(__('migration-viewer::migration-viewer.detail.columns'))
-                ->state($columns)
-                ->placeholder(__('migration-viewer::migration-viewer.detail.no_column'))
-                ->table([
-                    TableColumn::make(__('migration-viewer::migration-viewer.detail.column')),
-                    TableColumn::make(__('migration-viewer::migration-viewer.detail.definition')),
-                ])
-                ->schema([
-                    TextEntry::make('name')->fontFamily(FontFamily::Mono)->weight('medium'),
-                    TextEntry::make('definition')->fontFamily(FontFamily::Mono)->color('gray'),
-                ]),
-        ];
-    }
-
-    private function operationColor(Operation $operation): string
-    {
-        return match ($operation) {
-            Operation::Create => 'success',
-            Operation::Alter => 'info',
-            Operation::Rename => 'warning',
-            Operation::Drop => 'danger',
-            Operation::Data => 'gray',
-        };
     }
 
     private function statusColor(string $status): string

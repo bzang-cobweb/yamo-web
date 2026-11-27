@@ -18,6 +18,20 @@ enum Operation: string
     /** No schema change: the migration only reads or writes rows. */
     case Data = 'data';
 
+    /**
+     * The Filament-style colour name adapters may use for this operation.
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::Create => 'success',
+            self::Alter => 'info',
+            self::Rename => 'warning',
+            self::Drop => 'danger',
+            self::Data => 'gray',
+        };
+    }
+
     public function label(): string
     {
         return __('migration-viewer::migration-viewer.operations.'.$this->value);

@@ -2,12 +2,17 @@
 
 namespace Bza\MigrationViewer;
 
+use Bza\MigrationViewer\Console\SyncMigrationTablesCommand;
 use Bza\MigrationViewer\Replay\BlueprintCollector;
 use Bza\MigrationViewer\Replay\BlueprintReader;
 use Bza\MigrationViewer\Replay\MigrationReplayer;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
 
@@ -49,10 +54,36 @@ class MigrationViewerServiceProvider extends ServiceProvider
         });
 
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'migration-viewer');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        if ($this->app['config']->get('migration-viewer.sync_after_migrate', true)) {
+            Event::listen(MigrationsEnded::class, fn (MigrationsEnded $event) => $this->syncAfterMigrate($event));
+        }
 
         if ($this->app->runningInConsole()) {
+            $this->commands([SyncMigrationTablesCommand::class]);
+
             $this->publishes([__DIR__.'/../config/migration-viewer.php' => config_path('migration-viewer.php')], 'migration-viewer-config');
             $this->publishes([__DIR__.'/../resources/lang' => $this->app->langPath('vendor/migration-viewer')], 'migration-viewer-translations');
+        }
+    }
+
+    /**
+     * Keeps migration_tables in step with the schema after each "migrate" or
+     * "migrate:rollback". Never makes the migration command fail.
+     */
+    private function syncAfterMigrate(MigrationsEnded $event): void
+    {
+        if (($event->options['pretend'] ?? false) || ! Schema::hasTable('migration_tables')) {
+            return;
+        }
+
+        try {
+            // The replays memoized before the migrations ran know nothing of them.
+            $this->app->forgetInstance(MigrationInspector::class);
+            $this->app->make(MigrationTableSynchronizer::class)->sync();
+        } catch (Throwable $exception) {
+            Log::warning('migration-viewer: the tables could not be synchronized after migrating.', ['exception' => $exception]);
         }
     }
 

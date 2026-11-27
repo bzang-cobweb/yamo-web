@@ -24,4 +24,10 @@ return [
     */
     'connections' => null,
 
+    /*
+    | Refresh the migration_tables table after each "migrate" or "migrate:rollback".
+    | Otherwise run "php artisan migration-viewer:sync" or use the page's button.
+    */
+    'sync_after_migrate' => env('MIGRATION_VIEWER_SYNC_AFTER_MIGRATE', true),
+
 ];
