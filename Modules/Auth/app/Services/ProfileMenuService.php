@@ -43,6 +43,7 @@ class ProfileMenuService
             ProfileMenuKey::PHONE,
             ProfileMenuKey::PASSWORD,
             ProfileMenuKey::RESIDENCE,
+            ProfileMenuKey::EMERGENCY_CONTACT,
             ProfileMenuKey::IDENTITY,
         ],
         'privacy' => [

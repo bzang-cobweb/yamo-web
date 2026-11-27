@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\Api\AccountController;
 use Modules\Auth\Http\Controllers\Api\EmailChangeController;
+use Modules\Auth\Http\Controllers\Api\EmergencyContactController;
 use Modules\Auth\Http\Controllers\Api\IdentityController;
 use Modules\Auth\Http\Controllers\Api\LoginController;
 use Modules\Auth\Http\Controllers\Api\LogoutController;
@@ -64,6 +65,7 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::patch('me/preferences', [PreferencesController::class, 'update'])->can('updateMe', User::class)->name('me.preferences.update');
         Route::patch('me/notifications', [NotificationSettingsController::class, 'update'])->can('updateMe', User::class)->name('me.notifications.update');
         Route::put('me/residence', [ResidenceController::class, 'update'])->can('updateMe', User::class)->name('me.residence.update');
+        Route::put('me/emergency-contact', [EmergencyContactController::class, 'update'])->can('updateMe', User::class)->name('me.emergency-contact.update');
         Route::post('me/avatar', [ProfileController::class, 'updateAvatar'])->can('updateMe', User::class)->name('me.avatar.update');
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
         Route::post('me/email', [EmailChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.store');

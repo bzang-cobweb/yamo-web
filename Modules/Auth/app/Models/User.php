@@ -127,6 +127,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
+     * Son contact d'urgence, un seul (décision 2026-11-27-contact-d-urgence).
+     *
+     * @return HasOne<EmergencyContact, $this>
+     */
+    public function emergencyContact(): HasOne
+    {
+        return $this->hasOne(EmergencyContact::class);
+    }
+
+    /**
      * En ligne : vu par l'API dans les `ONLINE_MINUTES` dernières minutes.
      */
     protected function isOnline(): Attribute

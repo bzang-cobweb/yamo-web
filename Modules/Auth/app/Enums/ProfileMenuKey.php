@@ -6,6 +6,7 @@ use Bza\Form\Support\Form;
 use Bza\Form\Support\Listing;
 use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Forms\EmailChangeForm;
+use Modules\Auth\Forms\EmergencyContactForm;
 use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\NotificationSettingsForm;
 use Modules\Auth\Forms\PasswordForm;
@@ -38,6 +39,8 @@ enum ProfileMenuKey: string
     case PASSWORD = 'password';
     /** L'adresse de résidence (décision 2026-11-27-adresse-de-residence). */
     case RESIDENCE = 'residence';
+    /** Le contact d'urgence (décision 2026-11-27-contact-d-urgence). */
+    case EMERGENCY_CONTACT = 'emergency-contact';
     /** « Confidentialité » : un sous-menu. */
     case PRIVACY = 'privacy';
     case DELETE_ACCOUNT = 'delete-account';
@@ -60,6 +63,7 @@ enum ProfileMenuKey: string
             self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
             self::RESIDENCE => ResidenceForm::class,
+            self::EMERGENCY_CONTACT => EmergencyContactForm::class,
             self::DELETE_ACCOUNT => DeleteAccountForm::class,
             self::NOTIFICATIONS => NotificationSettingsForm::class,
             self::PREFERENCES => PreferencesForm::class,
@@ -141,6 +145,7 @@ enum ProfileMenuKey: string
             self::PHONE => ['phone', 'call'],
             self::PASSWORD => ['key', 'key'],
             self::RESIDENCE => ['house', 'home'],
+            self::EMERGENCY_CONTACT => ['cross.case', 'emergency'],
             self::PRIVACY => ['lock', 'lock'],
             self::DELETE_ACCOUNT => ['trash', 'delete'],
             self::NOTIFICATIONS => ['bell', 'notifications'],
@@ -176,6 +181,7 @@ enum ProfileMenuKey: string
             self::PHONE => filled($user->phone) ? 'changePhone' : 'addPhone',
             self::PASSWORD => 'password',
             self::RESIDENCE => 'residence',
+            self::EMERGENCY_CONTACT => 'emergencyContact',
             self::PRIVACY => 'privacy',
             self::DELETE_ACCOUNT => 'deleteAccount',
             self::NOTIFICATIONS => 'notifications',

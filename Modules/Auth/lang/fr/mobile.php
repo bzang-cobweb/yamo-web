@@ -40,6 +40,7 @@ return [
         'addresses' => 'Mes adresses',
         'notifications' => 'Notifications',
         'residence' => 'Adresse de résidence',
+        'emergencyContact' => "Contact d'urgence",
         'passwordSaved' => 'Mot de passe modifié.',
         'addEmail' => 'Ajouter une adresse e-mail',
         'changeEmail' => "Changer d'adresse e-mail",

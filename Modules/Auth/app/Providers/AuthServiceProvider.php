@@ -15,6 +15,7 @@ use Modules\Auth\Console\PurgeDeletedAccountsCommand;
 use Modules\Auth\Forms\CodeForm;
 use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Forms\EmailChangeForm;
+use Modules\Auth\Forms\EmergencyContactForm;
 use Modules\Auth\Forms\ForgotPasswordForm;
 use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\LoginForm;
@@ -86,6 +87,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(ResetPasswordForm::class);
         $registry->register(UserAddressForm::class);
         $registry->register(ResidenceForm::class);
+        $registry->register(EmergencyContactForm::class);
 
         // Listes servies à l'app : « Mes adresses » (décision 2026-11-18-useraddress-dans-auth).
         $this->app->make(ListingRegistry::class)->register(UserAddressListing::class);
