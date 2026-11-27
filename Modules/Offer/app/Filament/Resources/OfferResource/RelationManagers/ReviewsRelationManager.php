@@ -11,6 +11,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Number;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;
 
@@ -35,7 +36,7 @@ class ReviewsRelationManager extends RelationManager
                     ->searchable(['name', 'first_name', 'last_name']),
                 TextColumn::make('rating')
                     ->label(__('offer::review.resource.rating'))
-                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state))
+                    ->formatStateUsing(fn (float|string $state): string => Number::format((float) $state, precision: 1, locale: app()->getLocale()).' ★')
                     ->sortable(),
                 TextColumn::make('comment')
                     ->label(__('offer::review.resource.comment'))
@@ -50,7 +51,9 @@ class ReviewsRelationManager extends RelationManager
             ->filters([
                 SelectFilter::make('rating')
                     ->label(__('offer::review.resource.rating'))
-                    ->options(array_combine(range(1, 5), array_map(fn (int $stars): string => str_repeat('★', $stars), range(1, 5)))),
+                    // Par étoile : « ★★★ » garde les notes de 3,0 à 3,9 (décision 2026-11-27-note-au-dixieme).
+                    ->options(array_combine(range(1, 5), array_map(fn (int $stars): string => str_repeat('★', $stars), range(1, 5))))
+                    ->query(fn (Builder $query, array $data): Builder => blank($data['value'] ?? null) ? $query : $query->where('rating', '>=', (int) $data['value'])->where('rating', '<', (int) $data['value'] + 1)),
             ])
             ->recordActions([DeleteAction::make()])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()->authorizeIndividualRecords('delete')])]);

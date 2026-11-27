@@ -110,7 +110,8 @@ class OfferMessageApiTest extends TestCase
     public function test_the_form_is_served_to_a_member_and_to_the_publisher_replying(): void
     {
         $form = $this->api($this->member, 'GET', '/api/v1/forms/offer.message?record='.$this->offer->getKey())->assertOk()->json('data');
-        $this->assertSame('Envoyer un message', $form['title']);
+        // Le prénom de l'éditeur en titre (décision 2026-11-27-message-titre-prenom).
+        $this->assertSame((string) $this->publisher->first_name, $form['title']);
         // Sans le titre de l'offre (décision 2026-11-26-message-sans-titre-offre).
         $this->assertNull($form['subtitle']);
         $this->assertSame(['message', 'member'], array_column($form['fields'], 'name'));
@@ -130,6 +131,8 @@ class OfferMessageApiTest extends TestCase
         $this->send($this->member, 'Bonjour')->assertNoContent();
 
         $form = $this->api($this->publisher, 'GET', $reply)->assertOk()->json('data');
+        // Le prénom du membre à qui l'éditeur répond.
+        $this->assertSame((string) $this->member->first_name, $form['title']);
         // Sans prénom au-dessus du champ (décision 2026-11-27-message-sans-prenom).
         $this->assertNull($form['subtitle']);
         $this->assertSame((string) $this->member->getKey(), $form['fields'][1]['default']);

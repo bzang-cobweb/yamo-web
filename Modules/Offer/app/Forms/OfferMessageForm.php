@@ -69,9 +69,16 @@ class OfferMessageForm extends Form
         ];
     }
 
+    /**
+     * Le prénom de qui va lire le message, en titre du panneau (décision 2026-11-27-message-titre-prenom) : l'éditeur de
+     * l'offre quand un membre lui écrit, le membre quand l'éditeur lui répond ; sans prénom, « Envoyer un message ».
+     */
     public function title(): string
     {
-        return __('offer::message.title');
+        $recipient = $this->member ?? $this->offer?->user;
+        $name = $recipient === null ? '' : trim((string) $recipient->first_name);
+
+        return $name !== '' ? $name : (string) __('offer::message.title');
     }
 
     /**

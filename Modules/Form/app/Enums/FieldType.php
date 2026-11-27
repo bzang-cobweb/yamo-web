@@ -81,7 +81,8 @@ enum FieldType: string
             self::DATE => ['date_format:Y-m-d'],
             self::PHONE => ['string', 'phone'],
             self::CODE => ['string', 'digits:6'],
-            self::RATING => ['integer', 'between:1,5'],
+            // Au dixième, de 1 à 5 (décision 2026-11-27-note-au-dixieme).
+            self::RATING => ['numeric', 'between:1,5', 'multiple_of:0.1'],
             self::UPLOAD, self::REPEATER => ['array'],
         };
     }

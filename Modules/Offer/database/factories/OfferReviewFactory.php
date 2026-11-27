@@ -19,7 +19,7 @@ class OfferReviewFactory extends Factory
         return [
             'offer_id' => Offer::factory(),
             'user_id' => User::factory(),
-            'rating' => fake()->numberBetween(1, 5),
+            'rating' => fake()->randomFloat(1, 1, 5),
             'comment' => fake()->sentence(),
         ];
     }

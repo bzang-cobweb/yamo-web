@@ -115,8 +115,8 @@ class BookingApiTest extends TestCase
         $offer = $this->home(true);
 
         $this->asUser($this->member())->getJson('/api/v1/forms/offer.booking?record='.$offer->getKey())
-            ->assertJsonPath('data.fields.0.date_range.min', '2026-07-12')
-            ->assertJsonPath('data.fields.1.date_range.min', '2026-07-13');
+            ->assertJsonPath('data.fields.0.range.min', '2026-07-12')
+            ->assertJsonPath('data.fields.1.range.min', '2026-07-13');
         // Le 11, déjà passé au Cameroun, est refusé.
         $this->asUser($this->member())->postJson("/api/v1/offers/{$offer->getKey()}/bookings", $this->stay(['check_in' => '2026-07-11', 'check_out' => '2026-07-14']))
             ->assertJsonValidationErrors('check_in');
@@ -135,8 +135,8 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.fields.1.help', app(DomainRegistry::class)->require()->formattedPrice($offer, 'fr').' ; le total figure dans le détail de la réservation une fois la demande envoyée.');
 
         // Le calendrier : à partir d'aujourd'hui (le départ, de demain), un an au plus (décision 2026-11-19-bornes-des-dates).
-        $stay->assertJsonPath('data.fields.0.date_range', ['min' => today()->toDateString(), 'max' => today()->addDays(365)->toDateString()])
-            ->assertJsonPath('data.fields.1.date_range.min', today()->addDay()->toDateString());
+        $stay->assertJsonPath('data.fields.0.range', ['min' => today()->toDateString(), 'max' => today()->addDays(365)->toDateString(), 'step' => null])
+            ->assertJsonPath('data.fields.1.range.min', today()->addDay()->toDateString());
 
         $visit = $this->asUser($guest)->getJson('/api/v1/forms/offer.booking?record='.$this->home(false)->getKey())->assertOk();
         // Une seule date de visite (décision 2026-11-22-visite-une-seule-date).

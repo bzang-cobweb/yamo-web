@@ -17,7 +17,7 @@ use Modules\Offer\Database\Factories\OfferReviewFactory;
  *
  * @property int $offer_id
  * @property int $user_id
- * @property int $rating
+ * @property float $rating note au dixième, de 1,0 à 5,0 (décision 2026-11-27-note-au-dixieme)
  * @property string $comment
  * @property-read Offer $offer
  * @property-read User $user
@@ -47,7 +47,7 @@ class OfferReview extends Model
 
     protected function casts(): array
     {
-        return ['rating' => 'integer'];
+        return ['rating' => 'float'];
     }
 
     /**

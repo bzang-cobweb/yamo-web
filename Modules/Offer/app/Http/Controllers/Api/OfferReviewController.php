@@ -51,7 +51,7 @@ class OfferReviewController
 
         $offer->reviews()->updateOrCreate(
             ['user_id' => $user->getKey()],
-            ['rating' => (int) $data['rating'], 'comment' => trim($data['comment'])],
+            ['rating' => round((float) $data['rating'], 1), 'comment' => trim($data['comment'])],
         );
 
         return response()->noContent();

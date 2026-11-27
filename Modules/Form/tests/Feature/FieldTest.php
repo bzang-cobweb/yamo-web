@@ -3,6 +3,7 @@
 namespace Modules\Form\Tests\Feature;
 
 use Illuminate\Support\Facades\Validator;
+use LogicException;
 use Modules\Form\Enums\FieldType;
 use Modules\Form\Support\Field;
 use Modules\Form\Support\Form;
@@ -95,15 +96,53 @@ class FieldTest extends TestCase
         $this->assertEqualsCanonicalizing(array_column(FieldType::cases(), 'value'), array_values(array_unique($types)));
     }
 
-    public function test_a_rating_is_a_whole_number_from_1_to_5(): void
+    public function test_a_rating_goes_from_1_to_5_by_tenths(): void
     {
-        foreach ([0, 6, 2.5, 'beaucoup'] as $invalid) {
+        // Décision 2026-11-27-note-au-dixieme.
+        foreach ([0, 0.9, 5.1, 6, 2.55, 'beaucoup'] as $invalid) {
             $this->assertContains('stars', $this->errors([...$this->valid(), 'stars' => $invalid]), (string) $invalid);
         }
-        foreach ([1, 5, '3'] as $valid) {
-            $this->assertNotContains('stars', $this->errors([...$this->valid(), 'stars' => $valid]));
+        foreach ([1, 5, '3', 3.2, '4.7'] as $valid) {
+            $this->assertNotContains('stars', $this->errors([...$this->valid(), 'stars' => $valid]), (string) $valid);
         }
-        $this->assertSame('★★★★☆', Field::rating('stars')->displayValue(4, 'fr'));
+        $this->assertSame('★★★★☆ 4,0', Field::rating('stars')->displayValue(4, 'fr'));
+        $this->assertSame('★★★☆☆ 3,2', Field::rating('stars')->displayValue(3.2, 'fr'));
+    }
+
+    public function test_a_rating_serves_its_range_and_stars_and_is_validated_against_them(): void
+    {
+        // Décision 2026-11-27-note-bornes-etoiles : 1 à 5 et les étoiles par défaut.
+        $this->assertSame([['min' => 1.0, 'max' => 5.0, 'step' => 0.1], true], [Field::rating('stars')->toArray()['range'], Field::rating('stars')->toArray()['stars']]);
+        $this->assertSame([null, null], [Field::text('name')->toArray()['range'], Field::text('name')->toArray()['stars']]);
+
+        $field = Field::rating('score')->ratingRange(0, 10, 0.5)->stars(false);
+        $this->assertSame([['min' => 0.0, 'max' => 10.0, 'step' => 0.5], false], [$field->toArray()['range'], $field->toArray()['stars']]);
+        $rules = $field->validationRules();
+        $this->assertTrue(Validator::make(['score' => 7.5], $rules)->passes());
+        $this->assertTrue(Validator::make(['score' => 0], $rules)->passes());
+        $this->assertFalse(Validator::make(['score' => 10.5], $rules)->passes());
+        $this->assertFalse(Validator::make(['score' => 7.2], $rules)->passes());
+
+        $this->expectException(LogicException::class);
+        Field::rating('score')->ratingRange(5, 1);
+    }
+
+    public function test_a_range_can_be_a_two_thumb_slider_with_bounds_and_step(): void
+    {
+        // Décision 2026-11-27-intervalle-curseur : sans curseur, deux saisies et pas de bornes servies.
+        $this->assertNull(Field::range('price')->toArray()['range']);
+
+        $field = Field::range('price')->slider(0, 500000, 5000);
+        $this->assertSame(['min' => 0.0, 'max' => 500000.0, 'step' => 5000.0], $field->toArray()['range']);
+        $rules = $field->validationRules();
+        $this->assertTrue(Validator::make(['price' => [50000, 200000]], $rules)->passes());
+        $this->assertTrue(Validator::make(['price' => [null, 200000]], $rules)->passes());
+        $this->assertFalse(Validator::make(['price' => [50000, 600000]], $rules)->passes());
+        $this->assertFalse(Validator::make(['price' => [52000, 200000]], $rules)->passes());
+        $this->assertFalse(Validator::make(['price' => [200000, 50000]], $rules)->passes());
+
+        $this->expectException(LogicException::class);
+        Field::text('name')->slider(0, 10);
     }
 
     public function test_a_multiselect_and_a_range_are_validated(): void
@@ -178,7 +217,8 @@ class FieldTest extends TestCase
             'reloads' => false,
             'suggestions' => null,
             'max_length' => null,
-            'date_range' => null,
+            'range' => null,
+            'stars' => null,
             'date_formats' => null,
             'calendar' => null,
             'suffix' => null,
@@ -321,10 +361,10 @@ class FieldTest extends TestCase
     public function test_a_date_serves_its_calendar_bounds(): void
     {
         // Décision 2026-11-19-bornes-des-dates : sans borne par défaut ; bornée à la demande.
-        $this->assertSame(['min' => null, 'max' => null], Field::date('available_from')->toArray()['date_range']);
-        $this->assertSame(['min' => '2026-11-19', 'max' => '2027-11-19'], Field::date('check_in')->dateRange('2026-11-19', '2027-11-19')->toArray()['date_range']);
+        $this->assertSame(['min' => null, 'max' => null, 'step' => null], Field::date('available_from')->toArray()['range']);
+        $this->assertSame(['min' => '2026-11-19', 'max' => '2027-11-19', 'step' => null], Field::date('check_in')->dateRange('2026-11-19', '2027-11-19')->toArray()['range']);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         Field::text('name')->dateRange('2026-11-19', null);
     }
 

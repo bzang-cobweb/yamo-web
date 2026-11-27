@@ -55,12 +55,16 @@ trait FiltersOffers
                 ->visibleWhen('region', array_map('strval', array_keys($regions)))
                 ->options($this->offerCities($offers))
                 ->countryScoped(),
-            // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements).
-            ! $domain->hasPrice() ? null : Field::range('price')
-                // « Prix » quel que soit le domaine (décision 2026-11-26-filtre-prix-membre-identifie).
-                ->label(__('offer::offer.filters.price'))
-                ->suffix($currency)
-                ->rules(['min:0']),
+            // Un seul intervalle, min et max (décision 2026-11-19-contrat-multiselect-intervalle-equipements), en curseur à
+            // deux poignées de 0 au prix le plus haut des offres (décision 2026-11-27-intervalle-curseur).
+            ! $domain->hasPrice() ? null : $this->priceSlider(
+                Field::range('price')
+                    // « Prix » quel que soit le domaine (décision 2026-11-26-filtre-prix-membre-identifie).
+                    ->label(__('offer::offer.filters.price'))
+                    ->suffix($currency)
+                    ->rules(['min:0']),
+                $offers,
+            ),
             ...$domain->filters(),
             // L'éditeur de l'offre identifié ou non (décision 2026-11-26-filtre-prix-membre-identifie).
             ! $withIdentified ? null : Field::segmented('identified')
@@ -68,6 +72,27 @@ trait FiltersOffers
                 ->options(['any' => __('offer::offer.filters.any'), 'yes' => __('offer::offer.filters.yes'), 'no' => __('offer::offer.filters.no')])
                 ->default('any'),
         ]));
+    }
+
+    /**
+     * Le prix en curseur, de 0 au prix le plus haut de `$offers`, arrondi au pas au-dessus ; le pas est un nombre rond
+     * (1, 2 ou 5 fois une puissance de 10) qui découpe ce prix en une cinquantaine de crans. Sans offre ni prix : les
+     * deux saisies (décision 2026-11-27-intervalle-curseur).
+     *
+     * @param  Builder<Offer>  $offers
+     */
+    private function priceSlider(Field $field, Builder $offers): Field
+    {
+        $highest = (float) (clone $offers)->max('price');
+        if ($highest <= 0) {
+            return $field;
+        }
+
+        $raw = $highest / 50;
+        $power = 10 ** floor(log10($raw));
+        $step = collect([1, 2, 5, 10])->map(fn (int $factor): float => $factor * $power)->first(fn (float $candidate): bool => $candidate >= $raw);
+
+        return $field->slider(0, ceil($highest / $step) * $step, $step);
     }
 
     /**

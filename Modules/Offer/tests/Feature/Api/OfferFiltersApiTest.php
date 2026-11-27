@@ -78,6 +78,17 @@ class OfferFiltersApiTest extends TestCase
         $this->assertEqualsCanonicalizing([(string) $douala->getKey(), (string) $edea->getKey()], $this->ids('?filter[region]='.$littoral->getKey()));
     }
 
+    public function test_the_price_is_a_slider_from_0_to_the_highest_price(): void
+    {
+        // Décision 2026-11-27-intervalle-curseur : de 0 au prix le plus haut, arrondi à un pas rond (ici 10 000).
+        $this->home('Douala', 45000, []);
+        $this->home('Douala', 420000, []);
+
+        $price = collect($this->withHeaders(['X-Country' => 'CM', 'Accept-Language' => 'fr'])->getJson('/api/v1/lists/offer.browse')->json('data.filters'))->firstWhere('name', 'price');
+        $this->assertSame(['range', ['min' => 0, 'max' => 420000, 'step' => 10000]], [$price['type'], $price['range']]);
+        $this->assertCount(1, $this->ids('?filter[price][]=0&filter[price][]=100000'));
+    }
+
     public function test_the_search_always_has_a_region_the_first_with_offers_by_default(): void
     {
         // Décision 2026-11-25-region-obligatoire-recherche : la première région qui a des offres, dans l'ordre du

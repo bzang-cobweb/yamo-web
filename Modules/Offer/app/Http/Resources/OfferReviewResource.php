@@ -17,7 +17,7 @@ use Modules\Offer\Models\OfferReview;
 class OfferReviewResource extends JsonResource
 {
     /**
-     * @return array{id: string, author: string, rating: int, comment: string, created_at: string|null, date: string|null}
+     * @return array{id: string, author: string, rating: float, comment: string, created_at: string|null, date: string|null}
      */
     public function toArray(Request $request): array
     {

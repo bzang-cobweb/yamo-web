@@ -72,6 +72,18 @@ final class Field
     /** Bornes d'une date (`AAAA-MM-JJ`), proposées par le calendrier de l'app ; `null` : sans borne. */
     private ?string $dateMin = null;
 
+    /**
+     * Bornes numériques et incrément d'une note ou d'un intervalle en curseur (décisions 2026-11-27-note-bornes-etoiles
+     * et 2026-11-27-intervalle-curseur) ; `null` : sans curseur (un intervalle à deux saisies).
+     */
+    private ?float $boundMin = null;
+
+    private ?float $boundMax = null;
+
+    private ?float $boundStep = null;
+
+    private bool $ratingStars = true;
+
     private ?string $dateMax = null;
 
     /** @var array{unavailable: list<string>, after: string|null}|null */
@@ -282,7 +294,8 @@ final class Field
      */
     public static function rating(string $name): self
     {
-        return new self($name, FieldType::RATING);
+        // De 1 à 5 au dixième par défaut (décision 2026-11-27-note-au-dixieme).
+        return (new self($name, FieldType::RATING))->bounds(1, 5, 0.1);
     }
 
     /**
@@ -702,6 +715,60 @@ final class Field
     }
 
     /**
+     * Les bornes d'une note (1 et 5 par défaut) et son incrément (0,1 par défaut) ; le curseur de l'app et la
+     * validation les suivent (décisions 2026-11-27-note-bornes-etoiles et 2026-11-27-cle-range).
+     */
+    public function ratingRange(float $min, float $max, float $step = 0.1): self
+    {
+        if ($this->type !== FieldType::RATING) {
+            throw new LogicException("Champ « {$this->name} » : seule une note a ces bornes.");
+        }
+
+        return $this->bounds($min, $max, $step);
+    }
+
+    /**
+     * Un intervalle choisi sur un curseur à deux poignées, entre `$min` et `$max`, par `$step` (décision
+     * 2026-11-27-intervalle-curseur) ; sans, deux saisies « Min » et « Max ». La valeur reste `[min, max]`.
+     */
+    public function slider(float $min, float $max, float $step = 1): self
+    {
+        if ($this->type !== FieldType::RANGE) {
+            throw new LogicException("Champ « {$this->name} » : seul un intervalle a un curseur.");
+        }
+
+        return $this->bounds($min, $max, $step);
+    }
+
+    private function bounds(float $min, float $max, float $step): self
+    {
+        if ($max <= $min) {
+            throw new LogicException("Champ « {$this->name} » : la borne maximale doit dépasser la minimale.");
+        }
+        if ($step <= 0) {
+            throw new LogicException("Champ « {$this->name} » : l'incrément doit être positif.");
+        }
+
+        $this->boundMin = $min;
+        $this->boundMax = $max;
+        $this->boundStep = $step;
+
+        return $this;
+    }
+
+    /** Les étoiles au-dessus du curseur d'une note (par défaut) ; `false` : la note et le curseur seuls. */
+    public function stars(bool $shown = true): self
+    {
+        if ($this->type !== FieldType::RATING) {
+            throw new LogicException("Champ « {$this->name} » : seule une note a des étoiles.");
+        }
+
+        $this->ratingStars = $shown;
+
+        return $this;
+    }
+
+    /**
      * La date se choisit sur une grille de mois au lieu du sélecteur natif
      * (décision 2026-11-19-contrat-calendrier-offre) : les jours `$unavailable`
      * (`AAAA-MM-JJ`) y sont grisés. Avec `$after` (le champ du début d'une période,
@@ -848,6 +915,20 @@ final class Field
     }
 
     /**
+     * Les bornes et l'incrément d'un curseur (note, intervalle) ; aucune règle sans curseur.
+     *
+     * @return list<string>
+     */
+    private function boundRules(): array
+    {
+        if ($this->boundMin === null || $this->boundMax === null || $this->boundStep === null) {
+            return [];
+        }
+
+        return ['between:'.$this->boundMin.','.$this->boundMax, 'multiple_of:'.$this->boundStep];
+    }
+
+    /**
      * @return array<string, list<mixed>>
      */
     private function ownRules(): array
@@ -915,9 +996,14 @@ final class Field
                         $fail('form::validation.range_order')->translate();
                     }
                 }],
-                // Les règles du champ (`min:0`) valent pour chaque borne.
-                $this->name.'.*' => ['nullable', 'numeric', ...$this->rules],
+                // Les règles du champ (`min:0`) valent pour chaque borne ; en curseur, ses bornes et son incrément aussi.
+                $this->name.'.*' => ['nullable', 'numeric', ...$this->boundRules(), ...$this->rules],
             ];
+        }
+
+        if ($this->type === FieldType::RATING) {
+            // Les bornes du champ, au dixième (décision 2026-11-27-note-bornes-etoiles).
+            return [$this->name => [...$presence, 'numeric', ...$this->boundRules(), ...$this->rules]];
         }
 
         $length = $this->maxLength === null ? [] : ['max:'.$this->maxLength];
@@ -1072,7 +1158,7 @@ final class Field
             FieldType::RANGE => self::rangeText((array) $value, $locale),
             FieldType::CHECKBOX_GROUP, FieldType::MULTISELECT, FieldType::CHIPS => implode(', ', array_map(fn (mixed $item): string => $labels[(string) $item] ?? (string) $item, (array) $value)),
             FieldType::CHECKBOX, FieldType::SWITCH => __('form::field.'.(filter_var($value, FILTER_VALIDATE_BOOL) ? 'yes' : 'no'), [], $locale),
-            FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) $value))).str_repeat('☆', 5 - $stars) : (string) $value,
+            FieldType::RATING => is_numeric($value) ? str_repeat('★', $stars = max(0, min(5, (int) round((float) $value / ($this->boundMax ?? 5) * 5)))).str_repeat('☆', 5 - $stars).' '.Number::format((float) $value, precision: 1, locale: $locale) : (string) $value,
             FieldType::NUMBER => is_numeric($value) ? (string) Number::format((float) $value, locale: $locale) : (string) $value,
             // Le format court des avis (« 18 nov. 2026 », décision 2026-11-25-date-format-avis).
             FieldType::DATE => Carbon::parse((string) $value)->locale($locale)->isoFormat('ll'),
@@ -1145,7 +1231,17 @@ final class Field
             'suggestions' => $this->suggestions,
             'max_length' => $this->maxLength,
             /** Bornes du calendrier d'une date (`AAAA-MM-JJ` ou `null`) ; `null` pour un autre champ. */
-            'date_range' => $this->type !== FieldType::DATE ? null : ['min' => $this->dateMin, 'max' => $this->dateMax],
+            /**
+             * Les bornes du champ et son incrément, une seule notion (décision 2026-11-27-cle-range) : une date
+             * (`AAAA-MM-JJ` ou `null`, sans incrément), une note (1 à 5 par 0,1 par défaut) ; `null` pour un autre champ.
+             */
+            'range' => match ($this->type) {
+                FieldType::DATE => ['min' => $this->dateMin, 'max' => $this->dateMax, 'step' => null],
+                FieldType::RATING, FieldType::RANGE => $this->boundMin === null ? null : ['min' => $this->boundMin, 'max' => $this->boundMax, 'step' => $this->boundStep],
+                default => null,
+            },
+            /** Une note : ses étoiles affichées ou non ; `null` pour un autre champ. */
+            'stars' => $this->type === FieldType::RATING ? $this->ratingStars : null,
             // Les formats de ses dates, appliqués par l'app (config `form.date_formats`, décision 2026-11-25-dates-formatees-serveur).
             'date_formats' => $this->type !== FieldType::DATE ? null : (array) config('form.date_formats'),
             /** Grille de mois (date seulement) : jours indisponibles, et le champ du début d'une période (`after`) ; `null` : sélecteur natif. */

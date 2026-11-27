@@ -49,7 +49,11 @@ class OfferReviewForm extends Form
         return [
             Field::rating('rating')
                 ->label(__('offer::review.rating'))
-                ->default($this->review?->rating === null ? null : (string) $this->review->rating)
+                // De 1 à 5, au dixième, sans étoiles : la note en grand et le curseur (décisions 2026-11-27-note-au-dixieme,
+                // 2026-11-27-note-bornes-etoiles et 2026-11-27-avis-sans-etoiles).
+                ->ratingRange(1, 5, 0.1)
+                ->stars(false)
+                ->default($this->review?->rating === null ? null : number_format($this->review->rating, 1, '.', ''))
                 ->required(),
             Field::textarea('comment')
                 ->label(__('offer::review.comment'))

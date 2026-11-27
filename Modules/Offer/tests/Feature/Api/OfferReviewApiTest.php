@@ -68,7 +68,7 @@ class OfferReviewApiTest extends TestCase
         return $user;
     }
 
-    private function review(User $user, Offer $offer, int $rating, string $comment): TestResponse
+    private function review(User $user, Offer $offer, int|float $rating, string $comment): TestResponse
     {
         return $this->api($user, 'PUT', "/api/v1/offers/{$offer->getKey()}/review", ['rating' => $rating, 'comment' => $comment]);
     }
@@ -116,7 +116,12 @@ class OfferReviewApiTest extends TestCase
         $this->review($awa, $offer, 3, 'Bruyant, mais bien situé.')->assertNoContent();
 
         $this->assertSame(1, OfferReview::query()->count());
-        $this->assertSame(3, OfferReview::query()->value('rating'));
+        $this->assertSame(3.0, OfferReview::query()->value('rating'));
+        // Au dixième (décision 2026-11-27-note-au-dixieme) : 3,2 gardé et servi tel quel ; 3,25 refusé.
+        $this->review($awa, $offer, 3.2, 'Bruyant, mais bien situé.')->assertNoContent();
+        $this->assertSame(3.2, OfferReview::query()->sole()->rating);
+        $this->review($awa, $offer, 3.25, 'Bruyant.')->assertUnprocessable();
+        $this->review($awa, $offer, 3, 'Bruyant, mais bien situé.')->assertNoContent();
 
         // Un avis modifié redevient le premier de la fiche.
         $this->travel(1)->minutes();
@@ -129,11 +134,13 @@ class OfferReviewApiTest extends TestCase
 
         // Le formulaire, prérempli avec son avis.
         $form = $this->api($awa, 'GET', "/api/v1/forms/offer.review?record={$offer->getKey()}")->assertOk()->json('data');
+        // De 1 à 5 au dixième, sans étoiles (décision 2026-11-27-avis-sans-etoiles).
+        $this->assertSame([['min' => 1, 'max' => 5, 'step' => 0.1], false], [$form['fields'][0]['range'], $form['fields'][0]['stars']]);
         $this->assertSame('Modifier mon avis', $form['title']);
         // Sans le titre de l'offre (décision 2026-11-26-avis-sans-titre-offre).
         $this->assertNull($form['subtitle']);
         $this->assertSame(['rating', 'textarea'], array_column($form['fields'], 'type'));
-        $this->assertSame(['3', 'Bruyant le soir, mais bien situé.'], array_column($form['fields'], 'default'));
+        $this->assertSame(['3.0', 'Bruyant le soir, mais bien situé.'], array_column($form['fields'], 'default'));
         $this->assertSame('PUT', $form['submit']['method']);
 
         $this->api($awa, 'DELETE', "/api/v1/offers/{$offer->getKey()}/review")->assertNoContent();
