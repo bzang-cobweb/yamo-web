@@ -12,12 +12,12 @@ use Modules\Auth\Forms\NotificationSettingsForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalDataForm;
 use Modules\Auth\Forms\PersonalInfoForm;
-use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Forms\ProfileVisibilityForm;
 use Modules\Auth\Forms\ResidenceForm;
 use Modules\Auth\Forms\ReviewPrivacyForm;
 use Modules\Auth\Lists\UserAddressListing;
+use Modules\Auth\Lists\UserPhoneListing;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
 
@@ -67,7 +67,6 @@ enum ProfileMenuKey: string
             self::DETAILS => PersonalInfoForm::class,
             self::IDENTITY => IdentityForm::class,
             self::EMAIL => EmailChangeForm::class,
-            self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
             self::RESIDENCE => ResidenceForm::class,
             self::EMERGENCY_CONTACT => EmergencyContactForm::class,
@@ -90,6 +89,8 @@ enum ProfileMenuKey: string
     {
         return match ($this) {
             self::ADDRESSES => UserAddressListing::class,
+            // « Mes numéros » : le principal puis les supplémentaires (décision 2026-11-27-plusieurs-numeros).
+            self::PHONE => UserPhoneListing::class,
             default => null,
         };
     }
@@ -191,7 +192,7 @@ enum ProfileMenuKey: string
             self::DETAILS => 'details',
             self::IDENTITY => 'identity',
             self::EMAIL => filled($user->email) ? 'changeEmail' : 'addEmail',
-            self::PHONE => filled($user->phone) ? 'changePhone' : 'addPhone',
+            self::PHONE => 'phones',
             self::PASSWORD => 'password',
             self::RESIDENCE => 'residence',
             self::EMERGENCY_CONTACT => 'emergencyContact',

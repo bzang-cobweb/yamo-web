@@ -38,6 +38,7 @@ return [
         'password' => 'Change password',
         'preferences' => 'Preferences',
         'addresses' => 'My addresses',
+        'phones' => 'My phone numbers',
         'notifications' => 'Notifications',
         'residence' => 'Residential address',
         'emergencyContact' => 'Emergency contact',

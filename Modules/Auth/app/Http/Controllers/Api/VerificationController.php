@@ -17,6 +17,7 @@ use Modules\Auth\Services\LoginService;
 use Modules\Auth\Services\PasswordResetService;
 use Modules\Auth\Services\PhoneChangeService;
 use Modules\Auth\Services\RegisterService;
+use Modules\Auth\Services\UserPhoneService;
 use Modules\Auth\Services\VerificationCodeService;
 
 /**
@@ -31,6 +32,7 @@ class VerificationController
      * - inscription dont tous les codes sont validés : 201, le compte créé et son jeton ;
      * - inscription avec un autre code attendu : 202 et le prochain code à saisir ;
      * - changement d'e-mail ou de téléphone (connecté) : l'utilisateur à jour ;
+     * - ajout d'un numéro supplémentaire (connecté) : l'utilisateur ;
      * - vérification de l'e-mail ou du téléphone actuel (connecté) : l'utilisateur à jour ;
      * - suppression du compte (connecté) : le compte supprimé (l'app déconnecte) ;
      * - mot de passe oublié : `{next: "password", challenge}`, puis
@@ -48,6 +50,7 @@ class VerificationController
         PasswordResetService $passwordReset,
         ContactVerificationService $contactVerification,
         AccountDeletionService $accountDeletion,
+        UserPhoneService $userPhones,
     ): UserResource|JsonResponse {
         /** @var User|null $actingUser */
         $actingUser = $request->user('sanctum');
@@ -61,6 +64,7 @@ class VerificationController
             VerificationPurpose::REGISTER => $register->complete($verified, $deviceName),
             VerificationPurpose::CHANGE_EMAIL => $emailChange->complete($verified),
             VerificationPurpose::CHANGE_PHONE => $phoneChange->complete($verified),
+            VerificationPurpose::ADD_PHONE => $userPhones->complete($verified),
             VerificationPurpose::RESET_PASSWORD => $passwordReset->confirm($verified),
             VerificationPurpose::VERIFY_EMAIL, VerificationPurpose::VERIFY_PHONE => $contactVerification->complete($verified),
             VerificationPurpose::DELETE_ACCOUNT => $accountDeletion->complete($verified),

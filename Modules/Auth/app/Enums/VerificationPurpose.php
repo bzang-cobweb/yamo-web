@@ -15,6 +15,8 @@ enum VerificationPurpose: string
     case VERIFY_EMAIL = 'verify_email';
     /** Vérifier le numéro actuel du compte. */
     case VERIFY_PHONE = 'verify_phone';
+    /** Ajouter un numéro supplémentaire au compte (décision 2026-11-27-plusieurs-numeros). */
+    case ADD_PHONE = 'add_phone';
     /** Confirmer la suppression de son compte (décision 2026-11-27-confidentialite). */
     case DELETE_ACCOUNT = 'delete_account';
     case RESET_PASSWORD = 'reset_password';
@@ -22,6 +24,6 @@ enum VerificationPurpose: string
     /** Opération sur un compte connecté : le jeton de la requête doit être le sien. */
     public function needsSignedInUser(): bool
     {
-        return in_array($this, [self::CHANGE_EMAIL, self::CHANGE_PHONE, self::VERIFY_EMAIL, self::VERIFY_PHONE, self::DELETE_ACCOUNT], true);
+        return in_array($this, [self::CHANGE_EMAIL, self::CHANGE_PHONE, self::VERIFY_EMAIL, self::VERIFY_PHONE, self::ADD_PHONE, self::DELETE_ACCOUNT], true);
     }
 }

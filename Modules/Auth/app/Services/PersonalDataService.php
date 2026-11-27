@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Modules\Auth\Mail\PersonalDataMail;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Auth\Models\UserPhone;
 
 /**
  * « Mes données » (décision 2026-11-27-confidentialite) : les données du compte, en JSON, envoyées en pièce jointe à
@@ -37,7 +38,7 @@ final class PersonalDataService
      */
     public function export(User $user): array
     {
-        $user->loadMissing(['country', 'region', 'phoneCountry', 'identityCountry', 'addresses.address', 'emergencyContact']);
+        $user->loadMissing(['country', 'region', 'phoneCountry', 'identityCountry', 'addresses.address', 'emergencyContact', 'phones']);
 
         return [
             'exported_at' => now()->toIso8601String(),
@@ -67,6 +68,11 @@ final class PersonalDataService
                 'indication' => $address->indication,
                 'is_residence' => (bool) $address->is_residence,
                 'address' => $address->address?->only(['street', 'zip', 'city']),
+            ])->all(),
+            // Numéros supplémentaires (décision 2026-11-27-plusieurs-numeros).
+            'phones' => $user->phones->map(fn (UserPhone $phone): array => [
+                'phone' => $phone->phone,
+                'verified_at' => $phone->verified_at?->toIso8601String(),
             ])->all(),
             'emergency_contact' => $user->emergencyContact?->only(['name', 'relationship', 'email', 'phone', 'locale']),
             'notification_settings' => $user->notificationSettings(),

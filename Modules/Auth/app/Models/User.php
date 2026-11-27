@@ -139,6 +139,16 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     }
 
     /**
+     * Ses numéros supplémentaires, dans l'ordre d'ajout ; le principal reste `phone` (décision 2026-11-27-plusieurs-numeros).
+     *
+     * @return HasMany<UserPhone, $this>
+     */
+    public function phones(): HasMany
+    {
+        return $this->hasMany(UserPhone::class)->orderBy('id');
+    }
+
+    /**
      * En ligne : vu par l'API dans les `ONLINE_MINUTES` dernières minutes.
      */
     protected function isOnline(): Attribute

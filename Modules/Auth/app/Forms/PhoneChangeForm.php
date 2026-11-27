@@ -67,11 +67,12 @@ class PhoneChangeForm extends Form
 
     /**
      * L'app envoie le formulaire à `api.v1.auth.me.phone.store`
-     * (décision 2026-11-17-formulaires-profil-generiques).
+     * (décision 2026-11-17-formulaires-profil-generiques), puis revient à « Mes numéros », d'où il est ouvert
+     * (décision 2026-11-27-plusieurs-numeros).
      */
     public function submission(): Submission
     {
-        return Submission::toRoute('api.v1.auth.me.phone.store', SuccessAction::PROFILE, __('auth::mobile.profile.phoneSaved'));
+        return Submission::toRoute('api.v1.auth.me.phone.store', SuccessAction::BACK, __('auth::mobile.profile.phoneSaved'));
     }
 
     public function submitLabel(): string

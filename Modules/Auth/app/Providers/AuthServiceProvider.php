@@ -33,14 +33,18 @@ use Modules\Auth\Forms\ResetPasswordForm;
 use Modules\Auth\Forms\ResidenceForm;
 use Modules\Auth\Forms\ReviewPrivacyForm;
 use Modules\Auth\Forms\UserAddressForm;
+use Modules\Auth\Forms\UserPhoneForm;
 use Modules\Auth\Lists\UserAddressListing;
+use Modules\Auth\Lists\UserPhoneListing;
 use Modules\Auth\Models\Permission;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
+use Modules\Auth\Models\UserPhone;
 use Modules\Auth\Policies\PermissionPolicy;
 use Modules\Auth\Policies\RolePolicy;
 use Modules\Auth\Policies\UserAddressPolicy;
+use Modules\Auth\Policies\UserPhonePolicy;
 use Modules\Auth\Policies\UserPolicy;
 use Modules\Auth\Sms\LogSmsSender;
 use Modules\Auth\Sms\SmsSender;
@@ -71,6 +75,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
         Gate::policy(UserAddress::class, UserAddressPolicy::class);
+        Gate::policy(UserPhone::class, UserPhonePolicy::class);
 
         // Le groupe « Compte » du menu du profil, en tête (décision 2026-11-19-contrat-reservations-logements-profil).
         $this->app->make(ProfileMenuLinks::class)->addGroup(ProfileMenuLinks::ACCOUNT, fn (): string => __('auth::navigation.profile_groups.account'), 10);
@@ -98,9 +103,12 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(UserAddressForm::class);
         $registry->register(ResidenceForm::class);
         $registry->register(EmergencyContactForm::class);
+        $registry->register(UserPhoneForm::class);
 
         // Listes servies à l'app : « Mes adresses » (décision 2026-11-18-useraddress-dans-auth).
         $this->app->make(ListingRegistry::class)->register(UserAddressListing::class);
+        // « Mes numéros » (décision 2026-11-27-plusieurs-numeros).
+        $this->app->make(ListingRegistry::class)->register(UserPhoneListing::class);
 
         // Connexion API : 5 essais par minute pour un même identifiant (e-mail ou
         // numéro) depuis une même adresse.

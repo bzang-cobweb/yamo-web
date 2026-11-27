@@ -65,9 +65,12 @@ class ProfileMenuApiTest extends TestCase
         $this->assertSame('Informations personnelles', $submenu['title']);
         $this->assertSame(['details', 'email', 'phone', 'password', 'residence', 'emergency-contact', 'identity'], array_column($submenu['data'], 'key'));
         $this->assertSame(
-            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.phone', 'auth.profile.password', 'auth.profile.residence', 'auth.profile.emergency-contact', 'auth.identity'],
+            ['auth.profile.personal', 'auth.profile.email', 'auth.profile.password', 'auth.profile.residence', 'auth.profile.emergency-contact', 'auth.identity'],
             array_column($submenu['data'], 'form'),
         );
+        // « Mes numéros » : une liste, le principal puis les supplémentaires (décision 2026-11-27-plusieurs-numeros).
+        $this->assertSame(['key' => 'phone', 'label' => 'Mes numéros', 'list' => 'auth.phones'], array_intersect_key($submenu['data'][2], array_flip(['key', 'label', 'list'])));
+        $this->assertArrayNotHasKey('form', $submenu['data'][2]);
         $this->assertSame(['ios' => 'envelope', 'android' => 'mail'], $submenu['data'][1]['icon']);
     }
 
@@ -108,6 +111,7 @@ class ProfileMenuApiTest extends TestCase
         $menu = $this->submenu($this->user(['locale' => 'en', 'email' => null, 'phone' => '+41 79 123 45 67']), 'personal')['data'];
 
         $this->assertSame('Add an email address', collect($menu)->firstWhere('key', 'email')['label']);
-        $this->assertSame('Change phone number', collect($menu)->firstWhere('key', 'phone')['label']);
+        // « Mes numéros », quel que soit le compte (décision 2026-11-27-plusieurs-numeros).
+        $this->assertSame('My phone numbers', collect($menu)->firstWhere('key', 'phone')['label']);
     }
 }

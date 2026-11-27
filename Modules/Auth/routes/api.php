@@ -23,6 +23,7 @@ use Modules\Auth\Http\Controllers\Api\RegisterController;
 use Modules\Auth\Http\Controllers\Api\ResidenceController;
 use Modules\Auth\Http\Controllers\Api\ReviewPrivacyController;
 use Modules\Auth\Http\Controllers\Api\UserAddressController;
+use Modules\Auth\Http\Controllers\Api\UserPhoneController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
@@ -75,6 +76,10 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
         Route::delete('me/avatar', [ProfileController::class, 'destroyAvatar'])->can('updateMe', User::class)->name('me.avatar.destroy');
         Route::post('me/email', [EmailChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.store');
         Route::post('me/phone', [PhoneChangeController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phone.store');
+        // Numéros supplémentaires (décision 2026-11-27-plusieurs-numeros) ; celui d'un autre compte répond 404 (`UserPhonePolicy`).
+        Route::post('me/phones', [UserPhoneController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phones.store');
+        Route::post('me/phones/{userPhone}/primary', [UserPhoneController::class, 'primary'])->can('update', 'userPhone')->name('me.phones.primary');
+        Route::delete('me/phones/{userPhone}', [UserPhoneController::class, 'destroy'])->can('delete', 'userPhone')->name('me.phones.destroy');
         // Vérifier l'e-mail ou le numéro actuel (décision 2026-11-27-verifier-email-telephone).
         Route::post('me/email/verify', [EmailVerificationController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.email.verify');
         Route::post('me/phone/verify', [PhoneVerificationController::class, 'store'])->can('updateMe', User::class)->middleware('throttle:auth-codes')->name('me.phone.verify');

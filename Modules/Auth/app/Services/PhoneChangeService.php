@@ -44,6 +44,8 @@ final class PhoneChangeService
             Challenges::ensureFree('phone', $verified->destination, $user->getKey());
             // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
             PhoneOwnership::release($verified->destination, $user->getKey());
+            // Un de ses numéros supplémentaires devenu le principal n'y figure plus (décision 2026-11-27-plusieurs-numeros).
+            $user->phones()->where('phone', $verified->destination)->delete();
             $user->forceFill([
                 'phone' => $verified->destination,
                 'phone_country_id' => ((array) $verified->payload)['phone_country_id'] ?? null,

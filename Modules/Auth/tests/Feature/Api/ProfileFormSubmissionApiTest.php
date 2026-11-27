@@ -36,7 +36,8 @@ class ProfileFormSubmissionApiTest extends TestCase
         return [
             'informations personnelles' => ['auth.profile.personal', 'PATCH', '/v1/auth/me/personal-info', false, 'profile', 'Modifications enregistrées.'],
             'e-mail' => ['auth.profile.email', 'POST', '/v1/auth/me/email', false, 'profile', 'Adresse e-mail enregistrée.'],
-            'téléphone' => ['auth.profile.phone', 'POST', '/v1/auth/me/phone', false, 'profile', 'Numéro enregistré.'],
+            'téléphone' => ['auth.profile.phone', 'POST', '/v1/auth/me/phone', false, 'back', 'Numéro enregistré.'],
+            'numéro supplémentaire' => ['auth.profile.phones.create', 'POST', '/v1/auth/me/phones', false, 'back', 'Numéro ajouté.'],
             'mot de passe' => ['auth.profile.password', 'PUT', '/v1/auth/me/password', false, 'profile', 'Mot de passe modifié.'],
             'notifications' => ['auth.profile.notifications', 'PATCH', '/v1/auth/me/notifications', false, 'profile', 'Modifications enregistrées.'],
             'préférences' => ['auth.profile.preferences', 'PATCH', '/v1/auth/me/preferences', false, 'profile', 'Modifications enregistrées.'],

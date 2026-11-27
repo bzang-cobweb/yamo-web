@@ -13,6 +13,7 @@ use Modules\Auth\Filament\Resources\UserResource\Pages\CreateUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\EditUser;
 use Modules\Auth\Filament\Resources\UserResource\Pages\ListUsers;
 use Modules\Auth\Filament\Resources\UserResource\RelationManagers\AddressesRelationManager;
+use Modules\Auth\Filament\Resources\UserResource\RelationManagers\PhonesRelationManager;
 use Modules\Auth\Filament\Resources\UserResource\Schemas\UserForm;
 use Modules\Auth\Filament\Resources\UserResource\Tables\UserTable;
 use Modules\Auth\Models\User;
@@ -60,6 +61,8 @@ class UserResource extends AbstractAuthResource
     {
         return [
             AddressesRelationManager::class,
+            // Numéros supplémentaires (décision 2026-11-27-plusieurs-numeros).
+            PhonesRelationManager::class,
         ];
     }
 
