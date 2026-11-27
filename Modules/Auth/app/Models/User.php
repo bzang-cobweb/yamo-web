@@ -28,6 +28,7 @@ use Modules\Auth\Notifications\Channels\SmsChannel;
 use Modules\Auth\Services\AvatarService;
 use Modules\Auth\Services\IdentityDocumentService;
 use Modules\Auth\Support\AuthChannels;
+use Modules\Auth\Support\NotificationSettings;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Spatie\Image\Enums\Fit;
@@ -69,6 +70,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
             'phone_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'identified_at' => 'datetime',
+            'notification_settings' => 'array',
         ];
     }
 
@@ -220,16 +222,31 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, HasLocale
     /**
      * Les canaux sur lesquels le compte reçoit les notifications (décision
      * 2026-11-19-notifications-reservations) : l'e-mail et le SMS ouverts par
-     * l'application (`auth.channels`), si son adresse ou son numéro est vérifié.
+     * l'application (`auth.channels`), si son adresse ou son numéro est vérifié, et
+     * si le compte les a gardés pour « Activité du compte ».
      *
      * @return list<string>
      */
     public function notificationChannels(): array
     {
-        return array_values(array_filter([
-            AuthChannels::email() && $this->email !== null && $this->email_verified_at !== null ? 'mail' : null,
-            AuthChannels::phone() && $this->phone !== null && $this->phone_verified_at !== null ? SmsChannel::class : null,
-        ]));
+        $available = [
+            NotificationSettings::EMAIL => AuthChannels::email() && $this->email !== null && $this->email_verified_at !== null ? 'mail' : null,
+            NotificationSettings::SMS => AuthChannels::phone() && $this->phone !== null && $this->phone_verified_at !== null ? SmsChannel::class : null,
+        ];
+        // Et seulement ceux que le compte garde pour l'activité de son compte (décision 2026-11-27-notifications-du-profil).
+        $chosen = array_flip($this->notificationSettings()[NotificationSettings::ACCOUNT_ACTIVITY]);
+
+        return array_values(array_filter(array_intersect_key($available, $chosen)));
+    }
+
+    /**
+     * Ses choix de notifications, complétés par les défauts (décision 2026-11-27-notifications-du-profil).
+     *
+     * @return array{account_activity: list<string>, reminders: list<string>, offers: bool, news: bool}
+     */
+    public function notificationSettings(): array
+    {
+        return NotificationSettings::resolve($this->notification_settings);
     }
 
     /**

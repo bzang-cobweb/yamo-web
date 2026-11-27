@@ -25,6 +25,7 @@ class ProfileMenuService
     public const MENU = [
         ProfileMenuKey::PERSONAL,
         ProfileMenuKey::PRIVACY,
+        ProfileMenuKey::NOTIFICATIONS,
         ProfileMenuKey::PREFERENCES,
         ProfileMenuKey::ADDRESSES,
     ];

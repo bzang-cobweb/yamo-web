@@ -38,6 +38,7 @@ return [
         'password' => 'Change password',
         'preferences' => 'Preferences',
         'addresses' => 'My addresses',
+        'notifications' => 'Notifications',
         'passwordSaved' => 'Password changed.',
         'addEmail' => 'Add an email address',
         'changeEmail' => 'Change email address',

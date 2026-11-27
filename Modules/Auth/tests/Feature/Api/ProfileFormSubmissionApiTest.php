@@ -38,6 +38,7 @@ class ProfileFormSubmissionApiTest extends TestCase
             'e-mail' => ['auth.profile.email', 'POST', '/v1/auth/me/email', false, 'profile', 'Adresse e-mail enregistrée.'],
             'téléphone' => ['auth.profile.phone', 'POST', '/v1/auth/me/phone', false, 'profile', 'Numéro enregistré.'],
             'mot de passe' => ['auth.profile.password', 'PUT', '/v1/auth/me/password', false, 'profile', 'Mot de passe modifié.'],
+            'notifications' => ['auth.profile.notifications', 'PATCH', '/v1/auth/me/notifications', false, 'profile', 'Modifications enregistrées.'],
             'préférences' => ['auth.profile.preferences', 'PATCH', '/v1/auth/me/preferences', false, 'profile', 'Modifications enregistrées.'],
             'suppression du compte' => ['auth.profile.delete-account', 'DELETE', '/v1/auth/me', true, 'sign-out', 'Votre compte a été supprimé.'],
         ];

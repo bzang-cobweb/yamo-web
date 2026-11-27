@@ -18,6 +18,7 @@ use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Forms\ForgotPasswordForm;
 use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\LoginForm;
+use Modules\Auth\Forms\NotificationSettingsForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
@@ -75,6 +76,7 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(PasswordForm::class);
         $registry->register(DeleteAccountForm::class);
         $registry->register(PreferencesForm::class);
+        $registry->register(NotificationSettingsForm::class);
         $registry->register(RegisterForm::class);
         $registry->register(CodeForm::class);
         $registry->register(EmailChangeForm::class);

@@ -38,6 +38,7 @@ return [
         'password' => 'Passwort ändern',
         'preferences' => 'Einstellungen',
         'addresses' => 'Meine Adressen',
+        'notifications' => 'Benachrichtigungen',
         'passwordSaved' => 'Passwort geändert.',
         'addEmail' => 'E-Mail-Adresse hinzufügen',
         'changeEmail' => 'E-Mail-Adresse ändern',

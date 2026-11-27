@@ -45,17 +45,17 @@ class ProfileMenuApiTest extends TestCase
         $menu = $this->menu($this->user(['email' => 'jeanne@example.test', 'phone' => null]));
 
         // « Mes partenaires » (module Partner) vient après le compte (décision 2026-11-24-partenaires-par-les-membres).
-        $this->assertSame(['personal', 'privacy', 'preferences', 'addresses', 'partners'], array_column($menu, 'key'));
-        $this->assertSame(['Informations personnelles', 'Confidentialité', 'Préférences', 'Mes adresses', 'Mes partenaires'], array_column($menu, 'label'));
+        $this->assertSame(['personal', 'privacy', 'notifications', 'preferences', 'addresses', 'partners'], array_column($menu, 'key'));
+        $this->assertSame(['Informations personnelles', 'Confidentialité', 'Notifications', 'Préférences', 'Mes adresses', 'Mes partenaires'], array_column($menu, 'label'));
         // Un sous-menu (`menu`), un formulaire (`form`) ou une liste (`list`), et une icône par lien
         // (décision 2026-11-27-menu-profil-icones-sous-menus).
         $this->assertSame(['personal', 'privacy'], array_values(array_filter(array_column($menu, 'menu'))));
         $this->assertSame(['ios' => 'person.crop.circle', 'android' => 'account_circle'], $menu[0]['icon']);
-        $this->assertSame(['ios' => 'person.3', 'android' => 'groups'], $menu[4]['icon']);
+        $this->assertSame(['ios' => 'person.3', 'android' => 'groups'], $menu[5]['icon']);
         $this->assertSame([
             'key' => 'addresses', 'label' => 'Mes adresses', 'icon' => ['ios' => 'mappin.and.ellipse', 'android' => 'location_on'],
             'list' => 'auth.addresses', 'group' => ['key' => 'account', 'label' => 'Compte'],
-        ], $menu[3]);
+        ], $menu[4]);
     }
 
     public function test_the_personal_submenu_holds_the_details_email_phone_password_and_identity(): void

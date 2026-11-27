@@ -7,6 +7,7 @@ use Bza\Form\Support\Listing;
 use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Forms\IdentityForm;
+use Modules\Auth\Forms\NotificationSettingsForm;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Forms\PhoneChangeForm;
@@ -37,6 +38,8 @@ enum ProfileMenuKey: string
     /** « Confidentialité » : un sous-menu. */
     case PRIVACY = 'privacy';
     case DELETE_ACCOUNT = 'delete-account';
+    /** Les choix de notifications (décision 2026-11-27-notifications-du-profil). */
+    case NOTIFICATIONS = 'notifications';
     case PREFERENCES = 'preferences';
     case ADDRESSES = 'addresses';
 
@@ -54,6 +57,7 @@ enum ProfileMenuKey: string
             self::PHONE => PhoneChangeForm::class,
             self::PASSWORD => PasswordForm::class,
             self::DELETE_ACCOUNT => DeleteAccountForm::class,
+            self::NOTIFICATIONS => NotificationSettingsForm::class,
             self::PREFERENCES => PreferencesForm::class,
             default => null,
         };
@@ -134,6 +138,7 @@ enum ProfileMenuKey: string
             self::PASSWORD => ['key', 'key'],
             self::PRIVACY => ['lock', 'lock'],
             self::DELETE_ACCOUNT => ['trash', 'delete'],
+            self::NOTIFICATIONS => ['bell', 'notifications'],
             self::PREFERENCES => ['gearshape', 'settings'],
             self::ADDRESSES => ['mappin.and.ellipse', 'location_on'],
         };
@@ -167,6 +172,7 @@ enum ProfileMenuKey: string
             self::PASSWORD => 'password',
             self::PRIVACY => 'privacy',
             self::DELETE_ACCOUNT => 'deleteAccount',
+            self::NOTIFICATIONS => 'notifications',
             self::PREFERENCES => 'preferences',
             self::ADDRESSES => 'addresses',
         });
