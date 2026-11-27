@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\PasswordForm;
 use Modules\Auth\Models\User;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Changer son mot de passe. Règles et libellés : ceux du formulaire `PasswordForm`.

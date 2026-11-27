@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Database\Seeders;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Seeder;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\OfferCategory;

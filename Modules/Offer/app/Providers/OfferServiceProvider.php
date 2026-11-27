@@ -2,11 +2,11 @@
 
 namespace Modules\Offer\Providers;
 
+use Bza\Form\Support\FormRegistry;
+use Bza\Form\Support\ListingRegistry;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
-use Modules\Form\Support\FormRegistry;
-use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
 use Modules\Offer\Console\CompleteBookingsCommand;
 use Modules\Offer\Console\ExpireBookingsCommand;

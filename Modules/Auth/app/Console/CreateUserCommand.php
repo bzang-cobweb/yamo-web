@@ -2,7 +2,7 @@
 
 namespace Modules\Auth\Console;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;

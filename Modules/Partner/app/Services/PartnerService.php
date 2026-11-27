@@ -3,8 +3,8 @@
 namespace Modules\Partner\Services;
 
 use App\Models\Setting;
-use App\Support\ContainsSearch;
-use App\Support\Locales;
+use Bza\Form\Support\ContainsSearch;
+use Bza\Form\Support\Locales;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;

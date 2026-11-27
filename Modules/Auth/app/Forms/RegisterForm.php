@@ -2,6 +2,9 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Step;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -10,9 +13,6 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Rules\UniquePhone;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Step;
 use Modules\Location\Support\CurrentCountry;
 
 /**

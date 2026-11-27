@@ -2,11 +2,11 @@
 
 namespace Modules\Offer\Domains;
 
-use App\Support\Locales;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
-use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Enums\RentalTypeEnum;
 use Modules\Offer\Models\Offer;

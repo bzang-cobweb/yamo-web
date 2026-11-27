@@ -49,6 +49,8 @@ return [
     'member' => [
         // La barre fixe de « Partenaires » et « Mes partenaires » (décision 2026-11-24-devenir-partenaire).
         'become' => 'Devenir partenaire',
+        // Le bouton de « Mes partenaires » (décision 2026-11-27-mes-partenaires-ajouter).
+        'add' => 'Ajouter un partenaire',
         // Le bouton du champ logo (décision 2026-11-24-champ-fichier-libelle-ajout).
         'add_logo' => 'Ajouter un logo',
         // Les étapes du formulaire de l'app (décision 2026-11-24-etape-presentation).
@@ -63,7 +65,7 @@ return [
         'add' => 'Ajouter un partenaire',
         'edit' => 'Modifier le partenaire',
         'submit' => 'Envoyer pour validation',
-        'save' => 'Enregistrer et renvoyer',
+        'save' => 'Enregistrer',
         'submitted' => "Partenaire envoyé : l'équipe le valide avant de le publier.",
         'saved' => "Partenaire enregistré : l'équipe le valide de nouveau avant de le publier.",
         // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).

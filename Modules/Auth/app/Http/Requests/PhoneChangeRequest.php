@@ -2,11 +2,11 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\PhoneChangeForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Rules\UniquePhone;
 use Modules\Auth\Support\AuthChannels;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Ajouter ou changer son téléphone : règles du formulaire `auth.profile.phone`

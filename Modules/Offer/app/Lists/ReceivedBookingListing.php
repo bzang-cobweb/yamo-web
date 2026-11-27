@@ -2,15 +2,15 @@
 
 namespace Modules\Offer\Lists;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Forms\BookingAcceptForm;

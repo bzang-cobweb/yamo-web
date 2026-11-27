@@ -4,14 +4,14 @@ namespace Modules\Offer\Http\Resources;
 
 use App\Models\Setting;
 use App\Support\Currency;
-use App\Support\DisplayTime;
 use App\Support\MediaUrl;
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\DisplayTime;
+use Bza\Form\Support\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Submission;
 use Modules\Notification\Support\NotificationThreads;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;

@@ -2,8 +2,8 @@
 
 namespace Modules\Partner\Http\Requests;
 
-use Modules\Form\Http\Requests\FormBackedRequest;
-use Modules\Form\Support\Form;
+use Bza\Form\Http\Requests\FormBackedRequest;
+use Bza\Form\Support\Form;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 

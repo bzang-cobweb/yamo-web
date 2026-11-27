@@ -2,13 +2,13 @@
 
 namespace App\Support\Media;
 
+use Bza\Form\Models\FormUpload;
+use Bza\Form\Rules\MinImageSide;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Dimensions;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Rules\MinImageSide;
 use Spatie\Image\Enums\Fit;
 use Spatie\Image\Image;
 use Spatie\MediaLibrary\HasMedia;

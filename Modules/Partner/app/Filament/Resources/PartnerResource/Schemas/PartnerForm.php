@@ -3,7 +3,7 @@
 namespace Modules\Partner\Filament\Resources\PartnerResource\Schemas;
 
 use App\Filament\Schemas\TranslatableTabs;
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;

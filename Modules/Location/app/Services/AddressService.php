@@ -2,7 +2,7 @@
 
 namespace Modules\Location\Services;
 
-use App\Support\ContainsSearch;
+use Bza\Form\Support\ContainsSearch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Modules\Location\Models\Address;

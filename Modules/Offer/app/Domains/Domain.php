@@ -3,9 +3,9 @@
 namespace Modules\Offer\Domains;
 
 use App\Support\Currency;
+use Bza\Form\Support\Field;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
-use Modules\Form\Support\Field;
 use Modules\Offer\Enums\BookingTypeEnum;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferCategory;

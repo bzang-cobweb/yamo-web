@@ -2,7 +2,7 @@
 
 use App\Http\Middleware\SetSessionLocale;
 use App\Models\Setting;
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

@@ -2,10 +2,10 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Validation\Rules\Password;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
 
 /**
  * Mot de passe oublié, dernière étape : le nouveau mot de passe et sa confirmation,

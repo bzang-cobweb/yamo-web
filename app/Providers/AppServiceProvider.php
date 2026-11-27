@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use App\Models\Setting;
 use App\Policies\SettingPolicy;
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;

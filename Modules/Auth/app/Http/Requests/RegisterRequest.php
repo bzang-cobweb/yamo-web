@@ -2,8 +2,8 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\RegisterForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Créer un compte : toutes les règles du formulaire `auth.register`, unicité du

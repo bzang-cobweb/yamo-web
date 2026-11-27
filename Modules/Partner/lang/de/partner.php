@@ -49,6 +49,7 @@ return [
     'member' => [
         // La barre fixe de « Partenaires » et « Mes partenaires » (décision 2026-11-24-devenir-partenaire).
         'become' => 'Partner werden',
+        'add' => 'Partner hinzufügen',
         // Le bouton du champ logo (décision 2026-11-24-champ-fichier-libelle-ajout).
         'add_logo' => 'Logo hinzufügen',
         // Les étapes du formulaire de l'app (décision 2026-11-24-etape-presentation).
@@ -63,7 +64,7 @@ return [
         'add' => 'Partner hinzufügen',
         'edit' => 'Partner bearbeiten',
         'submit' => 'Zur Prüfung senden',
-        'save' => 'Speichern und erneut senden',
+        'save' => 'Speichern',
         'submitted' => 'Partner gesendet: Das Team prüft ihn vor der Veröffentlichung.',
         'saved' => 'Partner gespeichert: Das Team prüft ihn vor der Veröffentlichung erneut.',
         // La note du formulaire, à la création seulement ; le paiement s'il est appliqué (décision 2026-11-24-partenaire-note-creation).

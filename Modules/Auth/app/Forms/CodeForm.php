@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
 
 /**
  * Saisir le code reçu par e-mail ou SMS. Commun à la connexion, à l'inscription

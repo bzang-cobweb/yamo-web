@@ -3,7 +3,7 @@
 namespace Modules\Offer\Lists;
 
 use App\Support\MediaUrl;
-use Modules\Form\Support\ListItem;
+use Bza\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Booking;
 

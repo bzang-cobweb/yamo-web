@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -9,13 +10,12 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Modules\Location\Support\Currencies;
 use Modules\Offer\Models\Offer;
+use Tests\Concerns\MakesFormUploads;
 use Tests\TestCase;
 
 /**

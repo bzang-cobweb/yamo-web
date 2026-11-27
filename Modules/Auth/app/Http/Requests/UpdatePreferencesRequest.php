@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Models\User;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Modifier ses préférences (langue). Règles et libellés : ceux du formulaire `PreferencesForm`.

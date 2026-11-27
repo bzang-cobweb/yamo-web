@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Modifier ses informations personnelles (prénom, nom). Règles et libellés : ceux du formulaire `PersonalInfoForm`.

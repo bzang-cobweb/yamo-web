@@ -1,6 +1,6 @@
 <?php
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 

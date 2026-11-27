@@ -2,8 +2,8 @@
 
 namespace Modules\Offer\Filament\Resources\OfferResource\Tables;
 
-use App\Support\ContainsSearch;
-use App\Support\Locales;
+use Bza\Form\Support\ContainsSearch;
+use Bza\Form\Support\Locales;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Http\JsonResponse;
 
 /**

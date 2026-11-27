@@ -4,12 +4,12 @@ namespace Modules\Partner\Lists;
 
 use App\Models\Setting;
 use App\Support\MediaUrl;
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
+use Bza\Form\Support\Submission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
-use Modules\Form\Support\Submission;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;
@@ -88,7 +88,7 @@ class MyPartnerListing extends Listing
             return null;
         }
 
-        return ['label' => __('partner::partner.member.become'), 'form' => PartnerForm::name(), 'link' => null];
+        return ['label' => __('partner::partner.member.add'), 'form' => PartnerForm::name(), 'link' => null];
     }
 
     public function item(Model $record): ListItem

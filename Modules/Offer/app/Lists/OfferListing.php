@@ -2,17 +2,17 @@
 
 namespace Modules\Offer\Lists;
 
-use App\Support\Locales;
 use App\Support\MediaUrl;
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
+use Bza\Form\Support\Locales;
+use Bza\Form\Support\Submission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
-use Modules\Form\Support\Submission;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;

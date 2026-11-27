@@ -2,8 +2,8 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\LoginForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Connexion, première étape : règles du formulaire `auth.login` (e-mail ou

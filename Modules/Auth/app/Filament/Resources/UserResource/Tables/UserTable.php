@@ -2,7 +2,7 @@
 
 namespace Modules\Auth\Filament\Resources\UserResource\Tables;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;

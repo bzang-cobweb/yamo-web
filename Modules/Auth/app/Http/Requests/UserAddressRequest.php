@@ -2,8 +2,8 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\UserAddressForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Ajout ou changement d'une adresse du compte (destinataire et adresse), validé

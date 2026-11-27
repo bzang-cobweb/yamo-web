@@ -2,12 +2,12 @@
 
 namespace Modules\Partner\Providers;
 
+use Bza\Form\Support\FormRegistry;
+use Bza\Form\Support\ListingRegistry;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\ProfileMenuLinks;
-use Modules\Form\Support\FormRegistry;
-use Modules\Form\Support\ListingRegistry;
 use Modules\Notification\Support\NotificationFilters;
 use Modules\Notification\Support\NotificationThreads;
 use Modules\Partner\Console\AwaitPartnerPaymentsCommand;

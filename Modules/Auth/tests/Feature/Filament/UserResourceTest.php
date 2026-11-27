@@ -2,7 +2,7 @@
 
 namespace Modules\Auth\Tests\Feature\Filament;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;

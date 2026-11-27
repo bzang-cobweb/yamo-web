@@ -2,12 +2,12 @@
 
 namespace Modules\Auth\Tests\Feature\Api;
 
+use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\IdentityDocumentService;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Tests\Concerns\MakesFormUploads;
+use Tests\Concerns\MakesFormUploads;
 use Tests\TestCase;
 
 /**

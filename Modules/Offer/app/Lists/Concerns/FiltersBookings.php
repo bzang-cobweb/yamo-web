@@ -2,9 +2,9 @@
 
 namespace Modules\Offer\Lists\Concerns;
 
+use Bza\Form\Support\Field;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Location\Models\Address;
 use Modules\Location\Support\CurrentCountry;
 use Modules\Offer\Domains\DomainRegistry;

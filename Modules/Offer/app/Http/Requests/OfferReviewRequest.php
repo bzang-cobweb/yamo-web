@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Http\Requests;
 
-use Modules\Form\Http\Requests\FormBackedRequest;
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Offer\Forms\OfferReviewForm;
 
 /**

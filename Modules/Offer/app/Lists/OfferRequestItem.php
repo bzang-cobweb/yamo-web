@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Lists;
 
-use Modules\Form\Support\ListItem;
+use Bza\Form\Support\ListItem;
 use Modules\Offer\Models\Booking;
 
 /**

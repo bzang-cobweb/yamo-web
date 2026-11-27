@@ -2,6 +2,7 @@
 
 namespace Modules\Offer\Tests\Feature\Api;
 
+use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -9,14 +10,13 @@ use Illuminate\Testing\TestResponse;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Services\OfferPhotoService;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Tests\Concerns\MakesFormUploads;
 use Tests\TestCase;
 
 /**

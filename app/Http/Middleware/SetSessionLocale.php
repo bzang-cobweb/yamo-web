@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;

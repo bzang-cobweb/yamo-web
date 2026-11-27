@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Modules\Location\Models\Country;

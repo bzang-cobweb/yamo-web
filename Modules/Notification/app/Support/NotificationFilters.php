@@ -2,11 +2,11 @@
 
 namespace Modules\Notification\Support;
 
-use App\Support\ContainsSearch;
+use Bza\Form\Support\ContainsSearch;
+use Bza\Form\Support\Field;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 
 /**

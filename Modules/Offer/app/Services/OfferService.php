@@ -2,11 +2,11 @@
 
 namespace Modules\Offer\Services;
 
+use Bza\Form\Enums\FieldType;
+use Bza\Form\Support\Field;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Enums\FieldType;
-use Modules\Form\Support\Field;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Modules\Location\Services\AddressService;

@@ -3,12 +3,12 @@
 namespace Modules\Partner\Lists;
 
 use App\Support\MediaUrl;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
 use Modules\Partner\Forms\PartnerForm;
 use Modules\Partner\Models\Partner;
 use Modules\Partner\Services\PartnerService;

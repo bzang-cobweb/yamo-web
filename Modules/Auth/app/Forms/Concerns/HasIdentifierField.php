@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Forms\Concerns;
 
+use Bza\Form\Support\Field;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Support\Field;
 use Modules\Location\Support\CurrentCountry;
 
 /**

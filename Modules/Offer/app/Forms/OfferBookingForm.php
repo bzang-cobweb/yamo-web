@@ -2,15 +2,15 @@
 
 namespace Modules\Offer\Forms;
 
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Submission;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;

@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Http\Resources;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Offer\Models\OfferReview;

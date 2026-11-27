@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3366b74ed2bc53718fb16951a4871072",
+    "content-hash": "aa729e0be9397106f31322ebee7a8b28",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -320,6 +320,49 @@
                 "MIT"
             ],
             "description": "Read-only viewer for the effective Laravel configuration, module configuration included, with a Filament adapter.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "bza/laravel-form",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/form",
+                "reference": "6bd2ef723cebbcb9b4cb941ce53ba63c9b512d69"
+            },
+            "require": {
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/database": "^12.0|^13.0",
+                "illuminate/http": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.3",
+                "propaganistas/laravel-phone": "^6.0"
+            },
+            "suggest": {
+                "dedoc/scramble": "Documents the API query parameters.",
+                "filament/filament": "Required for the Filament adapter, Bza\\Form\\Filament (^5.0).",
+                "laravel/sanctum": "The API reads the requesting account from the sanctum guard."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Bza\\Form\\FormServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bza\\Form\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Server-described forms and lists for Laravel: fields, steps, uploads and listings served as JSON to a client app, with a Filament adapter.",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -13667,7 +13710,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "bza/laravel-config-viewer": 20
+        "bza/laravel-config-viewer": 20,
+        "bza/laravel-form": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

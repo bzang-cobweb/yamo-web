@@ -3,15 +3,15 @@
 namespace Modules\Offer\Forms;
 
 use App\Support\Currency;
-use App\Support\Locales;
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Locales;
+use Bza\Form\Support\Step;
+use Bza\Form\Support\Submission;
 use Closure;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Step;
-use Modules\Form\Support\Submission;
 use Modules\Location\Models\Country;
 use Modules\Location\Models\Region;
 use Modules\Location\Support\CurrentCountry;

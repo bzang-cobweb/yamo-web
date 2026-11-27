@@ -2,8 +2,8 @@
 
 namespace Modules\Partner\Notifications;
 
-use App\Support\ContainsSearch;
-use App\Support\Locales;
+use Bza\Form\Support\ContainsSearch;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;

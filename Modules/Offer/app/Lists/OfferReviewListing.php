@@ -2,16 +2,16 @@
 
 namespace Modules\Offer\Lists;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Number;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
 use Modules\Offer\Models\OfferReview;

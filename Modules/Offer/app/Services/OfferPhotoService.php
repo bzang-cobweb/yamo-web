@@ -4,8 +4,8 @@ namespace Modules\Offer\Services;
 
 use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
+use Bza\Form\Models\FormUpload;
 use Illuminate\Support\Facades\DB;
-use Modules\Form\Models\FormUpload;
 use Modules\Offer\Models\Offer;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 

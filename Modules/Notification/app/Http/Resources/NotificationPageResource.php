@@ -2,12 +2,12 @@
 
 namespace Modules\Notification\Http\Resources;
 
+use Bza\Form\Support\Field;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Pagination\CursorPaginator;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Notification\Support\NotificationFilters;
 
 /**

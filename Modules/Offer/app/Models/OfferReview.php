@@ -29,10 +29,6 @@ class OfferReview extends Model
     /** @use HasFactory<OfferReviewFactory> */
     use HasFactory;
 
-    public const MIN_RATING = 1;
-
-    public const MAX_RATING = 5;
-
     public const COMMENT_MAX_LENGTH = 1000;
 
     /**

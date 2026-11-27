@@ -2,13 +2,13 @@
 
 namespace Modules\Offer\Tests\Feature\Filament;
 
+use Bza\Form\Filament\FieldComponent;
 use Filament\Forms\Components\CheckboxList;
 use Livewire\Livewire;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Feature\Filament\AuthFilamentTestCase;
-use Modules\Form\Filament\FieldComponent;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;

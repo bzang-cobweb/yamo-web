@@ -2,6 +2,8 @@
 
 namespace Modules\Offer\Tests\Feature;
 
+use Bza\Form\Models\FormUpload;
+use Bza\Form\Support\Field;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
@@ -9,13 +11,11 @@ use LogicException;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Support\Field;
-use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
 use Modules\Offer\Domains\Domain;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Models\Offer;
+use Tests\Concerns\MakesFormUploads;
 use Tests\TestCase;
 
 /**

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Schemas;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Closure;
 use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;

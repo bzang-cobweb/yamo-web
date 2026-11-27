@@ -2,8 +2,8 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\ResetPasswordForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Nouveau mot de passe : règles du formulaire `auth.password.reset`, plus le défi

@@ -5,7 +5,7 @@ namespace Modules\Offer\Models;
 use App\Models\Concerns\HasCountry;
 use App\Models\Concerns\HasPaymentRange;
 use App\Models\Setting;
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;

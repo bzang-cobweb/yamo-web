@@ -3,14 +3,15 @@
 namespace App\Support;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Lang;
 use LogicException;
-use Nwidart\Modules\Facades\Module;
 
 /**
  * Textes de l'interface de l'app mobile, servis par `GET /api/v1/messages`.
  *
- * Chaque module déclare les siens dans `Modules/<Module>/lang/<langue>/mobile.php`,
- * l'application les textes communs dans `lang/<langue>/mobile.php`. Les tableaux
+ * Chaque module ou paquet déclare les siens dans `lang/<langue>/mobile.php` de son
+ * espace de traduction (`Modules/Auth/lang`, `packages/form/lang`), l'application les
+ * textes communs dans `lang/<langue>/mobile.php`. Les tableaux
  * sont aplatis par clé (`form.stepOf`) ; les variables suivent la convention
  * Laravel (`:name`) et sont remplacées par l'app.
  */
@@ -51,18 +52,20 @@ final class MobileMessages
     }
 
     /**
-     * Groupes de traduction lus : celui de l'application, puis celui de chaque
-     * module activé (`auth::mobile`, `form::mobile`…).
+     * Groupes de traduction lus : celui de l'application, puis celui de chaque espace de traduction enregistré
+     * (module activé ou paquet, décision 2026-11-27-paquet-form) qui a un fichier `mobile.php`, par ordre alphabétique
+     * (`auth::mobile`, `form::mobile`…).
      *
      * @return list<string>
      */
     public static function sources(): array
     {
-        $modules = array_map(
-            fn ($module): string => $module->getLowerName().'::'.self::GROUP,
-            array_values(Module::allEnabled()),
-        );
+        $namespaces = array_keys(array_filter(
+            Lang::getLoader()->namespaces(),
+            fn (string $path): bool => glob($path.'/*/'.self::GROUP.'.php') !== [],
+        ));
+        sort($namespaces);
 
-        return [self::GROUP, ...$modules];
+        return [self::GROUP, ...array_map(fn (string $namespace): string => $namespace.'::'.self::GROUP, $namespaces)];
     }
 }

@@ -3,17 +3,17 @@
 namespace Modules\Partner\Tests\Feature\Api;
 
 use App\Models\Setting;
+use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\Role;
 use Modules\Auth\Models\User;
-use Modules\Form\Models\FormUpload;
-use Modules\Form\Tests\Concerns\MakesFormUploads;
 use Modules\Location\Models\Country;
 use Modules\Partner\Enums\PartnerStatusEnum;
 use Modules\Partner\Models\Partner;
+use Tests\Concerns\MakesFormUploads;
 use Tests\TestCase;
 
 /**
@@ -144,8 +144,9 @@ class MyPartnerApiTest extends TestCase
         // Sa page, pas encore publiée : pour ses comptes seulement.
         $this->asUser($user)->getJson("/api/v1/partners/{$partner->getKey()}")->assertOk()->assertJsonPath('data.name', 'Déménageurs du Wouri');
         $this->asUser($this->member())->getJson("/api/v1/partners/{$partner->getKey()}")->assertNotFound();
-        // « Devenir partenaire » ouvre le formulaire d'ajout (décision 2026-11-24-devenir-partenaire).
-        $this->assertSame(['label' => 'Devenir partenaire', 'form' => 'partner.partner', 'link' => null], $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer'));
+        // « Ajouter un partenaire » ouvre le formulaire d'ajout (décisions 2026-11-24-devenir-partenaire et
+        // 2026-11-27-mes-partenaires-ajouter).
+        $this->assertSame(['label' => 'Ajouter un partenaire', 'form' => 'partner.partner', 'link' => null], $this->asUser($user)->getJson('/api/v1/lists/partner.mine')->json('data.footer'));
 
         // Invalides : un nom ou une description manquants, un lien qui n'en est pas un ; le logo est facultatif
         // (décision 2026-11-24-partenaire-description-obligatoire).

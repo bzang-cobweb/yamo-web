@@ -2,10 +2,10 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Forms\Concerns\HasIdentifierField;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
 
 /**
  * Connexion de l'app mobile, première étape : e-mail ou téléphone (format

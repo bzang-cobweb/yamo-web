@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Models;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;

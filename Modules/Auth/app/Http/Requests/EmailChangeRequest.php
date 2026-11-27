@@ -2,11 +2,11 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Illuminate\Validation\Rule;
 use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Ajouter ou changer son e-mail : règles du formulaire `auth.profile.email`, et une

@@ -2,10 +2,10 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Illuminate\Validation\Rule;
 use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Forms\CodeForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Valider un code : règles du formulaire `auth.code`, plus le défi (et le canal

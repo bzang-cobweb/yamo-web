@@ -3,7 +3,7 @@
 namespace Modules\Partner\Tests\Feature;
 
 use App\Models\Setting;
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Filament\Facades\Filament;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Notifications\DatabaseNotification;

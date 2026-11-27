@@ -2,7 +2,8 @@
 
 namespace Modules\Auth\Filament\Resources\UserResource\Schemas;
 
-use App\Support\Locales;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Locales;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -26,7 +27,6 @@ use Modules\Auth\Services\AvatarService;
 use Modules\Auth\Services\IdentityDocumentService;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Country;
 use Propaganistas\LaravelPhone\Rules\Phone;

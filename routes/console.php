@@ -1,9 +1,9 @@
 <?php
 
+use Bza\Form\Models\FormUpload;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use Modules\Form\Models\FormUpload;
 use Modules\Offer\Console\CompleteBookingsCommand;
 use Modules\Offer\Console\ExpireBookingsCommand;
 use Modules\Offer\Console\InviteReviewsCommand;

@@ -2,8 +2,8 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\ForgotPasswordForm;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Mot de passe oublié, première étape : règles du formulaire `auth.password.forgot`.

@@ -2,10 +2,10 @@
 
 namespace Modules\Offer\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
 use Modules\Auth\Models\User;
-use Modules\Form\Http\Requests\FormBackedRequest;
 use Modules\Offer\Forms\OfferMessageForm;
 use Modules\Offer\Models\Offer;
 

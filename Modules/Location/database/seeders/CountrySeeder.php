@@ -2,7 +2,7 @@
 
 namespace Modules\Location\Database\Seeders;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Seeder;
 use libphonenumber\PhoneNumberUtil;
 use Locale;

@@ -2,10 +2,10 @@
 
 namespace Modules\Auth\Forms;
 
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Submission;
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Submission;
 
 /**
  * Supprimer son compte, depuis le profil de l'app mobile

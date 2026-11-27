@@ -7,6 +7,7 @@ use App\Filament\NavigationGroup;
 use App\Filament\Resources\SettingResource\Pages\EditSettings;
 use App\Filament\Schemas\TranslatableTabs;
 use App\Models\Setting;
+use Bza\Form\Support\Field;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -18,7 +19,6 @@ use Filament\Support\Icons\Heroicon;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 
 /**
  * Réglages de l'application : une seule page, qui modifie l'unique ligne des

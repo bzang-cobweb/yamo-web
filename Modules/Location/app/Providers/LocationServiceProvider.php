@@ -2,7 +2,7 @@
 
 namespace Modules\Location\Providers;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Illuminate\Support\Facades\Gate;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;

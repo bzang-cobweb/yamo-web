@@ -3,7 +3,9 @@
 namespace Modules\Offer\Filament\Resources\OfferResource\Schemas;
 
 use App\Filament\Schemas\TranslatableTabs;
-use App\Support\Locales;
+use Bza\Form\Filament\FieldComponent;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Locales;
 use Closure;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -22,8 +24,6 @@ use Filament\Schemas\Schema;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\PhoneNumbers;
-use Modules\Form\Filament\FieldComponent;
-use Modules\Form\Support\Field;
 use Modules\Location\Filament\Forms\SingleCountry;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;

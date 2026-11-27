@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Services;
 
+use Bza\Form\Models\FormUpload;
 use Illuminate\Support\Facades\URL;
 use Modules\Auth\Models\User;
-use Modules\Form\Models\FormUpload;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**

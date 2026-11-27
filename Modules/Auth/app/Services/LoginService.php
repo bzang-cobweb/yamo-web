@@ -2,7 +2,7 @@
 
 namespace Modules\Auth\Services;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Enums\VerificationPurpose;

@@ -4,7 +4,7 @@ namespace Modules\Partner\Services;
 
 use App\Support\Media\ConfiguredImageService;
 use App\Support\MediaUrl;
-use Modules\Form\Models\FormUpload;
+use Bza\Form\Models\FormUpload;
 use Modules\Partner\Models\Partner;
 
 /**

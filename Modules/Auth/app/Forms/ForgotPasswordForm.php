@@ -2,10 +2,10 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Forms\Concerns\HasIdentifierField;
 use Modules\Auth\Support\AuthChannels;
-use Modules\Form\Support\Form;
 
 /**
  * Mot de passe oublié, première étape : l'e-mail ou le téléphone du compte. Un code

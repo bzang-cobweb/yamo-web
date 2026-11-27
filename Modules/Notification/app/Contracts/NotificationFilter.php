@@ -2,10 +2,10 @@
 
 namespace Modules\Notification\Contracts;
 
+use Bza\Form\Support\Field;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 
 /**
  * Des filtres de la liste des notifications, fournis par un autre module (décision

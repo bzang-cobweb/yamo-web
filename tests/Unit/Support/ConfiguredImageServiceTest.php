@@ -3,7 +3,7 @@
 namespace Tests\Unit\Support;
 
 use App\Support\Media\ConfiguredImageService;
-use Modules\Form\Rules\MinImageSide;
+use Bza\Form\Rules\MinImageSide;
 use Spatie\Image\Enums\Fit;
 use Tests\TestCase;
 

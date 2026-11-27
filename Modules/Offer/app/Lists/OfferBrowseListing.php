@@ -3,15 +3,15 @@
 namespace Modules\Offer\Lists;
 
 use App\Models\Setting;
-use App\Support\Locales;
 use App\Support\MediaUrl;
+use Bza\Form\Support\Listing;
+use Bza\Form\Support\ListItem;
+use Bza\Form\Support\Locales;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Modules\Form\Support\Listing;
-use Modules\Form\Support\ListItem;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Lists\Concerns\FiltersOffers;
 use Modules\Offer\Models\Offer;

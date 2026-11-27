@@ -3,11 +3,11 @@
 namespace Modules\Offer\Tests\Feature\Api;
 
 use App\Models\Setting;
+use Bza\Form\Support\Field;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Location\Models\Address;
 use Modules\Location\Models\Country;
 use Modules\Offer\Database\Seeders\OfferDatabaseSeeder;

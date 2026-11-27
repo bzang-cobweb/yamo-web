@@ -2,6 +2,8 @@
 
 namespace Modules\Auth\Providers;
 
+use Bza\Form\Support\FormRegistry;
+use Bza\Form\Support\ListingRegistry;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
@@ -35,8 +37,6 @@ use Modules\Auth\Policies\UserPolicy;
 use Modules\Auth\Sms\LogSmsSender;
 use Modules\Auth\Sms\SmsSender;
 use Modules\Auth\Support\ProfileMenuLinks;
-use Modules\Form\Support\FormRegistry;
-use Modules\Form\Support\ListingRegistry;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class AuthServiceProvider extends ModuleServiceProvider

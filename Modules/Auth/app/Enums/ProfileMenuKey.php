@@ -2,6 +2,8 @@
 
 namespace Modules\Auth\Enums;
 
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Listing;
 use Modules\Auth\Forms\EmailChangeForm;
 use Modules\Auth\Forms\IdentityForm;
 use Modules\Auth\Forms\PasswordForm;
@@ -11,8 +13,6 @@ use Modules\Auth\Forms\PreferencesForm;
 use Modules\Auth\Lists\UserAddressListing;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\AuthChannels;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Listing;
 
 /**
  * Les liens possibles du menu du profil : chacun ouvre soit un formulaire, que

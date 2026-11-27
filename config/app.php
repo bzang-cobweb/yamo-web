@@ -85,7 +85,7 @@ return [
     'faker_locale' => env('APP_FAKER_LOCALE', 'fr_FR'),
 
     // Langues proposées : contenu traduisible (spatie/laravel-translatable, Filament),
-    // langue des comptes, de l'API et de l'app mobile. Domicile : App\Support\Locales.
+    // langue des comptes, de l'API et de l'app mobile. Domicile : Bza\Form\Support\Locales.
     // L'allemand (décision 2026-11-19-contrat-langue-saisie-allemand).
     'supported_locales' => ['fr', 'en', 'de'],
 

@@ -1,0 +1,32 @@
+{
+    "name": "bza/laravel-form",
+    "description": "Server-described forms and lists for Laravel: fields, steps, uploads and listings served as JSON to a client app, with a Filament adapter.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "propaganistas/laravel-phone": "^6.0"
+    },
+    "suggest": {
+        "filament/filament": "Required for the Filament adapter, Bza\\Form\\Filament (^5.0).",
+        "laravel/sanctum": "The API reads the requesting account from the sanctum guard.",
+        "dedoc/scramble": "Documents the API query parameters."
+    },
+    "autoload": {
+        "psr-4": {
+            "Bza\\Form\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Bza\\Form\\FormServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable"
+}

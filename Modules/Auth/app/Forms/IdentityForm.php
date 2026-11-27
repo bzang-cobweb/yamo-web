@@ -2,12 +2,12 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Submission;
 use Modules\Auth\Models\User;
 use Modules\Auth\Services\IdentityDocumentService;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Submission;
 
 /**
  * « S'identifier », depuis le menu du profil (décision 2026-11-25-identification) : le compte envoie une pièce

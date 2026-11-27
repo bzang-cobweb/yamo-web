@@ -2,12 +2,12 @@
 
 namespace Modules\Offer\Notifications;
 
-use App\Support\ContainsSearch;
-use App\Support\Locales;
+use Bza\Form\Support\ContainsSearch;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Locales;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\DatabaseNotification;
 use Modules\Auth\Models\User;
-use Modules\Form\Support\Field;
 use Modules\Notification\Contracts\NotificationFilter;
 use Modules\Notification\Support\NotificationThreads;
 use Modules\Offer\Enums\BookingStatusEnum;

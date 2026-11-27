@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Support\EnvFile;
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Illuminate\Console\Command;
 use libphonenumber\PhoneNumberUtil;
 use Modules\Location\Models\Country;

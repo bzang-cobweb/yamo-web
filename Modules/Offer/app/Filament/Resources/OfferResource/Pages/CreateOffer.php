@@ -2,7 +2,7 @@
 
 namespace Modules\Offer\Filament\Resources\OfferResource\Pages;
 
-use App\Support\Locales;
+use Bza\Form\Support\Locales;
 use Filament\Resources\Pages\CreateRecord;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Filament\Resources\OfferResource;

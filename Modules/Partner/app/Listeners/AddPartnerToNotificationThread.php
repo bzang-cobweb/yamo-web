@@ -2,7 +2,7 @@
 
 namespace Modules\Partner\Listeners;
 
-use App\Support\DisplayTime;
+use Bza\Form\Support\DisplayTime;
 use Illuminate\Support\Str;
 use Modules\Auth\Models\User;
 use Modules\Notification\Events\NotificationThreadSerializing;

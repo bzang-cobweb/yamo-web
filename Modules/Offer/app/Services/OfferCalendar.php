@@ -2,12 +2,12 @@
 
 namespace Modules\Offer\Services;
 
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Submission;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Submission;
 use Modules\Offer\Domains\DomainRegistry;
 use Modules\Offer\Enums\BookingStatusEnum;
 use Modules\Offer\Enums\BookingTypeEnum;

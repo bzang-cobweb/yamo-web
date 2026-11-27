@@ -2,9 +2,9 @@
 
 namespace Modules\Auth\Http\Requests;
 
+use Bza\Form\Http\Requests\FormBackedRequest;
 use Modules\Auth\Forms\DeleteAccountForm;
 use Modules\Auth\Models\User;
-use Modules\Form\Http\Requests\FormBackedRequest;
 
 /**
  * Supprimer son compte. Règles et libellés : ceux du formulaire `DeleteAccountForm`.

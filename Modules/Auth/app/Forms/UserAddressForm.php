@@ -2,13 +2,13 @@
 
 namespace Modules\Auth\Forms;
 
+use Bza\Form\Enums\SuccessAction;
+use Bza\Form\Support\Field;
+use Bza\Form\Support\Form;
+use Bza\Form\Support\Submission;
 use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
-use Modules\Form\Enums\SuccessAction;
-use Modules\Form\Support\Field;
-use Modules\Form\Support\Form;
-use Modules\Form\Support\Submission;
 use Modules\Location\Models\Region;
 use Modules\Location\Support\CurrentCountry;
 
