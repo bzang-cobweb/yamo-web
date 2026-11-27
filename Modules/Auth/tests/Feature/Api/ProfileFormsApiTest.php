@@ -36,27 +36,24 @@ class ProfileFormsApiTest extends TestCase
         $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
             ->assertOk()
             ->assertJsonPath('data.title', 'Informations personnelles')
-            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'gender', 'birth_date', 'country_id', 'region_id', 'description'])
+            // Plus de genre (demande du 2026-11-27).
+            ->assertJsonPath('data.fields.*.name', ['first_name', 'last_name', 'birth_date', 'country_id', 'region_id', 'description'])
             ->assertJsonPath('data.fields.0.default', 'Jeanne')
             ->assertJsonPath('data.fields.1.default', 'Dupont')
-            // Genre : liste déroulante, obligatoire, options de GenderEnum traduites.
-            ->assertJsonPath('data.fields.2.type', 'select')
-            ->assertJsonPath('data.fields.2.required', true)
-            ->assertJsonPath('data.fields.2.default', 'female')
-            ->assertJsonPath('data.fields.2.options', [['value' => 'male', 'label' => 'Homme', 'hint' => null, 'parent' => null], ['value' => 'female', 'label' => 'Femme', 'hint' => null, 'parent' => null]])
             // Date de naissance : type date, facultative.
-            ->assertJsonPath('data.fields.3.type', 'date')
-            ->assertJsonPath('data.fields.3.required', false)
-            ->assertJsonPath('data.fields.3.default', '1990-04-12');
+            ->assertJsonPath('data.fields.2.type', 'date')
+            ->assertJsonPath('data.fields.2.required', false)
+            ->assertJsonPath('data.fields.2.default', '1990-04-12');
     }
 
     public function test_personal_info_updates_its_four_fields_only(): void
     {
-        $user = $this->user(['name' => 'jeanne', 'email' => 'jeanne@example.com']);
+        $user = $this->user(['gender' => 'male', 'name' => 'jeanne', 'email' => 'jeanne@example.com']);
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
             'first_name' => 'Élodie',
             'last_name' => 'Ängel',
+            // Plus écrit : le genre reste celui du compte.
             'gender' => 'female',
             'birth_date' => '1990-04-12',
             'email' => 'pirate@example.com',
@@ -66,7 +63,7 @@ class ProfileFormsApiTest extends TestCase
             ->assertJsonPath('data.first_name', 'Élodie')
             ->assertJsonPath('data.full_name', 'Élodie Ängel')
             ->assertJsonPath('data.initials', 'EA')
-            ->assertJsonPath('data.gender', 'female')
+            ->assertJsonPath('data.gender', 'male')
             ->assertJsonPath('data.birth_date', '1990-04-12');
 
         $user->refresh();
@@ -76,13 +73,13 @@ class ProfileFormsApiTest extends TestCase
 
     public function test_personal_info_saves_clears_and_limits_the_description(): void
     {
-        $user = $this->user(['gender' => 'female']);
-        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female'];
+        $user = $this->user();
+        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont'];
 
         $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')
-            ->assertJsonPath('data.fields.6.type', 'textarea')
-            ->assertJsonPath('data.fields.6.required', false)
-            ->assertJsonPath('data.fields.6.max_length', 1000);
+            ->assertJsonPath('data.fields.5.type', 'textarea')
+            ->assertJsonPath('data.fields.5.required', false)
+            ->assertJsonPath('data.fields.5.max_length', 1000);
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'description' => "Ligne 1\nLigne 2"])
             ->assertOk()
@@ -101,7 +98,7 @@ class ProfileFormsApiTest extends TestCase
     {
         $user = $this->user();
 
-        $response = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => '', 'last_name' => 'Durand', 'gender' => 'female'])
+        $response = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => '', 'last_name' => 'Durand'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['first_name']);
 
@@ -109,27 +106,28 @@ class ProfileFormsApiTest extends TestCase
         $this->assertSame('Jeanne', $user->fresh()->first_name);
     }
 
-    public function test_gender_is_required_and_must_be_male_or_female(): void
+    public function test_gender_is_neither_asked_nor_written(): void
     {
         $user = $this->user(['gender' => null]);
 
-        $missing = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => 'Jeanne', 'last_name' => 'Dupont'])
-            ->assertUnprocessable();
-        $this->assertSame('Le champ Genre est obligatoire.', $missing->json('errors.gender.0'));
+        // Sans genre : accepté.
+        $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => 'Jeanne', 'last_name' => 'Dupont'])
+            ->assertOk()
+            ->assertJsonMissingValidationErrors(['gender']);
 
+        // Un genre envoyé, même invalide, est ignoré.
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'other'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['gender']);
+            ->assertOk();
 
         $this->assertNull($user->fresh()->gender);
     }
 
     public function test_birth_date_is_optional_and_an_empty_value_clears_it(): void
     {
-        $user = $this->user(['gender' => 'male', 'birth_date' => '1990-04-12']);
+        $user = $this->user(['birth_date' => '1990-04-12']);
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
-            'first_name' => 'Jean', 'last_name' => 'Dupont', 'gender' => 'male', 'birth_date' => '',
+            'first_name' => 'Jean', 'last_name' => 'Dupont', 'birth_date' => '',
         ])->assertOk()->assertJsonPath('data.birth_date', null);
 
         $this->assertNull($user->fresh()->birth_date);
@@ -137,8 +135,8 @@ class ProfileFormsApiTest extends TestCase
 
     public function test_birth_date_must_be_between_1900_and_today_with_translated_messages(): void
     {
-        $user = $this->user(['gender' => 'male']);
-        $base = ['first_name' => 'Jean', 'last_name' => 'Dupont', 'gender' => 'male'];
+        $user = $this->user();
+        $base = ['first_name' => 'Jean', 'last_name' => 'Dupont'];
 
         $future = $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$base, 'birth_date' => now()->addDay()->format('Y-m-d')])
             ->assertUnprocessable();
@@ -156,12 +154,12 @@ class ProfileFormsApiTest extends TestCase
 
     public function test_country_and_region_are_saved_and_the_region_must_belong_to_the_country(): void
     {
-        $user = $this->user(['gender' => 'female']);
+        $user = $this->user();
         $switzerland = Country::factory()->create(['code' => 'CH']);
         $france = Country::factory()->create(['code' => 'FR']);
         $geneva = Region::factory()->for($switzerland)->create();
         $brittany = Region::factory()->for($france)->create();
-        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female'];
+        $base = ['first_name' => 'Jeanne', 'last_name' => 'Dupont'];
 
         $form = $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
         $region = collect($form->json('data.fields'))->firstWhere('name', 'region_id');
@@ -197,7 +195,7 @@ class ProfileFormsApiTest extends TestCase
 
     public function test_an_inactive_country_is_not_offered_nor_accepted(): void
     {
-        $user = $this->user(['gender' => 'female']);
+        $user = $this->user();
         $hidden = Country::factory()->create(['code' => 'XK', 'active' => false]);
 
         $form = $this->asUser($user)->getJson('/api/v1/forms/auth.profile.personal')->assertOk();
@@ -205,7 +203,7 @@ class ProfileFormsApiTest extends TestCase
         $this->assertNotContains((string) $hidden->getKey(), array_column($country['options'], 'value'));
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [
-            'first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female', 'country_id' => (string) $hidden->getKey(),
+            'first_name' => 'Jeanne', 'last_name' => 'Dupont', 'country_id' => (string) $hidden->getKey(),
         ])->assertUnprocessable()->assertJsonValidationErrors(['country_id']);
     }
 
@@ -283,6 +281,47 @@ class ProfileFormsApiTest extends TestCase
             'password' => 'ancien-secret',
             'password_confirmation' => 'ancien-secret',
         ])->assertUnprocessable()->assertJsonValidationErrors(['password']);
+    }
+
+    public function test_an_account_without_password_creates_one_without_the_current_password(): void
+    {
+        // Inscrit depuis l'app, sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
+        $user = $this->user(['password' => null]);
+
+        $this->asUser($user)->getJson('/api/v1/forms/auth.profile.password')
+            ->assertOk()
+            ->assertJsonPath('data.title', __('auth::form.password.create_title', [], 'fr'))
+            ->assertJsonPath('data.fields.*.name', ['password', 'password_confirmation']);
+
+        $this->asUser($user)->putJson('/api/v1/auth/me/password', [
+            'password' => 'premier-secret-2026',
+            'password_confirmation' => 'premier-secret-2026',
+        ])->assertNoContent();
+
+        $this->assertTrue(Hash::check('premier-secret-2026', $user->fresh()->password));
+
+        // Une fois créé, l'ancien est demandé.
+        $this->app['auth']->forgetGuards();
+        $this->asUser($user->fresh())->getJson('/api/v1/forms/auth.profile.password')
+            ->assertJsonPath('data.title', 'Changer le mot de passe')
+            ->assertJsonPath('data.fields.*.name', ['current_password', 'password', 'password_confirmation']);
+    }
+
+    public function test_an_account_without_password_still_needs_a_valid_confirmed_one(): void
+    {
+        $user = $this->user(['password' => null]);
+
+        $this->asUser($user)->putJson('/api/v1/auth/me/password', [
+            'password' => 'court',
+            'password_confirmation' => 'court',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['password'])->assertJsonMissingValidationErrors(['current_password']);
+
+        $this->asUser($user)->putJson('/api/v1/auth/me/password', [
+            'password' => 'premier-secret-2026',
+            'password_confirmation' => 'autre-secret-2026',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['password']);
+
+        $this->assertNull($user->fresh()->password);
     }
 
     // Préférences

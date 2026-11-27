@@ -9,7 +9,6 @@ use Bza\Form\Support\Form;
 use Bza\Form\Support\Submission;
 use Collator;
 use Illuminate\Support\Facades\App;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Rules\MinimumAge;
 use Modules\Location\Models\Country;
@@ -18,7 +17,7 @@ use Modules\Location\Support\CurrentCountry;
 
 /**
  * Informations personnelles, depuis le profil de l'app mobile
- * (`PATCH /api/v1/auth/me/personal-info`) : prénom, nom, genre (obligatoire),
+ * (`PATCH /api/v1/auth/me/personal-info`) : prénom, nom,
  * date de naissance, pays et région du pays, description (facultatifs).
  */
 class PersonalInfoForm extends Form
@@ -70,11 +69,6 @@ class PersonalInfoForm extends Form
                 ->default($user?->last_name)
                 ->required()
                 ->rules(['max:255']),
-            Field::select('gender')
-                ->label(__('auth::user.gender'))
-                ->options(GenderEnum::options())
-                ->default($user?->gender?->value)
-                ->required(),
             self::birthDateField()->default($user?->birth_date?->format('Y-m-d')),
             Field::select('country_id')
                 ->label(__('auth::user.country'))

@@ -53,9 +53,8 @@ class RecycledPhoneTest extends TestCase
     private function registerWithThePhone()
     {
         return $this->postJson('/api/v1/auth/register', [
-            'name' => 'nouveau', 'first_name' => 'Nouveau', 'last_name' => 'Titulaire', 'gender' => 'male',
+            'name' => 'nouveau', 'first_name' => 'Nouveau', 'last_name' => 'Titulaire',
             'phone' => '079 123 45 67', 'phone_country' => 'CH',
-            'password' => 'Secret-password-1', 'password_confirmation' => 'Secret-password-1',
         ]);
     }
 
@@ -185,11 +184,23 @@ class RecycledPhoneTest extends TestCase
 
     public function test_the_new_owner_cannot_sign_in_to_the_old_account(): void
     {
-        // Le code SMS ne suffit pas : la connexion exige le mot de passe de l'ancien titulaire.
+        // Sans mot de passe, le code SMS suffirait : un compte inactif ne se connecte plus par
+        // SMS, le numéro mène à l'inscription (qui le reprend, voir plus haut).
         $this->oldOwner(daysSinceLastSeen: 200);
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'not-the-password'])
-            ->assertUnprocessable()->assertJsonValidationErrors('phone');
+        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
+            ->assertOk()
+            ->assertJsonPath('next', 'register')
+            ->assertJsonMissingPath('challenge');
         $this->assertSame([], $this->sms->messages);
+    }
+
+    public function test_an_inactive_account_still_signs_in_by_email(): void
+    {
+        $old = $this->oldOwner(daysSinceLastSeen: 200);
+
+        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $old->email])
+            ->assertAccepted()
+            ->assertJsonPath('channel', 'email');
     }
 }

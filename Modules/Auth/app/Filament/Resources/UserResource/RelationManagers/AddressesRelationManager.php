@@ -8,7 +8,6 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -17,7 +16,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Services\UserAddressService;
@@ -89,7 +87,6 @@ class AddressesRelationManager extends RelationManager
             ->recordActions([
                 EditAction::make()
                     ->fillForm(fn (UserAddress $record): array => [
-                        'gender' => $record->gender?->value,
                         'first_name' => $record->first_name,
                         'last_name' => $record->last_name,
                         'indication' => $record->indication,
@@ -108,7 +105,7 @@ class AddressesRelationManager extends RelationManager
     }
 
     /**
-     * Genre, prénom et nom du destinataire ; à l'ajout, c'est d'abord
+     * Prénom et nom du destinataire ; à l'ajout, c'est d'abord
      * l'utilisateur lui-même.
      *
      * @return list<Component>
@@ -116,12 +113,6 @@ class AddressesRelationManager extends RelationManager
     private static function recipient(User $user): array
     {
         return [
-            Select::make('gender')
-                ->label(__('auth::user.gender'))
-                ->options(GenderEnum::options())
-                ->default($user->gender?->value)
-                ->required()
-                ->columnSpanFull(),
             TextInput::make('first_name')
                 ->label(__('auth::user.first_name'))
                 ->default($user->first_name)

@@ -12,17 +12,20 @@ use Modules\Auth\Services\LoginService;
 class LoginController
 {
     /**
-     * Connexion : e-mail ou téléphone (format international) et mot de passe. Si les
-     * identifiants sont justes, un code part vers cet e-mail ou ce téléphone ; la
-     * réponse décrit le défi à valider par `POST /auth/codes/verify`, qui seul rend
-     * le jeton.
+     * Connexion : e-mail ou téléphone, sans mot de passe. Compte trouvé : un code part
+     * vers cet e-mail ou ce téléphone ; la réponse (202) décrit le défi à valider par
+     * `POST /auth/codes/verify`, qui seul rend le jeton. Compte inconnu (200) :
+     * `next: register` et l'identifiant, à renvoyer avec l'inscription.
      *
      * @unauthenticated
      *
      * @response 202 array{challenge: string, channel: 'email'|'sms', destination: string}
+     * @response 200 array{next: 'register', values: array<string, string>}
      */
     public function login(LoginRequest $request, LoginService $service): JsonResponse
     {
-        return response()->json($service->start($request->validated()), 202);
+        $result = $service->start($request->validated());
+
+        return response()->json($result, isset($result['next']) ? 200 : 202);
     }
 }

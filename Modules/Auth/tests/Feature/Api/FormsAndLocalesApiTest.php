@@ -29,7 +29,7 @@ class FormsAndLocalesApiTest extends TestCase
         // Les deux canaux : le sélecteur « E-mail | Téléphone », puis un seul champ visible.
         $fr->assertJsonPath('data.name', 'auth.login')
             ->assertJsonPath('data.title', 'Se connecter')
-            ->assertJsonPath('data.subtitle', 'Accédez à votre compte yamo.')
+            ->assertJsonPath('data.subtitle', __('auth::form.login.subtitle', [], 'fr'))
             ->assertJsonPath('data.submit.label', 'Se connecter')
             ->assertJsonPath('data.fields.0.name', 'channel')
             ->assertJsonPath('data.fields.0.type', 'segmented')
@@ -44,13 +44,12 @@ class FormsAndLocalesApiTest extends TestCase
             ->assertJsonPath('data.fields.2.name', 'phone')
             ->assertJsonPath('data.fields.2.type', 'phone')
             ->assertJsonPath('data.fields.2.visible_when', ['field' => 'channel', 'value' => 'phone', 'values' => ['phone']])
-            ->assertJsonPath('data.fields.3.name', 'password')
-            ->assertJsonPath('data.fields.3.type', 'password');
+            ->assertJsonCount(3, 'data.fields');
 
         $this->withHeader('Accept-Language', 'en')->getJson('/api/v1/forms/auth.login')
             ->assertOk()
             ->assertJsonPath('data.title', 'Sign in')
-            ->assertJsonPath('data.subtitle', 'Access your yamo account.')
+            ->assertJsonPath('data.subtitle', __('auth::form.login.subtitle', [], 'en'))
             ->assertJsonPath('data.fields.0.label', 'Email or phone')
             ->assertJsonPath('data.submit.label', 'Sign in');
     }

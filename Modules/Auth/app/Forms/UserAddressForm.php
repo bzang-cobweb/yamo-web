@@ -6,7 +6,6 @@ use Bza\Form\Enums\SuccessAction;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
 use Bza\Form\Support\Submission;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Location\Models\Region;
@@ -16,7 +15,7 @@ use Modules\Location\Support\CurrentCountry;
  * Une adresse du compte, depuis la liste « Mes adresses » de l'app : vide pour
  * en ajouter une (`POST /api/v1/auth/me/addresses`), ou liée à l'une de ses
  * adresses (`?record=12`, une `UserAddress`) pour la modifier
- * (`PATCH …/addresses/12`). Destinataire (genre, prénom, nom, préremplis depuis
+ * (`PATCH …/addresses/12`). Destinataire (prénom, nom, préremplis depuis
  * le compte à l'ajout), puis rue (avec suggestions), NPA, région et ville
  * obligatoires, et des indications facultatives. Latitude et longitude sont
  * réservées au back-office : une adresse créée depuis l'app n'a pas de coordonnées (décisions
@@ -56,11 +55,6 @@ class UserAddressForm extends Form
         $country = CurrentCountry::require();
 
         return [
-            Field::select('gender')
-                ->label(__('auth::user.gender'))
-                ->options(GenderEnum::options())
-                ->default($recipient?->gender?->value)
-                ->required(),
             Field::text('first_name')
                 ->label(__('auth::user.first_name'))
                 ->default($recipient?->first_name)

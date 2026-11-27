@@ -4,7 +4,7 @@ return [
     'save' => 'Save',
     'login' => [
         'title' => 'Sign in',
-        'subtitle' => 'Access your yamo account.',
+        'subtitle' => 'Your email or phone number: a code is sent to you. No account yet? It is created next.',
         'submit' => 'Sign in',
     ],
     'register' => [
@@ -46,6 +46,7 @@ return [
     ],
     'password' => [
         'title' => 'Change password',
+        'create_title' => 'Create a password',
         'submit' => 'Change password',
         'help' => 'At least 8 characters.',
     ],

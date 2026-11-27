@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-27-onglets-visiteur-invitation.md
 # `2026-11-27` — Un visiteur a le même menu du bas ; Notifications et Profil lui montrent la connexion
 
 Remplace en partie : 2026-11-18-accueil-offres-du-pays.md (l'accueil d'un visiteur `/welcome`, sans menu du bas)

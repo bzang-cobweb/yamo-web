@@ -12,13 +12,9 @@ return [
     ],
     'auth' => [
         'createAccount' => 'Create an account',
-        'haveAccount' => 'I already have an account',
         'codeSent' => 'Code sent to :destination.',
         'resend' => 'Resend the code',
         'resent' => 'New code sent.',
-        'forgotPassword' => 'Forgot password?',
-        'forgotPasswordTitle' => 'Forgot password',
-        'passwordReset' => 'Password changed, please sign in.',
         'accountDeleted' => 'Your account has been deleted.',
         'restoreTitle' => 'Recover my account',
         'restoreMessage' => 'Your account will be permanently deleted on :date. Do you want to recover it?',
@@ -27,6 +23,12 @@ return [
         'accountRestored' => 'Your account has been recovered.',
         'previousStep' => 'Previous step',
         'signIn' => 'Sign in',
+        'signInOrUp' => 'Sign in or sign up',
+        'registerIntro' => 'No account with this identifier yet: create one in a few words.',
+        'guest' => [
+            'notifications' => 'Sign in to follow your requests, bookings and messages.',
+            'profile' => 'Sign in to manage your profile, favourites and listings.',
+        ],
     ],
     'profile' => [
         'personalInfo' => 'Personal information',

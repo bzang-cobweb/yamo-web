@@ -12,13 +12,9 @@ return [
     ],
     'auth' => [
         'createAccount' => 'Créer un compte',
-        'haveAccount' => "J'ai déjà un compte",
         'codeSent' => 'Code envoyé à :destination.',
         'resend' => 'Renvoyer le code',
         'resent' => 'Nouveau code envoyé.',
-        'forgotPassword' => 'Mot de passe oublié ?',
-        'forgotPasswordTitle' => 'Mot de passe oublié',
-        'passwordReset' => 'Mot de passe modifié, connectez-vous.',
         'accountDeleted' => 'Votre compte a été supprimé.',
         'restoreTitle' => 'Récupérer mon compte',
         'restoreMessage' => 'Votre compte sera supprimé définitivement le :date. Voulez-vous le récupérer ?',
@@ -27,6 +23,12 @@ return [
         'accountRestored' => 'Votre compte a été récupéré.',
         'previousStep' => 'Étape précédente',
         'signIn' => 'Se connecter',
+        'signInOrUp' => "Se connecter ou s'inscrire",
+        'registerIntro' => 'Pas encore de compte avec cet identifiant : créez-le en quelques mots.',
+        'guest' => [
+            'notifications' => 'Connectez-vous pour suivre vos demandes, vos réservations et vos messages.',
+            'profile' => 'Connectez-vous pour gérer votre profil, vos favoris et vos logements.',
+        ],
     ],
     'profile' => [
         'personalInfo' => 'Informations personnelles',

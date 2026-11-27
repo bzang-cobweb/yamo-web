@@ -4,7 +4,7 @@ return [
     'save' => 'Enregistrer',
     'login' => [
         'title' => 'Se connecter',
-        'subtitle' => 'Accédez à votre compte yamo.',
+        'subtitle' => 'Votre e-mail ou votre téléphone : un code vous est envoyé. Pas encore de compte ? Il est créé à la suite.',
         'submit' => 'Se connecter',
     ],
     'register' => [
@@ -46,6 +46,7 @@ return [
     ],
     'password' => [
         'title' => 'Changer le mot de passe',
+        'create_title' => 'Créer un mot de passe',
         'submit' => 'Changer le mot de passe',
         'help' => '8 caractères au moins.',
     ],

@@ -4,6 +4,7 @@ namespace Modules\Auth\Tests\Feature\Api;
 
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Modules\Auth\Models\User;
 use Modules\Location\Models\Country;
 use Tests\TestCase;
@@ -17,11 +18,12 @@ class MinimumAgeApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const IDENTITY = ['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'gender' => 'female'];
+    private const IDENTITY = ['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'email' => 'marie@example.com'];
 
     protected function setUp(): void
     {
         parent::setUp();
+        Mail::fake();
         Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
     }
 
@@ -38,11 +40,11 @@ class MinimumAgeApiTest extends TestCase
     public function test_without_a_minimum_age_the_birth_date_stays_optional(): void
     {
         $this->getJson('/api/v1/forms/auth.register')
-            ->assertJsonPath('data.fields.4.name', 'birth_date')
-            ->assertJsonPath('data.fields.4.required', false)
-            ->assertJsonPath('data.fields.4.help', null);
+            ->assertJsonPath('data.fields.3.name', 'birth_date')
+            ->assertJsonPath('data.fields.3.required', false)
+            ->assertJsonPath('data.fields.3.help', null);
 
-        $this->postJson('/api/v1/forms/auth.register/steps/1', self::IDENTITY)->assertNoContent();
+        $this->postJson('/api/v1/auth/register', self::IDENTITY)->assertAccepted();
     }
 
     public function test_with_a_minimum_age_the_birth_date_is_required_and_its_help_says_the_age(): void
@@ -50,13 +52,13 @@ class MinimumAgeApiTest extends TestCase
         $this->minimumAge(18);
 
         $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register')
-            ->assertJsonPath('data.fields.4.name', 'birth_date')
-            ->assertJsonPath('data.fields.4.required', true)
-            ->assertJsonPath('data.fields.4.help', 'Au moins 18 ans.')
+            ->assertJsonPath('data.fields.3.name', 'birth_date')
+            ->assertJsonPath('data.fields.3.required', true)
+            ->assertJsonPath('data.fields.3.help', 'Au moins 18 ans.')
             // Le calendrier s'arrête à la dernière date qui donne 18 ans (décision 2026-11-19-bornes-des-dates).
-            ->assertJsonPath('data.fields.4.range', ['min' => '1900-01-01', 'max' => today()->subYears(18)->toDateString(), 'step' => null]);
+            ->assertJsonPath('data.fields.3.range', ['min' => '1900-01-01', 'max' => today()->subYears(18)->toDateString(), 'step' => null]);
 
-        $this->postJson('/api/v1/forms/auth.register/steps/1', self::IDENTITY)->assertJsonValidationErrors('birth_date');
+        $this->postJson('/api/v1/auth/register', self::IDENTITY)->assertJsonValidationErrors('birth_date');
     }
 
     public function test_registering_too_young_is_refused_and_old_enough_is_accepted(): void
@@ -66,17 +68,17 @@ class MinimumAgeApiTest extends TestCase
         $exactly = today()->subYears(18)->toDateString();
 
         $this->withHeader('Accept-Language', 'fr')
-            ->postJson('/api/v1/forms/auth.register/steps/1', [...self::IDENTITY, 'birth_date' => $tooYoung])
+            ->postJson('/api/v1/auth/register', [...self::IDENTITY, 'birth_date' => $tooYoung])
             ->assertJsonValidationErrors(['birth_date' => 'Vous devez avoir au moins 18 ans.']);
 
-        $this->postJson('/api/v1/forms/auth.register/steps/1', [...self::IDENTITY, 'birth_date' => $exactly])->assertNoContent();
+        $this->postJson('/api/v1/auth/register', [...self::IDENTITY, 'birth_date' => $exactly])->assertAccepted();
     }
 
     public function test_personal_information_needs_a_birth_date_old_enough(): void
     {
         $this->minimumAge(21);
         $user = User::factory()->create(['birth_date' => null, 'locale' => 'fr']);
-        $data = ['first_name' => 'Jeanne', 'last_name' => 'Dupont', 'gender' => 'female'];
+        $data = ['first_name' => 'Jeanne', 'last_name' => 'Dupont'];
 
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', $data)->assertJsonValidationErrors('birth_date');
         $this->asUser($user)->patchJson('/api/v1/auth/me/personal-info', [...$data, 'birth_date' => today()->subYears(20)->toDateString()])

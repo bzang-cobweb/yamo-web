@@ -3,7 +3,6 @@
 namespace Modules\Auth\Services;
 
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Hash;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
@@ -22,7 +21,7 @@ final class RegisterService
     public function __construct(private readonly VerificationCodeService $codeService) {}
 
     /**
-     * @param  array{name: string, first_name: string, last_name: string, gender: string, birth_date?: string|null, description?: string|null, email?: string|null, phone?: string|null, phone_country?: string|null, password: string}  $data
+     * @param  array{name: string, first_name: string, last_name: string, birth_date?: string|null, email?: string|null, phone?: string|null, phone_country?: string|null}  $data
      * @return array{challenge: string, channel: string, destination: string}
      */
     public function start(array $data): array
@@ -39,13 +38,10 @@ final class RegisterService
                 'name' => $data['name'],
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'gender' => $data['gender'],
                 'birth_date' => filled($data['birth_date'] ?? null) ? $data['birth_date'] : null,
-                'description' => filled($data['description'] ?? null) ? $data['description'] : null,
                 'email' => $email,
                 'phone' => $phone,
                 'phone_country_id' => $phone === null ? null : $country?->getKey(),
-                'password' => Hash::make($data['password']),
                 'locale' => App::getLocale(),
             ],
         );
@@ -74,10 +70,9 @@ final class RegisterService
                 // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
                 PhoneOwnership::release($payload['phone']);
             }
-            // Mot de passe déjà haché à l'ouverture du défi : le cast `hashed` le garde tel quel.
+            // Sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
             $user = new User(collect($payload)->except('password')->all());
             $user->forceFill([
-                'password' => $payload['password'],
                 'email_verified_at' => $payload['email'] !== null ? now() : null,
                 'phone_verified_at' => $payload['phone'] !== null ? now() : null,
             ])->save();

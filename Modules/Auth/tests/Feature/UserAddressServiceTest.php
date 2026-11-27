@@ -3,7 +3,6 @@
 namespace Modules\Auth\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\UserAddress;
 use Modules\Auth\Services\UserAddressService;
@@ -53,7 +52,8 @@ class UserAddressServiceTest extends TestCase
         $this->assertSame(1, Address::query()->count());
         $this->assertSame('Rue du Lac 4', $entry->address->street);
         $this->assertSame('46.2043907', $entry->address->latitude);
-        $this->assertSame(GenderEnum::FEMALE, $entry->gender);
+        // Le genre envoyé n'est plus écrit (demande du 2026-11-27).
+        $this->assertNull($entry->gender);
         $this->assertSame('Jeanne Dupont', $entry->recipient());
         $this->assertTrue($user->addresses()->sole()->is($entry));
     }
@@ -107,7 +107,7 @@ class UserAddressServiceTest extends TestCase
 
         $this->assertTrue($updated->address->is($address));
         $this->assertSame('Jeanne-Marie', $updated->first_name);
-        $this->assertSame(GenderEnum::MALE, $updated->gender);
+        $this->assertNull($updated->gender);
         $this->assertSame(1, Address::query()->count());
     }
 

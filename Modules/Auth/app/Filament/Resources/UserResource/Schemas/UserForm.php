@@ -19,7 +19,6 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Forms\PersonalInfoForm;
 use Modules\Auth\Models\User;
@@ -73,10 +72,6 @@ abstract class UserForm
                     ->maxLength(255)
                     ->required(),
                 // Mêmes règles que le formulaire Informations personnelles de l'app.
-                Select::make('gender')
-                    ->label(__('auth::user.gender'))
-                    ->options(GenderEnum::options())
-                    ->required(),
                 DatePicker::make('birth_date')
                     ->label(__('auth::user.birth_date'))
                     ->native(false)

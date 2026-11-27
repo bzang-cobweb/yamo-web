@@ -4,7 +4,6 @@ namespace Modules\Auth\Tests\Feature\Filament;
 
 use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
-use Modules\Auth\Enums\GenderEnum;
 use Modules\Auth\Enums\PermissionEnum;
 use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Filament\Resources\UserResource;
@@ -45,7 +44,7 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
     private function input(Country $country, array $overrides = []): array
     {
         return [
-            'gender' => 'female', 'first_name' => 'Jeanne', 'last_name' => 'Dupont',
+            'first_name' => 'Jeanne', 'last_name' => 'Dupont',
             'region_id' => (string) $this->regionOf($country), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève',
             ...$overrides,
         ];
@@ -86,7 +85,7 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
 
         $this->manager($user)
             ->mountAction(TestAction::make('create')->table())
-            ->assertSchemaStateSet(['gender' => 'male', 'first_name' => 'Paul', 'last_name' => 'Martin']);
+            ->assertSchemaStateSet(['first_name' => 'Paul', 'last_name' => 'Martin']);
     }
 
     public function test_adding_a_new_address_creates_it_and_the_entry(): void
@@ -101,7 +100,8 @@ class UserAddressesRelationManagerTest extends AuthFilamentTestCase
 
         $entry = $user->addresses()->sole();
         $this->assertSame('Jeanne Dupont', $entry->recipient());
-        $this->assertSame(GenderEnum::FEMALE, $entry->gender);
+        // Le genre envoyé n'est plus écrit (demande du 2026-11-27).
+        $this->assertNull($entry->gender);
         $this->assertTrue($entry->address->country->is($country));
     }
 

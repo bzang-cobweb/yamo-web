@@ -22,7 +22,7 @@ use Modules\Location\Services\AddressService;
 class UserAddressService
 {
     /** Champs du destinataire, propres au compte. */
-    public const RECIPIENT_FIELDS = ['gender', 'first_name', 'last_name'];
+    public const RECIPIENT_FIELDS = ['first_name', 'last_name'];
 
     public function __construct(private readonly AddressService $addressService) {}
 
@@ -82,14 +82,13 @@ class UserAddressService
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{gender: mixed, first_name: mixed, last_name: mixed, indication: string|null}
+     * @return array{first_name: mixed, last_name: mixed, indication: string|null}
      */
     private function recipient(array $data): array
     {
         $indication = trim((string) ($data['indication'] ?? ''));
 
         return [
-            'gender' => $data['gender'] ?? null,
             'first_name' => $data['first_name'] ?? '',
             'last_name' => $data['last_name'] ?? '',
             'indication' => $indication === '' ? null : $indication,

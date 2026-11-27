@@ -12,13 +12,9 @@ return [
     ],
     'auth' => [
         'createAccount' => 'Konto erstellen',
-        'haveAccount' => 'Ich habe bereits ein Konto',
         'codeSent' => 'Code gesendet an :destination.',
         'resend' => 'Code erneut senden',
         'resent' => 'Neuer Code gesendet.',
-        'forgotPassword' => 'Passwort vergessen?',
-        'forgotPasswordTitle' => 'Passwort vergessen',
-        'passwordReset' => 'Passwort geändert, bitte melden Sie sich an.',
         'accountDeleted' => 'Ihr Konto wurde gelöscht.',
         'restoreTitle' => 'Mein Konto wiederherstellen',
         'restoreMessage' => 'Ihr Konto wird am :date endgültig gelöscht. Möchten Sie es wiederherstellen?',
@@ -27,6 +23,12 @@ return [
         'accountRestored' => 'Ihr Konto wurde wiederhergestellt.',
         'previousStep' => 'Vorheriger Schritt',
         'signIn' => 'Anmelden',
+        'signInOrUp' => 'Anmelden oder registrieren',
+        'registerIntro' => 'Noch kein Konto mit dieser Kennung: Erstellen Sie es mit wenigen Angaben.',
+        'guest' => [
+            'notifications' => 'Melden Sie sich an, um Ihre Anfragen, Buchungen und Nachrichten zu verfolgen.',
+            'profile' => 'Melden Sie sich an, um Ihr Profil, Ihre Favoriten und Ihre Unterkünfte zu verwalten.',
+        ],
     ],
     'profile' => [
         'personalInfo' => 'Persönliche Angaben',

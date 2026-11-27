@@ -2,15 +2,15 @@
 
 namespace Modules\Auth\Forms;
 
-use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Forms\Concerns\HasIdentifierField;
 
 /**
- * Connexion de l'app mobile, première étape : e-mail ou téléphone (format
- * international) et mot de passe. Un code est ensuite envoyé à cet e-mail ou ce
- * téléphone (formulaire `auth.code`). `device_name` part avec le code.
+ * Connexion de l'app mobile, première étape : e-mail ou téléphone (l'indicatif du
+ * pays courant d'office), sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
+ * Compte trouvé : un code part vers cet e-mail ou ce téléphone (formulaire `auth.code`) ;
+ * sinon, l'app ouvre l'inscription avec cet identifiant. `device_name` part avec le code.
  */
 class LoginForm extends Form
 {
@@ -23,13 +23,7 @@ class LoginForm extends Form
 
     public function fields(): array
     {
-        return [
-            ...$this->identifierFields(),
-            Field::password('password')
-                ->label(__('auth::user.password'))
-                ->required()
-                ->rules(['max:255']),
-        ];
+        return $this->identifierFields();
     }
 
     public function submitLabel(): string

@@ -65,7 +65,7 @@ class AccountDeletionApiTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/v1/auth/me')->assertUnauthorized();
         // Se reconnecter ne rouvre pas la session : l'app propose de récupérer le compte.
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])
             ->assertAccepted()->json('challenge');
         $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])
             ->assertOk()->assertJsonPath('next', 'restore')->assertJsonMissingPath('token');
@@ -78,7 +78,7 @@ class AccountDeletionApiTest extends TestCase
         $user = $this->user();
         $this->travelTo(now()->subDays(10), fn () => $user->delete());
 
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
         $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@example.com')])
             ->assertOk()
             ->assertJsonPath('next', 'restore')
@@ -104,7 +104,7 @@ class AccountDeletionApiTest extends TestCase
         $user->delete();
 
         // Code non validé.
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
         $this->postJson('/api/v1/auth/account/restore', ['challenge' => $challenge])->assertUnprocessable()->assertJsonValidationErrors('code');
 
         // Défi inconnu.
@@ -122,8 +122,9 @@ class AccountDeletionApiTest extends TestCase
         $user = $this->user();
         $user->forceDelete();
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
-            ->assertUnprocessable()->assertJsonValidationErrors('email');
+        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])
+            // Plus aucune trace : l'identifiant mène à l'inscription.
+            ->assertOk()->assertJsonPath('next', 'register');
     }
 
     public function test_a_wrong_password_is_refused_and_the_account_stays(): void
@@ -176,8 +177,8 @@ class AccountDeletionApiTest extends TestCase
         $user->delete();
 
         $this->postJson('/api/v1/auth/register', [
-            'name' => 'autre', 'first_name' => 'Autre', 'last_name' => 'Personne', 'gender' => 'female',
-            'email' => 'jeanne@example.com', 'password' => 'Secret-password-1', 'password_confirmation' => 'Secret-password-1',
+            'name' => 'autre', 'first_name' => 'Autre', 'last_name' => 'Personne',
+            'email' => 'jeanne@example.com',
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
@@ -189,9 +190,8 @@ class AccountDeletionApiTest extends TestCase
         $token = $other->createToken('test')->plainTextToken;
 
         $this->postJson('/api/v1/auth/register', [
-            'name' => 'jeanne', 'first_name' => 'A', 'last_name' => 'B', 'gender' => 'female',
+            'name' => 'jeanne', 'first_name' => 'A', 'last_name' => 'B',
             'phone' => '079 123 45 67', 'phone_country' => 'CH',
-            'password' => 'Secret-password-1', 'password_confirmation' => 'Secret-password-1',
         ])->assertUnprocessable()->assertJsonValidationErrors(['name', 'phone']);
 
         $this->withToken($token)->postJson('/api/v1/auth/me/email', ['email' => 'held@example.com'])

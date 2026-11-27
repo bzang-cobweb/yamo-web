@@ -3,6 +3,7 @@
 namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Auth\Models\User;
@@ -36,7 +37,6 @@ class AuthApiTest extends TestCase
     {
         return $this->postJson('/api/v1/auth/login', [
             'channel' => 'email', 'email' => 'jeanne@example.com',
-            'password' => 'secret-password',
             ...$overrides,
         ]);
     }
@@ -97,45 +97,55 @@ class AuthApiTest extends TestCase
         $this->assertNotEmpty($response->json('token'));
     }
 
-    public function test_login_with_wrong_password_returns_422_and_creates_no_token(): void
+    public function test_login_with_a_known_email_sends_a_code_and_no_token(): void
     {
         $this->user();
 
-        $this->login(['password' => 'wrong'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email'])
-            ->assertJsonMissingPath('token');
+        $this->login()
+            ->assertAccepted()
+            ->assertJsonStructure(['challenge', 'channel', 'destination'])
+            ->assertJsonPath('channel', 'email')
+            ->assertJsonMissingPath('token')
+            ->assertJsonMissingPath('next');
 
+        $this->assertNotEmpty($this->emailCode('jeanne@example.com'));
         $this->assertSame(0, PersonalAccessToken::count());
     }
 
-    public function test_login_with_unknown_email_gives_the_same_answer(): void
+    public function test_login_with_an_unknown_email_leads_to_register_with_the_email(): void
     {
         $this->user();
 
-        $wrongPassword = $this->login(['password' => 'wrong'])->json('errors');
-        $unknownEmail = $this->login(['channel' => 'email', 'email' => 'nobody@example.com'])->assertUnprocessable()->json('errors');
+        $this->login(['email' => '  nobody@example.com '])
+            ->assertOk()
+            ->assertExactJson(['next' => 'register', 'values' => ['email' => 'nobody@example.com']]);
 
-        $this->assertSame($wrongPassword, $unknownEmail);
+        // Ni code, ni compte, ni jeton.
+        Mail::assertNothingSent();
+        $this->assertSame(1, User::count());
+        $this->assertSame(0, PersonalAccessToken::count());
     }
 
     public function test_login_validates_its_fields(): void
     {
         $this->postJson('/api/v1/auth/login', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['channel', 'password']);
+            ->assertJsonValidationErrors(['channel'])
+            ->assertJsonMissingValidationErrors(['password']);
+
+        $this->login(['email' => null])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function test_login_error_is_translated_from_accept_language(): void
     {
-        $this->user();
-
         // Le client de test de Symfony envoie « en-us » par défaut : chaque langue est demandée.
-        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['password' => 'wrong'])->json('errors.email.0');
-        $en = $this->withHeader('Accept-Language', 'en')->login(['password' => 'wrong'])->json('errors.email.0');
+        $fr = $this->withHeader('Accept-Language', 'fr-CH,fr;q=0.9')->login(['email' => 'pas-un-e-mail'])->assertUnprocessable()->json('errors.email.0');
+        $en = $this->withHeader('Accept-Language', 'en')->login(['email' => 'pas-un-e-mail'])->assertUnprocessable()->json('errors.email.0');
 
-        $this->assertSame(trans('auth.failed', [], 'fr'), $fr);
-        $this->assertSame(trans('auth.failed', [], 'en'), $en);
+        $this->assertNotEmpty($fr);
+        $this->assertNotEmpty($en);
         $this->assertNotSame($fr, $en);
     }
 
@@ -143,12 +153,13 @@ class AuthApiTest extends TestCase
     {
         $this->user();
 
+        // Limite par identifiant (et adresse) : un autre identifiant passe encore.
         for ($i = 0; $i < 5; $i++) {
-            $this->login(['password' => 'wrong'])->assertUnprocessable();
+            $this->login(['email' => 'inconnu@example.com'])->assertOk();
         }
 
-        $this->login(['password' => 'wrong'])->assertTooManyRequests();
-        $this->login()->assertTooManyRequests();
+        $this->login(['email' => 'INCONNU@example.com'])->assertTooManyRequests();
+        $this->login()->assertAccepted();
     }
 
     public function test_me_returns_the_authenticated_user(): void

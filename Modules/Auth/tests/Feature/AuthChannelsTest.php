@@ -50,8 +50,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
     private function register(array $overrides = [])
     {
         return $this->postJson('/api/v1/auth/register', [
-            'name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'gender' => 'female',
-            'password' => 'Secret-password-1', 'password_confirmation' => 'Secret-password-1',
+            'name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie',
             ...$overrides,
         ]);
     }
@@ -61,14 +60,14 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $register = $this->fieldsOf($this->form('auth.register'));
         $this->assertArrayHasKey('email', $register);
         $this->assertArrayHasKey('phone', $register);
-        $this->assertFalse($register['email']['required']);
-        // L'aide « l'un ou l'autre » est le sous-titre de l'étape, plus celle du champ e-mail.
-        $this->assertNull($register['email']['help']);
-        $this->assertSame(__('auth::form.register.contact_help', [], 'fr'), $this->form('auth.register')['steps'][1]['subtitle']);
+        $this->assertArrayHasKey('phone_country', $register);
+        // L'identifiant vient de la connexion : champs cachés, l'un ou l'autre.
+        $this->assertSame(['hidden', 'hidden', 'hidden'], [$register['email']['type'], $register['phone']['type'], $register['phone_country']['type']]);
+        $this->assertSame([], $this->form('auth.register')['steps']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
         // Sélecteur « E-mail | Téléphone », puis le champ choisi.
-        $this->assertSame(['channel', 'email', 'phone', 'password'], array_keys($login));
+        $this->assertSame(['channel', 'email', 'phone'], array_keys($login));
         $this->assertSame('segmented', $login['channel']['type']);
         $this->assertSame(['field' => 'channel', 'value' => 'email', 'values' => ['email']], $login['email']['visible_when']);
         $this->assertSame(['field' => 'channel', 'value' => 'phone', 'values' => ['phone']], $login['phone']['visible_when']);
@@ -80,16 +79,13 @@ class AuthChannelsTest extends AuthFilamentTestCase
     {
         $this->channels(email: true, phone: false);
 
-        $form = $this->form('auth.register');
-        $register = $this->fieldsOf($form);
+        $register = $this->fieldsOf($this->form('auth.register'));
         $this->assertArrayNotHasKey('phone', $register);
-        $this->assertTrue($register['email']['required']);
-        $this->assertNull($register['email']['help']);
-        $this->assertSame(['email'], $form['steps'][1]['fields']);
-        $this->assertNull($form['steps'][1]['subtitle']);
+        $this->assertArrayNotHasKey('phone_country', $register);
+        $this->assertSame('hidden', $register['email']['type']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertSame(['email', 'password'], array_keys($login));
+        $this->assertSame(['email'], array_keys($login));
         $this->assertSame('email', $login['email']['type']);
         $this->assertNull($login['email']['visible_when']);
         $this->assertSame(['email'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
@@ -108,11 +104,11 @@ class AuthChannelsTest extends AuthFilamentTestCase
 
         $register = $this->fieldsOf($this->form('auth.register'));
         $this->assertArrayNotHasKey('email', $register);
-        $this->assertTrue($register['phone']['required']);
+        $this->assertSame(['hidden', 'hidden'], [$register['phone']['type'], $register['phone_country']['type']]);
 
         // Le pays et le numéro, sur une ligne (champ téléphone), sans aide sur le format.
         $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertSame(['phone', 'password'], array_keys($login));
+        $this->assertSame(['phone'], array_keys($login));
         $this->assertSame('phone', $login['phone']['type']);
         $this->assertContains('CH', array_column($login['phone']['options'], 'value'));
         $this->assertSame(['phone'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
@@ -129,7 +125,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
             'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',
         ]);
 
-        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67', 'phone_country' => 'CH'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms');
         $this->postJson('/api/v1/auth/password/forgot', ['phone' => '079 123 45 67', 'phone_country' => 'CH'])
@@ -137,7 +133,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
             ->assertJsonPath('channel', 'sms');
 
         // Sans pays, le champ téléphone est incomplet.
-        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['phone' => '079 123 45 67'])
             ->assertUnprocessable()->assertJsonValidationErrors('phone_country');
     }
 
@@ -145,7 +141,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
     {
         $this->channels(email: true, phone: false);
 
-        $this->postJson('/api/v1/auth/login', ['email' => '+41 79 123 45 67', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['email' => '+41 79 123 45 67'])
             ->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
@@ -174,7 +170,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
             'phone_country_id' => Country::query()->where('code', 'CH')->value('id'), 'password' => 'secret-password',
         ]);
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms');
     }
@@ -213,13 +209,11 @@ class AuthChannelsTest extends AuthFilamentTestCase
 
     public function test_a_single_active_country_is_chosen_and_locked_everywhere(): void
     {
-        // Seul pays actif : la Suisse (créée dans setUp).
-        $phone = $this->fieldsOf($this->form('auth.register'))['phone'];
+        // Seul pays actif : la Suisse (créée dans setUp). L'inscription reprend le pays
+        // choisi à la connexion (champ caché).
+        $phone = $this->fieldsOf($this->form('auth.login'))['phone'];
         $this->assertTrue($phone['locked']);
         $this->assertSame(['country' => 'CH', 'number' => null], $phone['default']);
-
-        $login = $this->fieldsOf($this->form('auth.login'));
-        $this->assertTrue($login['phone']['locked']);
 
         $user = User::factory()->create(['country_id' => null]);
         $personal = $this->fieldsOf($this->withToken($user->createToken('t')->plainTextToken)->getJson('/api/v1/forms/auth.profile.personal')->json('data'));
@@ -229,7 +223,7 @@ class AuthChannelsTest extends AuthFilamentTestCase
 
         // Un second pays actif : plus rien n'est verrouillé.
         Country::factory()->create(['code' => 'FR', 'dial_code' => '+33']);
-        $this->assertFalse($this->fieldsOf($this->form('auth.register'))['phone']['locked']);
+        $this->assertFalse($this->fieldsOf($this->form('auth.login'))['phone']['locked']);
     }
 
     public function test_the_back_office_locks_a_single_active_country_and_saves_it(): void
@@ -243,13 +237,13 @@ class AuthChannelsTest extends AuthFilamentTestCase
         Livewire::test(CreateUser::class)
             ->assertFormFieldEnabled('country_id')
             ->assertSchemaStateSet(['country_id' => $switzerland, 'phone_country_id' => $switzerland])
-            ->fillForm(['name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Martin', 'gender' => 'male', 'email' => 'paul@example.com', 'password' => 'Secret-password-1', 'country_id' => $inactive->getKey()])
+            ->fillForm(['name' => 'paul', 'first_name' => 'Paul', 'last_name' => 'Martin', 'email' => 'paul@example.com', 'password' => 'Secret-password-1', 'country_id' => $inactive->getKey()])
             ->call('create')
             ->assertHasFormErrors(['country_id']);
 
         Livewire::test(CreateUser::class)
             ->assertSchemaStateSet(['country_id' => $switzerland, 'phone_country_id' => $switzerland])
-            ->fillForm(['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'gender' => 'female', 'email' => 'marie@example.com', 'phone' => '079 123 45 67', 'password' => 'Secret-password-1'])
+            ->fillForm(['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'email' => 'marie@example.com', 'phone' => '079 123 45 67', 'password' => 'Secret-password-1'])
             ->call('create')
             ->assertHasNoFormErrors();
 

@@ -136,14 +136,14 @@ class CountrySpaceTest extends TestCase
         $this->assertNotContains((string) $dakar->address->region_id, array_column($fields['region']['options'], 'value'));
         // Une région d'un autre pays est refusée dans cet espace.
         $this->in($user, 'CM')->postJson('/api/v1/auth/me/addresses', [
-            'gender' => 'female', 'first_name' => 'Awa', 'last_name' => 'Diop',
+            'first_name' => 'Awa', 'last_name' => 'Diop',
             'region' => (string) $dakar->address->region_id, 'street' => 'Rue 10', 'zip' => '1000', 'city' => 'Dakar',
         ])->assertUnprocessable()->assertJsonValidationErrors(['region']);
     }
 
     public function test_the_phone_country_defaults_to_the_current_country(): void
     {
-        $phone = collect($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'SN'])->getJson('/api/v1/forms/auth.register')->json('data.fields'))->firstWhere('name', 'phone');
+        $phone = collect($this->withHeaders(['Accept-Language' => 'fr', 'X-Country' => 'SN'])->getJson('/api/v1/forms/auth.login')->json('data.fields'))->firstWhere('name', 'phone');
 
         $this->assertSame('SN', $phone['default']['country']);
     }

@@ -3,7 +3,6 @@
 namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -53,11 +52,11 @@ class VerificationCodesApiTest extends TestCase
 
     // Connexion
 
-    public function test_a_right_password_alone_gives_no_access(): void
+    public function test_a_known_identifier_alone_gives_no_access(): void
     {
         $this->jeanne();
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
+        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])
             ->assertAccepted()
             ->assertJsonStructure(['challenge', 'channel', 'destination'])
             ->assertJsonPath('channel', 'email')
@@ -73,7 +72,7 @@ class VerificationCodesApiTest extends TestCase
     {
         $user = $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id, 'phone_verified_at' => now()]);
 
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
             ->assertAccepted()
             ->assertJsonPath('channel', 'sms')
             ->assertJsonPath('destination', '+41 ••• 67')
@@ -89,15 +88,47 @@ class VerificationCodesApiTest extends TestCase
         $this->assertSame(0, VerificationCode::count());
     }
 
-    public function test_an_unverified_or_national_phone_does_not_sign_in(): void
+    public function test_a_code_received_by_sms_marks_the_phone_as_verified(): void
     {
-        $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id]);
+        $user = $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id, 'phone_verified_at' => now()]);
 
-        // Numéro non vérifié : refusé comme un mauvais mot de passe, sur le champ saisi.
-        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH', 'password' => 'secret-password'])
-            ->assertUnprocessable()->assertJsonValidationErrors(['phone']);
-        // Numéro sans son pays : incomplet.
-        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'password' => 'secret-password'])
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
+            ->assertAccepted()->json('challenge');
+        // La vérification retirée pendant que le code attendait : le code SMS la rend.
+        $user->forceFill(['phone_verified_at' => null])->save();
+
+        $this->verify($challenge, $this->smsCode('+41791234567'), ['device_name' => 'Pixel'])->assertOk();
+
+        $this->assertNotNull($user->fresh()->phone_verified_at);
+    }
+
+    public function test_a_code_received_by_email_leaves_the_phone_unverified(): void
+    {
+        $user = $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id]);
+
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])->assertAccepted()->json('challenge');
+        $this->verify($challenge, $this->emailCode($user->email), ['device_name' => 'iPhone'])->assertOk();
+
+        $this->assertNull($user->fresh()->phone_verified_at);
+    }
+
+    public function test_an_unverified_phone_signs_in_by_sms_and_becomes_verified(): void
+    {
+        $user = $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id]);
+
+        // Numéro jamais vérifié (compte créé au back-office) : le code SMS le prouve.
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => ' 079 123 45 67', 'phone_country' => 'CH'])
+            ->assertAccepted()->json('challenge');
+        $this->verify($challenge, $this->smsCode('+41791234567'), ['device_name' => 'Pixel'])->assertOk();
+
+        $this->assertNotNull($user->fresh()->phone_verified_at);
+    }
+
+    public function test_a_national_phone_without_its_country_is_incomplete(): void
+    {
+        $this->jeanne(['phone' => '+41 79 123 45 67', 'phone_country_id' => $this->switzerland->id, 'phone_verified_at' => now()]);
+
+        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67'])
             ->assertUnprocessable()->assertJsonValidationErrors(['phone_country']);
         $this->assertSame([], $this->sms->messages);
     }
@@ -105,7 +136,7 @@ class VerificationCodesApiTest extends TestCase
     public function test_a_wrong_code_is_refused_and_five_wrong_codes_exhaust_it(): void
     {
         $this->jeanne();
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
         $code = $this->emailCode('jeanne@example.com');
 
         for ($i = 1; $i <= 4; $i++) {
@@ -122,7 +153,7 @@ class VerificationCodesApiTest extends TestCase
     public function test_an_expired_code_is_refused(): void
     {
         $this->jeanne();
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
         $code = $this->emailCode('jeanne@example.com');
 
         $this->travel(11)->minutes();
@@ -139,7 +170,7 @@ class VerificationCodesApiTest extends TestCase
 
         config(['auth.verification_codes.max_attempts' => 2, 'auth.verification_codes.minutes' => 1, 'auth.verification_codes.resend_seconds' => 5]);
         $this->jeanne();
-        $login = fn () => $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $login = fn () => $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
 
         $challenge = $login();
         $code = $this->emailCode('jeanne@example.com');
@@ -164,7 +195,7 @@ class VerificationCodesApiTest extends TestCase
     public function test_a_code_can_be_resent_after_a_minute_and_replaces_the_old_one(): void
     {
         $this->jeanne();
-        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])->json('challenge');
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])->json('challenge');
         $first = $this->emailCode('jeanne@example.com');
 
         $this->postJson('/api/v1/auth/codes/resend', ['challenge' => $challenge])
@@ -185,7 +216,7 @@ class VerificationCodesApiTest extends TestCase
     {
         $this->jeanne();
         $this->withHeader('Accept-Language', 'fr')
-            ->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com', 'password' => 'secret-password'])
+            ->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => 'jeanne@example.com'])
             ->assertAccepted();
 
         Mail::assertSent(VerificationCodeMail::class, fn (VerificationCodeMail $mail): bool => $mail->locale === 'fr');
@@ -199,10 +230,7 @@ class VerificationCodesApiTest extends TestCase
             'name' => 'marie',
             'first_name' => 'Marie',
             'last_name' => 'Curie',
-            'gender' => 'female',
             'email' => 'marie@example.com',
-            'password' => 'Secret-password-1',
-            'password_confirmation' => 'Secret-password-1',
             ...$overrides,
         ]);
     }
@@ -217,13 +245,24 @@ class VerificationCodesApiTest extends TestCase
         $user = User::query()->where('name', 'marie')->sole();
         $response->assertJsonPath('data.id', $user->id)->assertJsonPath('data.email', 'marie@example.com')->assertJsonStructure(['token']);
         $this->assertNotNull($user->email_verified_at);
-        $this->assertSame('female', $user->gender->value);
+        $this->assertNull($user->gender);
         $this->assertNull($user->description);
         $this->assertNull($user->birth_date);
         $this->assertNull($user->phone);
-        $this->assertTrue(Hash::check('Secret-password-1', $user->password));
+        // Sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
+        $this->assertNull($user->password);
         // Inscrit depuis l'app : membre, et rien d'autre (décision 2026-11-18-role-membre).
         $this->assertSame(['member'], $user->getRoleNames()->all());
+
+        // Le compte se connecte ensuite par code, sans mot de passe.
+        $this->travel(61)->seconds();
+        $login = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])
+            ->assertAccepted()->assertJsonPath('channel', 'email')->json('challenge');
+        $this->verify($login, $this->emailCode($user->email), ['device_name' => 'iPad'])
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonStructure(['token']);
+        $this->assertSame(['iPhone', 'iPad'], $user->tokens()->pluck('name')->all());
     }
 
     public function test_register_creates_the_account_in_the_language_chosen_in_the_app(): void
@@ -247,18 +286,22 @@ class VerificationCodesApiTest extends TestCase
             ->assertJsonPath('data.birth_date', '1990-04-12');
     }
 
-    public function test_register_saves_the_optional_description_and_limits_it(): void
+    public function test_register_ignores_the_former_description_gender_and_password(): void
     {
-        $this->register(['description' => str_repeat('a', 1001)])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('description');
-
-        $challenge = $this->register(['description' => 'Physicienne'])->assertAccepted()->json('challenge');
+        $challenge = $this->register([
+            'description' => str_repeat('a', 1001),
+            'gender' => 'nope',
+            'password' => 'court',
+            'password_confirmation' => 'autre',
+        ])->assertAccepted()->json('challenge');
         $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
             ->assertCreated()
-            ->assertJsonPath('data.description', 'Physicienne');
+            ->assertJsonPath('data.description', null)
+            ->assertJsonPath('data.gender', null);
 
-        $this->assertSame('Physicienne', User::query()->where('name', 'marie')->value('description'));
+        $user = User::query()->where('name', 'marie')->sole();
+        $this->assertNull($user->description);
+        $this->assertNull($user->password);
     }
 
     public function test_register_with_phone_only_sends_an_sms(): void
@@ -429,8 +472,9 @@ class VerificationCodesApiTest extends TestCase
     public function test_register_and_code_forms_are_public(): void
     {
         $this->getJson('/api/v1/forms/auth.register')->assertOk()
-            ->assertJsonPath('data.fields.7.name', 'phone')
-            ->assertJsonPath('data.fields.7.type', 'phone');
+            ->assertJsonPath('data.fields.5.name', 'phone')
+            ->assertJsonPath('data.fields.5.type', 'hidden')
+            ->assertJsonPath('data.fields.6.name', 'phone_country');
         $this->getJson('/api/v1/forms/auth.code')->assertOk()
             ->assertJsonPath('data.fields.0.type', 'code');
     }

@@ -48,7 +48,7 @@ class UserAddressApiTest extends TestCase
     private function input(Country $country, array $overrides = []): array
     {
         return [
-            'gender' => 'female', 'first_name' => 'Jeanne', 'last_name' => 'Dupont',
+            'first_name' => 'Jeanne', 'last_name' => 'Dupont',
             'region' => (string) $this->regionOf($country), 'street' => 'Rue du Lac 4', 'zip' => '1200', 'city' => 'Genève',
             ...$overrides,
         ];
@@ -240,9 +240,9 @@ class UserAddressApiTest extends TestCase
         // Latitude et longitude sont réservées au back-office ; la rue propose les adresses
         // connues, comme pour une offre (décision 2026-11-19-carnet-adresses-recherche).
         // La région avant la ville, à la place du pays (décisions 2026-11-25-adresse-sans-pays et 2026-11-25-region-avant-ville).
-        $this->assertSame(['gender', 'first_name', 'last_name', 'street', 'zip', 'region', 'city', 'indication'], array_keys($fields));
+        $this->assertSame(['first_name', 'last_name', 'street', 'zip', 'region', 'city', 'indication'], array_keys($fields));
         $this->assertSame(['textarea', false, null], [$fields['indication']['type'], $fields['indication']['required'], $fields['indication']['default']]);
-        $this->assertSame(['male', 'Paul', 'Martin', null], [$fields['gender']['default'], $fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
+        $this->assertSame(['Paul', 'Martin', null], [$fields['first_name']['default'], $fields['last_name']['default'], $fields['street']['default']]);
         $this->assertSame('/v1/addresses/suggestions', $fields['street']['suggestions']);
     }
 
@@ -261,7 +261,8 @@ class UserAddressApiTest extends TestCase
             ->json('data.fields');
 
         $defaults = array_column($definition, 'default', 'name');
-        $this->assertSame(['female', 'Léa', 'Roux'], [$defaults['gender'], $defaults['first_name'], $defaults['last_name']]);
+        $this->assertSame(['Léa', 'Roux'], [$defaults['first_name'], $defaults['last_name']]);
+        $this->assertArrayNotHasKey('gender', $defaults);
         $this->assertSame((string) $address->region_id, $defaults['region']);
         $this->assertSame('Rue du Lac 4', $defaults['street']);
         $this->assertArrayNotHasKey('latitude', $defaults);
@@ -339,7 +340,8 @@ class UserAddressApiTest extends TestCase
         $this->asUser(User::factory()->create())
             ->postJson('/api/v1/auth/me/addresses', ['region' => '999', 'street' => '', 'zip' => '1200', 'city' => 'Genève', 'gender' => 'other'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['gender', 'first_name', 'last_name', 'region', 'street']);
+            ->assertJsonValidationErrors(['first_name', 'last_name', 'region', 'street'])
+            ->assertJsonMissingValidationErrors(['gender']);
     }
 
     public function test_changing_an_address_leaves_the_shared_one_intact(): void
