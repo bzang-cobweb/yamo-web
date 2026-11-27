@@ -1,6 +1,6 @@
 # Nuit du 2026-11-27 — Yamo
 Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
-État : interrompue (en cours)
+État : terminée avec réserves
 
 ## Ce qui attend votre attention
 - **Visibilité du profil** : choix en boutons radio (et non interrupteurs : un seul choix possible) ; « contacts » =
@@ -39,9 +39,16 @@ Branche : nuit/2026-11-27 (web depuis main@336f312, mobile depuis main@5888a1b)
   par la page publique d'un membre), lieu sous les avis, « Mes données » (JSON par e-mail), suppression avec raison et
   code, puis déconnexion. Web `1097118`, `fc97d96`, `4782e7f` ; mobile `d0474c8`, `778d90a`, `c817da5`. Preuves : web
   993 tests verts ; mobile tsc propre, 74 suites / 470 tests verts.
+- **Plusieurs numéros** (sous-agent, `B-numeros.md`) : « Mes numéros » (principal en tête, numéros ajoutés par code
+  SMS, retrait, « Rendre principal »), onglet au back-office. Web `382450a`.
+- **Vérification indépendante** : qa-check **GO** (`qa-check.md`), 0 écart bloquant ; non couvert : le rendu dans
+  l'app, l'envoi réel des SMS et e-mails, Android.
+- **Preuves finales** : web 1008 tests verts ; mobile tsc propre, 74 suites / 470 tests verts.
 
 ## Reste à faire
-- Demande `specs/todo/2026-11-27-yamo-visiteur-profil-favoris.md` (copie de `~/Downloads/yamo.rtf`).
+- Voir tous les écrans dans l'app (rien n'a été vu dans le simulateur).
+- Les suspens du contrat (`specs/2026-11-27-visiteur-profil-favoris.md`, « Ce qui reste en suspens »).
+- Rien n'est poussé ni mergé : les deux branches `nuit/2026-11-27` attendent votre relecture.
 
 ## Décidé seul
 - La demande vient d'un fichier RTF hors du dépôt : copiée telle quelle en texte dans `specs/todo/` pour en garder la trace.

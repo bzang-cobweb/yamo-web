@@ -49,3 +49,46 @@ Ordre : A (il change l'entrée dans l'app), puis B dans l'ordre B12, B6, B2–B5
 - Un membre range une offre dans une liste choisie ou créée à la volée ; renomme et supprime une liste ; voit ses
   offres récemment consultées à l'accueil et dans leur liste, et en retire.
 - Web : tests verts, Pint propre ; mobile : tsc sans erreur, Jest vert (« Test Suites: » compris).
+
+## Ce que j'ai décidé seul
+- **Connexion** : l'identifiant inconnu reçoit 200 `next: register` et l'app renvoie l'identifiant avec l'inscription
+  (pas d'état côté serveur) ; WhatsApp n'existe pas → le code part par SMS (escalade, défaut appliqué) ; un compte
+  inactif ne se connecte plus par SMS (numéro recyclé) ; un numéro jamais vérifié se connecte par SMS et devient
+  vérifié ; une connexion par code e-mail vérifie l'adresse.
+- **Inscription et profil** : mot de passe facultatif en base, créé depuis le profil ; écrans « Créer un compte » et
+  « Mot de passe oublié » retirés de l'app (routes d'API gardées) ; genre retiré des formulaires, colonnes gardées.
+- **Menu** : icônes SF Symbols / Material servies ; le téléphone reste dans « Informations personnelles » ; « Supprimer
+  mon compte » dans « Confidentialité ».
+- **Confidentialité** : visibilité en boutons radio (choix unique), « contacts » = demande ou messages en commun, profil
+  caché → 404 ; lieu sous les avis désactivé par défaut ; « Mes données » envoie un JSON des données du compte par
+  e-mail ; suppression : raison gardée pour l'équipe, code à l'e-mail vérifié, sinon au téléphone.
+- **Notifications** : seule « Activité du compte » est appliquée (e-mail, SMS) ; le reste est enregistré.
+- **Numéros** : le principal reste `users.phone` ; les autres dans `user_phones`, vérifiés à l'ajout ; « Rendre
+  principal » sans nouveau code.
+- **Favoris** : listes `wishlists` / `wishlist_items`, favoris d'avant copiés dans « Favoris » ; ⋮ à droite (la gauche
+  porte le retour) ; « Récemment consultés » : 50 offres, 10 à l'accueil, croix sans confirmation.
+- Détail : décisions `2026-11-27-*` du registre et rapports `.ia/runs/nuit-2026-11-27/`.
+
+## Ce qui a été fait
+- Lot A : web `a1c30a9` ; mobile (connexion, invitation, menu côté app).
+- Lot B : menu `5c13a99` ; formulaires `653a97b`, `15d8185`, `6c15f5c`, `93c699c` ; masquage, vérification,
+  confidentialité `1097118`, `fc97d96`, `4782e7f` (mobile `d0474c8`, `778d90a`, `c817da5`) ; numéros `382450a`.
+- Lot C : web `1b859a3`, `65a98ab` ; mobile `e12e372`, `e218784`.
+- Preuves : web 1008 tests verts, Pint propre, migrations jouées ; mobile tsc propre, 74 suites / 470 tests verts ;
+  qa-check GO (`.ia/runs/nuit-2026-11-27/qa-check.md`).
+
+## Ce que je n'ai pas vérifié
+- Le rendu dans l'app (aucun écran vu dans le simulateur), Android, un appareil réel.
+- L'envoi réel des SMS et des e-mails (codes, « Mes données »).
+- Le retour arrière des migrations sur la base locale (vérifié à blanc seulement).
+- Le contrat OpenAPI n'est pas régénéré.
+
+## Ce qui reste en suspens
+- WhatsApp : choisir un fournisseur et ses identifiants.
+- Supprimer la table `offer_favorites` (plus lue).
+- Appliquer « Rappels », « Offres », « Nouveautés » et le push quand ces envois existeront.
+- Étendre la visibilité du profil au nom affiché ailleurs (avis, notifications, partenaires), si voulu.
+- Contact d'urgence : la liste des langues refuse l'allemand (`config('form.locales')`).
+- Après « Rendre principal », relire `/me` pour que le profil affiche le nouveau numéro.
+- Fusionner `MenuShell` (copie dans `ProfileListScreen`) avec `ProfileScreenShell`.
+- `UserResource` sert encore `gender` (inutilisé par l'app).
