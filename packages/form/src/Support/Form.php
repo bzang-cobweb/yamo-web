@@ -2,9 +2,9 @@
 
 namespace Bza\Form\Support;
 
+use Bza\Form\Enums\FieldType;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Arr;
-use Bza\Form\Enums\FieldType;
 
 /**
  * A form described by the server: the mobile app displays its fields, and the
@@ -116,6 +116,16 @@ abstract class Form
     public function notice(): ?string
     {
         return null;
+    }
+
+    /**
+     * Links shown under the form, each opening another form (decision 2026-11-27-formulaire-liens); none by default.
+     *
+     * @return list<FormLink>
+     */
+    public function links(): array
+    {
+        return [];
     }
 
     /**

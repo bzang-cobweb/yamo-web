@@ -2,11 +2,12 @@
 
 namespace Bza\Form\Http\Resources;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormLink;
 use Bza\Form\Support\Step;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Definition of a form, as the mobile app displays it.
@@ -16,7 +17,7 @@ use Bza\Form\Support\Step;
 class FormResource extends JsonResource
 {
     /**
-     * @return array{name: string, title: string|null, subtitle: string|null, title_align: 'start'|'center', fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, upload: array{accept: list<string>, max_size_kb: int, max_files: int, endpoint: string, files: list<array{id: string, url: string}>}|null, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
+     * @return array{name: string, title: string|null, subtitle: string|null, title_align: 'start'|'center', fields: list<array{name: string, type: string, label: string|null, placeholder: string|null, help: string|null, required: bool, default: mixed, upload: array{accept: list<string>, max_size_kb: int, max_files: int, endpoint: string, files: list<array{id: string, url: string}>}|null, options: list<array{value: string, label: string}>}>, steps: list<array{title: string|null, fields: list<string>}>, links: list<array{label: string, form: string}>, submit: array{label: string, method?: string, endpoint?: string, destructive?: bool, success?: array{action: 'profile'|'sign-out'|'back', message: string}}}
      */
     public function toArray(Request $request): array
     {
@@ -36,6 +37,8 @@ class FormResource extends JsonResource
             'fields' => array_map(fn (Field $field): array => $this->field($field), $this->resource->fields()),
             /** Steps (title, field names); empty for a single-part form. */
             'steps' => array_map(fn (Step $step): array => $step->toArray(), $this->resource->steps()),
+            /** Links under the form, each opening another form (`label`, `form`); empty: none. */
+            'links' => array_map(fn (FormLink $link): array => $link->toArray(), $this->resource->links()),
             /** Button label; for a form the app sends without knowing it, also `method`, `endpoint` (relative to the API), `destructive` and `success`. */
             'submit' => ['label' => $this->resource->submitLabel(), ...($this->resource->submission()?->toArray() ?? [])],
         ];

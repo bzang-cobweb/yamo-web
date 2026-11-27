@@ -5,6 +5,7 @@ namespace Bza\Form\Tests\Fixtures;
 use Bza\Form\Enums\SuccessAction;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
+use Bza\Form\Support\FormLink;
 use Bza\Form\Support\Step;
 use Bza\Form\Support\Submission;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -24,6 +25,11 @@ class ContactForm extends Form
     public function title(): ?string
     {
         return 'Contact us';
+    }
+
+    public function links(): array
+    {
+        return [FormLink::make('Our private form', 'test.private')];
     }
 
     public function submitLabel(): string

@@ -120,7 +120,8 @@ public function boot(FormRegistry $forms): void
 
 Other hooks of `Form`, all optional: `subtitle()`, `description()`, `notice()`, `navigationTitle()`,
 `titleAlign()`, `forRecord()` (bind the form to a record to edit it), `isAvailable()` (an unavailable form answers
-404) and `canBeViewedBy()` (by default, a signed-in account only; return `true` for a public form).
+404), `canBeViewedBy()` (by default, a signed-in account only; return `true` for a public form) and `links()`
+(a list of `FormLink::make($label, $form)`, links shown under the form, each opening another form).
 
 ### Validating the submission
 

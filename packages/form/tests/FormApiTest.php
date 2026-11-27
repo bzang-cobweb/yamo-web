@@ -26,6 +26,7 @@ class FormApiTest extends TestCase
             ->assertJsonPath('data.fields.3.upload.max_files', 2)
             ->assertJsonPath('data.fields.3.upload.endpoint', '/v1/forms/test.contact/uploads/photos')
             ->assertJsonPath('data.steps.1', ['title' => 'Your request', 'subtitle' => 'Tell us more', 'fields' => ['topic', 'photos']])
+            ->assertJsonPath('data.links', [['label' => 'Our private form', 'form' => 'test.private']])
             ->assertJsonPath('data.submit', [
                 'label' => 'Send',
                 'method' => 'GET',
