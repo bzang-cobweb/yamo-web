@@ -27,8 +27,24 @@ return [
         'registerIntro' => 'Noch kein Konto mit dieser Kennung: Erstellen Sie es mit wenigen Angaben.',
         'guest' => [
             'notifications' => 'Melden Sie sich an, um Ihre Anfragen, Buchungen und Nachrichten zu verfolgen.',
-            'profile' => 'Melden Sie sich an, um Ihr Profil, Ihre Favoriten und Ihre Unterkünfte zu verwalten.',
+            'notificationsSubtitle' => 'Ihre Anfragen und Nachrichten erscheinen hier.',
+            'profile' => 'Melden Sie sich an, um Ihre Buchungen und Ihre Unterkünfte zu verwalten.',
+            'profileSubtitle' => 'Melden Sie sich an oder erstellen Sie Ihr Konto.',
         ],
+        // Le panneau « Se connecter ou s'inscrire » (décision 2026-11-28-connexion-panneau).
+        'welcomeBack' => 'Willkommen zurück, :name',
+        'welcomeNote' => [
+            'email' => 'Wir senden Ihnen einen Code per E-Mail, um Sie anzumelden.',
+            'sms' => 'Wir senden Ihnen einen Code per SMS, um Sie anzumelden.',
+        ],
+        'notYou' => 'Nicht Sie?',
+        'codeSentTo' => 'Wir haben einen Code an :destination gesendet.',
+        'didntGetIt' => 'Nicht erhalten?',
+        'sendNewCode' => 'Neuen Code senden',
+        'tryAnotherWay' => 'Anders versuchen',
+        'codeBySms' => 'Code per SMS erhalten',
+        'codeByEmail' => 'Code per E-Mail erhalten',
+        'forgotPassword' => 'Passwort vergessen?',
     ],
     'profile' => [
         'personalInfo' => 'Persönliche Angaben',

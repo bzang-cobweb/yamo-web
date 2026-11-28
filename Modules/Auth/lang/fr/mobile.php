@@ -27,8 +27,24 @@ return [
         'registerIntro' => 'Pas encore de compte avec cet identifiant : créez-le en quelques mots.',
         'guest' => [
             'notifications' => 'Connectez-vous pour suivre vos demandes, vos réservations et vos messages.',
-            'profile' => 'Connectez-vous pour gérer votre profil, vos favoris et vos logements.',
+            'notificationsSubtitle' => 'Vos demandes et vos messages arrivent ici.',
+            'profile' => 'Connectez-vous pour gérer vos réservations et vos logements.',
+            'profileSubtitle' => 'Connectez-vous ou créez votre compte.',
         ],
+        // Le panneau « Se connecter ou s'inscrire » (décision 2026-11-28-connexion-panneau).
+        'welcomeBack' => 'Bon retour, :name',
+        'welcomeNote' => [
+            'email' => 'Nous allons vous envoyer un code par e-mail pour vous connecter.',
+            'sms' => 'Nous allons vous envoyer un code par SMS pour vous connecter.',
+        ],
+        'notYou' => 'Ce n\'est pas vous ?',
+        'codeSentTo' => 'Nous avons envoyé un code à :destination.',
+        'didntGetIt' => 'Vous ne l\'avez pas reçu ?',
+        'sendNewCode' => 'Envoyer un nouveau code',
+        'tryAnotherWay' => 'Essayer autrement',
+        'codeBySms' => 'Recevoir un code par SMS',
+        'codeByEmail' => 'Recevoir un code par e-mail',
+        'forgotPassword' => 'Mot de passe oublié ?',
     ],
     'profile' => [
         'personalInfo' => 'Informations personnelles',

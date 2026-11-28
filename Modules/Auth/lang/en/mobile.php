@@ -27,8 +27,24 @@ return [
         'registerIntro' => 'No account with this identifier yet: create one in a few words.',
         'guest' => [
             'notifications' => 'Sign in to follow your requests, bookings and messages.',
-            'profile' => 'Sign in to manage your profile, favourites and listings.',
+            'notificationsSubtitle' => 'Your requests and messages arrive here.',
+            'profile' => 'Sign in to manage your bookings and your listings.',
+            'profileSubtitle' => 'Sign in or create your account.',
         ],
+        // Le panneau « Se connecter ou s'inscrire » (décision 2026-11-28-connexion-panneau).
+        'welcomeBack' => 'Welcome back, :name',
+        'welcomeNote' => [
+            'email' => 'We will email you a code to sign you in.',
+            'sms' => 'We will text you a code to sign you in.',
+        ],
+        'notYou' => 'Not you?',
+        'codeSentTo' => 'We sent a code to :destination.',
+        'didntGetIt' => 'Didn\'t get it?',
+        'sendNewCode' => 'Send a new code',
+        'tryAnotherWay' => 'Try another way',
+        'codeBySms' => 'Get a code by text message',
+        'codeByEmail' => 'Get a code by email',
+        'forgotPassword' => 'Forgot your password?',
     ],
     'profile' => [
         'personalInfo' => 'Personal information',
