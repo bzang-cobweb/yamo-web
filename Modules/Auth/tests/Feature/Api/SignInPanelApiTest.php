@@ -181,8 +181,8 @@ class SignInPanelApiTest extends TestCase
         // Le défi tient encore : le bon mot de passe passe.
         $this->assertSame(1, VerificationCode::query()->ofChallenge($challenge)->count());
 
-        $this->passwordStep($challenge, ['password' => 'pas-le-bon'])->assertUnprocessable()->assertJsonValidationErrors('password');
-        // Cinquième essai faux : clos, même le bon mot de passe ne sert plus.
+        $this->passwordStep($challenge, ['password' => 'pas-le-bon'])->assertUnprocessable()->assertJsonValidationErrors('code');
+        // Cinquième essai faux : clos (erreur sur `code`, l'app recommence), même le bon mot de passe ne sert plus.
         $this->assertSame(0, VerificationCode::count());
         $this->travel(61)->seconds(); // Hors de la limite de fréquence de la route.
         $this->passwordStep($challenge, ['password' => self::PASSWORD])->assertUnprocessable()->assertJsonValidationErrors('code');

@@ -89,7 +89,8 @@ final class SessionService
         if ($verified->attempts >= $this->codeService->maxAttempts()) {
             $this->codeService->close($verified->challenge);
 
-            throw ValidationException::withMessages(['password' => __('auth::form.session.too_many')]);
+            // Sur `code`, comme un défi qui n'est plus valable : l'app revient au début du parcours.
+            throw ValidationException::withMessages(['code' => __('auth::form.session.too_many')]);
         }
 
         throw ValidationException::withMessages(['password' => __('auth::form.session.wrong_password')]);
