@@ -38,7 +38,9 @@ final class PhoneNumbers
     }
 
     /**
-     * Pays actifs proposés par un champ téléphone : code ISO => libellé et indicatif.
+     * Pays proposés par un champ téléphone : tous, pas seulement les actifs (décision
+     * 2026-11-28-connexion-panneau) ; code ISO => libellé et indicatif. Les pays actifs ne servent qu'au choix du
+     * pays courant.
      *
      * @return array<string, array{label: string, hint: string}>
      */
@@ -46,7 +48,7 @@ final class PhoneNumbers
     {
         $collator = new \Collator(App::getLocale());
 
-        return Country::query()->active()->get()
+        return Country::query()->get()
             ->sort(fn (Country $a, Country $b): int => (int) $collator->compare($a->label(), $b->label()))
             ->mapWithKeys(fn (Country $country): array => [$country->code => ['label' => $country->label(), 'hint' => $country->dial_code]])
             ->all();
@@ -74,10 +76,10 @@ final class PhoneNumbers
     }
 
     /**
-     * Pays actif d'après son code ISO, ou `null`.
+     * Pays d'un indicatif d'après son code ISO, actif ou non (tous sont proposés aux champs téléphone), ou `null`.
      */
     public static function country(?string $code): ?Country
     {
-        return $code === null ? null : Country::query()->active()->where('code', strtoupper($code))->first();
+        return $code === null ? null : Country::query()->where('code', strtoupper($code))->first();
     }
 }
