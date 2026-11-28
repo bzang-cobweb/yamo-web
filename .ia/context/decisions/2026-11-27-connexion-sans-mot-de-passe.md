@@ -1,3 +1,4 @@
+Remplacée en partie par : 2026-11-28-numero-non-verifie.md (point « numéro jamais vérifié » : il ne se connecte plus par SMS)
 Remplacée en partie par : 2026-11-28-connexion-panneau.md, 2026-11-28-app-connexion-panneau.md
 
 # `2026-11-27` — Connexion sans mot de passe, l'inscription à la suite

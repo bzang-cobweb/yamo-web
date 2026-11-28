@@ -131,11 +131,12 @@ class SignInPanelApiTest extends TestCase
         $byPhone = User::factory()->create(['email' => 'tel@example.com', 'phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id, 'phone_verified_at' => null, 'email_verified_at' => null]);
 
         $this->verifiedChallenge(['email' => 'ada@example.com'], 'sign-in');
-        $this->verifiedChallenge(['phone' => '+41791234567', 'phone_country' => 'CH'], 'sign-in');
+        $this->verifiedChallenge(['phone' => '+41791234567', 'phone_country' => 'CH'], 'register');
 
         $this->assertNotNull($byEmail->fresh()->email_verified_at);
-        $this->assertNotNull($byPhone->fresh()->phone_verified_at);
-        // Seul l'identifiant prouvé.
+        // Un numéro jamais vérifié ne trouve pas son compte : le code mène à l'inscription et ne prouve rien pour ce compte
+        // (décision 2026-11-28-numero-non-verifie).
+        $this->assertNull($byPhone->fresh()->phone_verified_at);
         $this->assertNull($byPhone->fresh()->email_verified_at);
     }
 

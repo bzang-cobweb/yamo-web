@@ -42,7 +42,7 @@ final class PhoneChangeService
 
         Challenges::persist('phone', function () use ($user, $verified): void {
             Challenges::ensureFree('phone', $verified->destination, $user->getKey());
-            // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
+            // Numéro prouvé par SMS : retiré du compte qui le portait sans l'avoir vérifié, ou du compte inactif.
             PhoneOwnership::release($verified->destination, $user->getKey());
             // Un de ses numéros supplémentaires devenu le principal n'y figure plus (décision 2026-11-27-plusieurs-numeros).
             $user->phones()->where('phone', $verified->destination)->delete();

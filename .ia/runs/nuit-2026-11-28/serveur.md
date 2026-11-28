@@ -106,3 +106,28 @@ Docblocks `@response` mis à jour (`LoginController`, `VerificationController`, 
   SMS (règle du 2026-11-27 gardée) ; son vrai titulaire peut entrer dans ce compte par « Mot de passe oublié ? » et ne
   peut pas s'inscrire avec ce numéro. À trancher.
 - `openapi.json` non à jour.
+
+## Suite : numéro non vérifié (risque noté ci-dessus, tranché)
+
+Décision `.ia/context/decisions/2026-11-28-numero-non-verifie.md` (remplace en partie 2026-11-27-connexion-sans-mot-de-passe).
+
+- **Fait** : la connexion par SMS ne trouve que les numéros principaux vérifiés (branche « numéro jamais vérifié »
+  retirée de `LoginService::start`) ; un numéro non vérifié mène au défi `REGISTER`. `PhoneOwnership::isTaken` et
+  `isTakenAsExtra` ignorent les numéros non vérifiés ; `release` les retire (principal : `phone`, `phone_country_id` à
+  null ; supplémentaires supprimés) quand le numéro est prouvé par code — inscription par SMS, changement de numéro,
+  ajout d'un numéro, et désormais vérification du numéro actuel — sans e-mail (réservé au compte inactif).
+- **Décidé seul** : l'autre contact de l'inscription (saisi sans preuve) reste refusé dès qu'un autre compte porte le
+  numéro, vérifié ou non (`UniquePhone(proven: false)`, `PhoneOwnership::isHeld`) — sinon l'index unique de
+  `users.phone` butait ; un compte en attente de suppression ne retient pas un numéro jamais vérifié ; le marquage
+  `phone_verified_at` par SMS dans `LoginService::verified` reste pour le seul cas d'une vérification retirée pendant
+  que le code attendait.
+- **Tests** : `UnverifiedPhoneTest` (7) : SMS d'un numéro non vérifié → `REGISTER` ; inscription par SMS d'un numéro
+  porté sans vérification → acceptée, numéro retiré de l'autre compte, pas d'e-mail ; numéro vérifié d'un compte actif
+  → toujours refusé (connexion `LOGIN`, changement de numéro, autre contact) ; autre contact sur un numéro non vérifié
+  → refusé ; changement et ajout de numéro → retiré de l'autre compte ; le porteur vérifie encore son numéro, et le
+  numéro supplémentaire non vérifié d'un tiers disparaît. Mis à jour : `SignInPanelApiTest` (le numéro non vérifié
+  mène à `register`), `VerificationCodesApiTest` (idem ; le numéro « pris » du refus est vérifié).
+- **Preuves** : `ddev exec php artisan test --compact Modules/Auth` → 325 passés ; suite complète
+  `ddev exec php artisan test --compact` → 1028 passés, nouveaux tests compris ;
+  `ddev exec vendor/bin/pint --dirty` → 1 correction (import inutile de `LoginService`).
+- **Non vérifié** : pas d'essai depuis l'app ; aucun changement de contrat pour elle (`mode: 'register'` existait déjà).

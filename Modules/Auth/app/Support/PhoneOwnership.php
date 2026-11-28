@@ -20,6 +20,9 @@ use Modules\Auth\Models\UserPhone;
  * - un compte en attente de suppression garde son numéro jusqu'à la purge.
  * Les numéros supplémentaires (`user_phones`, décision 2026-11-27-plusieurs-numeros) suivent la même règle quand on
  * en ajoute un : tenu ailleurs, il est refusé ; tenu par un compte inactif, il lui est retiré une fois prouvé.
+ * Seul un numéro prouvé par code tient (décision 2026-11-28-numero-non-verifie) : un numéro saisi sans être vérifié
+ * (autre contact d'une inscription, back-office) ne retient rien, comme celui d'un compte inactif, et il est retiré
+ * du compte qui le portait dès qu'un autre le prouve, sans e-mail.
  */
 final class PhoneOwnership
 {
@@ -36,42 +39,61 @@ final class PhoneOwnership
 
     /**
      * Le numéro (E.164) est-il tenu par un autre compte ? Un compte actif, ou en
-     * attente de suppression, le tient ; un compte inactif le cède.
+     * attente de suppression, le tient s'il l'a vérifié ; un compte inactif, ou
+     * qui ne l'a jamais vérifié, le cède à qui le prouve.
      */
     public static function isTaken(string $phone, ?int $ignoreUserId = null): bool
     {
         $holder = self::holder($phone, $ignoreUserId);
 
-        return $holder !== null && ($holder->trashed() || ! self::isInactive($holder));
+        return $holder !== null && $holder->phone_verified_at !== null && ($holder->trashed() || ! self::isInactive($holder));
     }
 
     /**
-     * Le numéro vient d'être prouvé par un code SMS : il est retiré du compte
-     * inactif qui le portait encore.
+     * Le numéro est-il porté par un autre compte, vérifié ou non, ou tenu comme numéro supplémentaire ? Pour un numéro
+     * saisi sans preuve (l'autre contact d'une inscription) : il ne peut retirer le numéro à personne, et l'index
+     * unique de `users.phone` le refuserait.
+     */
+    public static function isHeld(string $phone, ?int $ignoreUserId = null): bool
+    {
+        return self::holder($phone, $ignoreUserId) !== null || self::isTakenAsExtra($phone, $ignoreUserId);
+    }
+
+    /**
+     * Le numéro vient d'être prouvé par un code SMS : il est retiré du compte qui le
+     * portait encore sans l'avoir vérifié, ou du compte inactif (celui-ci prévenu
+     * par e-mail).
      */
     public static function release(string $phone, ?int $ignoreUserId = null): void
     {
         $holder = self::holder($phone, $ignoreUserId);
 
-        if ($holder !== null && ! $holder->trashed() && self::isInactive($holder)) {
+        if ($holder !== null && $holder->phone_verified_at === null) {
+            $holder->forceFill(['phone' => null, 'phone_country_id' => null])->saveQuietly();
+        } elseif ($holder !== null && ! $holder->trashed() && self::isInactive($holder)) {
             $holder->forceFill(['phone' => null, 'phone_country_id' => null, 'phone_verified_at' => null])->saveQuietly();
             self::notify($holder, $phone);
         }
 
-        // Numéro supplémentaire d'un compte inactif : retiré de même, sans e-mail (ce n'est pas son numéro de connexion).
+        // Numéro supplémentaire non vérifié, ou d'un compte inactif : retiré de même, sans e-mail (ce n'est pas son
+        // numéro de connexion).
         self::extras($phone, $ignoreUserId)
-            ->filter(fn (UserPhone $extra): bool => ! $extra->user->trashed() && self::isInactive($extra->user))
+            ->reject(fn (UserPhone $extra): bool => self::holds($extra))
             ->each(fn (UserPhone $extra) => $extra->delete());
     }
 
     /**
-     * Le numéro (E.164) est-il un numéro supplémentaire d'un autre compte, actif ou en attente de suppression ? Un compte
-     * inactif le cède, comme son numéro principal.
+     * Le numéro (E.164) est-il un numéro supplémentaire vérifié d'un autre compte, actif ou en attente de suppression ?
+     * Un compte inactif le cède, comme son numéro principal ; un numéro supplémentaire non vérifié ne tient rien.
      */
     public static function isTakenAsExtra(string $phone, ?int $ignoreUserId = null): bool
     {
-        return self::extras($phone, $ignoreUserId)
-            ->contains(fn (UserPhone $extra): bool => $extra->user->trashed() || ! self::isInactive($extra->user));
+        return self::extras($phone, $ignoreUserId)->contains(fn (UserPhone $extra): bool => self::holds($extra));
+    }
+
+    private static function holds(UserPhone $extra): bool
+    {
+        return $extra->verified_at !== null && ($extra->user->trashed() || ! self::isInactive($extra->user));
     }
 
     /**

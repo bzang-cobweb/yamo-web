@@ -7,6 +7,7 @@ use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
+use Modules\Auth\Support\PhoneOwnership;
 
 /**
  * Vérifier l'e-mail ou le numéro actuel du compte (décision 2026-11-27-verifier-email-telephone) : un code part à
@@ -42,7 +43,8 @@ final class ContactVerificationService
     }
 
     /**
-     * Le code validé : la valeur est vérifiée, si elle n'a pas changé entre-temps.
+     * Le code validé : la valeur est vérifiée, si elle n'a pas changé entre-temps. Un numéro prouvé est retiré des autres
+     * comptes qui le portaient sans l'avoir vérifié (décision 2026-11-28-numero-non-verifie).
      *
      * @throws ValidationException l'adresse (ou le numéro) a changé depuis l'envoi (erreur sur `code`)
      */
@@ -59,8 +61,16 @@ final class ContactVerificationService
             throw ValidationException::withMessages(['code' => __('auth::verification.errors.unknown')]);
         }
 
-        $user->forceFill([$stamp => now()])->save();
-        $this->codeService->close($verified->challenge);
+        Challenges::persist($column, function () use ($user, $verified, $stamp): void {
+            // Le numéro prouvé est retiré des comptes qui le portaient sans l'avoir vérifié (numéros supplémentaires)
+            // ou des comptes inactifs (décision 2026-11-28-numero-non-verifie).
+            if ($verified->purpose === VerificationPurpose::VERIFY_PHONE) {
+                PhoneOwnership::release($verified->destination, $user->getKey());
+            }
+
+            $user->forceFill([$stamp => now()])->save();
+            $this->codeService->close($verified->challenge);
+        });
 
         return $user;
     }

@@ -65,7 +65,8 @@ class RegisterForm extends Form
         if ($this->channel === 'email' && AuthChannels::phone()) {
             return [
                 Field::phone('phone')->label(__('auth::user.phone'))->options(PhoneNumbers::countryOptions())
-                    ->rules([new UniquePhone])
+                    // Saisi sans preuve : refusé dès qu'un autre compte le porte (décision 2026-11-28-numero-non-verifie).
+                    ->rules([new UniquePhone(proven: false)])
                     // Le pays courant d'office (décision 2026-11-18-espace-pays) ; l'app peut reprendre le dernier indicatif.
                     ->default(['country' => CurrentCountry::get()?->code, 'number' => null]),
             ];

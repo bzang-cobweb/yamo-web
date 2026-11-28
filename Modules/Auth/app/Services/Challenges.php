@@ -76,21 +76,25 @@ final class Challenges
      * Entre l'envoi et la validation du code, un autre compte a pu prendre la valeur :
      * on refuse proprement plutôt que de buter sur l'index unique. Un compte
      * supprimé, en attente de purge, garde ses valeurs : il compte aussi. Un numéro
-     * tenu par un compte inactif est libre (`PhoneOwnership`).
+     * prouvé par code (`$proven`) est libre s'il n'est tenu que par un compte inactif
+     * ou qui ne l'a pas vérifié (`PhoneOwnership::isTaken`) ; un numéro enregistré
+     * sans preuve ne l'est que si personne ne le porte (`isHeld`).
      *
      * @throws ValidationException valeur déjà prise (erreur sur `code`)
      */
-    public static function ensureFree(string $column, ?string $value, ?int $ignoreUserId = null): void
+    public static function ensureFree(string $column, ?string $value, ?int $ignoreUserId = null, bool $proven = true): void
     {
         if ($value === null) {
             return;
         }
 
-        $taken = $column === 'phone'
-            ? PhoneOwnership::isTaken($value, $ignoreUserId)
-            : User::withTrashed()->where($column, $value)
+        $taken = match (true) {
+            $column === 'phone' && $proven => PhoneOwnership::isTaken($value, $ignoreUserId),
+            $column === 'phone' => PhoneOwnership::isHeld($value, $ignoreUserId),
+            default => User::withTrashed()->where($column, $value)
                 ->when($ignoreUserId !== null, fn ($query) => $query->whereKeyNot($ignoreUserId))
-                ->exists();
+                ->exists(),
+        };
 
         if ($taken) {
             throw ValidationException::withMessages(['code' => __('validation.unique', ['attribute' => __('auth::user.'.$column)])]);

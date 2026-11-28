@@ -6,7 +6,6 @@ use Bza\Form\Support\DisplayTime;
 use Illuminate\Validation\ValidationException;
 use Modules\Auth\Enums\VerificationChannel;
 use Modules\Auth\Enums\VerificationPurpose;
-use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\Identifiers;
 use Modules\Auth\Support\PhoneNumbers;
@@ -25,7 +24,8 @@ final class LoginService
     /**
      * Le code part toujours, compte connu ou non, et la réponse a la même forme : l'existence du compte n'est
      * révélée qu'après le code. Compte connu : défi `LOGIN` ; inconnu : défi `REGISTER`, sans compte, l'identifiant
-     * dans son `payload`.
+     * dans son `payload`. Par SMS, seul un numéro principal vérifié trouve son compte (`Identifiers`) : un numéro saisi
+     * sans être vérifié mène à l'inscription, qui le retire de ce compte (décision 2026-11-28-numero-non-verifie).
      *
      * @param  array{channel?: string|null, email?: string|null, phone?: string|null, phone_country?: string|null}  $data
      * @return array{challenge: string, channel: string, destination: string}
@@ -39,13 +39,6 @@ final class LoginService
         // inscription libère le numéro.
         if ($user !== null && $channel === VerificationChannel::SMS && PhoneOwnership::isInactive($user)) {
             $user = null;
-        }
-
-        // Un numéro saisi mais jamais vérifié (compte créé au back-office) : le code SMS le prouve et `verified()`
-        // pose `phone_verified_at` ; l'inscription le refuserait (déjà pris).
-        if ($user === null && $channel === VerificationChannel::SMS) {
-            $user = User::query()->where('phone', $destination)->whereNull('phone_verified_at')->first();
-            $user = $user !== null && ! PhoneOwnership::isInactive($user) ? $user : null;
         }
 
         $challenge = $user !== null
@@ -86,7 +79,8 @@ final class LoginService
             ];
         }
 
-        // Le code reçu par SMS prouve le numéro (demande du 2026-11-27).
+        // Le code reçu par SMS prouve le numéro (demande du 2026-11-27) : seulement si sa vérification a été retirée
+        // pendant que le code attendait, `start` ne trouvant que des numéros vérifiés.
         if ($verified->channel === VerificationChannel::SMS && $user->phone_verified_at === null && $user->phone === $verified->destination) {
             $user->forceFill(['phone_verified_at' => now()])->save();
         }

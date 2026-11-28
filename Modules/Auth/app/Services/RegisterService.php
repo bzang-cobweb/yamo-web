@@ -71,9 +71,10 @@ final class RegisterService
 
         $user = Challenges::persist($byPhone ? 'phone' : 'email', function () use ($attributes, $byPhone, $payload, $verified): User {
             Challenges::ensureFree('email', $attributes['email']);
-            Challenges::ensureFree('phone', $attributes['phone']);
+            // L'autre contact n'est pas prouvé : il ne peut retirer le numéro à personne (décision 2026-11-28-numero-non-verifie).
+            Challenges::ensureFree('phone', $attributes['phone'], proven: $byPhone);
             if ($byPhone) {
-                // Numéro prouvé par SMS : retiré du compte inactif qui le portait encore.
+                // Numéro prouvé par SMS : retiré du compte qui le portait sans l'avoir vérifié, ou du compte inactif.
                 PhoneOwnership::release($attributes['phone']);
             }
 

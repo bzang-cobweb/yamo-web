@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
+use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Mail\VerificationCodeMail;
 use Modules\Auth\Models\User;
 use Modules\Auth\Models\VerificationCode;
@@ -112,16 +113,20 @@ class VerificationCodesApiTest extends TestCase
         $this->assertNull($user->fresh()->phone_verified_at);
     }
 
-    public function test_an_unverified_phone_signs_in_by_sms_and_becomes_verified(): void
+    public function test_an_unverified_phone_leads_to_registration_by_sms(): void
     {
         $user = $this->jeanne(['phone' => '+41791234567', 'phone_country_id' => $this->switzerland->id]);
 
-        // Numéro jamais vérifié (compte créé au back-office) : le code SMS le prouve.
+        // Numéro jamais vérifié (autre contact d'une inscription, back-office) : il ne trouve pas le compte, le code SMS
+        // mène à l'inscription (décision 2026-11-28-numero-non-verifie).
         $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => ' 079 123 45 67', 'phone_country' => 'CH'])
             ->assertAccepted()->json('challenge');
-        $this->verify($challenge, $this->smsCode('+41791234567'), ['device_name' => 'Pixel'])->assertOk();
+        $this->verify($challenge, $this->smsCode('+41791234567'), ['device_name' => 'Pixel'])
+            ->assertOk()->assertJsonPath('mode', 'register');
 
-        $this->assertNotNull($user->fresh()->phone_verified_at);
+        $this->assertSame(VerificationPurpose::REGISTER, VerificationCode::query()->ofChallenge($challenge)->sole()->purpose);
+        $this->assertNull($user->fresh()->phone_verified_at);
+        $this->assertSame(0, $user->tokens()->count());
     }
 
     public function test_a_national_phone_without_its_country_is_incomplete(): void
@@ -311,7 +316,7 @@ class VerificationCodesApiTest extends TestCase
     public function test_an_invalid_or_taken_phone_is_refused(): void
     {
         $user = $this->jeanne();
-        User::factory()->create(['phone' => '+41791234567']);
+        User::factory()->create(['phone_verified_at' => now(), 'phone' => '+41791234567']);
         $token = $this->token($user);
 
         $this->withToken($token)->postJson('/api/v1/auth/me/phone', ['phone' => '123', 'phone_country' => 'CH'])

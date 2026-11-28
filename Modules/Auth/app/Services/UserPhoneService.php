@@ -24,7 +24,8 @@ final class UserPhoneService
     /**
      * Pourquoi ce numéro (E.164) ne peut pas être ajouté au compte, ou `null` s'il le peut : déjà son numéro
      * principal, déjà dans ses numéros, ou tenu par un autre compte (principal ou supplémentaire ; un compte inactif
-     * le cède, décision 2026-11-20-restauration-numero-recycle).
+     * le cède, décision 2026-11-20-restauration-numero-recycle, de même un numéro non vérifié, décision
+     * 2026-11-28-numero-non-verifie).
      */
     public static function refusal(User $user, string $phone): ?string
     {
@@ -79,7 +80,7 @@ final class UserPhoneService
                 throw ValidationException::withMessages(['code' => $refusal]);
             }
 
-            // Prouvé par SMS : retiré du compte inactif qui le portait encore.
+            // Prouvé par SMS : retiré du compte qui le portait sans l'avoir vérifié, ou du compte inactif.
             PhoneOwnership::release($verified->destination, $user->getKey());
             $user->phones()->create([
                 'phone' => $verified->destination,
