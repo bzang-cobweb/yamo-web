@@ -32,6 +32,8 @@ use Modules\Auth\Forms\RegisterForm;
 use Modules\Auth\Forms\ResetPasswordForm;
 use Modules\Auth\Forms\ResidenceForm;
 use Modules\Auth\Forms\ReviewPrivacyForm;
+use Modules\Auth\Forms\SessionNewPasswordForm;
+use Modules\Auth\Forms\SessionPasswordForm;
 use Modules\Auth\Forms\UserAddressForm;
 use Modules\Auth\Forms\UserPhoneForm;
 use Modules\Auth\Lists\UserAddressListing;
@@ -90,6 +92,8 @@ class AuthServiceProvider extends ModuleServiceProvider
         $registry->register(PreferencesForm::class);
         $registry->register(NotificationSettingsForm::class);
         $registry->register(RegisterForm::class);
+        $registry->register(SessionPasswordForm::class);
+        $registry->register(SessionNewPasswordForm::class);
         $registry->register(CodeForm::class);
         $registry->register(EmailChangeForm::class);
         $registry->register(PhoneChangeForm::class);
@@ -111,9 +115,9 @@ class AuthServiceProvider extends ModuleServiceProvider
         $this->app->make(ListingRegistry::class)->register(UserPhoneListing::class);
 
         // Connexion API : 5 essais par minute pour un même identifiant (e-mail ou
-        // numéro) depuis une même adresse.
+        // numéro) depuis une même adresse ; à l'étape du mot de passe, pour un même défi.
         RateLimiter::for('auth-login', fn (Request $request): Limit => Limit::perMinute(5)
-            ->by(Str::lower((string) ($request->input('email') ?: $request->input('phone_country').$request->input('phone'))).'|'.$request->ip()));
+            ->by(Str::lower((string) ($request->input('email') ?: $request->input('phone_country').$request->input('phone') ?: $request->input('challenge'))).'|'.$request->ip()));
         // Inscription : 5 demandes par minute depuis une même adresse.
         RateLimiter::for('auth-register', fn (Request $request): Limit => Limit::perMinute(5)->by((string) $request->ip()));
         // Codes (envoi, validation, renvoi) : 10 appels par minute depuis une même adresse.

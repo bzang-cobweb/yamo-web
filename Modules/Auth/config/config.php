@@ -12,6 +12,9 @@ return [
         'max_attempts' => (int) env('AUTH_CODE_MAX_ATTEMPTS', 5),
         // Délai minimal entre deux envois, en secondes.
         'resend_seconds' => (int) env('AUTH_CODE_RESEND_SECONDS', 60),
+        // Après la validation du code de connexion ou d'inscription, délai pour choisir ou saisir son mot de passe, en
+        // minutes (décision 2026-11-28-connexion-panneau).
+        'password_minutes' => (int) env('AUTH_CODE_PASSWORD_MINUTES', 30),
     ],
 
     // Canaux de compte : e-mail, téléphone ou les deux ; au moins un.

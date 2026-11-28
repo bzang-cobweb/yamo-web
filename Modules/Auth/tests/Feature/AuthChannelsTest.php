@@ -47,22 +47,11 @@ class AuthChannelsTest extends AuthFilamentTestCase
         return collect($form['fields'])->keyBy('name')->all();
     }
 
-    private function register(array $overrides = [])
-    {
-        return $this->postJson('/api/v1/auth/register', [
-            'name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie',
-            ...$overrides,
-        ]);
-    }
-
     public function test_both_channels_keep_today_behaviour(): void
     {
-        $register = $this->fieldsOf($this->form('auth.register'));
-        $this->assertArrayHasKey('email', $register);
-        $this->assertArrayHasKey('phone', $register);
-        $this->assertArrayHasKey('phone_country', $register);
-        // L'identifiant vient de la connexion : champs cachés, l'un ou l'autre.
-        $this->assertSame(['hidden', 'hidden', 'hidden'], [$register['email']['type'], $register['phone']['type'], $register['phone_country']['type']]);
+        // L'inscription demande l'autre moyen de contact que celui prouvé par le code (décision 2026-11-28-connexion-panneau).
+        $this->assertSame(['first_name', 'last_name', 'phone'], array_keys($this->fieldsOf($this->form('auth.register?channel=email'))));
+        $this->assertSame(['first_name', 'last_name', 'email'], array_keys($this->fieldsOf($this->form('auth.register?channel=phone'))));
         $this->assertSame([], $this->form('auth.register')['steps']);
 
         $login = $this->fieldsOf($this->form('auth.login'));
@@ -79,10 +68,8 @@ class AuthChannelsTest extends AuthFilamentTestCase
     {
         $this->channels(email: true, phone: false);
 
-        $register = $this->fieldsOf($this->form('auth.register'));
-        $this->assertArrayNotHasKey('phone', $register);
-        $this->assertArrayNotHasKey('phone_country', $register);
-        $this->assertSame('hidden', $register['email']['type']);
+        // Pas de téléphone à proposer à l'inscription.
+        $this->assertSame(['first_name', 'last_name'], array_keys($this->fieldsOf($this->form('auth.register?channel=email'))));
 
         $login = $this->fieldsOf($this->form('auth.login'));
         $this->assertSame(['email'], array_keys($login));
@@ -91,10 +78,6 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertSame(['email'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
         $this->assertStringNotContainsString('téléphone', $this->form('auth.password.forgot')['subtitle']);
 
-        // Un téléphone ne s'inscrit pas : l'e-mail est obligatoire, le numéro ignoré.
-        $this->register(['phone' => '079 123 45 67', 'phone_country' => 'CH'])
-            ->assertUnprocessable()->assertJsonValidationErrors('email')->assertJsonMissingValidationErrors('phone');
-
         $this->getJson('/api/v1/app')->assertJsonPath('data.channels', ['email' => true, 'phone' => false]);
     }
 
@@ -102,9 +85,8 @@ class AuthChannelsTest extends AuthFilamentTestCase
     {
         $this->channels(email: false, phone: true);
 
-        $register = $this->fieldsOf($this->form('auth.register'));
-        $this->assertArrayNotHasKey('email', $register);
-        $this->assertSame(['hidden', 'hidden'], [$register['phone']['type'], $register['phone_country']['type']]);
+        // Pas d'e-mail à proposer à l'inscription.
+        $this->assertSame(['first_name', 'last_name'], array_keys($this->fieldsOf($this->form('auth.register?channel=phone'))));
 
         // Le pays et le numéro, sur une ligne (champ téléphone), sans aide sur le format.
         $login = $this->fieldsOf($this->form('auth.login'));
@@ -112,9 +94,6 @@ class AuthChannelsTest extends AuthFilamentTestCase
         $this->assertSame('phone', $login['phone']['type']);
         $this->assertContains('CH', array_column($login['phone']['options'], 'value'));
         $this->assertSame(['phone'], array_keys($this->fieldsOf($this->form('auth.password.forgot'))));
-
-        $this->register(['email' => 'marie@example.com'])
-            ->assertUnprocessable()->assertJsonValidationErrors('phone')->assertJsonMissingValidationErrors('email');
     }
 
     public function test_phone_only_signs_in_with_the_country_and_the_national_number(): void

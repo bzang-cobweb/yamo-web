@@ -15,7 +15,8 @@ class RouteGuardTest extends TestCase
     /** @var array<string, string> URI => motif */
     private const WITHOUT_CAN = [
         'api/v1/auth/login' => 'publique : connexion, limitée par throttle:auth-login',
-        'api/v1/auth/register' => 'publique : inscription, limitée par throttle:auth-register ; le compte naît après les codes',
+        'api/v1/auth/register' => 'publique : inscription, limitée par throttle:auth-register ; exige un défi d\'inscription au code validé et au mot de passe choisi',
+        'api/v1/auth/session' => 'publique : étape du mot de passe, limitée par throttle:auth-login ; exige un défi au code validé depuis moins de 30 minutes',
         'api/v1/auth/password/forgot' => 'publique : mot de passe oublié, limitée par throttle:auth-login ; ne révèle pas si un compte existe',
         'api/v1/auth/account/restore' => 'publique : récupérer son compte en attente de suppression, limitée par throttle:auth-codes ; exige un défi de connexion dont le code a été validé',
         'api/v1/auth/password/reset' => 'publique : nouveau mot de passe, limitée par throttle:auth-codes ; exige un défi dont le code a été validé',

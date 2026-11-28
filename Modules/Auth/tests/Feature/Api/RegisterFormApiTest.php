@@ -8,9 +8,8 @@ use Modules\Location\Models\Country;
 use Tests\TestCase;
 
 /**
- * Formulaire d'inscription (module Form) : une seule page, sans étapes, sans genre
- * ni mot de passe ; l'identifiant saisi à la connexion revient en champs cachés
- * (décision 2026-11-27-connexion-sans-mot-de-passe). L'envoi valide tout d'un coup.
+ * Formulaire d'inscription (module Form) : une seule page, prénom, nom, puis l'autre moyen de contact, facultatif,
+ * selon le canal de l'identifiant prouvé (décision 2026-11-28-connexion-panneau). L'envoi valide tout d'un coup.
  */
 class RegisterFormApiTest extends TestCase
 {
@@ -27,15 +26,26 @@ class RegisterFormApiTest extends TestCase
         return $this->postJson("/api/v1/forms/{$form}/steps/{$number}", $data);
     }
 
-    public function test_the_register_form_is_a_single_page_without_gender_or_password(): void
+    public function test_the_register_form_asks_the_names_then_the_other_contact(): void
     {
-        $response = $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register')->assertOk();
+        $byEmail = $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register?channel=email')->assertOk();
+        $this->assertSame(['first_name', 'last_name', 'phone'], array_column($byEmail->json('data.fields'), 'name'));
+        $byEmail->assertJsonPath('data.steps', [])
+            ->assertJsonPath('data.title', 'Créer votre compte')
+            ->assertJsonPath('data.submit.label', 'Créer mon compte')
+            ->assertJsonPath('data.fields.0.label', 'Prénom')
+            ->assertJsonPath('data.fields.1.label', 'Nom')
+            ->assertJsonPath('data.fields.2.type', 'phone')
+            ->assertJsonPath('data.fields.2.required', false)
+            ->assertJsonPath('data.fields.2.default', ['country' => 'CH', 'number' => null]);
 
-        $this->assertSame(['name', 'first_name', 'last_name', 'birth_date', 'email', 'phone', 'phone_country'], array_column($response->json('data.fields'), 'name'));
-        $response->assertJsonPath('data.steps', [])
-            ->assertJsonPath('data.fields.4.type', 'hidden')
-            ->assertJsonPath('data.fields.5.type', 'hidden')
-            ->assertJsonPath('data.fields.6.type', 'hidden');
+        $byPhone = $this->getJson('/api/v1/forms/auth.register?channel=phone')->assertOk();
+        $this->assertSame(['first_name', 'last_name', 'email'], array_column($byPhone->json('data.fields'), 'name'));
+        $byPhone->assertJsonPath('data.fields.2.type', 'email')->assertJsonPath('data.fields.2.required', false);
+
+        // `sms` (le canal d'un défi) vaut `phone` ; sans canal, ni l'un ni l'autre.
+        $this->assertSame(['first_name', 'last_name', 'email'], array_column($this->getJson('/api/v1/forms/auth.register?channel=sms')->json('data.fields'), 'name'));
+        $this->assertSame(['first_name', 'last_name'], array_column($this->getJson('/api/v1/forms/auth.register')->json('data.fields'), 'name'));
     }
 
     public function test_a_form_without_steps_sends_an_empty_list(): void
@@ -43,31 +53,13 @@ class RegisterFormApiTest extends TestCase
         $this->getJson('/api/v1/forms/auth.login')->assertOk()->assertJsonPath('data.steps', []);
     }
 
-    public function test_the_submission_checks_every_field_at_once(): void
+    public function test_the_submission_checks_the_fields_and_the_challenge(): void
     {
         $this->postJson('/api/v1/auth/register', [])->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'first_name', 'last_name', 'email', 'phone'])
-            ->assertJsonMissingValidationErrors(['gender', 'password', 'password_confirmation', 'description']);
-
-        // Un numéro sans son pays.
-        $this->postJson('/api/v1/auth/register', ['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'phone' => '079 123 45 67'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['phone_country'])
-            ->assertJsonMissingValidationErrors(['email']);
+            ->assertJsonValidationErrors(['challenge', 'first_name', 'last_name'])
+            ->assertJsonMissingValidationErrors(['name', 'gender', 'password', 'birth_date', 'email', 'phone']);
 
         $this->assertSame(0, User::count());
-    }
-
-    public function test_uniqueness_is_checked_on_submission(): void
-    {
-        User::factory()->create(['name' => 'marie', 'email' => 'marie@example.com', 'phone' => '+41791234567']);
-
-        $this->postJson('/api/v1/auth/register', [
-            'name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie',
-            'email' => 'marie@example.com', 'phone' => '079 123 45 67', 'phone_country' => 'CH',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['name', 'email', 'phone']);
-
-        $this->assertSame(1, User::count());
     }
 
     public function test_an_unknown_step_or_a_form_without_steps_answers_404(): void

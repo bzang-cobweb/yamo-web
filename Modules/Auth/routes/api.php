@@ -22,6 +22,7 @@ use Modules\Auth\Http\Controllers\Api\ProfileVisibilityController;
 use Modules\Auth\Http\Controllers\Api\RegisterController;
 use Modules\Auth\Http\Controllers\Api\ResidenceController;
 use Modules\Auth\Http\Controllers\Api\ReviewPrivacyController;
+use Modules\Auth\Http\Controllers\Api\SessionController;
 use Modules\Auth\Http\Controllers\Api\UserAddressController;
 use Modules\Auth\Http\Controllers\Api\UserPhoneController;
 use Modules\Auth\Http\Controllers\Api\VerificationController;
@@ -35,6 +36,10 @@ Route::prefix('v1/auth')->name('v1.auth.')->group(function () {
     Route::post('login', [LoginController::class, 'login'])
         ->middleware('throttle:auth-login')
         ->name('login');
+    // L'étape du mot de passe, après le code (décision 2026-11-28-connexion-panneau).
+    Route::post('session', [SessionController::class, 'store'])
+        ->middleware('throttle:auth-login')
+        ->name('session');
     Route::post('register', [RegisterController::class, 'register'])
         ->middleware('throttle:auth-register')
         ->name('register');

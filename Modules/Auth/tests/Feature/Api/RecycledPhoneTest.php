@@ -5,6 +5,7 @@ namespace Modules\Auth\Tests\Feature\Api;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Testing\TestResponse;
 use Modules\Auth\Mail\PhoneReleasedMail;
 use Modules\Auth\Models\User;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
@@ -50,12 +51,31 @@ class RecycledPhoneTest extends TestCase
         return $this->postJson('/api/v1/auth/password/forgot', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH']);
     }
 
-    private function registerWithThePhone()
+    /**
+     * Le numéro saisi pour se connecter ou s'inscrire (décision 2026-11-28-connexion-panneau) : le défi, et la réponse
+     * au code SMS.
+     *
+     * @return array{0: string, 1: TestResponse}
+     */
+    private function codeForThePhone(): array
     {
-        return $this->postJson('/api/v1/auth/register', [
-            'name' => 'nouveau', 'first_name' => 'Nouveau', 'last_name' => 'Titulaire',
-            'phone' => '079 123 45 67', 'phone_country' => 'CH',
-        ]);
+        $challenge = $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '+41791234567', 'phone_country' => 'CH'])
+            ->assertAccepted()->json('challenge');
+
+        return [$challenge, $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567')])];
+    }
+
+    /**
+     * Le nouveau titulaire du numéro s'inscrit : le code, le mot de passe, puis l'inscription.
+     */
+    private function registerWithThePhone(): TestResponse
+    {
+        [$challenge, $verified] = $this->codeForThePhone();
+        $verified->assertOk()->assertJsonPath('mode', 'register');
+        $this->postJson('/api/v1/auth/session', ['challenge' => $challenge, 'password' => 'Le-bon-mot-2026', 'password_confirmation' => 'Le-bon-mot-2026'])
+            ->assertOk()->assertJsonPath('next', 'register');
+
+        return $this->postJson('/api/v1/auth/register', ['challenge' => $challenge, 'first_name' => 'Nina', 'last_name' => 'Titulaire', 'device_name' => 'iPhone']);
     }
 
     public function test_an_inactive_account_cannot_reset_its_password_by_sms(): void
@@ -100,8 +120,7 @@ class RecycledPhoneTest extends TestCase
     {
         $old = $this->oldOwner(daysSinceLastSeen: 200);
 
-        $challenge = $this->registerWithThePhone()->assertAccepted()->json('challenge');
-        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567'), 'device_name' => 'iPhone'])
+        $this->registerWithThePhone()
             ->assertCreated()
             ->assertJsonPath('data.phone', '+41791234567');
 
@@ -122,24 +141,27 @@ class RecycledPhoneTest extends TestCase
     {
         $this->oldOwner(daysSinceLastSeen: 200, attributes: ['email' => null]);
 
-        $challenge = $this->registerWithThePhone()->json('challenge');
-        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->smsCode('+41791234567'), 'device_name' => 'iPhone'])->assertCreated();
+        $this->registerWithThePhone()->assertCreated();
 
         Mail::assertNotSent(PhoneReleasedMail::class);
     }
 
     public function test_an_active_holder_keeps_the_number(): void
     {
-        $this->oldOwner(daysSinceLastSeen: 10);
+        $holder = $this->oldOwner(daysSinceLastSeen: 10);
 
-        $this->registerWithThePhone()->assertUnprocessable()->assertJsonValidationErrors('phone');
+        // Le numéro mène au compte de son titulaire, pas à une inscription.
+        $this->codeForThePhone()[1]->assertOk()->assertJsonPath('mode', 'sign-in');
+        $this->assertSame('+41791234567', $holder->refresh()->phone);
     }
 
     public function test_an_account_awaiting_deletion_keeps_the_number_until_the_purge(): void
     {
         $this->oldOwner(daysSinceLastSeen: 200)->delete();
 
-        $this->registerWithThePhone()->assertUnprocessable()->assertJsonValidationErrors('phone');
+        // Inactif, il ne se connecte plus par SMS ; supprimé, il garde le numéro : l'inscription est refusée dès le code.
+        $this->codeForThePhone()[1]->assertUnprocessable()->assertJsonValidationErrors('code');
+        $this->assertSame(1, User::withTrashed()->count());
     }
 
     public function test_adding_the_number_to_an_account_releases_it_too(): void
@@ -159,12 +181,9 @@ class RecycledPhoneTest extends TestCase
     public function test_two_new_owners_at_once_end_in_a_clean_refusal_and_nothing_half_done(): void
     {
         $old = $this->oldOwner(daysSinceLastSeen: 200);
-        $challenge = $this->registerWithThePhone()->assertAccepted()->json('challenge');
-        $code = $this->smsCode('+41791234567');
-
         // Course : au moment précis de l'enregistrement, une autre demande a pris le numéro.
         User::creating(function (User $user): void {
-            if ($user->name === 'nouveau') {
+            if ($user->last_name === 'Titulaire') {
                 DB::table('users')->insert([
                     'name' => 'concurrent', 'first_name' => 'C', 'last_name' => 'C', 'locale' => 'fr', 'password' => 'x',
                     'phone' => '+41791234567', 'created_at' => now(), 'updated_at' => now(),
@@ -172,27 +191,25 @@ class RecycledPhoneTest extends TestCase
             }
         });
 
-        $this->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $code, 'device_name' => 'iPhone'])
+        $this->registerWithThePhone()
             ->assertUnprocessable()
             ->assertJsonValidationErrors('code');
 
         // Tout ou rien : ni nouveau compte, ni numéro retiré de l'ancien, ni e-mail.
-        $this->assertFalse(User::query()->where('name', 'nouveau')->exists());
+        $this->assertFalse(User::query()->where('last_name', 'Titulaire')->exists());
         $this->assertSame('+41791234567', $old->refresh()->phone);
         Mail::assertNotSent(PhoneReleasedMail::class);
     }
 
     public function test_the_new_owner_cannot_sign_in_to_the_old_account(): void
     {
-        // Sans mot de passe, le code SMS suffirait : un compte inactif ne se connecte plus par
-        // SMS, le numéro mène à l'inscription (qui le reprend, voir plus haut).
-        $this->oldOwner(daysSinceLastSeen: 200);
+        // Le code SMS ouvrirait l'ancien compte au nouveau titulaire : un compte inactif ne se connecte plus par SMS, le
+        // numéro mène à l'inscription (qui le reprend, voir plus haut), avec la même réponse qu'un numéro inconnu.
+        $old = $this->oldOwner(daysSinceLastSeen: 200);
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'phone', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
-            ->assertOk()
-            ->assertJsonPath('next', 'register')
-            ->assertJsonMissingPath('challenge');
-        $this->assertSame([], $this->sms->messages);
+        [$challenge, $verified] = $this->codeForThePhone();
+        $verified->assertOk()->assertExactJson(['next' => 'password', 'challenge' => $challenge, 'mode' => 'register']);
+        $this->assertSame(0, $old->tokens()->count());
     }
 
     public function test_an_inactive_account_still_signs_in_by_email(): void

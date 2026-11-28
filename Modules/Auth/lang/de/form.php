@@ -8,7 +8,7 @@ return [
         'submit' => 'Anmelden',
     ],
     'register' => [
-        'title' => 'Konto erstellen',
+        'title' => 'Ihr Konto erstellen',
         'submit' => 'Mein Konto erstellen',
         'contact_help' => 'Eine E-Mail-Adresse, eine Telefonnummer oder beides: An jede wird ein Bestätigungscode gesendet.',
         'steps' => [
@@ -51,6 +51,20 @@ return [
     'password_reset' => [
         'title' => 'Neues Passwort',
         'submit' => 'Passwort ändern',
+    ],
+    // L'étape du mot de passe, après le code (décision 2026-11-28-connexion-panneau).
+    'session' => [
+        'password' => [
+            'title' => 'Ihr Passwort',
+            'submit' => 'Anmelden',
+        ],
+        'new_password' => [
+            'title' => 'Wählen Sie ein Passwort',
+            'submit' => 'Weiter',
+        ],
+        'wrong_password' => 'Falsches Passwort.',
+        'too_many' => 'Zu viele Versuche. Melden Sie sich erneut an.',
+        'password_missing' => 'Wählen Sie zuerst ein Passwort.',
     ],
     'personal' => [
         'title' => 'Persönliche Angaben',

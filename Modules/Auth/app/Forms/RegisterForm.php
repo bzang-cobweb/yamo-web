@@ -2,6 +2,7 @@
 
 namespace Modules\Auth\Forms;
 
+use App\Models\Setting;
 use Bza\Form\Support\Field;
 use Bza\Form\Support\Form;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -10,16 +11,33 @@ use Modules\Auth\Models\User;
 use Modules\Auth\Rules\UniquePhone;
 use Modules\Auth\Support\AuthChannels;
 use Modules\Auth\Support\PhoneNumbers;
+use Modules\Location\Support\CurrentCountry;
 
 /**
- * Créer un compte depuis l'app, sur une seule page : pseudonyme, prénom, nom et date de
- * naissance (décision 2026-11-27-connexion-sans-mot-de-passe). L'identifiant vient de
- * la connexion : l'app renvoie l'e-mail, ou le numéro et son pays, saisis à la
- * connexion (champs cachés). Pas de mot de passe. Un code part vers cet identifiant,
- * et le compte n'existe qu'une fois le code validé.
+ * Créer son compte, dernière étape du parcours (décision 2026-11-28-connexion-panneau) : l'identifiant est prouvé par
+ * le code, le mot de passe choisi ; restent le prénom, le nom, puis l'autre moyen de contact, facultatif : le
+ * téléphone pour une inscription par e-mail (`?channel=email`), l'e-mail pour une inscription par téléphone
+ * (`?channel=phone`). Le pseudonyme est tiré du prénom et du nom par le serveur. L'app l'envoie à
+ * `POST /auth/register` avec le défi.
  */
 class RegisterForm extends Form
 {
+    /** Le canal de l'identifiant prouvé (`email` ou `phone`) ; `null` : pas d'autre contact. */
+    private readonly ?string $channel;
+
+    public function __construct(?Authenticatable $user = null, ?string $channel = null)
+    {
+        parent::__construct($user);
+
+        // Servi par `GET /forms/auth.register?channel=…` ; `sms` vaut `phone` (le canal d'un défi).
+        $channel ??= request()->query('channel');
+        $this->channel = match ($channel) {
+            'email' => 'email',
+            'phone', 'sms' => 'phone',
+            default => null,
+        };
+    }
+
     public static function name(): string
     {
         return 'auth.register';
@@ -28,48 +46,38 @@ class RegisterForm extends Form
     public function fields(): array
     {
         return [
-            Field::text('name')
-                ->label(__('auth::user.name'))
-                ->help(__('auth::user.name_help'))
-                ->required()
-                ->rules(['max:255', Rule::unique(User::class, 'name')]),
             Field::text('first_name')->label(__('auth::user.first_name'))->required()->rules(['max:255']),
             Field::text('last_name')->label(__('auth::user.last_name'))->required()->rules(['max:255']),
-            // La même que dans les informations personnelles (âge minimum compris).
-            PersonalInfoForm::birthDateField(),
-            ...$this->contactFields(),
+            // La date de naissance reste au profil ; avec un âge minimum réglé, elle est exigée ici (décision
+            // 2026-11-19-age-minimum), la même que dans les informations personnelles.
+            ...(Setting::minimumAge() !== null ? [PersonalInfoForm::birthDateField()] : []),
+            ...$this->otherContactFields(),
         ];
     }
 
     /**
-     * L'identifiant saisi à la connexion, caché : l'e-mail, ou le numéro et son pays,
-     * selon les canaux de l'application ; l'un des deux est obligatoire.
+     * L'autre moyen de contact, facultatif et unique, si son canal est ouvert dans l'application.
      *
      * @return list<Field>
      */
-    private function contactFields(): array
+    private function otherContactFields(): array
     {
-        $fields = [];
-
-        if (AuthChannels::email()) {
-            $fields[] = Field::hidden('email')->rules([
-                AuthChannels::phone() ? 'required_without:phone' : 'required',
-                'nullable', 'email', 'max:255', Rule::unique(User::class, 'email'),
-            ]);
+        if ($this->channel === 'email' && AuthChannels::phone()) {
+            return [
+                Field::phone('phone')->label(__('auth::user.phone'))->options(PhoneNumbers::countryOptions())
+                    ->rules([new UniquePhone])
+                    // Le pays courant d'office (décision 2026-11-18-espace-pays) ; l'app peut reprendre le dernier indicatif.
+                    ->default(['country' => CurrentCountry::get()?->code, 'number' => null]),
+            ];
         }
 
-        if (AuthChannels::phone()) {
-            $fields[] = Field::hidden('phone')->rules([
-                AuthChannels::email() ? 'required_without:email' : 'required',
-                'nullable', 'string', 'phone', new UniquePhone,
-            ]);
-            $fields[] = Field::hidden('phone_country')->rules([
-                'required_with:phone', 'nullable', 'string',
-                Rule::in(array_map('strval', array_keys(PhoneNumbers::countryOptions()))),
-            ]);
+        if ($this->channel === 'phone' && AuthChannels::email()) {
+            return [
+                Field::email('email')->label(__('auth::user.email'))->rules(['max:255', Rule::unique(User::class, 'email')]),
+            ];
         }
 
-        return $fields;
+        return [];
     }
 
     public function title(): string

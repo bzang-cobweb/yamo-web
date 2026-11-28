@@ -6,7 +6,9 @@ use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Modules\Auth\Enums\VerificationPurpose;
 use Modules\Auth\Models\User;
+use Modules\Auth\Models\VerificationCode;
 use Modules\Auth\Support\Masks;
 use Modules\Auth\Support\PhoneOwnership;
 
@@ -28,6 +30,38 @@ final class Challenges
             'channel' => $next?->channel->value ?? '',
             'destination' => $next === null ? '' : Masks::destination($next->channel, $next->destination),
         ];
+    }
+
+    /**
+     * Le défi de connexion ou d'inscription dont le code a été validé, à l'étape du mot de passe ou de l'inscription
+     * (décision 2026-11-28-connexion-panneau). Il sert une seule fois (il est clos ensuite) et
+     * `auth.verification_codes.password_minutes` minutes après la validation du code ; au-delà, il est clos.
+     *
+     * @param  list<VerificationPurpose>  $purposes
+     *
+     * @throws ValidationException défi inconnu, déjà servi, au code non validé, expiré, ou aux essais épuisés (erreur sur `code`)
+     */
+    public static function verified(string $challenge, array $purposes, VerificationCodeService $codeService): VerificationCode
+    {
+        $verified = VerificationCode::query()->ofChallenge($challenge)->whereIn('purpose', $purposes)->first();
+
+        if ($verified === null || $verified->verified_at === null) {
+            throw ValidationException::withMessages(['code' => __('auth::verification.errors.unknown')]);
+        }
+
+        if ($verified->verified_at->lt(now()->subMinutes((int) config('auth.verification_codes.password_minutes', 30)))) {
+            $codeService->close($challenge);
+
+            throw ValidationException::withMessages(['code' => __('auth::verification.errors.unknown')]);
+        }
+
+        if ($verified->attempts >= $codeService->maxAttempts()) {
+            $codeService->close($challenge);
+
+            throw ValidationException::withMessages(['code' => __('auth::verification.errors.unknown')]);
+        }
+
+        return $verified;
     }
 
     /**

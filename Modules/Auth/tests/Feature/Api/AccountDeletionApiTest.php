@@ -11,6 +11,7 @@ use Modules\Auth\Enums\RoleEnum;
 use Modules\Auth\Models\User;
 use Modules\Auth\Support\Masks;
 use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
+use Modules\Auth\Tests\Concerns\SignsUpWithCode;
 use Modules\Location\Models\Country;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
@@ -24,6 +25,7 @@ class AccountDeletionApiTest extends TestCase
 {
     use CapturesVerificationCodes;
     use RefreshDatabase;
+    use SignsUpWithCode;
 
     protected function setUp(): void
     {
@@ -181,9 +183,9 @@ class AccountDeletionApiTest extends TestCase
         $user = $this->user();
         $user->forceDelete();
 
-        $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])
-            // Plus aucune trace : l'identifiant mène à l'inscription.
-            ->assertOk()->assertJsonPath('next', 'register');
+        // Plus aucune trace : l'identifiant mène à l'inscription.
+        $challenge = $this->startWith(['email' => $user->email]);
+        $this->verifyCodeFor($challenge, ['email' => $user->email])->assertOk()->assertJsonPath('mode', 'register');
     }
 
     public function test_a_guest_cannot_delete_an_account(): void
@@ -220,28 +222,29 @@ class AccountDeletionApiTest extends TestCase
 
     public function test_the_email_stays_reserved_until_the_purge(): void
     {
-        $user = $this->user(['name' => 'jeanne']);
-        $user->delete();
+        Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
+        User::factory()->create(['email' => 'partie@example.com'])->delete();
 
-        $this->postJson('/api/v1/auth/register', [
-            'name' => 'autre', 'first_name' => 'Autre', 'last_name' => 'Personne',
-            'email' => 'jeanne@example.com',
-        ])->assertUnprocessable()->assertJsonValidationErrors('email');
+        // Ni comme identifiant (il mène à la récupération du compte), ni comme autre contact d'une inscription.
+        $challenge = $this->startWith(['email' => 'partie@example.com']);
+        $this->verifyCodeFor($challenge, ['email' => 'partie@example.com'])->assertOk()->assertJsonPath('next', 'restore');
+        $this->signUp(['phone' => '+41791234567', 'phone_country' => 'CH'], ['email' => 'partie@example.com'])
+            ->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
     public function test_the_username_phone_and_email_stay_reserved_until_the_purge(): void
     {
         $country = Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
-        User::factory()->create(['name' => 'jeanne', 'email' => 'held@example.com', 'phone' => '+41791234567', 'phone_country_id' => $country->getKey()])->delete();
+        User::factory()->create(['name' => 'adamartin', 'email' => 'partie@example.com', 'phone' => '+41791234567', 'phone_country_id' => $country->getKey()])->delete();
         $other = $this->user();
         $token = $other->createToken('test')->plainTextToken;
 
-        $this->postJson('/api/v1/auth/register', [
-            'name' => 'jeanne', 'first_name' => 'A', 'last_name' => 'B',
-            'phone' => '079 123 45 67', 'phone_country' => 'CH',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['name', 'phone']);
+        // Le pseudonyme généré passe à côté ; le numéro reste réservé.
+        $this->signUp(['email' => 'ada@example.com'], ['phone' => '+41791234567', 'phone_country' => 'CH'])
+            ->assertUnprocessable()->assertJsonValidationErrors('phone');
+        $this->signUp(['email' => 'ada2@example.com'])->assertCreated()->assertJsonPath('data.name', 'adamartin2');
 
-        $this->withToken($token)->postJson('/api/v1/auth/me/email', ['email' => 'held@example.com'])
+        $this->withToken($token)->postJson('/api/v1/auth/me/email', ['email' => 'partie@example.com'])
             ->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 

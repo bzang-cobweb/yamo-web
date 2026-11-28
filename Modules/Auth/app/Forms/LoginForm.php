@@ -7,10 +7,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Modules\Auth\Forms\Concerns\HasIdentifierField;
 
 /**
- * Connexion de l'app mobile, première étape : e-mail ou téléphone (l'indicatif du
- * pays courant d'office), sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
- * Compte trouvé : un code part vers cet e-mail ou ce téléphone (formulaire `auth.code`) ;
- * sinon, l'app ouvre l'inscription avec cet identifiant. `device_name` part avec le code.
+ * Se connecter ou s'inscrire, première étape : e-mail ou téléphone (l'indicatif du pays courant d'office, tous les pays
+ * proposés). Un code part toujours vers cet identifiant (formulaire `auth.code`), compte connu ou non ; viennent
+ * ensuite le mot de passe, puis l'inscription pour un nouveau compte (décision 2026-11-28-connexion-panneau).
  */
 class LoginForm extends Form
 {

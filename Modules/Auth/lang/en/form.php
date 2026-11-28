@@ -8,7 +8,7 @@ return [
         'submit' => 'Sign in',
     ],
     'register' => [
-        'title' => 'Create an account',
+        'title' => 'Create your account',
         'submit' => 'Create my account',
         'contact_help' => 'An email, a phone number or both: a verification code is sent to each.',
         'steps' => [
@@ -51,6 +51,20 @@ return [
     'password_reset' => [
         'title' => 'New password',
         'submit' => 'Change password',
+    ],
+    // L'étape du mot de passe, après le code (décision 2026-11-28-connexion-panneau).
+    'session' => [
+        'password' => [
+            'title' => 'Your password',
+            'submit' => 'Sign in',
+        ],
+        'new_password' => [
+            'title' => 'Choose a password',
+            'submit' => 'Continue',
+        ],
+        'wrong_password' => 'Incorrect password.',
+        'too_many' => 'Too many attempts. Start signing in again.',
+        'password_missing' => 'Choose a password first.',
     ],
     'personal' => [
         'title' => 'Personal information',

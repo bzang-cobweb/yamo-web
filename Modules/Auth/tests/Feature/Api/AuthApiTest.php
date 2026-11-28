@@ -3,7 +3,6 @@
 namespace Modules\Auth\Tests\Feature\Api;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 use Modules\Auth\Models\User;
@@ -16,6 +15,8 @@ class AuthApiTest extends TestCase
     use CapturesVerificationCodes;
     use RefreshDatabase;
 
+    private const PASSWORD = 'Le-bon-mot-2026';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,7 +27,7 @@ class AuthApiTest extends TestCase
     {
         return User::factory()->create([
             'email' => 'jeanne@example.com',
-            'password' => 'secret-password',
+            'password' => self::PASSWORD,
             ...$attributes,
         ]);
     }
@@ -43,17 +44,20 @@ class AuthApiTest extends TestCase
     }
 
     /**
-     * Connexion complète : identifiants, puis le code reçu par e-mail.
+     * Connexion complète : identifiant, le code reçu par e-mail, puis le mot de passe (décision
+     * 2026-11-28-connexion-panneau).
      */
     private function signIn(string $deviceName = 'iPhone de Jeanne'): TestResponse
     {
         $challenge = $this->login()->assertAccepted()->json('challenge');
 
-        return $this->postJson('/api/v1/auth/codes/verify', [
+        $this->postJson('/api/v1/auth/codes/verify', [
             'challenge' => $challenge,
             'code' => $this->emailCode('jeanne@example.com'),
             'device_name' => $deviceName,
-        ]);
+        ])->assertOk()->assertJsonPath('mode', 'sign-in');
+
+        return $this->postJson('/api/v1/auth/session', ['challenge' => $challenge, 'password' => self::PASSWORD, 'device_name' => $deviceName]);
     }
 
     public function test_login_returns_a_token_and_the_user_without_sensitive_data(): void
@@ -119,16 +123,20 @@ class AuthApiTest extends TestCase
         $this->assertSame(0, PersonalAccessToken::count());
     }
 
-    public function test_login_with_an_unknown_email_leads_to_register_with_the_email(): void
+    public function test_login_with_an_unknown_email_sends_a_code_too_with_the_same_answer(): void
     {
         $this->user();
 
-        $this->login(['email' => '  nobody@example.com '])
-            ->assertOk()
-            ->assertExactJson(['next' => 'register', 'values' => ['email' => 'nobody@example.com']]);
+        // Même forme de réponse qu'un compte connu : l'existence du compte n'est révélée qu'après le code.
+        $this->login(['email' => '  nouvelle@example.com '])
+            ->assertAccepted()
+            ->assertJsonStructure(['challenge', 'channel', 'destination'])
+            ->assertJsonCount(3)
+            ->assertJsonPath('channel', 'email')
+            ->assertJsonPath('destination', 'n•••@example.com');
 
-        // Ni code, ni compte, ni jeton.
-        Mail::assertNothingSent();
+        // Un code, mais ni compte, ni jeton.
+        $this->assertNotEmpty($this->emailCode('nouvelle@example.com'));
         $this->assertSame(1, User::count());
         $this->assertSame(0, PersonalAccessToken::count());
     }
@@ -162,7 +170,7 @@ class AuthApiTest extends TestCase
 
         // Limite par identifiant (et adresse) : un autre identifiant passe encore.
         for ($i = 0; $i < 5; $i++) {
-            $this->login(['email' => 'inconnu@example.com'])->assertOk();
+            $this->login(['email' => 'inconnu@example.com'])->assertAccepted();
         }
 
         $this->login(['email' => 'INCONNU@example.com'])->assertTooManyRequests();

@@ -4,8 +4,9 @@ namespace Modules\Auth\Tests\Feature\Api;
 
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Modules\Auth\Models\User;
+use Modules\Auth\Tests\Concerns\CapturesVerificationCodes;
+use Modules\Auth\Tests\Concerns\SignsUpWithCode;
 use Modules\Location\Models\Country;
 use Tests\TestCase;
 
@@ -16,14 +17,14 @@ use Tests\TestCase;
  */
 class MinimumAgeApiTest extends TestCase
 {
+    use CapturesVerificationCodes;
     use RefreshDatabase;
-
-    private const IDENTITY = ['name' => 'marie', 'first_name' => 'Marie', 'last_name' => 'Curie', 'email' => 'marie@example.com'];
+    use SignsUpWithCode;
 
     protected function setUp(): void
     {
         parent::setUp();
-        Mail::fake();
+        $this->captureVerificationCodes();
         Country::factory()->create(['code' => 'CH', 'dial_code' => '+41']);
     }
 
@@ -37,14 +38,12 @@ class MinimumAgeApiTest extends TestCase
         return $this->withToken($user->createToken('iPhone')->plainTextToken)->withHeader('Accept-Language', 'fr');
     }
 
-    public function test_without_a_minimum_age_the_birth_date_stays_optional(): void
+    public function test_without_a_minimum_age_the_birth_date_is_not_asked_at_registration(): void
     {
-        $this->getJson('/api/v1/forms/auth.register')
-            ->assertJsonPath('data.fields.3.name', 'birth_date')
-            ->assertJsonPath('data.fields.3.required', false)
-            ->assertJsonPath('data.fields.3.help', null);
+        // La date de naissance reste au profil (décision 2026-11-28-connexion-panneau).
+        $this->assertSame(['first_name', 'last_name'], array_column($this->getJson('/api/v1/forms/auth.register')->json('data.fields'), 'name'));
 
-        $this->postJson('/api/v1/auth/register', self::IDENTITY)->assertAccepted();
+        $this->signUp(['email' => 'ada@example.com'])->assertCreated()->assertJsonPath('data.birth_date', null);
     }
 
     public function test_with_a_minimum_age_the_birth_date_is_required_and_its_help_says_the_age(): void
@@ -52,13 +51,13 @@ class MinimumAgeApiTest extends TestCase
         $this->minimumAge(18);
 
         $this->withHeader('Accept-Language', 'fr')->getJson('/api/v1/forms/auth.register')
-            ->assertJsonPath('data.fields.3.name', 'birth_date')
-            ->assertJsonPath('data.fields.3.required', true)
-            ->assertJsonPath('data.fields.3.help', 'Au moins 18 ans.')
+            ->assertJsonPath('data.fields.2.name', 'birth_date')
+            ->assertJsonPath('data.fields.2.required', true)
+            ->assertJsonPath('data.fields.2.help', 'Au moins 18 ans.')
             // Le calendrier s'arrête à la dernière date qui donne 18 ans (décision 2026-11-19-bornes-des-dates).
-            ->assertJsonPath('data.fields.3.range', ['min' => '1900-01-01', 'max' => today()->subYears(18)->toDateString(), 'step' => null]);
+            ->assertJsonPath('data.fields.2.range', ['min' => '1900-01-01', 'max' => today()->subYears(18)->toDateString(), 'step' => null]);
 
-        $this->postJson('/api/v1/auth/register', self::IDENTITY)->assertJsonValidationErrors('birth_date');
+        $this->signUp(['email' => 'ada@example.com'])->assertJsonValidationErrors('birth_date');
     }
 
     public function test_registering_too_young_is_refused_and_old_enough_is_accepted(): void
@@ -67,11 +66,12 @@ class MinimumAgeApiTest extends TestCase
         $tooYoung = today()->subYears(18)->addDay()->toDateString();
         $exactly = today()->subYears(18)->toDateString();
 
-        $this->withHeader('Accept-Language', 'fr')
-            ->postJson('/api/v1/auth/register', [...self::IDENTITY, 'birth_date' => $tooYoung])
-            ->assertJsonValidationErrors(['birth_date' => 'Vous devez avoir au moins 18 ans.']);
+        $challenge = $this->registerChallenge(['email' => 'ada@example.com']);
+        $register = fn (string $birthDate) => $this->withHeader('Accept-Language', 'fr')
+            ->postJson('/api/v1/auth/register', ['challenge' => $challenge, 'first_name' => 'Ada', 'last_name' => 'Martin', 'birth_date' => $birthDate]);
 
-        $this->postJson('/api/v1/auth/register', [...self::IDENTITY, 'birth_date' => $exactly])->assertAccepted();
+        $register($tooYoung)->assertJsonValidationErrors(['birth_date' => 'Vous devez avoir au moins 18 ans.']);
+        $register($exactly)->assertCreated()->assertJsonPath('data.birth_date', $exactly);
     }
 
     public function test_personal_information_needs_a_birth_date_old_enough(): void

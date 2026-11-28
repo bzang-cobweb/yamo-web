@@ -15,7 +15,7 @@ use Modules\Location\Models\Country;
 use Tests\TestCase;
 
 /**
- * Connexion par téléphone, codes (faux, expirés, épuisés, renvoyés), inscription et
+ * Connexion par téléphone, codes (faux, expirés, épuisés, renvoyés) et
  * changements d'e-mail ou de téléphone vérifiés par code.
  */
 class VerificationCodesApiTest extends TestCase
@@ -81,12 +81,11 @@ class VerificationCodesApiTest extends TestCase
 
         Mail::assertNothingSent();
 
+        // Le code mène à l'étape du mot de passe (décision 2026-11-28-connexion-panneau), sans jeton.
         $this->verify($challenge, $this->smsCode('+41791234567'), ['device_name' => 'Pixel'])
             ->assertOk()
-            ->assertJsonPath('data.id', $user->id)
-            ->assertJsonStructure(['token']);
-        $this->assertSame(['Pixel'], $user->tokens()->pluck('name')->all());
-        $this->assertSame(0, VerificationCode::count());
+            ->assertExactJson(['next' => 'password', 'challenge' => $challenge, 'mode' => 'sign-in']);
+        $this->assertSame(0, $user->tokens()->count());
     }
 
     public function test_a_code_received_by_sms_marks_the_phone_as_verified(): void
@@ -210,7 +209,7 @@ class VerificationCodesApiTest extends TestCase
         if ($first !== $second) {
             $this->verify($challenge, $first)->assertUnprocessable();
         }
-        $this->verify($challenge, $second)->assertOk()->assertJsonStructure(['token']);
+        $this->verify($challenge, $second)->assertOk()->assertJsonPath('next', 'password');
     }
 
     public function test_the_code_email_is_in_the_request_language(): void
@@ -221,135 +220,6 @@ class VerificationCodesApiTest extends TestCase
             ->assertAccepted();
 
         Mail::assertSent(VerificationCodeMail::class, fn (VerificationCodeMail $mail): bool => $mail->locale === 'fr');
-    }
-
-    // Inscription
-
-    private function register(array $overrides = []): TestResponse
-    {
-        return $this->postJson('/api/v1/auth/register', [
-            'name' => 'marie',
-            'first_name' => 'Marie',
-            'last_name' => 'Curie',
-            'email' => 'marie@example.com',
-            ...$overrides,
-        ]);
-    }
-
-    public function test_register_with_email_only_creates_the_account_after_the_code(): void
-    {
-        $challenge = $this->register()->assertAccepted()->assertJsonPath('channel', 'email')->json('challenge');
-        $this->assertFalse(User::query()->where('name', 'marie')->exists());
-
-        $response = $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])->assertCreated();
-
-        $user = User::query()->where('name', 'marie')->sole();
-        $response->assertJsonPath('data.id', $user->id)->assertJsonPath('data.email', 'marie@example.com')->assertJsonStructure(['token']);
-        $this->assertNotNull($user->email_verified_at);
-        $this->assertNull($user->gender);
-        $this->assertNull($user->description);
-        $this->assertNull($user->birth_date);
-        $this->assertNull($user->phone);
-        // Sans mot de passe (décision 2026-11-27-connexion-sans-mot-de-passe).
-        $this->assertNull($user->password);
-        // Inscrit depuis l'app : membre, et rien d'autre (décision 2026-11-18-role-membre).
-        $this->assertSame(['member'], $user->getRoleNames()->all());
-
-        // Le compte se connecte ensuite par code, sans mot de passe.
-        $this->travel(61)->seconds();
-        $login = $this->postJson('/api/v1/auth/login', ['channel' => 'email', 'email' => $user->email])
-            ->assertAccepted()->assertJsonPath('channel', 'email')->json('challenge');
-        $this->verify($login, $this->emailCode($user->email), ['device_name' => 'iPad'])
-            ->assertOk()
-            ->assertJsonPath('data.id', $user->id)
-            ->assertJsonStructure(['token']);
-        $this->assertSame(['iPhone', 'iPad'], $user->tokens()->pluck('name')->all());
-    }
-
-    public function test_register_creates_the_account_in_the_language_chosen_in_the_app(): void
-    {
-        $challenge = $this->withHeader('Accept-Language', 'en')->register()->assertAccepted()->json('challenge');
-
-        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
-            ->assertCreated()
-            ->assertJsonPath('data.locale', 'en');
-        $this->assertSame('en', User::query()->where('name', 'marie')->sole()->locale);
-    }
-
-    public function test_register_saves_the_optional_birth_date_within_bounds(): void
-    {
-        $this->register(['birth_date' => '1899-12-31'])->assertUnprocessable()->assertJsonValidationErrors('birth_date');
-        $this->register(['birth_date' => now()->addDay()->format('Y-m-d')])->assertUnprocessable()->assertJsonValidationErrors('birth_date');
-
-        $challenge = $this->register(['birth_date' => '1990-04-12'])->assertAccepted()->json('challenge');
-        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
-            ->assertCreated()
-            ->assertJsonPath('data.birth_date', '1990-04-12');
-    }
-
-    public function test_register_ignores_the_former_description_gender_and_password(): void
-    {
-        $challenge = $this->register([
-            'description' => str_repeat('a', 1001),
-            'gender' => 'nope',
-            'password' => 'court',
-            'password_confirmation' => 'autre',
-        ])->assertAccepted()->json('challenge');
-        $this->verify($challenge, $this->emailCode('marie@example.com'), ['device_name' => 'iPhone'])
-            ->assertCreated()
-            ->assertJsonPath('data.description', null)
-            ->assertJsonPath('data.gender', null);
-
-        $user = User::query()->where('name', 'marie')->sole();
-        $this->assertNull($user->description);
-        $this->assertNull($user->password);
-    }
-
-    public function test_register_with_phone_only_sends_an_sms(): void
-    {
-        $challenge = $this->register(['email' => null, 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
-            ->assertAccepted()->assertJsonPath('channel', 'sms')->json('challenge');
-        Mail::assertNothingSent();
-
-        $this->verify($challenge, $this->smsCode('+41791234567'))->assertCreated();
-
-        $user = User::query()->where('name', 'marie')->sole();
-        $this->assertSame('+41791234567', $user->phone);
-        $this->assertSame($this->switzerland->id, $user->phone_country_id);
-        $this->assertNotNull($user->phone_verified_at);
-        $this->assertNull($user->email);
-    }
-
-    public function test_register_with_both_needs_both_codes(): void
-    {
-        $challenge = $this->register(['phone' => '079 123 45 67', 'phone_country' => 'CH'])->assertAccepted()->json('challenge');
-
-        $this->verify($challenge, $this->emailCode('marie@example.com'), ['channel' => 'email'])
-            ->assertAccepted()
-            ->assertJsonPath('channel', 'sms')
-            ->assertJsonPath('challenge', $challenge)
-            ->assertJsonMissingPath('token');
-        $this->assertFalse(User::query()->where('name', 'marie')->exists());
-
-        $this->verify($challenge, $this->smsCode('+41791234567'), ['channel' => 'sms'])->assertCreated()->assertJsonStructure(['token']);
-
-        $user = User::query()->where('name', 'marie')->sole();
-        $this->assertNotNull($user->email_verified_at);
-        $this->assertNotNull($user->phone_verified_at);
-        $this->assertSame(['member'], $user->getRoleNames()->all());
-    }
-
-    public function test_register_needs_an_email_or_a_phone_and_refuses_taken_ones(): void
-    {
-        $this->register(['email' => null])->assertUnprocessable()->assertJsonValidationErrors(['email', 'phone']);
-        $this->register(['email' => null, 'phone' => '123', 'phone_country' => 'CH'])->assertUnprocessable()->assertJsonValidationErrors(['phone']);
-
-        $this->jeanne(['name' => 'marie', 'phone' => '+41791234567']);
-        $this->register(['email' => 'jeanne@example.com', 'phone' => '079 123 45 67', 'phone_country' => 'CH'])
-            ->assertUnprocessable()->assertJsonValidationErrors(['name', 'email', 'phone']);
-
-        Mail::assertNothingSent();
-        $this->assertSame(0, VerificationCode::count());
     }
 
     // Changer d'e-mail ou de téléphone
@@ -404,23 +274,6 @@ class VerificationCodesApiTest extends TestCase
         $this->withToken($token)->postJson('/api/v1/auth/codes/verify', ['challenge' => $challenge, 'code' => $this->emailCode('jeanne@new.example.com')])
             ->assertUnprocessable()->assertJsonValidationErrors(['code']);
         $this->assertSame('jeanne@example.com', $user->fresh()->email);
-
-        $this->flushHeaders();
-        $register = $this->register(['email' => 'late@example.com'])->json('challenge');
-        User::factory()->create(['email' => 'late@example.com']);
-        $this->verify($register, $this->emailCode('late@example.com'))->assertUnprocessable()->assertJsonValidationErrors(['code']);
-        $this->assertFalse(User::query()->where('name', 'marie')->exists());
-    }
-
-    public function test_a_value_held_by_a_deleted_account_awaiting_purge_is_refused_cleanly(): void
-    {
-        // Pris puis supprimé pendant que le code attendait : la valeur reste réservée
-        // jusqu'à la purge, et l'index unique n'est jamais atteint.
-        $register = $this->register(['email' => 'held@example.com'])->json('challenge');
-        User::factory()->create(['email' => 'held@example.com'])->delete();
-
-        $this->verify($register, $this->emailCode('held@example.com'))->assertUnprocessable()->assertJsonValidationErrors(['code']);
-        $this->assertFalse(User::query()->where('name', 'marie')->exists());
     }
 
     public function test_an_email_taken_by_someone_else_is_refused(): void
@@ -473,9 +326,7 @@ class VerificationCodesApiTest extends TestCase
     public function test_register_and_code_forms_are_public(): void
     {
         $this->getJson('/api/v1/forms/auth.register')->assertOk()
-            ->assertJsonPath('data.fields.5.name', 'phone')
-            ->assertJsonPath('data.fields.5.type', 'hidden')
-            ->assertJsonPath('data.fields.6.name', 'phone_country');
+            ->assertJsonPath('data.fields.0.name', 'first_name');
         $this->getJson('/api/v1/forms/auth.code')->assertOk()
             ->assertJsonPath('data.fields.0.type', 'code');
     }
