@@ -90,3 +90,39 @@ souvient du dernier moyen de connexion (« cookie » = stockage sécurisé de l'
   (nouveau compte), puis connecté, ou inscription (prénom, nom, l'autre contact facultatif) puis connecté.
 - Les champs téléphone proposent tous les pays ; l'identifiant validé par code est marqué vérifié.
 - Web : tests verts, Pint propre ; mobile : tsc sans erreur, Jest vert (« Test Suites: » compris).
+
+## Ce que j'ai décidé seul
+- Les interprétations ci-dessus (mémoire sur l'appareil, « Essayer autrement », code toujours envoyé, compte sans mot
+  de passe, « Mot de passe oublié » après le code, inscription prénom + nom + autre contact, tous les pays).
+- Serveur : les erreurs d'un défi qui n'est plus valable (inconnu, servi, non vérifié, expiré, épuisé, cinquième mot de
+  passe faux) portent sur `code` ; l'app revient alors au début avec le message. Date de naissance demandée à
+  l'inscription seulement si un âge minimum est réglé (décision du 2026-11-19). Pseudonyme : prénom + nom normalisés,
+  suffixe si pris. `reset` déconnecte les autres appareils. Sous-titres des onglets : « Connectez-vous ou créez votre
+  compte. » / « Vos demandes et vos messages arrivent ici. ».
+- Sécurité : un numéro non vérifié n'identifie plus un compte et ne retient plus le numéro ; il est retiré quand
+  quelqu'un le prouve par code (décision 2026-11-28-numero-non-verifie).
+- App : panneau ouvert par un état global (`openAuthSheet()`, un seul hôte dans `_layout`), route `/sign-in` retirée ;
+  l'indicatif est gardé à part (survit à « Ce n'est pas vous ? ») ; « Essayer autrement » n'utilise l'autre
+  identifiant mémorisé que si le code est parti vers celui de la mémoire (même compte) ; envoi automatique à 6
+  chiffres pour tous les champs code.
+
+## Ce qui a été fait
+- Serveur (web) : `33c98bdd` (tous les pays au téléphone), `425f3db2` (login, verify, session, register, formulaires),
+  `f0afa07f` (textes), `e2675614` (décision), `2ff586f7` (numéro non vérifié), `db24565d` (cinquième essai sur `code`).
+- App (mobile) : `6a1fbed` (code à 6 chiffres, `defaults`/`params` des formulaires), `9eba6bf` (services, mémoire),
+  `f7fbcfd` (panneau, parcours, `GuestTab`), `99e48a4`, `0b19e9e` (défi expiré), `6901ad3` (indicatif à l'inscription).
+- Preuves : web 1028 tests verts, Pint propre ; mobile tsc propre, 76 suites / 491 tests verts ; parcours de bout en
+  bout joué contre le serveur local (inscription puis connexion, mot de passe faux, défi réutilisé) ; qa-check GO.
+
+## Ce que je n'ai pas vérifié
+- Le rendu dans l'app (panneau à hauteur maximale, panneau « Essayer autrement » dans le premier, clavier) : aucun écran
+  vu dans le simulateur.
+- Le stockage sécurisé réel (simulé dans les tests), l'envoi réel des SMS.
+- `openapi.json` : non régénéré (la commande échoue sur des erreurs antérieures).
+
+## Ce qui reste en suspens
+- Compte en attente de suppression : il se récupère avec le seul code, sans l'étape du mot de passe (comportement
+  d'avant, gardé tel quel).
+- `/sign-in` survit comme lien servi par `PartnerListing` et intercepté par `openListFooter` ; un autre usage casserait.
+- Les routes du mot de passe oublié d'hier (`password/forgot|reset`) restent sans usage dans l'app.
+- Un compte inscrit par e-mail qui ne vérifie pas son numéro peut le perdre, sans être prévenu.
